@@ -4,15 +4,15 @@
     <pre
       class="code"
       tabindex="0"
-    ><code><template v-for="(line, i) in lines" :key="i"><span v-if="lineNumbers" class="ln" aria-hidden="true">{{ i + 1 }}</span>{{ line }}
+    ><code><template v-for="(line, i) in lines" :key="i"><span v-if="lineNumbers" class="ln" aria-hidden="true">{{ i + 1 }}</span><HighlightedLine :line="line" />
 </template></code></pre>
   </figure>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import HighlightedLine from './HighlightedLine.vue'
 
-// Plain text for now; build-time highlighted tokens replace this in M1 (plans/03 §4.1).
 const props = defineProps<{ code: string; caption?: string; lineNumbers?: boolean }>()
 const lines = computed(() => props.code.replace(/\n$/, '').split('\n'))
 </script>

@@ -111,7 +111,10 @@ also works. CI doesn't need either.
     `reviewConcepts` must be in some earlier-or-current level's `concepts:`
   - [~] Licence allow-list for `sources:` (enforced by schema enum); [ ] generate `ATTRIBUTIONS.md` (01 §13.3)
   - [x] Emit `app/public/content/section-<id>.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
-  - [ ] Build-time syntax highlighting (Shiki or Lezer) (03 §4.1)
+  - [x] Syntax highlighting: deviation, a tiny per-line regex lexer at runtime (`components/highlight.ts`,
+    `HighlightedLine.vue`) rather than build-time Shiki/Lezer, because fill-tokens and spot-bug split the code
+    themselves. Used by CodeCard, spot-bug, fill-tokens. Colour tokens `--c-syn-*` in tokens.css
+    - [ ] (new) Check `--c-syn-*` contrast with a tool in the M5 accessibility audit
   - [x] Markdown -> HTML at build time (markdown-it, `html: false`): prompts, explanations, hints, `why`,
     concept cards, option text (not predict-output's, which is literal output), guidebooks
   - [x] (new) Id nesting check: unit ids start with the section id, level ids with the unit id (the app

@@ -17,6 +17,13 @@
   --c-scrim: rgb(0 0 0 / 0.4);
   --c-terminal: light-dark(#1f1b2e, #0b0912);
   --c-terminal-text: #ece9f5;
+  /* Syntax highlighting; light values chosen for >= 4.5:1 on --c-surface */
+  --c-syn-kw: light-dark(#6a3df0, #b39dff);
+  --c-syn-str: light-dark(#2e7d32, #8bd17c);
+  --c-syn-num: light-dark(#b93d0b, #ffab70);
+  --c-syn-com: light-dark(#6f6982, #a9a3b8);
+  --c-syn-mac: light-dark(#0369a1, #6cc4ff);
+  --c-syn-ty: light-dark(#9c3f88, #f19ad8);
 
   /* Primary (brand, the action colour) */
   --c-primary: #7c4dff;

@@ -15,7 +15,7 @@
         :disabled="checked"
         @click="response = i + 1"
       >
-        <span class="ln" aria-hidden="true">{{ i + 1 }}</span>{{ line }}
+        <span class="ln" aria-hidden="true">{{ i + 1 }}</span><HighlightedLine :line="line" />
       </button>
     </div>
   </div>
@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import HighlightedLine from '@/components/HighlightedLine.vue'
 import type { Ex } from './grade'
 
 const props = defineProps<{ exercise: Ex<'spot-bug'>; checked: boolean }>()

@@ -5,7 +5,7 @@
     <pre
       class="code"
       tabindex="0"
-    ><code><template v-for="(p, i) in parts" :key="i"><template v-if="p.blank === undefined">{{ p.text }}</template><button
+    ><code><template v-for="(p, i) in parts" :key="i"><HighlightedLine v-if="p.blank === undefined" :line="p.text!" /><button
       v-else
       type="button"
       class="blank"
@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import AnswerTile from '@/components/AnswerTile.vue'
+import HighlightedLine from '@/components/HighlightedLine.vue'
 import { BLANK, type Ex, type Responses } from './grade'
 import { shuffledIndices } from './shuffle'
 

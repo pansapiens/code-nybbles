@@ -121,3 +121,29 @@ h1 {
   overflow-x: auto;
   font-size: var(--code-size);
 }
+
+/* Token classes from components/highlight.ts */
+.syn-kw {
+  color: var(--c-syn-kw);
+  font-weight: 600;
+}
+.syn-str {
+  color: var(--c-syn-str);
+}
+.syn-num {
+  color: var(--c-syn-num);
+}
+.syn-com {
+  color: var(--c-syn-com);
+  font-style: italic;
+}
+.syn-mac {
+  color: var(--c-syn-mac);
+}
+.syn-ty {
+  color: var(--c-syn-ty);
+}
+/* Correct/wrong lines take their state colour instead. */
+:is(.correct, .wrong) > [class^='syn-'] {
+  color: inherit;
+}
