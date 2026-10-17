@@ -430,7 +430,7 @@ lessons:
         id: pairs-code-where
         prompt: Match each line to where its data lives
         pairs:
-          - ["let n = 7;", "stack only"]
+          - ["let n = 7;", "stack, 4 bytes"]
           - ["let s = String::from(\"hi\");", "stack and heap"]
           - ["let t = \"hi\";", "stack, text in the program"]
           - ["let a = [1, 2, 3];", "stack, 12 bytes"]

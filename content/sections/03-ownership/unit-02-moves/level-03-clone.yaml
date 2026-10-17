@@ -135,7 +135,7 @@ lessons:
 
       - type: spot-bug
         id: spot-missing-clone
-        prompt: "This should print `jazz jazz`. Tap the line with the mistake."
+        prompt: "This should print `jazz jazz`, with `genre` still valid at the end. Tap the line that needs a `.clone()`."
         code:
           rust: |
             fn main() {
@@ -428,7 +428,7 @@ lessons:
 
       - type: spot-bug
         id: spot-clone-wrong-var
-        prompt: "This should print `A B A`. Tap the line with the mistake."
+        prompt: "This should print `A B A`, using `a` on the last line. Tap the line that needs a `.clone()`."
         code:
           rust: |
             fn main() {

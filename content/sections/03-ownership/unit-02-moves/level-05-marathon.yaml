@@ -147,7 +147,7 @@ lessons:
           - { id: b, text: "`a` and `b` can't both be `String`s", why: "Two variables can each own a `String`. Here there's only one `String` to give." }
           - { id: c, text: "`key` needs `mut` to be moved twice", why: "`mut` doesn't help. A value can only move once." }
         answer: a
-        explanation: "Moving counts as a use. The label says `use of moved value` because line 4 tries to move `key` a second time."
+        explanation: "Moving counts as a use. The message says `use of moved value` because line 4 tries to move `key` a second time."
         concepts: [own.mixed, err.E0382]
 
       - type: compiles
@@ -299,7 +299,7 @@ lessons:
 
       - type: decode-error
         id: decode-loop-fix
-        prompt: "Which change makes this compile and print `Go!` twice, then `Go`?"
+        prompt: "Which replacement for line 8 makes this compile and print `Go!` twice, then `Go`?"
         code:
           rust: |
             fn shout(text: String) {
@@ -317,7 +317,7 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, code: "shout(cheer.clone());" }
-          - { id: b, code: "let cheer = cheer;", why: "Shadowing inside the loop still moves `cheer` on the first pass." }
+          - { id: b, code: "let copy = cheer; shout(copy);", why: "Naming it `copy` doesn't copy it. `let copy = cheer;` moves `cheer` on the first pass." }
           - { id: c, code: "shout(String::from(cheer));", why: "`String::from(cheer)` takes `cheer` by value, so it still moves." }
         answer: a
         explanation: "Replacing line 8 with a clone gives each call its own `String`. `cheer` never moves, so line 10 works too."
@@ -325,7 +325,22 @@ lessons:
 
       - type: mcq
         id: mcq-diagram-loop
-        prompt: "Inside the second pass of the loop in the fixed program, which diagram is right?"
+        prompt: "Inside `shout`, on the second pass of the loop, which diagram is right?"
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let cheer = String::from("Go");
+                for _ in 0..2 {
+                    shout(cheer.clone());
+                }
+                println!("{cheer}");
+            }
+          verify: run
+          expectStdout: "Go!\nGo!\nGo\n"
         diagram:
           caption: "Option A"
           frames:

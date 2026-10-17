@@ -169,7 +169,20 @@ lessons:
 
       - type: true-false
         id: tf-two-calls
-        prompt: "In the last example, calling `greet()` twice creates and frees two separate `String`s."
+        prompt: "Calling `greet()` twice creates and frees two separate `String`s."
+        code:
+          rust: |
+            fn greet() {
+                let msg = String::from("hi");
+                println!("{msg}");
+            }
+
+            fn main() {
+                greet();
+                greet();
+            }
+          verify: run
+          expectStdout: "hi\nhi\n"
         answer: true
         explanation: "Each call runs the body again: it makes a new `String` on the heap and drops it at the closing `}`."
         concepts: [own.scope-drop, fn.define]

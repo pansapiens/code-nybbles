@@ -125,7 +125,21 @@ lessons:
 
       - type: mcq
         id: mcq-who-owns-after
-        prompt: "In the last program, who owns the text after line 8?"
+        prompt: "Who owns the text after line 8?"
+        code:
+          rust: |
+            fn add_bang(mut s: String) -> String {
+                s.push_str("!");
+                s
+            }
+
+            fn main() {
+                let name = String::from("Hi");
+                let loud = add_bang(name);
+                println!("{loud}");
+            }
+          verify: run
+          expectStdout: "Hi!\n"
         options:
           - { id: a, text: "`loud`" }
           - { id: b, text: "`name`", why: "`name` moved into `add_bang` and never gets the value back. The return value goes to `loud`." }

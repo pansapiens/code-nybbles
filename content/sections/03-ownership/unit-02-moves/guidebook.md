@@ -12,7 +12,7 @@ println!("{s2}");     // fine
 - `let s2 = s1;` copies the pointer, length and capacity on the stack. The heap text is not copied.
 - `s1` is invalid afterwards, so only `s2` frees the text. No double free.
 - Moving is fine; *using* the old name afterwards is error **E0382**.
-- Reading E0382: `value moved here` marks the move, `value borrowed here after move` (or `use of moved value`) marks the late use.
+- Reading E0382: `value moved here` marks the move, `value borrowed here after move` (or `value used here after move`) marks the late use.
 - A `mut` variable that was moved from can be given a new value: `s1 = String::from("new");`.
 
 ## Copy types are copied

@@ -55,9 +55,9 @@ chunks:
         concepts: [own.fn-move, own.fn-return]
       - type: true-false
         id: add-milk-semicolon
-        prompt: "If line 7 were `drink;`, the text would be dropped at the end of `add_milk`, and the program would not compile."
+        prompt: "If line 7 were `drink;`, `add_milk` would drop the text instead of returning it, and the program would not compile."
         answer: true
-        explanation: "With `;` the body returns `()`, which doesn't match `-> String` (E0308). The `String` would be dropped at the `}`."
+        explanation: "With `;` the body returns `()`, which doesn't match `-> String` (E0308). The `String` would be dropped inside `add_milk`."
         concepts: [own.fn-return, err.E0308]
   - lines: 4
     exercises:

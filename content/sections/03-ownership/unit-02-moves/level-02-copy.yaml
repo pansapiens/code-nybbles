@@ -246,7 +246,7 @@ lessons:
           - { id: b, text: "Tuples can never be assigned to another variable", why: "They can. A tuple of Copy types is even copied." }
           - { id: c, text: "`{:?}` can't print a tuple", why: "It can. The problem is that `pair` is used after it moved." }
         answer: a
-        explanation: "The note says the type `(String, i32)` does not implement Copy. One non-Copy part is enough to make the tuple move."
+        explanation: "The compiler says the type `(String, i32)` does not implement `Copy`. One non-Copy part is enough to make the tuple move."
         concepts: [own.copy, err.E0382, compiler.read-error]
 
       - type: true-false

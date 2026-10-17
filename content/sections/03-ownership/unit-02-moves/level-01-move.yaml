@@ -364,13 +364,24 @@ lessons:
 
       - type: mcq
         id: mcq-block-drop
-        prompt: "In the last program (without line 6), when is the text `\"jig\"` freed?"
+        prompt: "When is the text `\"jig\"` freed?"
+        code:
+          rust: |
+            fn main() {
+                let tune = String::from("jig");
+                {
+                    let playing = tune;
+                    println!("{playing}");
+                }
+            }
+          verify: run
+          expectStdout: "jig\n"
         options:
-          - { id: a, text: "At the `}` on line 5, when `playing` goes out of scope" }
+          - { id: a, text: "At the `}` on line 6, when `playing` goes out of scope" }
           - { id: b, text: "At the end of `main`, when `tune` goes out of scope", why: "`tune` doesn't own the text any more, so nothing is freed for it." }
           - { id: c, text: "Twice: once for each variable", why: "Only the owner frees heap data, and there is one owner at a time." }
         answer: a
-        explanation: "The owner drops the value when it goes out of scope. After the move the owner is `playing`, whose scope ends at line 5."
+        explanation: "The owner drops the value when it goes out of scope. After the move the owner is `playing`, whose scope ends at line 6."
         concepts: [own.move, own.scope-drop]
 
       - type: decode-error
@@ -405,7 +416,7 @@ lessons:
           verify: run
           expectStdout: "v1 v2\n"
         answer: true
-        explanation: "After the move `draft` is empty, but it is `mut`, so line 3 gives it a new `String`. Then both variables own something."
+        explanation: "After the move `draft` can't be used, but it is `mut`, so line 3 gives it a new `String`. Then both variables own something."
         concepts: [own.move, var.mut]
 
       - type: true-false
