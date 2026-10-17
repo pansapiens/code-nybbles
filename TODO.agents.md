@@ -122,7 +122,7 @@ also works. CI doesn't need either.
   - [x] (new) Id nesting check: unit ids start with the section id, level ids with the unit id (the app
     finds a level's bundle from the first segment)
   - [ ] Turn on `--strict` in CI once the vertical slice meets the length rules
-  - [ ] (new) Warn when a decode-error snippet uses `wrap: auto`/`hidden.before` (line numbers in the
+  - [x] (new) Warn when a decode-error snippet is wrapped or uses `hidden.before` (line numbers in the
     baked compiler output wouldn't match the shown code)
 - [~] `rust-verify` (03 §4.2)
   - Deviation: implemented in TypeScript (`tools/content-build/verify.ts`) calling `rustc` directly, not as

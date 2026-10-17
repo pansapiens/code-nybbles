@@ -160,6 +160,9 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
       checkOptions(where, ex.options, ex.answer, issues)
       if (ex.type === 'decode-error' && ex.code.verify !== 'compile-fail')
         issues.error(where, 'decode-error code must be `verify: compile-fail`')
+      // The compiler output quotes line numbers of the verified source; they must match the shown code.
+      if (ex.type === 'decode-error' && (ex.code.hidden?.before || caseSource(ex.code.rust, ex.code.wrap) !== ex.code.rust))
+        issues.warn(where, 'decode-error code is wrapped or has hidden.before, so error line numbers won\'t match')
       break
     case 'predict-output':
       if (ex.code.verify !== 'run') issues.error(where, 'predict-output code must be `verify: run`')
