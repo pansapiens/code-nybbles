@@ -19,6 +19,7 @@
     </main>
 
     <main v-else-if="exercise" class="prompt">
+      <CodeCard v-if="program" class="program" :code="visibleProgram" line-numbers caption="Program" />
       <component
         :is="rendererFor(exercise)"
         :key="run!.index"
@@ -79,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CompiledExercise } from '@code-nybbles/content-build/schema'
+import type { CompiledExercise, CompiledLevel } from '@code-nybbles/content-build/schema'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
@@ -102,6 +103,7 @@ import {
 import { type Grade, grade, solution } from '@/exercises/grade'
 import { checksItself, isGraded, rendererFor } from '@/exercises/registry'
 import CelebrationScreen, { type Screen } from '@/components/CelebrationScreen.vue'
+import CodeCard from '@/components/CodeCard.vue'
 import { addDays } from '@/domain/dates'
 import { ACHIEVEMENTS, PRICES } from '@/domain/progress'
 import { type Cue, feedback } from '@/services/feedback'
@@ -115,13 +117,17 @@ const settings = useSettingsStore()
 const checkpoint = ref(false)
 /** Hearts only apply in new lessons: levels not yet complete (plans/01 §3.8). */
 const newLesson = ref(false)
-const heartsApply = computed(() => settings.heartsMode && newLesson.value)
+const heartsApply = computed(() => settings.heartsMode && newLesson.value && !program.value)
 const outOfHearts = ref(false)
 const screens = ref<Screen[]>()
 const screenIndex = ref(0)
 const saving = ref(false)
 
 const exercises = new Map<string, CompiledExercise>()
+/** Code Reads: the program, and how many of its lines each exercise reveals. Lines stay shown once revealed. */
+const program = shallowRef<CompiledLevel['program']>()
+const reveals = new Map<string, number>()
+const revealed = ref(0)
 const run = shallowRef<LessonRun>()
 const error = ref<string>()
 const response = ref<unknown>()
@@ -137,7 +143,11 @@ onMounted(async () => {
     checkpoint.value = found!.checkpoint
     newLesson.value = (game.state.levels[level.id]?.lessons ?? 0) < level.lessons.length
     if (heartsApply.value && game.view.hearts === 0) outOfHearts.value = true
-    for (const ex of lesson.exercises) exercises.set(`${level.id}/${lesson.id}/${ex.id}`, ex)
+    lesson.exercises.forEach((ex, i) => {
+      exercises.set(`${level.id}/${lesson.id}/${ex.id}`, ex)
+      if (level.reveals) reveals.set(`${level.id}/${lesson.id}/${ex.id}`, level.reveals[i]!)
+    })
+    program.value = level.program
     run.value = startRun(planLesson(level.id, lesson), Date.now())
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
@@ -145,6 +155,8 @@ onMounted(async () => {
 })
 
 const exercise = computed(() => (run.value ? exercises.get(currentRef(run.value) ?? '') : undefined))
+watch(run, (r) => (revealed.value = Math.max(revealed.value, reveals.get((r && currentRef(r)) ?? '') ?? 0)))
+const visibleProgram = computed(() => program.value?.rust.split('\n').slice(0, revealed.value).join('\n') ?? '')
 const explanation = computed(() => (exercise.value && 'explanation' in exercise.value ? exercise.value.explanation : undefined))
 const shownSolution = computed(() => (exercise.value ? solution(exercise.value as never) : {}))
 const feedbackClass = computed(() => (result.value ? (result.value.correct ? 'ok' : 'bad') : ''))
@@ -186,6 +198,7 @@ async function finish(r: LessonRun) {
     levelId: props.levelId,
     lessonId: props.lessonId,
     checkpoint: checkpoint.value,
+    codeRead: !!program.value,
     ...sum,
   })
   saving.value = false
@@ -263,6 +276,9 @@ watch(response, (r) => {
   background: none;
   color: var(--c-text-2);
   cursor: pointer;
+}
+.program {
+  margin-bottom: var(--s-4);
 }
 .prompt {
   flex: 1;

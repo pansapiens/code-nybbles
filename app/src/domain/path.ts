@@ -3,8 +3,8 @@ import type { Progress } from './progress'
 
 export interface PathNode {
   id: string
-  kind: 'level' | 'checkpoint' | 'chest'
-  /** Lessons in the level (level and checkpoint nodes). */
+  kind: 'level' | 'checkpoint' | 'code-read' | 'chest'
+  /** Lessons in the level (level, checkpoint and code-read nodes). */
   lessons?: number
 }
 export type NodeState = 'done' | 'current' | 'locked'

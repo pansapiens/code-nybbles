@@ -9,10 +9,12 @@
       </select>
     </label>
     <template v-if="level">
+      <CodeCard v-if="level.program" :code="level.program.rust" line-numbers caption="Program" />
       <section v-for="lesson in level.lessons" :key="lesson.id" class="stack">
         <h2>{{ lesson.id }} ({{ lesson.exercises.length }} exercises)</h2>
         <article v-for="ex in lesson.exercises" :key="ex.id" class="card stack">
           <p class="meta">
+            <span v-if="level.reveals">lines 1-{{ level.reveals[lesson.exercises.indexOf(ex)] }} · </span>
             <code>{{ ex.type }}</code> · <code>{{ ex.id }}</code>
             <span v-if="'concepts' in ex && ex.concepts"> · {{ ex.concepts.join(', ') }}</span>
           </p>
@@ -33,6 +35,7 @@
 import type { CompiledLevel } from '@code-nybbles/content-build/schema'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import CodeCard from '@/components/CodeCard.vue'
 import { loadManifest, loadSection } from '@/content/loader'
 import { solution } from '@/exercises/grade'
 import { isGraded, rendererFor } from '@/exercises/registry'

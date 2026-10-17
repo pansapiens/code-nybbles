@@ -71,3 +71,29 @@ test('unknown concepts and bad option answers fail schema-independent checks', a
   assert.match(msg, /unknown concept "intro.nope"/)
   assert.match(msg, /answer "z" is not an option id/)
 })
+
+test('a code read compiles to a one-lesson level with per-exercise reveals and a verified program', async () => {
+  const root = fixture([predict('a')])
+  const tf = (id: string) => ({ type: 'true-false', id, prompt: 'p', answer: true, explanation: 'e', concepts: ['intro.main'] })
+  writeFileSync(
+    join(root, 'sections/s1/u1/unit.yaml'),
+    stringify({ id: 's1.u1', title: 'U1', description: 'd', path: [{ level: 'level' }, { 'code-read': 'read' }] }),
+  )
+  const cr = (lines: number[]) => ({
+    id: 's1.u1.read',
+    title: 'R',
+    program: { rust: 'fn main() {\n    println!("hi");\n}\n', verify: 'run', expectStdout: 'hi\n' },
+    chunks: lines.map((n, i) => ({ lines: n, exercises: [tf(`q${i}`)] })),
+  })
+  writeFileSync(join(root, 'sections/s1/u1/read.yaml'), stringify(cr([2, 1])))
+  const r = await buildContent({ contentDir: root })
+  assert.equal(r.issues.errors.length, 0, r.issues.errors.map((i) => i.message).join('\n'))
+  const level = r.sections[0]!.units[0]!.levels['s1.u1.read']!
+  assert.deepEqual(level.reveals, [2, 3])
+  assert.equal(level.program?.verified?.stdout, 'hi\n')
+  assert.deepEqual(r.sections[0]!.units[0]!.path[1], { kind: 'code-read', levelId: 's1.u1.read' })
+
+  writeFileSync(join(root, 'sections/s1/u1/read.yaml'), stringify(cr([1, 1])))
+  const bad = await buildContent({ contentDir: root })
+  assert.match(bad.issues.errors.map((i) => i.message).join('\n'), /chunks reveal 2 lines but the program has 3/)
+})

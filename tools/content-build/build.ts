@@ -10,6 +10,7 @@ import MarkdownIt from 'markdown-it'
 import { parse as parseYaml } from 'yaml'
 import type { z } from 'zod'
 import {
+  CodeRead,
   Concepts,
   Course,
   Level,
@@ -75,7 +76,8 @@ export function caseSource(rust: string, wrap: 'auto' | 'none', hidden?: { befor
 
 interface Snippet {
   case: Case
-  exercise: Exercise
+  /** Absent for a Code Read's program. */
+  exercise?: Exercise
   apply: (r: CaseResult) => void
 }
 
@@ -128,6 +130,52 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
     }
   }
   return out
+}
+
+/** A Code Read becomes a one-lesson level with the program and a per-exercise reveal count. */
+function codeReadLevel(
+  cr: CodeRead | undefined,
+  where: string,
+  edition: string,
+  issues: Issues,
+  snippets: { s: Snippet; where: string }[],
+): CompiledLevel | undefined {
+  if (!cr) return
+  const { chunks, program, ...rest } = cr
+  const total = program.rust.replace(/\n$/, '').split('\n').length
+  const revealed = chunks.reduce((n, c) => n + c.lines, 0)
+  if (revealed !== total) issues.error(where, `chunks reveal ${revealed} lines but the program has ${total}`)
+  if (total > 25) issues.warn(where, `program has ${total} lines (Code Reads allow 25)`)
+  const level: CompiledLevel = { ...rest, program, reveals: [], lessons: [{ id: 'read', exercises: [] }] }
+  let shown = 0
+  for (const c of chunks) {
+    shown += c.lines
+    for (const ex of c.exercises) {
+      level.lessons[0]!.exercises.push(ex)
+      level.reveals!.push(shown)
+    }
+  }
+  if (program.verify !== 'none')
+    snippets.push({
+      where: `${where}: program`,
+      s: {
+        case: {
+          id: `${cr.id}/program`,
+          source: caseSource(program.rust, program.wrap, program.hidden, program.verify),
+          mode: program.verify,
+          edition,
+          expectStdout: program.expectStdout,
+          expectErrors: program.expectErrors,
+          expectErrorMessage: program.expectErrorMessage,
+          expectPanic: program.expectPanic,
+          denyWarnings: program.denyWarnings,
+        },
+        apply: (r) => {
+          if (program.verify === 'run') level.program = { ...program, verified: { stdout: r.outcome.stdout } }
+        },
+      },
+    })
+  return level
 }
 
 // ---- Cross-checks (plans/03 §4.1) ----
@@ -344,15 +392,18 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
           continue
         }
         const [kind, file] = Object.entries(entry)[0] as [keyof typeof entry, string]
-        if (kind === 'code-read' || kind === 'build') {
+        if (kind === 'build') {
           issues.warn(uwhere, `${kind} nodes are not supported yet (${file})`)
           path.push({ kind, id: `${unit.id}.${file}` })
           continue
         }
         const lfile = join(udir, `${file}.yaml`)
-        const level = load(Level, lfile, issues, root) as CompiledLevel | undefined
-        if (!level) continue
         const lwhere = relative(root, lfile)
+        const level =
+          kind === 'code-read'
+            ? codeReadLevel(load(CodeRead, lfile, issues, root), lwhere, course.edition, issues, snippets)
+            : (load(Level, lfile, issues, root) as CompiledLevel | undefined)
+        if (!level) continue
         if (levelIds.has(level.id)) issues.error(lwhere, `duplicate level id "${level.id}"`)
         // The app finds a level's section bundle from the first segment of its id.
         if (!level.id.startsWith(`${unit.id}.`)) issues.error(lwhere, `level id must start with "${unit.id}."`)
@@ -371,7 +422,7 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
         for (const lesson of level.lessons) {
           if (lessonIds.has(lesson.id)) issues.error(lwhere, `duplicate lesson id "${lesson.id}"`)
           lessonIds.add(lesson.id)
-          if (lesson.exercises.length < 8 || lesson.exercises.length > 15)
+          if (kind !== 'code-read' && (lesson.exercises.length < 8 || lesson.exercises.length > 15))
             issues.warn(`${lwhere}: ${lesson.id}`, `${lesson.exercises.length} exercises (expected 8-15)`)
           const exIds = new Set<string>()
           for (const ex of lesson.exercises) {
@@ -412,7 +463,7 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
       for (const p of r.problems) issues.error(w, `rust-verify: ${p}`)
       if (!r.problems.length) {
         s.apply(r)
-        checkAgainstOutcome(s.exercise, r, w, issues)
+        if (s.exercise) checkAgainstOutcome(s.exercise, r, w, issues)
       }
     })
   }

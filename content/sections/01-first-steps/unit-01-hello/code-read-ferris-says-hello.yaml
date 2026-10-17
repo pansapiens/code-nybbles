@@ -1,0 +1,103 @@
+id: first-steps.hello.code-read-ferris
+title: Ferris says hello
+concepts: []
+reviewConcepts: [intro.main, macro.println-basic, macro.bang, syntax.comments]
+program:
+  rust: |
+    // Ferris introduces itself
+    fn main() {
+        println!("Hello, I'm Ferris!");
+        println!("I'm a crab.");
+        /* This comment covers
+           two lines */
+        println!("I live in Rust.");
+        // println!("I can't swim.");
+        println!("Bye!");
+    }
+  verify: run
+  expectStdout: |
+    Hello, I'm Ferris!
+    I'm a crab.
+    I live in Rust.
+    Bye!
+chunks:
+  - lines: 2
+    exercises:
+      - type: mcq
+        id: line-one
+        prompt: What does line 1 do when the program runs?
+        options:
+          - { id: a, text: Nothing. It's a comment for people reading the code. }
+          - { id: b, text: "It prints `Ferris introduces itself`.", why: "Only `println!` prints. Text after `//` is a comment, which the compiler ignores." }
+          - { id: c, text: It names the program `Ferris`., why: "Comments have no effect on the program, including its name." }
+        answer: a
+        explanation: "A line starting with `//` is a comment. The compiler skips it."
+        concepts: [syntax.comments]
+      - type: true-false
+        id: starts-at-main
+        prompt: "When you run this program, it starts at `fn main()` on line 2."
+        answer: true
+        explanation: "Every Rust program starts running at the `main` function."
+        concepts: [intro.main]
+  - lines: 2
+    exercises:
+      - type: mcq
+        id: first-output
+        prompt: What is the first line the program prints?
+        options:
+          - { id: a, text: "`Hello, I'm Ferris!`" }
+          - { id: b, text: "`\"Hello, I'm Ferris!\"`", why: "The quotes mark where the string starts and ends. They aren't printed." }
+          - { id: c, text: "`println!(\"Hello, I'm Ferris!\");`", why: "`println!` prints the text inside the quotes, not its own code." }
+        answer: a
+        explanation: "`println!` prints the text between the quotes, then moves to a new line."
+        concepts: [macro.println-basic]
+      - type: mcq
+        id: why-bang
+        prompt: "Why does `println` have a `!` after it?"
+        options:
+          - { id: a, text: "It's a macro, not a normal function." }
+          - { id: b, text: To print the text loudly, why: "The `!` doesn't change how the text looks. It marks a macro call." }
+          - { id: c, text: To end the line, why: "The `;` ends the statement. The `!` marks a macro." }
+        answer: a
+        explanation: "In Rust, a name followed by `!` is a macro call. `println!` is a macro."
+        concepts: [macro.bang]
+  - lines: 3
+    exercises:
+      - type: true-false
+        id: block-comment
+        prompt: "Lines 5 and 6 are one comment."
+        answer: true
+        explanation: "A block comment starts with `/*` and ends with `*/`, and it can cover several lines."
+        concepts: [syntax.comments]
+      - type: mcq
+        id: third-output
+        prompt: What is the third line the program prints?
+        options:
+          - { id: a, text: "`I live in Rust.`" }
+          - { id: b, text: "`This comment covers`", why: "That text is inside a block comment, so it is never printed." }
+          - { id: c, text: "`I'm a crab.`", why: "That's the second line printed. The comment on lines 5-6 prints nothing." }
+        answer: a
+        explanation: "The block comment on lines 5-6 prints nothing, so line 7 prints the third line."
+        concepts: [syntax.comments, macro.println-basic]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: commented-out
+        prompt: What happens to line 8?
+        options:
+          - { id: a, text: It doesn't run. The whole line is a comment. }
+          - { id: b, text: "It prints `I can't swim.`", why: "The line starts with `//`, so the `println!` on it is part of the comment." }
+          - { id: c, text: It's a compile error., why: "Comments can contain any text, including code." }
+        answer: a
+        explanation: "Putting `//` in front of a line of code turns it into a comment. Programmers do this to switch code off without deleting it."
+        concepts: [syntax.comments]
+      - type: mcq
+        id: how-many
+        prompt: How many lines does the whole program print?
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "5", why: "Line 8 is commented out, so it doesn't print." }
+          - { id: c, text: "7", why: "Comments never print. Count only the `println!` lines that aren't commented out." }
+        answer: a
+        explanation: "Lines 3, 4, 7 and 9 each print one line. Everything else is a comment or the `main` function's braces."
+        concepts: [macro.println-basic, syntax.comments]

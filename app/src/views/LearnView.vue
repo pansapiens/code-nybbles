@@ -25,7 +25,7 @@
             :title="n.title"
             :done="Math.min(game.state.levels[n.id]?.lessons ?? 0, n.lessons ?? 0)"
             :total="n.lessons ?? 0"
-            :xp="n.kind === 'checkpoint' ? XP.checkpoint : XP.lesson"
+            :xp="n.kind === 'checkpoint' ? XP.checkpoint : n.kind === 'code-read' ? XP.codeRead : XP.lesson"
             :colour="u.colour"
             :offset="n.offset"
             @start="start(n)"
@@ -66,7 +66,7 @@ const units = computed(() => {
     s.units.map((u, ui) => {
       const nodes: ViewNode[] = []
       for (const p of u.path) {
-        // Practice, Code Read and Build nodes aren't playable yet (M4+), so they're left off the path.
+        // Practice and Build nodes aren't playable yet (M4+), so they're left off the path.
         if (p.kind !== 'chest' && !('levelId' in p)) continue
         const i = nodes.length
         // Winding path: +-1 x --wave (plans/01 §4.3.2).

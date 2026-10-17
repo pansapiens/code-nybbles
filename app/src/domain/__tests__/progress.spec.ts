@@ -59,6 +59,9 @@ describe('progress', () => {
     expect(r2.notices).toContainEqual({ type: 'daily_goal_reached', gems: 10 })
     expect(s.state.daily['2026-10-01']).toEqual({ xp: 25, sessions: 2, chest: true })
     expect(s.state.levels['s.u.a']).toMatchObject({ lessons: 2, bestAccuracy: 1 })
+    // Code Reads and checkpoints have flat XP, with no perfect bonus.
+    expect(completeLesson(s.state, lesson({ codeRead: true }), ctx(T0)).xp).toBe(15)
+    expect(completeLesson(s.state, lesson({ checkpoint: true }), ctx(T0)).xp).toBe(30)
   })
 
   it('live state equals a replay of the log, across gaps, freezes, loss and repair', () => {

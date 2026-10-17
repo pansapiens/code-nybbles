@@ -217,6 +217,24 @@ export const Level = z
   })
   .strict()
 
+/**
+ * Code Read (plans/03 type 14): one program revealed chunk by chunk, with questions after each chunk.
+ * `lines` is how many more program lines each chunk reveals; they must add up to the whole program.
+ */
+export const CodeRead = z
+  .object({
+    id: Slug,
+    title: z.string(),
+    icon: z.string().optional(),
+    concepts: z.array(ConceptId).default([]),
+    reviewConcepts: z.array(ConceptId).default([]),
+    program: Code,
+    chunks: z
+      .array(z.object({ lines: z.number().int().positive(), exercises: z.array(Exercise).min(1) }).strict())
+      .min(1),
+  })
+  .strict()
+
 /** Licences we can adapt from (plans/01 §13.2). Anything else fails the build. */
 export const SourceLicence = z.enum(['MIT', 'Apache-2.0', 'MIT OR Apache-2.0', 'CC0-1.0', 'CC-BY-4.0', 'CC-BY-SA-4.0'])
 
@@ -287,6 +305,7 @@ export type Exercise = z.output<typeof Exercise>
 export type ExerciseType = Exercise['type']
 export type Lesson = z.output<typeof Lesson>
 export type Level = z.output<typeof Level>
+export type CodeRead = z.output<typeof CodeRead>
 export type Unit = z.output<typeof Unit>
 export type Section = z.output<typeof Section>
 export type Course = z.output<typeof Course>
@@ -308,13 +327,19 @@ export interface VerifiedCode {
  */
 export type CompiledExercise = Exercise & { verified?: VerifiedCode }
 export type CompiledLesson = Omit<Lesson, 'exercises'> & { exercises: CompiledExercise[] }
-export type CompiledLevel = Omit<Level, 'lessons'> & { lessons: CompiledLesson[] }
+export type CompiledLevel = Omit<Level, 'lessons'> & {
+  lessons: CompiledLesson[]
+  /** Code Reads only: the program, and how many of its lines are visible at each exercise of the one lesson. */
+  program?: Code & { verified?: VerifiedCode }
+  reveals?: number[]
+}
 
 export type CompiledPathNode =
   | { kind: 'level'; levelId: string }
   | { kind: 'checkpoint'; levelId: string }
+  | { kind: 'code-read'; levelId: string }
   | { kind: 'chest' | 'practice'; id: string }
-  | { kind: 'code-read' | 'build'; id: string }
+  | { kind: 'build'; id: string }
 
 export interface CompiledUnit extends Omit<Unit, 'path' | 'guidebook'> {
   guidebook?: string // rendered HTML

@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-comments
   - level: level-05-first-errors
+  - code-read: code-read-ferris-says-hello
   - checkpoint: checkpoint-hello
