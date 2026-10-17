@@ -48,8 +48,9 @@ also works. CI doesn't need either.
 - [x] Vite `base: '/code-nybbles/'`, router `createWebHistory(import.meta.env.BASE_URL)` (01 §5.5)
 - [x] Design tokens light/dark in `styles/tokens.css`, `base.css` (01 §4.1)
   - (new) Uses CSS `light-dark()` + `color-scheme`, so one token block serves light, dark and system
-  - [ ] (new) In-app "animations off" setting should apply the reduced-motion rule (`data-motion` attr) (01 §4.3.10)
-  - [ ] (new) Limit precached font subsets to latin (currently all subsets, ~445 KiB precache)
+  - [x] (new) In-app "Reduce animations" setting applies the reduced-motion rule via `data-motion` (01 §4.3.10)
+    (not persisted yet: settings move to Dexie in M2)
+  - [x] (new) Precache only latin font subsets (`globIgnores`); others still load online if ever needed
   - [x] Self-hosted fonts: Nunito + JetBrains Mono (offline; via @fontsource)
   - [x] Theme switch: `[data-theme]` attribute set from localStorage before first paint (01 §5.1 "tiny flags")
 - [x] Base components (01 §4.1, §9 M0)

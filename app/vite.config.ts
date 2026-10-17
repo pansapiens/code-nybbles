@@ -53,6 +53,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
+        // Fonts load a subset only when its characters appear; content is English, so precache latin only.
+        globIgnores: ['**/*-{cyrillic,cyrillic-ext,greek,greek-ext,vietnamese}-wght-*.woff2'],
         navigateFallback: `${BASE}index.html`,
       },
     }),

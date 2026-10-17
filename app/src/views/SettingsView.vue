@@ -19,6 +19,18 @@
       Hearts mode
     </label>
     <label class="row">
+      <input v-model="settings.sound" type="checkbox" />
+      Sound effects
+    </label>
+    <label class="row">
+      <input v-model="settings.haptics" type="checkbox" />
+      Vibration
+    </label>
+    <label class="row">
+      <input v-model="settings.reduceMotion" type="checkbox" />
+      Reduce animations
+    </label>
+    <label class="row">
       Code font size
       <input v-model.number="settings.codeSize" type="range" min="13" max="18" />
       {{ settings.codeSize }}px

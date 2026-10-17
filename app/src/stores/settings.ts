@@ -18,6 +18,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const sound = ref(true)
   const haptics = ref(true)
   const codeSize = ref(15)
+  /** On top of the OS `prefers-reduced-motion` setting, which always applies (plans/01 §4.5). */
+  const reduceMotion = ref(false)
 
   watch(theme, (t) => {
     if (t === 'system') localStorage.removeItem(THEME_KEY)
@@ -28,5 +30,10 @@ export const useSettingsStore = defineStore('settings', () => {
     immediate: true,
   })
 
-  return { theme, heartsMode, sound, haptics, codeSize }
+  watch(reduceMotion, (on) => {
+    if (on) document.documentElement.dataset.motion = 'reduced'
+    else delete document.documentElement.dataset.motion
+  })
+
+  return { theme, heartsMode, sound, haptics, codeSize, reduceMotion }
 })
