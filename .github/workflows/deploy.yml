@@ -45,7 +45,7 @@ jobs:
       - name: Unit tests
         run: pnpm test
       - name: Content build + rust-verify
-        run: pnpm content:build
+        run: pnpm content:build --strict # warnings fail CI too
       - name: Build
         working-directory: app
         run: pnpm build-only

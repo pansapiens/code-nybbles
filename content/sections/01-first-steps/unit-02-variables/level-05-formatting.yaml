@@ -1,0 +1,456 @@
+id: first-steps.variables.formatting
+title: Printing values
+icon: chat
+concepts: [fmt.placeholders, fmt.inline-args]
+reviewConcepts: [var.let, var.mut, var.shadowing, var.const, err.E0384]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-placeholders
+        title: "{} placeholders"
+        markdown: |
+          **Each `{}` is a placeholder.** After the text, list the values that fill them, in order, separated by commas.
+        code:
+          rust: |
+            let player = "Ferris";
+            let lives = 3;
+            println!("{}: {} lives", player, lives);
+          verify: run
+          expectStdout: "Ferris: 3 lives\n"
+        concepts: [fmt.placeholders]
+
+      - type: predict-output
+        id: predict-scored
+        code:
+          rust: |
+            let player = "Ferris";
+            let score = 90;
+            println!("{} scored {}", player, score);
+          verify: run
+        options:
+          - { id: a, text: "Ferris scored 90" }
+          - { id: b, text: "90 scored Ferris", why: "The first `{}` takes the first value after the text, which is `player`." }
+          - { id: c, text: "{} scored {}", why: "Each `{}` is replaced by a value before printing." }
+        answer: a
+        explanation: "The values fill the placeholders from left to right."
+        concepts: [fmt.placeholders]
+
+      - type: fill-tokens
+        id: fill-placeholder
+        prompt: "Fill the blanks so the program prints `Lives left: 2`"
+        code:
+          rust: |
+            let lives = 2;
+            println!("Lives left: ___1___", ___2___);
+          verify: run
+          expectStdout: "Lives left: 2\n"
+        blanks:
+          "1": { answer: ["{}"] }
+          "2": { answer: ["lives"] }
+        bank: ["{}", "()", "[]", "lives", "\"lives\""]
+        explanation: "`{}` marks where the value goes, and `lives` after the comma fills it. `\"lives\"` would print the word instead."
+        concepts: [fmt.placeholders]
+
+      - type: concept
+        id: concept-inline-args
+        title: "Names inside the braces"
+        markdown: |
+          You've been writing `{score}` since level 1. That's an **inline argument**: the variable's name goes inside the braces.
+
+          Both lines below print the same thing. Inline names are often easier to read.
+        code:
+          rust: |
+            let score = 90;
+            println!("{score} points");
+            println!("{} points", score);
+          verify: run
+          expectStdout: "90 points\n90 points\n"
+        concepts: [fmt.inline-args]
+
+      - type: true-false
+        id: tf-inline-same
+        prompt: "`println!(\"{score}\")` and `println!(\"{}\", score)` print the same thing."
+        answer: true
+        explanation: "Both print the value of `score`. One names it inside the braces, the other passes it after the text."
+        concepts: [fmt.inline-args, fmt.placeholders]
+
+      - type: compiles
+        id: compiles-too-few-args
+        code:
+          rust: |
+            let lives = 3;
+            println!("{} and {}", lives);
+          verify: compile-fail
+          expectErrorMessage: "2 positional arguments in format string, but there is 1 argument"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "There are two `{}` but only one value to fill them" }
+            - { id: b, text: "`lives` needs to be `mut`", why: "Printing doesn't change `lives`, so `mut` isn't needed." }
+            - { id: c, text: "`println!` can only print one value", why: "It can print as many as you have placeholders for." }
+          answer: a
+        explanation: "The number of `{}` must match the number of values after the text. The compiler checks this for you."
+        concepts: [fmt.placeholders]
+
+      - type: mcq
+        id: mcq-hi-name
+        prompt: "Given `let name = \"Ferris\";`, which line prints `Hi, Ferris`?"
+        options:
+          - { id: a, code: "println!(\"Hi, {name}\");" }
+          - { id: b, code: "println!(\"Hi, name\");", why: "Without braces, `name` is ordinary text and is printed as the word." }
+          - { id: c, code: "println!(\"Hi, {}\");", why: "The `{}` has no value to fill it, so this doesn't compile." }
+          - { id: d, code: "println!(\"Hi, {}\", \"name\");", why: "`\"name\"` is a string, so this prints `Hi, name`." }
+        answer: a
+        explanation: "`{name}` prints the value of the variable `name`."
+        concepts: [fmt.inline-args]
+
+      - type: predict-output
+        id: predict-pears-apples
+        code:
+          rust: |
+            let figs = 3;
+            let pears = 5;
+            println!("{pears} pears, {figs} figs");
+          verify: run
+        options:
+          - { id: a, text: "5 pears, 3 figs" }
+          - { id: b, text: "3 pears, 5 figs", why: "Inline names don't depend on the order you created the variables. `{pears}` is always `pears`." }
+          - { id: c, text: "pears pears, figs figs", why: "Inside braces, the name is replaced by its value." }
+        answer: a
+        explanation: "Each inline name is replaced by that variable's value, wherever it appears."
+        concepts: [fmt.inline-args]
+
+      - type: spot-bug
+        id: spot-missing-arg
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                let level = 2;
+                println!("{} {}", lives);
+                println!("{level}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "2 positional arguments in format string, but there is 1 argument"
+        answer: 4
+        explanation: "Line 4 has two `{}` but passes only `lives`. Adding `, level` would fix it."
+        concepts: [fmt.placeholders]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-debug
+        title: "Debug format {:?}"
+        markdown: |
+          **`{:?}` prints the Debug format**, which is meant for programmers. Text appears with its quotes.
+
+          You can combine it with a name: `{name:?}`. You'll use it to print lists of values later.
+        code:
+          rust: |
+            let name = "Ferris";
+            println!("{}", name);
+            println!("{:?}", name);
+            println!("{name:?}");
+          verify: run
+          expectStdout: "Ferris\n\"Ferris\"\n\"Ferris\"\n"
+        concepts: [fmt.placeholders, fmt.inline-args]
+
+      - type: predict-output
+        id: predict-debug-city
+        code:
+          rust: |
+            let city = "Hobart";
+            println!("{city:?}");
+          verify: run
+        options:
+          - { id: a, text: '"Hobart"' }
+          - { id: b, text: "Hobart", why: "`:?` asks for the Debug format, which shows text with quotes." }
+          - { id: c, text: "city", why: "`{city:?}` prints the value of `city`." }
+        answer: a
+        explanation: "`{city:?}` prints `city` in Debug format, so the quotes are included."
+        concepts: [fmt.inline-args]
+
+      - type: predict-output
+        id: predict-debug-number
+        code:
+          rust: |
+            let lives = 3;
+            println!("{:?}", lives);
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: '"3"', why: "Only text gets quotes in Debug format. A number looks the same either way." }
+          - { id: c, text: "lives", why: "The value is printed, not the name." }
+        answer: a
+        explanation: "For a number, `{:?}` and `{}` print the same thing."
+        concepts: [fmt.placeholders]
+
+      - type: compiles
+        id: compiles-inline-expr
+        code:
+          rust: |
+            let lives = 3;
+            println!("{lives + 1}");
+          verify: compile-fail
+          expectErrorMessage: "invalid format string"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "Only a variable name can go inside the braces. Use `println!(\"{}\", lives + 1);`" }
+            - { id: b, text: "`lives` needs `mut` to add 1", why: "`lives + 1` makes a new value without changing `lives`. The problem is the format string." }
+            - { id: c, text: "Numbers can't be added inside `println!`", why: "They can, as a value after the text: `println!(\"{}\", lives + 1)`." }
+          answer: a
+        explanation: "Inline arguments take a plain name, not a calculation. Put calculations after the text and use `{}`."
+        concepts: [fmt.inline-args]
+
+      - type: fill-tokens
+        id: fill-expr-arg
+        prompt: "Fill the blank so the program prints `Next: 4`"
+        code:
+          rust: |
+            let lives = 3;
+            println!("Next: {}", ___1___);
+          verify: run
+          expectStdout: "Next: 4\n"
+        blanks:
+          "1": { answer: ["lives + 1"] }
+        bank: ["lives + 1", "{lives + 1}", "lives += 1", "lives"]
+        explanation: "A value after the text can be a calculation. `lives += 1` is an assignment, not a value, and braces inside the text can't hold a calculation."
+        concepts: [fmt.placeholders]
+
+      - type: predict-output
+        id: predict-mixed
+        code:
+          rust: |
+            let lap = 3;
+            let name = "Cave";
+            println!("{} {name} {}", lap, lap * 2);
+          verify: run
+        options:
+          - { id: a, text: "3 Cave 6" }
+          - { id: b, text: "3 3 Cave", why: "`{name}` is filled by name. Only the `{}` take values from the list." }
+          - { id: c, text: "Cave 3 6", why: "The text prints in the order it's written: `{}`, then `{name}`, then `{}`." }
+        answer: a
+        explanation: "You can mix both styles. The `{}` placeholders take the listed values in order, and `{name}` uses the variable."
+        concepts: [fmt.placeholders, fmt.inline-args]
+
+      - type: decode-error
+        id: decode-unused-arg
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                let level = 1;
+                println!("Lives: {}", lives, level);
+            }
+          verify: compile-fail
+          expectErrorMessage: "argument never used"
+        options:
+          - { id: a, text: "There are more values than `{}` placeholders, so `level` is never printed" }
+          - { id: b, text: "`level` was never created", why: "It's created on line 3. The problem is that no placeholder uses it." }
+          - { id: c, text: "You can't print two variables in one `println!`", why: "You can, with one placeholder for each." }
+        answer: a
+        explanation: "Every value after the text must be used by a placeholder. Add another `{}` or remove `level`."
+        concepts: [fmt.placeholders, compiler.read-error]
+
+      - type: true-false
+        id: tf-debug-no-quotes
+        prompt: "`{:?}` prints text without its quotes."
+        answer: false
+        explanation: "Debug format shows text with quotes, like `\"Ferris\"`. Use `{}` for plain text."
+        concepts: [fmt.placeholders]
+
+      - type: match-pairs
+        id: pairs-formats
+        pairs:
+          - ["{}", "next value from the list"]
+          - ["{lives}", "the variable `lives`"]
+          - ["{:?}", "next value, Debug format"]
+          - ["{lives:?}", "`lives` in Debug format"]
+        concepts: [fmt.placeholders, fmt.inline-args]
+
+      - type: spot-bug
+        id: spot-coins
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let coins = 5;
+                println!("Coins: {}", coins);
+                coins += 1;
+                println!("Coins: {coins}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: 4
+        explanation: "`coins` isn't `mut`, so `coins += 1;` is error E0384. Both `println!` lines are fine."
+        concepts: [var.mut, err.E0384]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-wins
+        prompt: "Arrange the lines so the program prints `Ferris: 2 wins`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let name = "Ferris";' }
+          - { id: l3, text: "    let mut wins = 1;" }
+          - { id: l4, text: "    wins += 1;" }
+          - { id: l5, text: '    println!("{name}: {} wins", wins);' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let wins = 1;" }
+          - { id: d2, text: '    println!("{name}: {} wins");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l3, l2, l4, l5, l6]
+          - [l1, l3, l4, l2, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Ferris: 2 wins\n"
+        explanation: "`wins` must be `mut` to use `+=`, and the `{}` needs `wins` listed after the text."
+        concepts: [fmt.placeholders, fmt.inline-args, var.mut]
+
+      - type: fill-tokens
+        id: fill-item-price
+        prompt: "Fill the blanks so the program prints `sword costs 30`"
+        code:
+          rust: |
+            let item = "sword";
+            let price = 30;
+            println!("{___1___} costs {}", ___2___);
+          verify: run
+          expectStdout: "sword costs 30\n"
+        blanks:
+          "1": { answer: ["item"] }
+          "2": { answer: ["price"] }
+        bank: ["item", "price", "\"item\"", ":?"]
+        explanation: "`{item}` prints the item inline, and the `{}` is filled by `price` from the list."
+        concepts: [fmt.inline-args, fmt.placeholders]
+
+      - type: predict-output
+        id: predict-last-first
+        code:
+          rust: |
+            let first = "Ada";
+            let last = "Lovelace";
+            println!("{last}, {}", first);
+            println!("{first:?}");
+          verify: run
+        options:
+          - { id: a, text: "Lovelace, Ada\n\"Ada\"" }
+          - { id: b, text: "Lovelace, Ada\nAda", why: "`:?` is Debug format, which shows the quotes." }
+          - { id: c, text: "Ada, Lovelace\n\"Ada\"", why: "`{last}` comes first in the text, so `Lovelace` prints first." }
+        answer: a
+        explanation: "The text prints in the order it's written, and `{first:?}` adds quotes."
+        concepts: [fmt.inline-args, fmt.placeholders]
+
+      - type: compiles
+        id: compiles-wrong-inline-name
+        code:
+          rust: |
+            let player = "Ferris";
+            println!("Hi {name}");
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0425: cannot find value `name` in this scope" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The name inside the braces doesn't exist." }
+            - { id: c, text: "E0308: mismatched types", why: "The problem is the name, not a type." }
+          answer: a
+        explanation: "The name inside the braces must be a variable that exists. Here the variable is `player`."
+        concepts: [fmt.inline-args]
+
+      - type: predict-output
+        id: predict-shadow-format
+        code:
+          rust: |
+            let total = 4;
+            let total = total * total;
+            println!("{total} = {}", 4 * 4);
+          verify: run
+        options:
+          - { id: a, text: "16 = 16" }
+          - { id: b, text: "4 = 16", why: "`total` was shadowed by `4 * 4`, so it's 16." }
+          - { id: c, text: "16 = 4 * 4", why: "`4 * 4` is calculated before it fills the `{}`." }
+        answer: a
+        explanation: "The shadowed `total` is 16, and the listed value `4 * 4` is also 16."
+        concepts: [fmt.placeholders, var.shadowing]
+
+      - type: mcq
+        id: mcq-lives-equals
+        prompt: "Given `let lives = 3;`, which line prints `lives = 3`?"
+        options:
+          - { id: a, code: "println!(\"lives = {lives}\");" }
+          - { id: b, code: "println!(\"{lives} = lives\");", why: "That prints `3 = lives`." }
+          - { id: c, code: "println!(\"lives = {}\");", why: "The `{}` has no value, so this doesn't compile." }
+          - { id: d, code: "println!(\"{lives:?} = 3\");", why: "That prints `3 = 3`." }
+        answer: a
+        explanation: "Plain text prints as written, and `{lives}` is replaced by `3`."
+        concepts: [fmt.inline-args]
+
+      - type: decode-error
+        id: decode-no-args
+        prompt: Which fix for line 3 is right?
+        code:
+          rust: |
+            fn main() {
+                let score = 10;
+                println!("Score: {}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "1 positional argument in format string, but no arguments were given"
+        options:
+          - { id: a, code: "println!(\"Score: {}\", score);" }
+          - { id: b, code: "println!(\"Score: {}\", \"score\");", why: "That compiles, but prints `Score: score`." }
+          - { id: c, code: "println!(\"Score: {}\" score);", why: "The text and the value must be separated by a comma." }
+        answer: a
+        explanation: "The `{}` needs a value after the text, separated by a comma."
+        concepts: [fmt.placeholders, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-wrong-order
+        prompt: "The second line should say `Ferris has 3 hp`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let hero = "Ferris";
+                let hp = 3;
+                println!("Hero: {hero}");
+                println!("{} has {} hp", hp, hero);
+            }
+          verify: run
+          expectStdout: "Hero: Ferris\n3 has Ferris hp\n"
+        answer: 5
+        explanation: "The values fill `{}` in order, so `hp` lands first. It should be `hero, hp`."
+        concepts: [fmt.placeholders]
+
+      - type: true-false
+        id: tf-order
+        prompt: "In `println!(\"{} {}\", name, lives)`, the first `{}` always gets `name`."
+        answer: true
+        explanation: "Plain `{}` placeholders are filled from left to right by the listed values."
+        concepts: [fmt.placeholders]
+
+      - type: compiles
+        id: compiles-const-debug
+        code:
+          rust: |
+            const MAX_LIVES: u32 = 5;
+
+            fn main() {
+                println!("{MAX_LIVES:?} max");
+            }
+          verify: run
+          expectStdout: "5 max\n"
+        answer: true
+        explanation: "It compiles and prints `5 max`. Inline arguments work with constants as well as variables."
+        concepts: [fmt.inline-args, var.const]

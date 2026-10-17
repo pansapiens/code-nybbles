@@ -1,0 +1,261 @@
+id: first-steps.variables.checkpoint
+title: "Checkpoint: Variables"
+icon: flag
+concepts: []
+reviewConcepts:
+  - var.let
+  - style.snake-case
+  - var.mut
+  - err.E0384
+  - var.shadowing
+  - var.const
+  - fmt.placeholders
+  - fmt.inline-args
+  - intro.main
+  - macro.println-basic
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-mut-block
+        code:
+          rust: |
+            let mut score = 2;
+            score += 3;
+            {
+                let score = score * 10;
+                println!("{score}");
+            }
+            println!("{score:?}");
+          verify: run
+        options:
+          - { id: a, text: "50\n5" }
+          - { id: b, text: "50\n50", why: "The inner `score` is a shadow that ends at `}`. The outer one is still 5." }
+          - { id: c, text: "20\n2", why: "`score += 3` runs first, so `score` is 5 before the block." }
+        answer: a
+        explanation: "`score` becomes 5, the block's shadow is 50, and after the block `score` is 5 again. A number prints the same in Debug format."
+        concepts: [var.mut, var.shadowing, fmt.inline-args]
+
+      - type: compiles
+        id: compiles-shadow-drops-mut
+        code:
+          rust: |
+            const LIMIT: u32 = 3;
+
+            fn main() {
+                let mut tries = 0;
+                tries += LIMIT;
+                let tries = tries;
+                tries += 1;
+                println!("{tries}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0435: attempt to use a non-constant value in a constant", why: "`LIMIT` is only read here, and reading a constant into a variable is fine." }
+            - { id: c, text: "E0308: mismatched types", why: "`tries` holds whole numbers throughout." }
+          answer: a
+        explanation: "`let tries = tries;` creates a new, non-`mut` `tries`. Line 7 then tries to change it."
+        concepts: [var.shadowing, err.E0384]
+
+      - type: decode-error
+        id: decode-health
+        prompt: Which change makes the program compile and print `11`?
+        code:
+          rust: |
+            fn main() {
+                let health = 10;
+                health += 1;
+                println!("{health}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        options:
+          - { id: a, text: "Change line 2 to `let mut health = 10;`" }
+          - { id: b, text: "Change line 3 to `let health += 1;`", why: "`let` can't be combined with `+=`. Shadowing would be `let health = health + 1;`." }
+          - { id: c, text: "Change line 4 to `println!(\"{health + 1}\");`", why: "Inline arguments can't hold calculations, and line 3 would still fail." }
+        answer: a
+        explanation: "`+=` changes `health`, so it must be declared with `mut`."
+        concepts: [err.E0384, var.mut]
+
+      - type: fill-tokens
+        id: fill-bonus
+        prompt: "Fill the blanks so the program prints `15`"
+        code:
+          rust: |
+            ___1___ BONUS: u32 = 5;
+
+            fn main() {
+                let ___2___ points = 10;
+                points += BONUS;
+                println!("{}", ___3___);
+            }
+          verify: run
+          expectStdout: "15\n"
+        blanks:
+          "1": { answer: ["const"] }
+          "2": { answer: ["mut"] }
+          "3": { answer: ["points"] }
+        bank: ["const", "let", "mut", "points", "BONUS", "{points}"]
+        explanation: "`BONUS` is a constant, `points` must be `mut` for `+=`, and `points` fills the `{}`."
+        concepts: [var.const, var.mut, fmt.placeholders]
+
+      - type: spot-bug
+        id: spot-const-from-let
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let player_name = "Ferris";
+                let lives = 3;
+                let lives = lives - 1;
+                const MAX_LIVES: u32 = lives;
+                println!("{player_name}: {lives}");
+            }
+          verify: compile-fail
+          expectErrors: [E0435]
+        answer: 5
+        explanation: "Line 4 shadowing `lives` is fine. Line 5 tries to build a constant from a variable, which isn't known at compile time."
+        concepts: [var.const, var.shadowing]
+
+      - type: predict-output
+        id: predict-tiles-len
+        prompt: Build the output
+        code:
+          rust: |
+            let word = "abc";
+            let word = word.len();
+            let mut total = word;
+            total += word;
+            println!("{word} {total}");
+          verify: run
+        tiles: ["3", "6", "abc", "\"abc\"", "9"]
+        answer: "3 6"
+        explanation: "`word` is shadowed by its length, 3. `total` starts at 3 and adds another 3."
+        concepts: [var.shadowing, var.mut, fmt.inline-args]
+
+      - type: true-false
+        id: tf-type-change
+        prompt: "Both shadowing and `mut` let you change the type of value stored under a name."
+        answer: false
+        explanation: "Only shadowing can, because it creates a new variable. A `mut` variable keeps its type (assigning another type is E0308)."
+        concepts: [var.shadowing, var.mut]
+
+      - type: mcq
+        id: mcq-rename
+        prompt: "The compiler warns about `let PlayerScore = 0;`. What should the name be?"
+        options:
+          - { id: a, code: "player_score" }
+          - { id: b, code: "PLAYER_SCORE", why: "All-caps names are for constants. A `let` variable uses `snake_case`." }
+          - { id: c, code: "playerScore", why: "camelCase gets the same warning." }
+          - { id: d, code: "Player_Score", why: "Variable names are all lowercase." }
+        answer: a
+        explanation: "Variables use `snake_case`: lowercase words joined by `_`."
+        concepts: [style.snake-case]
+
+      - type: parsons
+        id: parsons-input-doubled
+        prompt: "Arrange the lines so the program prints `2 4`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let input = "42";' }
+          - { id: l3, text: "    let input = input.len();" }
+          - { id: l4, text: "    let mut doubled = input;" }
+          - { id: l5, text: "    doubled += input;" }
+          - { id: l6, text: '    println!("{input:?} {doubled}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    input = input.len();" }
+          - { id: d2, text: "    let doubled = input;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "2 4\n"
+        explanation: "`\"42\"` has length 2. Shadowing turns `input` into that number, and the `mut` copy adds it again. A number shows no quotes in Debug format."
+        concepts: [var.shadowing, var.mut, fmt.inline-args]
+
+      - type: decode-error
+        id: decode-mut-type
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut level = 1;
+                level = "two";
+                println!("{level}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`level` holds a number, so it can't be given text, even with `mut`" }
+          - { id: b, text: "`level` needs to be `mut`", why: "It already is. `mut` allows a new value of the same type only." }
+          - { id: c, text: "Text can't be printed with `{level}`", why: "It can. The error is on line 3, the assignment." }
+        answer: a
+        explanation: "E0308 means mismatched types. To switch to text, shadow with `let level = \"two\";` instead."
+        concepts: [var.mut, var.shadowing]
+
+      - type: predict-output
+        id: predict-start
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                println!("Start");
+                println!("{} {lives}", lives - 1);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Start\n2 3" }
+          - { id: b, text: "Start\n2 2", why: "`lives - 1` makes a new value. `lives` itself is still 3." }
+          - { id: c, text: "Start 2 3", why: "Each `println!` ends its line." }
+        answer: a
+        explanation: "`lives - 1` is calculated for the `{}` without changing `lives`, so `{lives}` is still 3."
+        concepts: [fmt.placeholders, fmt.inline-args, macro.println-basic]
+
+      - type: match-pairs
+        id: pairs-unit
+        prompt: Match each line to what it does
+        pairs:
+          - ["let lives = 1;", "creates an unchangeable variable"]
+          - ["let mut lives = 1;", "creates a changeable variable"]
+          - ["const LIVES: u32 = 1;", "creates a constant"]
+          - ["let lives = lives + 1;", "shadows `lives`"]
+          - ["lives += 1;", "changes a `mut` variable"]
+        concepts: [var.let, var.mut, var.const, var.shadowing]
+
+      - type: predict-output
+        id: predict-debug-shadow
+        code:
+          rust: |
+            let lives = 3;
+            println!("{lives:?} lives");
+            let lives = "no";
+            println!("{lives:?} lives");
+          verify: run
+        options:
+          - { id: a, text: "3 lives\n\"no\" lives" }
+          - { id: b, text: "3 lives\nno lives", why: "`:?` prints text with quotes." }
+          - { id: c, text: "\"3\" lives\n\"no\" lives", why: "Numbers have no quotes, even in Debug format." }
+        answer: a
+        explanation: "Shadowing switches `lives` from a number to text. Debug format quotes the text but not the number."
+        concepts: [var.shadowing, fmt.inline-args]
+
+      - type: spot-bug
+        id: spot-semicolon
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let mut steps = 0;
+                steps += 5
+                println!("{steps}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: 3
+        explanation: "Line 3 is missing its `;`. Every statement, including `+=`, ends with one."
+        concepts: [var.mut, macro.println-basic]

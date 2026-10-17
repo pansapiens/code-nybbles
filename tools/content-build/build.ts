@@ -148,10 +148,12 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
 
   const code = 'code' in ex ? ex.code : undefined
   if (code) {
-    const lines = code.rust.replace(/\n$/, '').split('\n')
+    // Fill-tokens lines are measured with the answers in place of the `___N___` markers.
+    const shown = ex.type === 'fill-tokens' ? code.rust.replace(BLANK, (_, n: string) => ex.blanks[n]?.answer[0] ?? '') : code.rust
+    const lines = shown.replace(/\n$/, '').split('\n')
     if (lines.length > MAX_LINES) issues.warn(where, `${lines.length} code lines (> ${MAX_LINES})`)
     // A top-level `fn` without `main` (say `fn Main`) gets wrapped in a second main, which changes the result.
-    if (code.wrap === 'auto' && /^fn\s/m.test(code.rust) && !/\bfn\s+main\b/.test(code.rust))
+    if (code.wrap === 'auto' && /^fn\s/m.test(shown) && !/\bfn\s+main\s*\(/.test(shown))
       issues.warn(where, 'top-level `fn` without `main` under `wrap: auto`; set `wrap: none` if this is a whole program')
     const wide = lines.filter((l) => l.length > MAX_COLS).length
     if (wide) issues.warn(where, `${wide} code line(s) wider than ${MAX_COLS} columns`)

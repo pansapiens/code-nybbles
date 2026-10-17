@@ -1,0 +1,18 @@
+id: first-steps.variables
+title: Variables & Mutability
+description: Name values with let, choose when they can change, and print them with format strings.
+colour: teal
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html
+sources:
+  - name: The Rust Programming Language, ch. 3.1
+    url: https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-let
+  - level: level-02-mut
+  - level: level-03-shadowing
+  - level: level-04-const
+  - level: level-05-formatting
+  - checkpoint: checkpoint-variables

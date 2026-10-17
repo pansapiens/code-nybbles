@@ -121,7 +121,7 @@ also works. CI doesn't need either.
     concept cards, option text (not predict-output's, which is literal output), guidebooks
   - [x] (new) Id nesting check: unit ids start with the section id, level ids with the unit id (the app
     finds a level's bundle from the first segment)
-  - [ ] Turn on `--strict` in CI once the vertical slice meets the length rules
+  - [x] `--strict` on in CI (the vertical slice builds with 0 warnings)
   - [x] (new) Warn when a decode-error snippet is wrapped or uses `hidden.before` (line numbers in the
     baked compiler output wouldn't match the shown code)
 - [~] `rust-verify` (03 §4.2)
@@ -162,16 +162,23 @@ also works. CI doesn't need either.
   - [x] course.yaml, concepts.yaml (Units 1.1-1.2), section 1, unit 1.1 with guidebook
   - [x] Seed level `level-02-anatomy` lesson l1: 10 exercises, one of each MVP type, all verified
   - [x] Unit 1.1 complete: 5 levels x 3 lessons x 9 exercises + checkpoint (14); guidebook for the unit
-  - [ ] Unit 1.2
+  - [x] Unit 1.2 complete: 5 levels x 3 lessons (9-10 exercises) + checkpoint (14); guidebook
+  - [x] All 303 exercises render without console errors (each level loaded in `/dev/content`)
+  - [ ] (new) Verify option `code` in mcq/decode-error (e.g. per-option `verify`), so "this still fails"
+    claims are checked; authors currently check these by hand
+  - [ ] (new) Concept ids for scope/blocks and E0070 (Unit 1.2 tagged them `var.shadowing` / `var.const`)
+  - [ ] (new) Human playtest of Units 1.1-1.2 on a phone (03 §5 step 6)
   - [ ] (new) Pools: lessons are exactly 9 items, no extra pooled exercises yet
   - [ ] (new) Build check: a parsons answer with a distractor swapped in must fail verification (catches
     distractors that also compile, e.g. a final `println!` without `;`)
+  - [x] (new) Width check measures fill-tokens lines with answers in place of `___N___`
   - [x] (new) Warn on a top-level `fn` without `main` under `wrap: auto` (a misspelled `fn Main` was
     silently wrapped in a second `main`)
   - [x] (new) CLI writes `ATTRIBUTIONS.md` only when building the repo's own `content/`
   - Note: shell commands (`cargo new`, `cargo run`) appear only in prose; nothing verifies them
 - [~] (new) App content loader `src/content/loader.ts` (manifest + cached section fetch); SW precaches bundles
-- [ ] Done-check: complete real lessons offline; all snippets verified in CI
+- [~] Done-check: complete real lessons offline; all snippets verified in CI
+  - Lessons play end to end from precached content; CI not yet run (no GitHub remote)
 
 ## M2: Path + gamification (01 §9 M2)
 
@@ -228,3 +235,9 @@ also works. CI doesn't need either.
   with tests, CI workflow). M1 foundations: content schema, content-build with cross-checks, rust-verify,
   seed content level, app loader. Next: lesson player + exercise registry (M1), rest of the vertical slice.
   Not done: no GitHub remote yet, so CI/deploy hasn't run; Lighthouse not run.
+- 2026-10-17: Session 2. Conda note in CLAUDE.md. M1 lesson engine: planner, graders, renderers for all 10
+  types, player with re-queue and complete screen, sound/haptics, dev content preview, runtime syntax
+  highlighting, build-time Markdown, attributions, taught-before-tested and other build checks. Units 1.1
+  and 1.2 authored by two subagents (303 exercises, 199 verified snippets, strict build clean). Next: M2 (learning
+  path, XP, streak wiring, event log + Dexie persistence of progress). Still not done: GitHub remote/CI run,
+  Lighthouse, human playtest.

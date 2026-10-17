@@ -1,0 +1,426 @@
+id: first-steps.variables.shadowing
+title: Shadowing
+icon: layers
+concepts: [var.shadowing]
+reviewConcepts: [var.let, var.mut, err.E0384]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-shadowing
+        title: Same name, new variable
+        markdown: |
+          **A second `let` with the same name creates a new variable.** The new one **shadows** the old one: from then on, the name means the new variable.
+
+          No `mut` is needed, because nothing is changed. You get a fresh variable.
+        code:
+          rust: |
+            let lives = 3;
+            let lives = lives + 1;
+            println!("{lives}");
+          verify: run
+          expectStdout: "4\n"
+        concepts: [var.shadowing]
+
+      - type: predict-output
+        id: predict-speed
+        code:
+          rust: |
+            let speed = 10;
+            let speed = speed * 2;
+            println!("{speed}");
+          verify: run
+        options:
+          - { id: a, text: "20" }
+          - { id: b, text: "10", why: "The second `let` creates a new `speed` holding `20`, and that's the one printed." }
+          - { id: c, text: "10\n20", why: "There's only one `println!`." }
+        answer: a
+        explanation: "The new `speed` is worked out from the old one (`10 * 2`) and then shadows it."
+        concepts: [var.shadowing]
+
+      - type: true-false
+        id: tf-shadow-needs-mut
+        prompt: "Shadowing a variable needs `mut`."
+        answer: false
+        explanation: "Shadowing uses `let` to create a new variable, so the old one never changes and doesn't need `mut`."
+        concepts: [var.shadowing]
+
+      - type: compiles
+        id: compiles-shadow-no-mut
+        code:
+          rust: |
+            let level = 1;
+            let level = level + 1;
+            println!("{level}");
+          verify: run
+          expectStdout: "2\n"
+        answer: true
+        explanation: "It compiles and prints `2`. The second line creates a new `level`; nothing is assigned twice."
+        concepts: [var.shadowing]
+
+      - type: concept
+        id: concept-shadow-type
+        title: Shadowing can change the type
+        markdown: |
+          Because shadowing makes a new variable, the new one can hold a **different kind of value**.
+
+          Here `.len()` gives the length of the text, so `spaces` goes from text to a number. A `mut` variable can't do this.
+        code:
+          rust: |
+            let spaces = "   ";
+            let spaces = spaces.len();
+            println!("{spaces}");
+          verify: run
+          expectStdout: "3\n"
+        concepts: [var.shadowing]
+
+      - type: compiles
+        id: compiles-mut-type-change
+        code:
+          rust: |
+            let mut spaces = "   ";
+            spaces = spaces.len();
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`spaces` is `mut`, so assigning is allowed. The new value has the wrong type." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`spaces` exists on line 1." }
+          answer: a
+        explanation: "`mut` lets you change the value but not its type. `spaces` holds text, so it can't be given a number."
+        concepts: [var.shadowing, var.mut]
+
+      - type: mcq
+        id: mcq-shadow-vs-assign
+        prompt: "What's the difference between `let score = score + 1;` and `score = score + 1;`?"
+        options:
+          - { id: a, text: "The first creates a new variable; the second changes an existing `mut` one" }
+          - { id: b, text: "They do exactly the same thing", why: "Both leave `score` one higher, but only the second changes a variable. The first makes a new one." }
+          - { id: c, text: "The first needs `mut`; the second doesn't", why: "It's the other way round: assigning needs `mut`, shadowing doesn't." }
+        answer: a
+        explanation: "With `let` you get a new variable that shadows the old one. Without `let`, you assign to the existing variable, which must be `mut`."
+        concepts: [var.shadowing, var.mut]
+
+      - type: fill-tokens
+        id: fill-shadow
+        prompt: Fill the blank so the program prints `10` without using `mut`
+        code:
+          rust: |
+            let score = 7;
+            ___1___ score = score + 3;
+            println!("{score}");
+          verify: run
+          expectStdout: "10\n"
+        blanks:
+          "1": { answer: ["let"] }
+        bank: ["let", "mut", "var", "set"]
+        explanation: "`let score = score + 3;` shadows the first `score` with a new one holding `10`."
+        concepts: [var.shadowing]
+
+      - type: predict-output
+        id: predict-name-shadow
+        code:
+          rust: |
+            let name = "Ferris";
+            let name = "Corro";
+            println!("{name}");
+          verify: run
+        options:
+          - { id: a, text: "Corro" }
+          - { id: b, text: "Ferris", why: "The second `let name` shadows the first, so `name` now means the new variable." }
+          - { id: c, text: "Ferris\nCorro", why: "Only one `println!` runs." }
+        answer: a
+        explanation: "After the second `let`, the name `name` refers to the new variable holding `\"Corro\"`."
+        concepts: [var.shadowing]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-shadow-block
+        title: Shadowing ends with its block
+        markdown: |
+          Curly braces `{ }` make a **block**. A variable created inside a block disappears at the closing `}`.
+
+          So a shadow made inside a block only lasts until the `}`. After that, the outer variable is visible again, unchanged.
+        code:
+          rust: |
+            let lives = 3;
+            {
+                let lives = 10;
+                println!("{lives}");
+            }
+            println!("{lives}");
+          verify: run
+          expectStdout: "10\n3\n"
+        concepts: [var.shadowing]
+
+      - type: predict-output
+        id: predict-block-shadow
+        code:
+          rust: |
+            let score = 5;
+            {
+                let score = score * 2;
+                println!("{score}");
+            }
+            println!("{score}");
+          verify: run
+        options:
+          - { id: a, text: "10\n5" }
+          - { id: b, text: "10\n10", why: "Shadowing doesn't change the outer `score`. The inner one is gone after `}`." }
+          - { id: c, text: "5\n5", why: "Inside the block, `score` means the new variable holding `10`." }
+        answer: a
+        explanation: "The inner `score` (10) shadows the outer one only inside the block. Outside, `score` is still 5."
+        concepts: [var.shadowing]
+
+      - type: predict-output
+        id: predict-block-mut
+        code:
+          rust: |
+            let mut score = 5;
+            {
+                score = score * 2;
+            }
+            println!("{score}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "5", why: "There's no `let` in the block, so it changes the outer `score` itself." }
+          - { id: c, text: "52", why: "`*` multiplies numbers." }
+        answer: a
+        explanation: "Without `let`, this is an assignment to the outer `mut` variable, so the change stays after the block."
+        concepts: [var.shadowing, var.mut]
+
+      - type: true-false
+        id: tf-shadow-changes-original
+        prompt: Shadowing changes the value stored in the original variable.
+        answer: false
+        explanation: "Shadowing creates a separate variable with the same name. The original keeps its value."
+        concepts: [var.shadowing]
+
+      - type: decode-error
+        id: decode-shadow-fix
+        prompt: Which replacement for line 3 fixes the error without touching line 2?
+        code:
+          rust: |
+            fn main() {
+                let total = 10;
+                total = total + 5;
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        options:
+          - { id: a, code: "let total = total + 5;" }
+          - { id: b, code: "total == total + 5;", why: "`==` compares and doesn't store anything, so `total` would stay 10." }
+          - { id: c, code: "mut total = total + 5;", why: "`mut` only appears after `let`. On its own it isn't valid." }
+        answer: a
+        explanation: "Adding `let` turns the assignment into shadowing: a new `total` holding 15. Changing line 2 to `let mut total` would also work."
+        concepts: [var.shadowing, err.E0384]
+
+      - type: compiles
+        id: compiles-shadow-add-mut
+        code:
+          rust: |
+            let lives = 3;
+            let mut lives = lives;
+            lives -= 1;
+            println!("{lives}");
+          verify: run
+          expectStdout: "2\n"
+        answer: true
+        explanation: "It compiles and prints `2`. The second `let` creates a new `lives` that is `mut`, so `-=` is allowed."
+        concepts: [var.shadowing, var.mut]
+
+      - type: mcq
+        id: mcq-shadow-type
+        prompt: "After `let lives = 3;` then `let lives = \"none\";`, what is `lives`?"
+        options:
+          - { id: a, text: "The text `\"none\"`" }
+          - { id: b, text: "The number `3`", why: "The second `let` shadows the first, so `lives` now means the new variable." }
+          - { id: c, text: "An error: a variable can't change type", why: "Shadowing makes a new variable, and that one can hold a different type." }
+        answer: a
+        explanation: "The new `lives` is a separate variable, so it can hold text even though the old one held a number."
+        concepts: [var.shadowing]
+
+      - type: spot-bug
+        id: spot-block-let
+        prompt: "This program should print `6` twice, but the second line is `3`. Tap the line causing it."
+        code:
+          rust: |
+            fn main() {
+                let mut total = 3;
+                {
+                    let total = total * 2;
+                    println!("{total}");
+                }
+                println!("{total}");
+            }
+          verify: run
+          expectStdout: "6\n3\n"
+        answer: 4
+        explanation: "The `let` on line 4 makes a new `total` inside the block instead of changing the outer one. Use `total = total * 2;`."
+        concepts: [var.shadowing, var.mut]
+
+      - type: match-pairs
+        id: pairs-shadow
+        prompt: Match each line to what it does
+        pairs:
+          - ["let lives = 3;", "creates `lives`"]
+          - ["let mut lives = 3;", "creates a changeable `lives`"]
+          - ["let lives = lives + 1;", "shadows `lives`"]
+          - ["lives = lives + 1;", "changes a `mut` `lives`"]
+        concepts: [var.shadowing, var.mut]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-word-len
+        prompt: Arrange the lines so the program prints `3`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let word = "cat";' }
+          - { id: l3, text: "    let word = word.len();" }
+          - { id: l4, text: '    println!("{word}");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    word = word.len();" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "3\n"
+        explanation: "Shadowing with `let` lets `word` go from text to a number. Plain assignment would fail: `word` isn't `mut`, and the types differ."
+        concepts: [var.shadowing]
+
+      - type: predict-output
+        id: predict-shadow-twice
+        code:
+          rust: |
+            let level = 1;
+            let level = level + 1;
+            {
+                let level = level * 10;
+                println!("{level}");
+            }
+            println!("{level}");
+          verify: run
+        options:
+          - { id: a, text: "20\n2" }
+          - { id: b, text: "10\n2", why: "Inside the block, `level` is already 2, so `level * 10` is 20." }
+          - { id: c, text: "20\n20", why: "The inner `level` disappears at `}`, leaving the outer one, which is 2." }
+        answer: a
+        explanation: "The first shadow gives 2. The block's shadow gives 20, then ends, so the last line prints 2."
+        concepts: [var.shadowing]
+
+      - type: compiles
+        id: compiles-shadow-loses-mut
+        code:
+          rust: |
+            let mut score = 1;
+            score += 1;
+            let score = score + 1;
+            score += 1;
+            println!("{score}");
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0308: mismatched types", why: "Every value here is a whole number." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`score` exists, but the newest `score` isn't `mut`." }
+          answer: a
+        explanation: "Line 3 creates a new `score` without `mut`. That shadow can't be changed, so line 4 fails."
+        concepts: [var.shadowing, err.E0384]
+
+      - type: fill-tokens
+        id: fill-len
+        prompt: Fill the blanks so the program prints `5`
+        code:
+          rust: |
+            let text = "hello";
+            ___1___ text = text.___2___();
+            println!("{text}");
+          verify: run
+          expectStdout: "5\n"
+        blanks:
+          "1": { answer: ["let"] }
+          "2": { answer: ["len"] }
+        bank: ["let", "mut", "len", "size", "count"]
+        explanation: "`let` shadows `text` with a new variable, and `.len()` gives the length of the text."
+        concepts: [var.shadowing]
+
+      - type: true-false
+        id: tf-shadow-number-to-text
+        prompt: Shadowing lets a name hold a number first and text later.
+        answer: true
+        explanation: "Each `let` creates a new variable, and each one can hold a different kind of value."
+        concepts: [var.shadowing]
+
+      - type: mcq
+        id: mcq-which-compiles
+        prompt: Which of these compiles?
+        options:
+          - { id: a, code: "let lives = \"three\"; let lives = 3;" }
+          - { id: b, code: "let mut lives = \"three\"; lives = 3;", why: "`mut` allows a new value, but not a different type (E0308)." }
+          - { id: c, code: "let lives = \"three\"; lives = 3;", why: "`lives` isn't `mut`, and the type is different too." }
+        answer: a
+        explanation: "Only shadowing can switch a name from text to a number, because it creates a new variable."
+        concepts: [var.shadowing, var.mut]
+
+      - type: decode-error
+        id: decode-e0308-fix
+        prompt: Which replacement for line 3 fixes it?
+        code:
+          rust: |
+            fn main() {
+                let mut input = "hello";
+                input = input.len();
+                println!("{input}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "let input = input.len();" }
+          - { id: b, code: "input = \"hello\".len();", why: "It's still a number going into a variable that holds text." }
+          - { id: c, code: "mut input = input.len();", why: "A new variable needs `let`. `mut` on its own isn't valid." }
+        answer: a
+        explanation: "`input` holds text, so assigning a number is a type mismatch. Shadowing with `let` makes a new `input` that holds the number."
+        concepts: [var.shadowing]
+
+      - type: spot-bug
+        id: spot-shadow-ok
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let name = "Ferris";
+                let name = "Corro";
+                let lives = 3;
+                lives = lives + 1;
+                println!("{name} {lives}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: 5
+        explanation: "Line 3 is fine: it shadows `name`. Line 5 assigns to `lives`, which isn't `mut`."
+        concepts: [var.shadowing, err.E0384]
+
+      - type: predict-output
+        id: predict-tiles-price
+        prompt: Build the output
+        code:
+          rust: |
+            let price = 2;
+            let paid = price;
+            let price = 7;
+            println!("{price} {paid}");
+          verify: run
+        tiles: ["7", "2", "9", "price", "paid"]
+        answer: "7 2"
+        explanation: "`paid` got the value `2` before `price` was shadowed. The new `price` doesn't affect it."
+        concepts: [var.shadowing, var.let]

@@ -1,0 +1,468 @@
+id: first-steps.variables.const
+title: Constants
+icon: lock
+concepts: [var.const]
+reviewConcepts: [var.let, var.mut, var.shadowing, style.snake-case]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-const
+        title: Values that never change
+        markdown: |
+          **`const` declares a constant**, a value that never changes. Constants are often written outside `main`.
+
+          - Names use `SCREAMING_SNAKE_CASE`.
+          - The type is required. `u32` means a whole number that can't be negative; the next unit covers types.
+        code:
+          rust: |
+            const MAX_LIVES: u32 = 3;
+
+            fn main() {
+                println!("{MAX_LIVES}");
+            }
+          verify: run
+          expectStdout: "3\n"
+        concepts: [var.const]
+
+      - type: predict-output
+        id: predict-speed-limit
+        code:
+          rust: |
+            const SPEED_LIMIT: u32 = 50;
+
+            fn main() {
+                let speed = SPEED_LIMIT - 10;
+                println!("{speed}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "40" }
+          - { id: b, text: "50", why: "`speed` is `SPEED_LIMIT - 10`, so 10 less than the constant." }
+          - { id: c, text: "SPEED_LIMIT - 10", why: "Rust calculates the value when `speed` is created." }
+        answer: a
+        explanation: "You can use a constant anywhere you'd use its value. `speed` is `50 - 10`."
+        concepts: [var.const]
+
+      - type: true-false
+        id: tf-const-type
+        prompt: "A `const` must have its type written out, like `: u32`."
+        answer: true
+        explanation: "With `let`, Rust can work out the type. With `const`, you always write it."
+        concepts: [var.const]
+
+      - type: compiles
+        id: compiles-const-no-type
+        code:
+          rust: |
+            const MAX_LIVES = 3;
+
+            fn main() {
+                println!("{MAX_LIVES}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "missing type for `const` item"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The constant needs a type: `const MAX_LIVES: u32 = 3;`" }
+            - { id: b, text: "Constants can't hold numbers", why: "They can. The type annotation is what's missing." }
+            - { id: c, text: "A `const` must be inside `main`", why: "Constants can go outside functions, and usually do." }
+          answer: a
+        explanation: "Every `const` needs a type annotation. The compiler reports `missing type for const item`."
+        concepts: [var.const]
+
+      - type: mcq
+        id: mcq-const-name
+        prompt: Which is the usual name style for a constant?
+        options:
+          - { id: a, code: "MAX_SCORE" }
+          - { id: b, code: "max_score", why: "`snake_case` is for variables. For a constant, the compiler warns that it should be upper case." }
+          - { id: c, code: "MaxScore", why: "Capitalised words like this are for types." }
+          - { id: d, code: "maxScore", why: "camelCase isn't used for Rust names." }
+        answer: a
+        explanation: "Constants use `SCREAMING_SNAKE_CASE`: capital letters with `_` between words."
+        concepts: [var.const, style.snake-case]
+
+      - type: compiles
+        id: compiles-const-mut
+        code:
+          rust: |
+            const mut LIMIT: u32 = 5;
+
+            fn main() {
+                println!("{LIMIT}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "const globals cannot be mutable"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "A constant can never be `mut`" }
+            - { id: b, text: "`mut` goes after the name: `const LIMIT mut`", why: "There's no place for `mut` on a constant at all." }
+            - { id: c, text: "`LIMIT` should be lowercase", why: "Upper case is correct for constants." }
+          answer: a
+        explanation: "Constants are always fixed, so `mut` isn't allowed. Use `let mut` inside a function for a value that changes."
+        concepts: [var.const, var.mut]
+
+      - type: fill-tokens
+        id: fill-const
+        prompt: Fill the blank to declare a constant
+        code:
+          rust: |
+            ___1___ MAX_PLAYERS: u32 = 4;
+
+            fn main() {
+                println!("{MAX_PLAYERS}");
+            }
+          verify: run
+          expectStdout: "4\n"
+        blanks:
+          "1": { answer: ["const"] }
+        bank: ["const", "let", "mut", "var"]
+        explanation: "`const` declares a constant. `let` only works inside a function, so it can't go here."
+        concepts: [var.const]
+
+      - type: spot-bug
+        id: spot-assign-const
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            const MAX_LIVES: u32 = 3;
+
+            fn main() {
+                let mut lives = MAX_LIVES;
+                lives -= 1;
+                MAX_LIVES = 2;
+                println!("{lives}");
+            }
+          verify: compile-fail
+          expectErrors: [E0070]
+        answer: 6
+        explanation: "A constant can't be assigned to. `lives` is a `mut` copy of the value, so changing it on line 5 is fine."
+        concepts: [var.const, var.mut]
+
+      - type: match-pairs
+        id: pairs-const-let
+        pairs:
+          - ["const", "fixed, type required"]
+          - ["let", "can't change, type optional"]
+          - ["let mut", "can change"]
+          - ["MAX_LIVES", "constant name style"]
+          - ["max_lives", "variable name style"]
+        concepts: [var.const, var.mut]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-const-compile-time
+        title: Known before the program runs
+        markdown: |
+          **A constant's value must be known when the program is compiled.** It can be a calculation, but only from numbers and other constants.
+
+          A `let` variable gets its value while the program runs, so a constant can't use one.
+        code:
+          rust: |
+            const SECONDS_PER_HOUR: u32 = 60 * 60;
+
+            fn main() {
+                println!("{SECONDS_PER_HOUR}");
+            }
+          verify: run
+          expectStdout: "3600\n"
+        concepts: [var.const]
+
+      - type: compiles
+        id: compiles-const-from-let
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                const MAX_LIVES: u32 = lives * 2;
+            }
+          verify: compile-fail
+          expectErrors: [E0435]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0435: attempt to use a non-constant value in a constant" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The constant uses a variable." }
+            - { id: c, text: "E0308: mismatched types", why: "The problem is where the value comes from, not its type." }
+          answer: a
+        explanation: "`lives` is a variable, so its value isn't fixed at compile time. A constant can only use literals and other constants."
+        concepts: [var.const]
+
+      - type: predict-output
+        id: predict-const-from-const
+        code:
+          rust: |
+            const MINUTES: u32 = 60;
+            const SECONDS: u32 = MINUTES * 60;
+
+            fn main() {
+                println!("{SECONDS}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3600" }
+          - { id: b, text: "60", why: "`SECONDS` is `MINUTES * 60`, which is `60 * 60`." }
+          - { id: c, text: "MINUTES * 60", why: "The calculation is done, and its result is printed." }
+        answer: a
+        explanation: "A constant can be calculated from another constant, because both are known at compile time."
+        concepts: [var.const]
+
+      - type: decode-error
+        id: decode-missing-const-type
+        prompt: Which fix for line 1 is right?
+        code:
+          rust: |
+            const MAX_SCORE = 100;
+
+            fn main() {
+                println!("{MAX_SCORE}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "missing type for `const` item"
+        options:
+          - { id: a, code: "const MAX_SCORE: u32 = 100;" }
+          - { id: b, code: "let MAX_SCORE = 100;", why: "`let` can't be used outside a function." }
+          - { id: c, code: "const MAX_SCORE = 100 as u32;", why: "The type must be written after the name with `:`. This still fails." }
+        answer: a
+        explanation: "The compiler wants a type annotation on the constant, written as `NAME: type`."
+        concepts: [var.const]
+
+      - type: true-false
+        id: tf-const-in-main
+        prompt: "A constant can also be declared inside `main`."
+        code:
+          rust: |
+            fn main() {
+                const BONUS: u32 = 5;
+                println!("{BONUS}");
+            }
+          verify: run
+          expectStdout: "5\n"
+        answer: true
+        explanation: "Constants can go inside or outside functions. Inside, the constant can only be used within that function."
+        concepts: [var.const]
+
+      - type: mcq
+        id: mcq-why-const
+        prompt: "Why write `const MAX_LIVES: u32 = 3;` instead of typing `3` everywhere?"
+        options:
+          - { id: a, text: "The name explains what `3` means, and you can change it in one place" }
+          - { id: b, text: "Number literals aren't allowed inside `main`", why: "They are. You've used them in every level." }
+          - { id: c, text: "Rust requires every number to have a name", why: "It doesn't. `let lives = 3;` uses a plain number." }
+        answer: a
+        explanation: "A named constant documents the value, and changing the rules means editing one line."
+        concepts: [var.const]
+
+      - type: compiles
+        id: compiles-mut-from-const
+        code:
+          rust: |
+            const START_FUEL: u32 = 10;
+
+            fn main() {
+                let mut fuel = START_FUEL;
+                fuel -= 3;
+                println!("{fuel}");
+            }
+          verify: run
+          expectStdout: "7\n"
+        answer: true
+        explanation: "It compiles and prints `7`. `fuel` is a `mut` variable that starts with the constant's value; the constant itself doesn't change."
+        concepts: [var.const, var.mut]
+
+      - type: predict-output
+        id: predict-const-shadow
+        code:
+          rust: |
+            const BASE: u32 = 5;
+
+            fn main() {
+                let points = BASE;
+                let points = points * 3;
+                println!("{points}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "5", why: "The second `let points` shadows the first with `5 * 3`." }
+          - { id: c, text: "53", why: "`*` multiplies numbers." }
+        answer: a
+        explanation: "`points` starts as `BASE` (5), then is shadowed by `5 * 3`."
+        concepts: [var.const, var.shadowing]
+
+      - type: concept
+        id: concept-static
+        title: "Preview: static"
+        markdown: |
+          **`static` looks like `const`**, with the same naming style and required type. The difference is that a static value lives at one fixed place in memory for the whole program.
+
+          You'll rarely need it. Use `const` unless you have a specific reason. (`&str` is the type for text; more on it later.)
+        code:
+          rust: |
+            static GREETING: &str = "G'day";
+
+            fn main() {
+                println!("{GREETING}");
+            }
+          verify: run
+          expectStdout: "G'day\n"
+        concepts: [var.const]
+
+      - type: true-false
+        id: tf-const-over-static
+        prompt: "For a fixed value like a maximum score, `const` is usually a better choice than `static`."
+        answer: true
+        explanation: "`const` is the usual choice for fixed values. `static` is for the rarer cases that need a single location in memory."
+        concepts: [var.const]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-const-type
+        prompt: "Fill the blanks so the program prints `120`"
+        code:
+          rust: |
+            ___1___ MAX_SPEED: ___2___ = 120;
+
+            fn main() {
+                println!("{MAX_SPEED}");
+            }
+          verify: run
+          expectStdout: "120\n"
+        blanks:
+          "1": { answer: ["const"] }
+          "2": { answer: ["u32"] }
+        bank: ["const", "let", "u32", "mut", "number"]
+        explanation: "A constant needs `const`, a name, `:`, a type, and a value. `number` isn't a Rust type."
+        concepts: [var.const]
+
+      - type: parsons
+        id: parsons-lives-of
+        prompt: "Arrange the lines so the program prints `2 of 3`"
+        lines:
+          - { id: l1, text: "const LIVES: u32 = 3;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let mut left = LIVES;" }
+          - { id: l4, text: "    left -= 1;" }
+          - { id: l5, text: '    println!("{left} of {LIVES}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "const LIVES = 3;" }
+          - { id: d2, text: "    LIVES -= 1;" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l2, l3, l4, l5, l6, l1]
+        verify:
+          mode: run
+          expectStdout: "2 of 3\n"
+        explanation: "The constant stays at 3. A `mut` variable starts from it and changes instead."
+        concepts: [var.const, var.mut]
+
+      - type: compiles
+        id: compiles-const-lowercase
+        code:
+          rust: |
+            const max_lives: u32 = 3;
+
+            fn main() {
+                println!("{max_lives}");
+            }
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "It compiles and prints `3`, with a warning that the constant should have an upper case name."
+        concepts: [var.const, style.snake-case]
+
+      - type: decode-error
+        id: decode-e0435
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let level = 4;
+                const BONUS: u32 = level * 10;
+                println!("{BONUS}");
+            }
+          verify: compile-fail
+          expectErrors: [E0435]
+        options:
+          - { id: a, text: "A constant can't use the variable `level`, because its value isn't known at compile time" }
+          - { id: b, text: "`level` needs to be `mut`", why: "`mut` wouldn't help. Constants can't use any `let` variable." }
+          - { id: c, text: "Constants can't be multiplied", why: "They can, like `60 * 60`. The problem is using a variable." }
+        answer: a
+        explanation: "Constants are worked out at compile time, before `level` exists. The compiler suggests using `let` instead."
+        concepts: [var.const]
+
+      - type: predict-output
+        id: predict-step
+        code:
+          rust: |
+            const STEP: u32 = 5;
+
+            fn main() {
+                let mut pos = 0;
+                pos += STEP;
+                pos += STEP;
+                let pos = pos * 2;
+                println!("{pos}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "20" }
+          - { id: b, text: "10", why: "The last `let pos` shadows `pos` with double its value." }
+          - { id: c, text: "15", why: "`pos` is 10 after two steps, then doubled." }
+        answer: a
+        explanation: "Two steps of 5 make 10, and the shadowing `let` doubles it to 20."
+        concepts: [var.const, var.mut, var.shadowing]
+
+      - type: mcq
+        id: mcq-const-not-let
+        prompt: "Which is true of `const` but not of `let`?"
+        options:
+          - { id: a, text: "The type must always be written" }
+          - { id: b, text: "The value can't change", why: "A plain `let` variable can't change either, unless it's `mut`." }
+          - { id: c, text: "It can hold a number", why: "`let` variables can hold numbers too." }
+        answer: a
+        explanation: "Only `const` requires the type annotation. Both `const` and plain `let` are unchangeable."
+        concepts: [var.const, var.let]
+
+      - type: spot-bug
+        id: spot-const-missing-type
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            const MAX_LIVES: u32 = 3;
+            const START_LIVES = MAX_LIVES;
+
+            fn main() {
+                println!("{START_LIVES}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "missing type for `const` item"
+        answer: 2
+        explanation: "`START_LIVES` has no type. Using another constant as the value is fine, but the `: u32` is still required."
+        concepts: [var.const]
+
+      - type: true-false
+        id: tf-const-runtime
+        prompt: "A `const` can hold a value that's worked out while the program runs, like a number the user types in."
+        answer: false
+        explanation: "Constants are fixed when the program is compiled. Values that only exist at runtime go in `let` variables."
+        concepts: [var.const]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each error code to its meaning
+        pairs:
+          - ["E0384", "assigned twice to a non-mut variable"]
+          - ["E0435", "non-constant value in a constant"]
+          - ["E0308", "mismatched types"]
+          - ["E0425", "name not found"]
+        concepts: [var.const, err.E0384]

@@ -4,3 +4,4 @@ description: Read and write tiny programs, meet values and types, and learn to r
 colour: purple
 units:
   - unit-01-hello
+  - unit-02-variables

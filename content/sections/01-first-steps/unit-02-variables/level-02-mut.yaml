@@ -1,0 +1,441 @@
+id: first-steps.variables.mut
+title: Changing values with mut
+icon: pencil
+concepts: [var.mut, err.E0384]
+reviewConcepts: [var.let, style.snake-case, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-immutable
+        title: Immutable by default
+        markdown: |
+          **Variables can't change unless you say so.** Once `let` gives `score` a value, assigning a new one is an error.
+
+          The compiler stops you with error **E0384**. This protects values you didn't mean to change.
+        code:
+          rust: |
+            let score = 10;
+            score = 20; // error[E0384]
+          verify: compile-fail
+          expectErrors: [E0384]
+        concepts: [var.mut, err.E0384]
+
+      - type: concept
+        id: concept-mut
+        title: Ask for mut
+        markdown: |
+          **Add `mut` to make a variable mutable** (changeable). Then `=` can give it a new value.
+        code:
+          rust: |
+            let mut score = 10;
+            println!("{score}");
+            score = 20;
+            println!("{score}");
+          verify: run
+          expectStdout: "10\n20\n"
+        concepts: [var.mut]
+
+      - type: predict-output
+        id: predict-mut-lives
+        code:
+          rust: |
+            let mut lives = 3;
+            lives = 2;
+            println!("{lives}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "3", why: "`lives = 2;` replaces the old value before the `println!` runs." }
+          - { id: c, text: "3\n2", why: "There's only one `println!`, so only one line is printed." }
+        answer: a
+        explanation: "`lives` is `mut`, so `lives = 2;` replaces `3` with `2`."
+        concepts: [var.mut]
+
+      - type: compiles
+        id: compiles-assign-immutable
+        code:
+          rust: |
+            let lives = 3;
+            lives = 2;
+            println!("{lives}");
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0425: cannot find value in this scope", why: "`lives` exists. The problem is changing it." }
+            - { id: c, text: "E0308: mismatched types", why: "Both values are whole numbers, so the types match." }
+          answer: a
+        explanation: "`lives` was created without `mut`, so it can't be given a new value. E0384 is the error for this."
+        concepts: [var.mut, err.E0384]
+
+      - type: fill-tokens
+        id: fill-mut
+        prompt: Fill the blank so the program prints `6`
+        code:
+          rust: |
+            let ___1___ coins = 5;
+            coins = 6;
+            println!("{coins}");
+          verify: run
+          expectStdout: "6\n"
+        blanks:
+          "1": { answer: ["mut"] }
+        bank: ["mut", "var", "let", "change"]
+        explanation: "`let mut` creates a variable that can be given a new value later."
+        concepts: [var.mut]
+
+      - type: true-false
+        id: tf-default-mutable
+        prompt: Rust variables can be changed by default.
+        answer: false
+        explanation: "Variables are immutable by default. You opt in to changes with `mut`."
+        concepts: [var.mut]
+
+      - type: mcq
+        id: mcq-declare-mut
+        prompt: Which line creates a variable you can change later?
+        options:
+          - { id: a, code: "let mut steps = 0;" }
+          - { id: b, code: "let steps = 0;", why: "Without `mut`, `steps` can't be given a new value." }
+          - { id: c, code: "mut let steps = 0;", why: "The order is `let mut`, not `mut let`." }
+          - { id: d, code: "let steps mut = 0;", why: "`mut` goes before the name: `let mut steps`." }
+        answer: a
+        explanation: "The pattern is `let mut name = value;`."
+        concepts: [var.mut]
+
+      - type: predict-output
+        id: predict-count-plus
+        code:
+          rust: |
+            let mut count = 1;
+            count = count + 1;
+            println!("{count}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "1", why: "The right side is worked out first (`1 + 1`), then stored back into `count`." }
+          - { id: c, text: "count + 1", why: "`count + 1` is calculated, so `count` holds a number." }
+        answer: a
+        explanation: "Rust calculates `count + 1` using the old value, then stores the result in `count`."
+        concepts: [var.mut]
+
+      - type: spot-bug
+        id: spot-reported-line
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let level = 1;
+                println!("{level}");
+                level = 2;
+                println!("{level}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: 4
+        explanation: "The error is reported on line 4, where `level` is changed. The fix goes on line 2: `let mut level = 1;`."
+        concepts: [var.mut, err.E0384]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-plus-equals
+        title: Shorter updates
+        markdown: |
+          **`+=` adds to a variable.** `score += 5;` means `score = score + 5;`. There's `-=` for subtracting too.
+
+          These change the variable, so it needs `mut`.
+        code:
+          rust: |
+            let mut score = 10;
+            score += 5;
+            println!("{score}");
+          verify: run
+          expectStdout: "15\n"
+        concepts: [var.mut]
+
+      - type: predict-output
+        id: predict-minus-equals
+        code:
+          rust: |
+            let mut lives = 3;
+            lives -= 1;
+            lives -= 1;
+            println!("{lives}");
+          verify: run
+        options:
+          - { id: a, text: "1" }
+          - { id: b, text: "2", why: "Both `-=` lines run, so `lives` goes down twice." }
+          - { id: c, text: "3", why: "`-=` changes `lives`. It isn't only a calculation." }
+        answer: a
+        explanation: "Each `lives -= 1;` takes one away: 3, then 2, then 1."
+        concepts: [var.mut]
+
+      - type: decode-error
+        id: decode-e0384
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let score = 10;
+                score = 20;
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        options:
+          - { id: a, text: "`score` was created without `mut`, so it can't be given a new value" }
+          - { id: b, text: "`score` was given a value of the wrong type", why: "Both values are numbers. The problem is assigning a second time." }
+          - { id: c, text: "`score` doesn't exist yet", why: "It's created on line 2. The compiler points to it as the first assignment." }
+        answer: a
+        explanation: "E0384 means a non-`mut` variable was assigned twice. The compiler's help suggests `let mut score`."
+        concepts: [err.E0384, compiler.read-error]
+
+      - type: compiles
+        id: compiles-unused-mut
+        code:
+          rust: |
+            let mut name = "Ferris";
+            println!("{name}");
+          verify: compile
+        answer: true
+        explanation: "It compiles. The compiler warns that `name` doesn't need to be mutable, because it never changes."
+        concepts: [var.mut]
+
+      - type: mcq
+        id: mcq-why-immutable
+        prompt: Why are Rust variables immutable by default?
+        options:
+          - { id: a, text: "So a value you didn't mean to change can't change by accident" }
+          - { id: b, text: "Because mutable variables run more slowly", why: "`mut` isn't about speed. It records whether you intend to change the value." }
+          - { id: c, text: "Because Rust has no way to change a value", why: "It does: `let mut`." }
+        answer: a
+        explanation: "Making changes opt-in means the compiler can catch an accidental assignment. A reader can also see at a glance which variables change."
+        concepts: [var.mut]
+
+      - type: predict-output
+        id: predict-copy-then-change
+        code:
+          rust: |
+            let mut total = 0;
+            total += 5;
+            let bonus = total;
+            total += 10;
+            println!("{bonus}");
+          verify: run
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "15", why: "`bonus` got the value `total` had at that moment. Later changes to `total` don't affect it." }
+          - { id: c, text: "0", why: "`total` was already `5` when `bonus` was created." }
+        answer: a
+        explanation: "`let bonus = total;` copies the value `5`. Changing `total` afterwards leaves `bonus` alone."
+        concepts: [var.mut, var.let]
+
+      - type: fill-tokens
+        id: fill-plus-equals
+        prompt: Fill the blank so the program prints `75`
+        code:
+          rust: |
+            let mut steps = 50;
+            steps ___1___ 25;
+            println!("{steps}");
+          verify: run
+          expectStdout: "75\n"
+        blanks:
+          "1": { answer: ["+="] }
+        bank: ["+=", "=+", "==", "-="]
+        explanation: "`steps += 25;` adds 25 to `steps`. `=+` isn't a Rust operator, and `==` compares without changing anything."
+        concepts: [var.mut]
+
+      - type: spot-bug
+        id: spot-price
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let mut coins = 10;
+                let price = 3;
+                coins -= price;
+                price = 4;
+                coins -= price;
+                println!("{coins}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: 5
+        explanation: "`coins` is `mut`, so changing it is fine. `price` isn't, so `price = 4;` is error E0384."
+        concepts: [var.mut, err.E0384]
+
+      - type: true-false
+        id: tf-unused-mut-error
+        prompt: "Adding `mut` to a variable you never change stops the program compiling."
+        answer: false
+        explanation: "It compiles with a warning, `variable does not need to be mutable`. Warnings point out problems but don't stop the build."
+        concepts: [var.mut]
+
+      - type: match-pairs
+        id: pairs-mut
+        pairs:
+          - ["let", "creates an unchangeable variable"]
+          - ["let mut", "creates a changeable variable"]
+          - ["+=", "adds to a variable"]
+          - ["E0384", "assigned twice to a non-mut variable"]
+        concepts: [var.mut, err.E0384]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-lives-left
+        prompt: "Arrange the lines so the program prints `Lives: 3`, then `Left: 2`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut lives = 3;" }
+          - { id: l3, text: '    println!("Lives: {lives}");' }
+          - { id: l4, text: "    lives -= 1;" }
+          - { id: l5, text: '    println!("Left: {lives}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let lives = 3;" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Lives: 3\nLeft: 2\n"
+        explanation: "`lives` needs `mut` because `-=` changes it. The first print comes before the change."
+        concepts: [var.mut, macro.println-basic]
+
+      - type: predict-output
+        id: predict-assign-vs-add
+        code:
+          rust: |
+            let mut score = 0;
+            score += 10;
+            score = 5;
+            score += 1;
+            println!("{score}");
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "16", why: "`score = 5;` replaces the value. It doesn't add 5." }
+          - { id: c, text: "11", why: "`score = 5;` throws away the 10, so only 5 + 1 is left." }
+        answer: a
+        explanation: "0, then 10, then replaced by 5, then 6. `=` replaces and `+=` adds."
+        concepts: [var.mut]
+
+      - type: compiles
+        id: compiles-plus-equals-immutable
+        code:
+          rust: |
+            let total = 5;
+            total += 1;
+            println!("{total}");
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0308: mismatched types", why: "`5` and `1` are both whole numbers." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`total` exists, but it isn't `mut`." }
+          answer: a
+        explanation: "`+=` assigns a new value, so it needs `mut` like `=` does."
+        concepts: [var.mut, err.E0384]
+
+      - type: decode-error
+        id: decode-fix-speed
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let speed = 50;
+                speed += 10;
+                println!("{speed}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        options:
+          - { id: a, code: "let mut speed = 50;" }
+          - { id: b, code: "mut speed += 10;", why: "`mut` belongs on the `let` that creates the variable, not on the change." }
+          - { id: c, code: "let speed += 10;", why: "`let` can't be combined with `+=`. That isn't valid Rust." }
+        answer: a
+        explanation: "Changing line 2 to `let mut speed = 50;` makes `speed` mutable, so line 3 compiles."
+        concepts: [err.E0384, var.mut]
+
+      - type: mcq
+        id: mcq-where-mut
+        prompt: "Which statement about `mut` is true?"
+        options:
+          - { id: a, text: "You write `mut` once, on the `let` that creates the variable" }
+          - { id: b, text: "You write `mut` every time you change the variable", why: "After `let mut`, you change it with plain `=` or `+=`." }
+          - { id: c, text: "`mut` makes a copy of the variable", why: "`mut` only marks the variable as changeable." }
+        answer: a
+        explanation: "`mut` is part of the declaration. Later assignments don't repeat it."
+        concepts: [var.mut]
+
+      - type: spot-bug
+        id: spot-double-equals
+        prompt: "This program should print `3` but prints `0`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let mut count = 0;
+                count == 3;
+                println!("{count}");
+            }
+          verify: run
+          expectStdout: "0\n"
+        answer: 3
+        explanation: "`count == 3` compares `count` with `3` and throws the answer away. To assign, use one `=`: `count = 3;`."
+        concepts: [var.mut]
+
+      - type: fill-tokens
+        id: fill-level-up
+        prompt: "Fill the blanks so the program prints `Level 2`"
+        code:
+          rust: |
+            fn main() {
+                let ___1___ ___2___ = 1;
+                level += 1;
+                println!("Level {level}");
+            }
+          verify: run
+          expectStdout: "Level 2\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["level"] }
+        bank: ["mut", "let", "level", "Level", "var"]
+        explanation: "`let mut level` creates a changeable `level`, so `level += 1;` is allowed."
+        concepts: [var.mut, style.snake-case]
+
+      - type: predict-output
+        id: predict-cat-dog
+        code:
+          rust: |
+            let mut word = "cat";
+            println!("{word}");
+            word = "dog";
+            println!("{word}");
+          verify: run
+        options:
+          - { id: a, text: "cat\ndog" }
+          - { id: b, text: "dog\ndog", why: "The first `println!` runs before `word` changes, so it prints `cat`." }
+          - { id: c, text: "cat\ncat", why: "`word` is `mut`, so `word = \"dog\";` changes it before the second print." }
+        answer: a
+        explanation: "Each `println!` prints the value at the moment it runs."
+        concepts: [var.mut, macro.println-basic]
+
+      - type: compiles
+        id: compiles-camel-mut
+        code:
+          rust: |
+            let mut highScore = 0;
+            highScore += 50;
+            println!("{highScore}");
+          verify: compile
+        answer: true
+        explanation: "It compiles, with a warning that `highScore` should be `high_score`. Style warnings don't stop the build."
+        concepts: [var.mut, style.snake-case]

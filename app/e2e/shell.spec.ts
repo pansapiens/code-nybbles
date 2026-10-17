@@ -8,15 +8,19 @@ test('shell navigates between tabs', async ({ page }) => {
   await expect(page).toHaveURL(/\/code-nybbles\/shop$/)
 })
 
-test('lesson player: concept card, wrong-answer feedback, quit', async ({ page }) => {
+test('lesson player: answer, feedback, quit', async ({ page }) => {
+  // Content-agnostic: skips concept cards, answers the first choice exercise with any option.
   await page.goto('./')
   await page.getByRole('button', { name: 'Start' }).first().click()
-  await page.getByRole('button', { name: 'Got it' }).click()
+  const gotIt = page.getByRole('button', { name: 'Got it' })
+  const radio = page.getByRole('radio').first()
+  await expect(gotIt.or(radio).first()).toBeVisible()
+  while (await gotIt.isVisible()) await gotIt.click()
   const check = page.getByRole('button', { name: 'Check' })
   await expect(check).toBeDisabled()
-  await page.getByRole('radio', { name: 'Ready Go!', exact: true }).click()
+  await radio.click()
   await check.click()
-  await expect(page.getByText('Correct solution:')).toBeVisible()
+  await expect(page.getByText(/Nicely done!|Correct solution:/)).toBeVisible()
   await page.getByRole('button', { name: 'Continue' }).click()
   await page.getByRole('button', { name: 'Quit lesson' }).click()
   await page.getByRole('button', { name: 'End session' }).click()

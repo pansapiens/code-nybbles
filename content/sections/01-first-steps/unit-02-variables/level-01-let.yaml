@@ -1,0 +1,415 @@
+id: first-steps.variables.let
+title: Naming values with let
+icon: tag
+concepts: [var.let, style.snake-case]
+reviewConcepts: [intro.main, macro.println-basic]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-let
+        title: Give a value a name
+        markdown: |
+          **`let` creates a variable.** It gives a name to a value so you can use it later.
+
+          Writing `{score}` inside the text prints the value of `score`. There's more on this in level 5.
+        code:
+          rust: |
+            let score = 10;
+            println!("{score}");
+          verify: run
+          expectStdout: "10\n"
+        concepts: [var.let]
+
+      - type: predict-output
+        id: predict-lives
+        code:
+          rust: |
+            let lives = 3;
+            println!("{lives}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "lives", why: "The braces mean \"the value of\", so Rust prints what `lives` holds, not its name." }
+          - { id: c, text: "{lives}", why: "Rust replaces `{lives}` with the value before printing." }
+        answer: a
+        explanation: "`lives` holds `3`, and `{lives}` in the text prints that value."
+        concepts: [var.let]
+
+      - type: true-false
+        id: tf-let-creates
+        prompt: "`let` creates a new variable and gives it a value."
+        answer: true
+        explanation: "`let name = value;` creates a variable called `name` holding `value`."
+        concepts: [var.let]
+
+      - type: fill-tokens
+        id: fill-let
+        prompt: Complete the line so the program prints `42`
+        code:
+          rust: |
+            ___1___ score = 42;
+            println!("{score}");
+          verify: run
+          expectStdout: "42\n"
+        blanks:
+          "1": { answer: ["let"] }
+        bank: ["let", "var", "int", "set"]
+        explanation: "Rust creates variables with `let`. `var` and `int` come from other languages and aren't Rust keywords."
+        concepts: [var.let]
+
+      - type: mcq
+        id: mcq-which-let
+        prompt: Which line creates a variable called `lives` holding `3`?
+        options:
+          - { id: a, code: "let lives = 3;" }
+          - { id: b, code: "lives = 3;", why: "Without `let`, Rust looks for an existing `lives` and doesn't find one." }
+          - { id: c, code: "let 3 = lives;", why: "The name goes on the left of `=` and the value on the right." }
+          - { id: d, code: "int lives = 3;", why: "Rust uses `let`, not a type name, to start a variable." }
+        answer: a
+        explanation: "The pattern is `let`, then the name, then `=`, then the value, then `;`."
+        concepts: [var.let]
+
+      - type: predict-output
+        id: predict-two-vars
+        code:
+          rust: |
+            let apples = 4;
+            let pears = 2;
+            println!("{apples}");
+            println!("{pears}");
+          verify: run
+        options:
+          - { id: a, text: "4\n2" }
+          - { id: b, text: "2\n4", why: "The lines run top to bottom, so `apples` is printed first." }
+          - { id: c, text: "6", why: "Each `println!` prints one value. Nothing adds them up." }
+        answer: a
+        explanation: "Each variable keeps its own value, and the two `println!`s run in order."
+        concepts: [var.let]
+
+      - type: compiles
+        id: compiles-use-before-let
+        code:
+          rust: |
+            fn main() {
+                println!("{score}");
+                let score = 10;
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`score` is used before the line that creates it" }
+            - { id: b, text: "`let` needs a type, like `let score: number`", why: "Rust can usually work out the type, so `let score = 10;` is fine." }
+            - { id: c, text: "Variables can't be printed", why: "They can. The problem is the order of the lines." }
+          answer: a
+        explanation: "A variable exists only from its `let` line onwards. Move the `let` above the `println!`."
+        concepts: [var.let]
+
+      - type: concept
+        id: concept-text-values
+        title: Text values too
+        markdown: |
+          A variable can hold text. Text in double quotes is a **string**. The quotes mark where it starts and ends; they aren't printed.
+        code:
+          rust: |
+            let player_name = "Ferris";
+            println!("Hi, {player_name}!");
+          verify: run
+          expectStdout: "Hi, Ferris!\n"
+        concepts: [var.let]
+
+      - type: predict-output
+        id: predict-hello-name
+        code:
+          rust: |
+            let city = "Perth";
+            println!("Hello, {city}!");
+          verify: run
+        options:
+          - { id: a, text: "Hello, Perth!" }
+          - { id: b, text: "Hello, city!", why: "`{city}` prints the value of `city`, not the word \"city\"." }
+          - { id: c, text: "Hello, \"Perth\"!", why: "The quotes only mark the string in your code. They aren't part of the text." }
+        answer: a
+        explanation: "`{city}` is replaced by the text `city` holds, without the quotes."
+        concepts: [var.let]
+
+      - type: match-pairs
+        id: pairs-let-parts
+        prompt: "Match each part of `let score = 10;`"
+        pairs:
+          - ["let", "creates a variable"]
+          - ["score", "the variable's name"]
+          - ["=", "gives it a value"]
+          - ["10", "the value"]
+          - [";", "ends the statement"]
+        concepts: [var.let]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-snake-case
+        title: Names in snake_case
+        markdown: |
+          **Rust names variables in `snake_case`:** lowercase words joined by underscores.
+
+          Names can use letters, digits and `_`, but can't start with a digit. A name like `playerName` still compiles, but the compiler warns you.
+        code:
+          rust: |
+            let player_name = "Ferris";
+            let high_score = 120;
+            println!("{player_name}: {high_score}");
+          verify: run
+          expectStdout: "Ferris: 120\n"
+        concepts: [style.snake-case]
+
+      - type: mcq
+        id: mcq-style
+        prompt: Which variable name follows Rust style?
+        options:
+          - { id: a, code: "high_score" }
+          - { id: b, code: "highScore", why: "That's camelCase. It compiles, but the compiler warns that it should be `high_score`." }
+          - { id: c, code: "HighScore", why: "Capitalised names like this are for types, which you'll meet later." }
+          - { id: d, code: "HIGH_SCORE", why: "All-caps names are for constants, which you'll meet in level 4." }
+        answer: a
+        explanation: "Variables use `snake_case`: lowercase words separated by `_`."
+        concepts: [style.snake-case]
+
+      - type: compiles
+        id: compiles-camel-case
+        code:
+          rust: |
+            let playerName = "Ferris";
+            println!("{playerName}");
+          verify: compile
+        answer: true
+        explanation: "It compiles and runs. The compiler only warns: `variable playerName should have a snake case name`."
+        concepts: [style.snake-case]
+
+      - type: true-false
+        id: tf-digit-start
+        prompt: "A variable name can start with a digit, like `2nd_place`."
+        answer: false
+        explanation: "Names can contain digits, but not as the first character. `second_place` or `place_2` work."
+        concepts: [style.snake-case]
+
+      - type: predict-output
+        id: predict-total
+        code:
+          rust: |
+            let base = 10;
+            let bonus = 5;
+            let total = base + bonus;
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "105", why: "`+` on two numbers adds them. It doesn't join their digits." }
+          - { id: c, text: "base + bonus", why: "Rust works out `base + bonus` when it creates `total`, so `total` holds a number." }
+        answer: a
+        explanation: "The value on the right of `=` can use other variables. `total` gets `10 + 5`."
+        concepts: [var.let]
+
+      - type: spot-bug
+        id: spot-misspelled
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                let level = 1;
+                println!("{lives}");
+                println!("{levels}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 5
+        explanation: "There's no variable called `levels`. The variable created on line 3 is `level`."
+        concepts: [var.let, compiler.read-error]
+
+      - type: decode-error
+        id: decode-missing-let
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                score = 10;
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, text: "There's no variable called `score`. Create it with `let score = 10;`." }
+          - { id: b, text: "`score` is a reserved word in Rust", why: "`score` is an ordinary name. The compiler can't find a variable with that name." }
+          - { id: c, text: "Numbers can't be stored in variables", why: "They can, once the variable is created with `let`." }
+        answer: a
+        explanation: "Without `let`, `score = 10;` tries to change an existing variable. None exists, so the compiler reports `cannot find value`."
+        concepts: [var.let, compiler.read-error]
+
+      - type: fill-tokens
+        id: fill-two-vars
+        prompt: "Fill the blanks so the program prints `Ferris: 3`"
+        code:
+          rust: |
+            ___1___ lives = 3;
+            let ___2___ = "Ferris";
+            println!("{player_name}: {lives}");
+          verify: run
+          expectStdout: "Ferris: 3\n"
+        blanks:
+          "1": { answer: ["let"] }
+          "2": { answer: ["player_name"] }
+        bank: ["let", "var", "player_name", "playerName", "PlayerName"]
+        explanation: "Both variables start with `let`, and the name must match `{player_name}` exactly."
+        concepts: [var.let, style.snake-case]
+
+      - type: true-false
+        id: tf-equals-compare
+        prompt: "In `let score = 10;`, the `=` checks whether `score` is equal to `10`."
+        answer: false
+        explanation: "A single `=` gives a value to a name. Comparing uses `==`, which you'll meet later."
+        concepts: [var.let]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-lives
+        prompt: Arrange the lines so the program prints `Ferris has 3 lives`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let player_name = "Ferris";' }
+          - { id: l3, text: "    let lives = 3;" }
+          - { id: l4, text: '    println!("{player_name} has {lives} lives");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    let player name = "Ferris";' }
+          - { id: d2, text: "    lives = 3;" }
+        answer: [l1, l2, l3, l4, l5]
+        alternatives:
+          - [l1, l3, l2, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Ferris has 3 lives\n"
+        explanation: "Both variables must be created with `let` before the `println!` uses them. Names can't contain spaces."
+        concepts: [var.let, intro.main]
+
+      - type: predict-output
+        id: predict-tiles-city
+        prompt: Build the output
+        code:
+          rust: |
+            let city = "Melbourne";
+            let rank = 1;
+            println!("{city} is number {rank}");
+          verify: run
+        tiles: ["Melbourne", "is", "number", "1", "city", "rank"]
+        answer: "Melbourne is number 1"
+        explanation: "Each `{name}` is replaced by that variable's value. The rest of the text prints as written."
+        concepts: [var.let]
+
+      - type: compiles
+        id: compiles-hyphen
+        code:
+          rust: |
+            fn main() {
+                let high-score = 10;
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected a pattern"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`-` isn't allowed in names. Use `high_score`." }
+            - { id: b, text: "Names must be a single word with no separators", why: "`_` is allowed and is the usual separator." }
+            - { id: c, text: "The value needs quotes: `\"10\"`", why: "Numbers don't need quotes. The name is the problem." }
+          answer: a
+        explanation: "Rust reads `high-score` as `high` minus `score`, which isn't a valid name. Use `_` to join words."
+        concepts: [style.snake-case]
+
+      - type: predict-output
+        id: predict-copy-name
+        code:
+          rust: |
+            let first = "Ada";
+            let greeting = first;
+            println!("{greeting}");
+          verify: run
+        options:
+          - { id: a, text: "Ada" }
+          - { id: b, text: "first", why: "`greeting` is given the value of `first`, not the word \"first\"." }
+          - { id: c, text: "greeting", why: "`{greeting}` prints the value, not the name." }
+        answer: a
+        explanation: "`let greeting = first;` gives `greeting` the same value that `first` holds."
+        concepts: [var.let]
+
+      - type: spot-bug
+        id: spot-let-semicolon
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let lives = 3
+                println!("{lives}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: 2
+        explanation: "A `let` statement ends with `;`, the same as other statements."
+        concepts: [var.let, compiler.read-error]
+
+      - type: decode-error
+        id: decode-case
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let score = 5;
+                println!("{Score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, text: "Names are case-sensitive: `Score` and `score` are different names" }
+          - { id: b, text: "`score` needs to be created with a capital letter", why: "`score` is the correct style. The `println!` has the wrong name." }
+          - { id: c, text: "`println!` can't print numbers", why: "It can. The compiler can't find `Score`." }
+        answer: a
+        explanation: "Rust treats `Score` and `score` as different names. The compiler even suggests the similar name `score`."
+        concepts: [var.let, compiler.read-error]
+
+      - type: match-pairs
+        id: pairs-names
+        prompt: Match each name to what the compiler thinks of it
+        pairs:
+          - ["high_score", "Rust style"]
+          - ["highScore", "compiles with a warning"]
+          - ["high-score", "error: `-` isn't allowed"]
+          - ["2nd_score", "error: starts with a digit"]
+        concepts: [style.snake-case]
+
+      - type: fill-tokens
+        id: fill-total-points
+        prompt: Fill the blanks so the program prints `250`
+        code:
+          rust: |
+            fn main() {
+                ___1___ total_points = 250;
+                println!("{___2___}");
+            }
+          verify: run
+          expectStdout: "250\n"
+        blanks:
+          "1": { answer: ["let"] }
+          "2": { answer: ["total_points"] }
+        bank: ["let", "var", "total_points", "totalPoints", "250"]
+        explanation: "Create the variable with `let`, then put its exact name inside the braces."
+        concepts: [var.let, style.snake-case]
+
+      - type: true-false
+        id: tf-main-review
+        prompt: "A `let` line inside `main` runs when the program reaches it, in order with the other statements."
+        answer: true
+        explanation: "Statements in `main` run top to bottom, and `let` is a statement like `println!`."
+        concepts: [var.let, intro.main]

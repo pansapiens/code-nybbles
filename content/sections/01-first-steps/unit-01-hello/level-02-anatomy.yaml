@@ -341,6 +341,7 @@ lessons:
             fn main {
                 println!("Hi");
             }
+          wrap: none
           verify: compile-fail
           expectErrorMessage: "missing parameters for function definition"
         answer: false
