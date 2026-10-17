@@ -22,7 +22,7 @@ const open = defineModel<boolean>('open', { default: false })
 .sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 0.4);
+  background: var(--c-scrim);
 }
 .sheet {
   position: fixed;

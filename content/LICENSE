@@ -1,0 +1,20 @@
+Code Nybbles course content
+===========================
+
+Copyright (c) 2026 The Code Nybbles contributors
+
+Lesson prose, explanations, guidebooks, exercise text and diagrams in this
+directory are licensed under the Creative Commons Attribution-ShareAlike 4.0
+International licence (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+Rust code examples inside this content (code blocks and `rust:` snippets) are
+licensed under either of
+
+  * Apache License, Version 2.0 (../LICENSE-APACHE)
+  * MIT License (../LICENSE-MIT)
+
+at your option, so you can reuse them freely in your own programs.
+
+Material adapted from third-party sources is credited per unit (`sources:` in
+each unit.yaml) and collected in the generated ATTRIBUTIONS.md.

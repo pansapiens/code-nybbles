@@ -33,34 +33,51 @@ Commands (from repo root): `pnpm dev`, `pnpm build`, `pnpm test`; in `app/`: `pn
 - [x] Scaffold Vite + Vue + TS + Pinia + router + Vitest + Playwright + ESLint/Prettier (create-vue)
 - [x] pnpm workspace at root; git repo
 - [x] Install vite-plugin-pwa, Dexie, zod, Reka UI, fake-indexeddb (tests)
-- [ ] Licences: `LICENSE-MIT`, `LICENSE-APACHE` at root; `content/LICENSE` (01 §13)
-- [ ] README with dev commands
-- [ ] Vite `base: '/code-nybbles/'`, router `createWebHistory(import.meta.env.BASE_URL)` (01 §5.5)
-- [ ] Design tokens light/dark in `styles/tokens.css`, `base.css` (01 §4.1)
-  - [ ] Self-hosted fonts: Nunito + JetBrains Mono (offline; via @fontsource)
-  - [ ] Theme switch: `[data-theme]` attribute set from localStorage before first paint (01 §5.1 "tiny flags")
-- [ ] Base components (01 §4.1, §9 M0)
-  - [ ] `DuoButton` (primary/secondary/danger/correct, ledge press, disabled)
-  - [ ] `AnswerTile` (idle/selected/correct/wrong/disabled)
-  - [ ] `HudChip` (streak/gems/hearts)
-  - [ ] `ProgressBar` (highlight stripe)
-  - [ ] `BottomSheet` (Reka UI Dialog)
-  - [ ] `TabBar` (mobile bottom tabs) + desktop sidebar
-  - [ ] `CodeCard` (monospace, horizontal scroll, font-size setting; highlighting comes in M1)
-- [ ] App shell: top HUD, bottom tabs, desktop sidebar + right rail at >= 1024px, routing skeleton (01 §4.2)
-  - [ ] Placeholder views: Learn, Practice, Shop, Profile, Settings, Lesson, Streak, Onboarding
-- [ ] PWA: manifest (01 §5.3), icons (192/512 + maskable), SW precache, `registerType: 'prompt'` update toast
-  - [ ] Copy `index.html` -> `404.html` at build; `.nojekyll` (01 §5.5)
-  - [ ] CSP `<meta>` tag allowing `connect-src play.rust-lang.org` (01 §5.5)
-- [ ] Dexie schema `db/schema.ts` (01 §6) with namespaced DB name `code-nybbles`
-- [ ] Domain layer foundations (pure TS, unit-tested)
-  - [ ] `domain/dates.ts`: `LocalDate` arithmetic, date-only (no ms/86400000), `toLocalDate(ts, tz)`
-  - [ ] `domain/streak.ts`: `reconcileStreak`, `onSessionCompleted`, milestones, bounded loop (cap 400 days) (01 §3.4-3.7)
-  - [ ] `domain/ids.ts`: UUIDv7 (01 §9.4)
-- [ ] Stylelint rule: no raw hex colours in components (01 §4.7)
-- [ ] Playwright: Pixel-sized project; offline smoke test of the built shell (01 §10)
-- [ ] GitHub Actions: type-check, unit tests, build, deploy to Pages (01 §5.5)
-- [ ] Done-check: installable, offline-loading shell on mobile viewport; Lighthouse PWA checks pass
+- [x] Licences: `LICENSE-MIT`, `LICENSE-APACHE` at root; `content/LICENSE` (01 §13)
+- [x] README with dev commands
+- [x] Vite `base: '/code-nybbles/'`, router `createWebHistory(import.meta.env.BASE_URL)` (01 §5.5)
+- [x] Design tokens light/dark in `styles/tokens.css`, `base.css` (01 §4.1)
+  - (new) Uses CSS `light-dark()` + `color-scheme`, so one token block serves light, dark and system
+  - [ ] (new) In-app "animations off" setting should apply the reduced-motion rule (`data-motion` attr) (01 §4.3.10)
+  - [ ] (new) Limit precached font subsets to latin (currently all subsets, ~445 KiB precache)
+  - [x] Self-hosted fonts: Nunito + JetBrains Mono (offline; via @fontsource)
+  - [x] Theme switch: `[data-theme]` attribute set from localStorage before first paint (01 §5.1 "tiny flags")
+- [x] Base components (01 §4.1, §9 M0)
+  - [x] `DuoButton` (primary/secondary/danger/correct, ledge press, disabled)
+  - [x] `AnswerTile` (idle/selected/correct/wrong/disabled)
+  - [x] `HudChip` (streak/gems/hearts)
+  - [x] `ProgressBar` (highlight stripe)
+  - [x] `BottomSheet` (Reka UI Dialog)
+  - [x] `TabBar` (mobile bottom tabs) + desktop sidebar -> one `AppNav.vue`, layout switched in CSS
+  - [x] (new) `AppIcon` inline-SVG icon set (placeholder art; replace with designed icons)
+  - [x] (new) `TopHud`; dev-only gallery at `/dev/components`
+  - [x] `CodeCard` (monospace, horizontal scroll, font-size setting; highlighting comes in M1)
+- [x] App shell: top HUD, bottom tabs, desktop sidebar + right rail at >= 1024px, routing skeleton (01 §4.2)
+  - [x] Placeholder views: Learn, Practice, Shop, Profile, Settings, Lesson, Streak, Onboarding
+- [x] PWA: manifest (01 §5.3), icons (192/512 + maskable), SW precache, `registerType: 'prompt'` update toast
+  - Icons are a placeholder "four bits" mark (`public/icons/icon.svg`); real artwork with the mascot task
+  - (new) Theme init is `public/theme-init.js` (not inline) so the CSP can forbid inline scripts
+  - [x] Copy `index.html` -> `404.html` at build; `.nojekyll` (01 §5.5)
+  - [x] CSP `<meta>` tag allowing `connect-src play.rust-lang.org` (01 §5.5)
+- [x] Dexie schema `db/schema.ts` (01 §6) with namespaced DB name `code-nybbles`
+  - Deviation: per-day streak status lives only in `StreakState.days` (not also `DailyStat.status`), single source of truth
+- [x] Domain layer foundations (pure TS, unit-tested)
+  - [x] `domain/dates.ts`: `LocalDate` arithmetic, date-only (no ms/86400000), `toLocalDate(ts, tz)`
+  - [x] `domain/streak.ts`: `reconcileStreak`, `onSessionCompleted`, milestones, bounded loop (cap 400 days) (01 §3.4-3.7)
+    - Also: starter freezes, `canRepair`/`repairCost`/`repairStreak`, earn-back (3 sessions same day), `isStreakAtRisk`
+    - Pure: returns `{ state, events }` instead of emitting
+    - [ ] (new) Forward timezone travel across the date line can skip a local date entirely; forgive it
+      (01 §3.7 "accept the day if any event exists on either local date"). Needs event tz data in reconcile.
+    - Milestones after 365 are every multiple of 100 (400, 500, ...); plan wording was ambiguous
+  - [x] `domain/ids.ts`: UUIDv7 (01 §9.4)
+- [x] Stylelint rule: no raw hex colours in components (01 §4.7)
+- [x] Playwright: Pixel-sized project; offline smoke test of the built shell (01 §10)
+  - Runs against `vite preview` of the production build; projects `mobile` (Pixel 7) and `desktop`
+- [x] GitHub Actions: type-check, unit tests, build, deploy to Pages (01 §5.5) - `.github/workflows/deploy.yml`
+  - [ ] (new) Not yet run: needs a GitHub remote (`pansapiens/code-nybbles`) and Pages source set to "GitHub Actions"
+  - [ ] (new) Add content-build + rust-verify steps once they exist (M1)
+- [~] Done-check: installable, offline-loading shell on mobile viewport; Lighthouse PWA checks pass
+  - Offline reload verified by e2e; Lighthouse not yet run
 
 ## M1: Content pipeline + lesson engine (01 §9 M1, 03)
 

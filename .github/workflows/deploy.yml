@@ -1,0 +1,59 @@
+name: CI and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        working-directory: app
+        run: pnpm exec eslint . && pnpm lint:style
+      - name: Type-check
+        working-directory: app
+        run: pnpm type-check
+      - name: Unit tests
+        run: pnpm test
+      # TODO(M1): content-build + rust-verify (needs the pinned Rust toolchain)
+      - name: Build
+        working-directory: app
+        run: pnpm build-only
+      - name: E2E tests
+        working-directory: app
+        run: pnpm exec playwright install --with-deps chromium && pnpm test:e2e
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

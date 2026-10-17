@@ -14,6 +14,7 @@
   --c-text: light-dark(#3f3a4d, #ffffff);
   --c-text-2: light-dark(#8f89a0, #a9a3b8);
   --c-border: light-dark(#e7e3f0, #342c47);
+  --c-scrim: rgb(0 0 0 / 0.4);
 
   /* Primary (brand, the action colour) */
   --c-primary: #7c4dff;
