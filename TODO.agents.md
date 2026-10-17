@@ -109,7 +109,9 @@ also works. CI doesn't need either.
   - [x] Code width (> 40 cols) and line-count warnings
   - [x] Concept taught-before-tested check along path order (warning): an exercise's concepts and a level's
     `reviewConcepts` must be in some earlier-or-current level's `concepts:`
-  - [~] Licence allow-list for `sources:` (enforced by schema enum); [ ] generate `ATTRIBUTIONS.md` (01 §13.3)
+  - [x] Licence allow-list for `sources:` (enforced by schema enum); `ATTRIBUTIONS.md` generated at the repo
+    root by the CLI, and `manifest.attributions` feeds Settings > Licences & attributions (01 §13.3)
+    - [ ] (new) Full MIT/Apache notice texts in-app (currently a link to the repo)
   - [x] Emit `app/public/content/section-<id>.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
   - [x] Syntax highlighting: deviation, a tiny per-line regex lexer at runtime (`components/highlight.ts`,
     `HighlightedLine.vue`) rather than build-time Shiki/Lezer, because fill-tokens and spot-bug split the code

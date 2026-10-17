@@ -326,9 +326,13 @@ export interface CompiledSection extends Omit<Section, 'units'> {
   units: CompiledUnit[]
 }
 
+export type Attribution = z.output<typeof Source> & { units: string[] }
+
 export interface ContentManifest {
   contentVersion: string
   course: Course
   concepts: Concept[]
+  /** Unit `sources:`, merged by url (plans/01 §13.3). */
+  attributions: Attribution[]
   sections: { id: string; title: string; hash: string; url: string }[]
 }

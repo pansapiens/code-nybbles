@@ -35,15 +35,36 @@
       <input v-model.number="settings.codeSize" type="range" min="13" max="18" />
       {{ settings.codeSize }}px
     </label>
+    <details class="about">
+      <summary>Licences &amp; attributions</summary>
+      <p>
+        Code Nybbles is free software under the MIT or Apache-2.0 licence. Course text is CC BY-SA 4.0 and course
+        code is MIT or Apache-2.0.
+        <a href="https://github.com/pansapiens/code-nybbles">Source and full licence texts</a>.
+      </p>
+      <p v-if="manifest?.attributions.length">The course draws on:</p>
+      <ul>
+        <li v-for="a in manifest?.attributions" :key="a.url">
+          <a :href="a.url">{{ a.name }}</a>, {{ a.licence }}{{ a.adapted ? ', adapted' : '' }}. Used in:
+          {{ a.units.join(', ') }}.
+        </li>
+      </ul>
+      <p v-if="manifest" class="version">Content version {{ manifest.contentVersion }}</p>
+    </details>
   </section>
 </template>
 
 <script setup lang="ts">
+import type { ContentManifest } from '@code-nybbles/content-build/schema'
+import { onMounted, ref } from 'vue'
 import AnswerTile from '@/components/AnswerTile.vue'
+import { loadManifest } from '@/content/loader'
 import { useSettingsStore, type Theme } from '@/stores/settings'
 
 const THEMES: Theme[] = ['system', 'light', 'dark']
 const settings = useSettingsStore()
+const manifest = ref<ContentManifest>()
+onMounted(async () => (manifest.value = await loadManifest().catch(() => undefined)))
 </script>
 
 <style scoped>
@@ -55,6 +76,14 @@ fieldset {
 legend {
   font-weight: 800;
   margin-bottom: var(--s-2);
+}
+.about summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+.version {
+  color: var(--c-text-2);
+  font-size: 0.85rem;
 }
 label {
   font-weight: 700;
