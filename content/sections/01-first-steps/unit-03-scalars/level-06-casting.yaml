@@ -136,7 +136,7 @@ lessons:
         id: concept-cast-pitfalls
         title: When the value doesn't fit
         markdown: |
-          **`as` never fails, so it can quietly change your value.**
+          **`as` never panics, so it can quietly change your value.**
 
           - Integer to a smaller integer: the extra bits are cut off. `300` as a `u8` becomes `44`.
           - Negative to unsigned: `-1` as a `u8` becomes `255`.
@@ -434,7 +434,7 @@ lessons:
         prompt: "`level` is a `u8` holding 250. Which line prints `260`?"
         options:
           - { id: a, code: 'println!("{}", level as u16 + 10);' }
-          - { id: b, code: 'println!("{}", (level + 10) as u16);', why: "`level + 10` is done in `u8` first, which overflows and panics." }
+          - { id: b, code: 'println!("{}", (level + 10) as u16);', why: "`level + 10` is worked out in `u8` first, and 260 doesn't fit, so it overflows." }
           - { id: c, code: 'println!("{}", level.wrapping_add(10));', why: "That wraps around in `u8` and prints 4." }
         answer: a
         explanation: "Convert to the bigger type before adding. Converting afterwards is too late: the `u8` addition has already overflowed."

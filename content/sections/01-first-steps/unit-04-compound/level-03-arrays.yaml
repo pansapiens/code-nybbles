@@ -404,7 +404,7 @@ lessons:
           verify: run
           expectStdout: "First: Ayr\nSecond: Bowen\n"
         answer: 4
-        explanation: "The second element is at index 1. `towns[2]` is the third, `\"Orbost\"`."
+        explanation: "The second element is at index 1. `towns[2]` is the third, `\"Bowen\"`."
         concepts: [types.array]
 
       - type: decode-error

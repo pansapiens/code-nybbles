@@ -221,7 +221,7 @@ lessons:
         options:
           - { id: a, text: "('a', 1.0, true)" }
           - { id: b, text: "(a, 1, true)", why: "Debug format keeps the quotes on a `char` and the `.0` on a float." }
-          - { id: c, text: "('a', 1, true)", why: "A float is always printed with a decimal point in Debug format." }
+          - { id: c, text: "('a', 1, true)", why: "Debug format prints the float `1.0` with its `.0`." }
         answer: a
         explanation: "Debug format shows each value the way you'd write it in code."
         concepts: [fmt.debug]

@@ -86,7 +86,7 @@ lessons:
           options:
             - { id: a, text: "The `\"` before `hi` ends the string. Write `\\\"hi\\\"` instead" }
             - { id: b, text: "`println!` can't print quote marks", why: "It can, with the `\\\"` escape." }
-            - { id: c, text: "Quotes inside a string must be single quotes", why: "`'hi'` would print, but the task is to print double quotes, which needs `\\\"`." }
+            - { id: c, text: "Quotes inside a string must be single quotes", why: "Double quotes can go inside a string when each one is escaped as `\\\"`." }
           answer: a
         explanation: "Rust reads `\"She said \"` as the whole string, then finds `hi` where it expected a comma."
         concepts: [string.literals]
@@ -227,13 +227,15 @@ lessons:
 
       - type: predict-output
         id: predict-tiles-braces
-        prompt: Build the output
         code:
           rust: |
             println!("{{{}}}", 7);
           verify: run
-        tiles: ["{", "}", "7", "{{", "}}", "{}"]
-        answer: "{7}"
+        options:
+          - { id: a, text: "{7}" }
+          - { id: b, text: "{{7}}", why: "Each doubled brace prints as a single brace." }
+          - { id: c, text: "7", why: "Only the middle `{}` is a placeholder. The doubled braces around it print as `{` and `}`." }
+        answer: a
         explanation: "Read it left to right: `{{` is a literal `{`, `{}` is filled with 7, and `}}` is a literal `}`."
         concepts: [string.literals, fmt.placeholders]
 

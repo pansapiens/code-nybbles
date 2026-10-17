@@ -239,15 +239,17 @@ lessons:
 
       - type: predict-output
         id: predict-tiles-brackets
-        prompt: Build the output
         code:
           rust: |
             print!("[");
             print!("{:^5}", "x");
             println!("]");
           verify: run
-        tiles: ["[", "]", "  x  ", " x ", "x", " ]"]
-        answer: "[  x  ]"
+        options:
+          - { id: a, text: "[  x  ]" }
+          - { id: b, text: "[\n  x  \n]", why: "`print!` doesn't end the line, so all three parts share one line." }
+          - { id: c, text: "[ x ]", why: "The width is 5 in total. `x` takes 1, leaving 4 spaces: 2 each side." }
+        answer: a
         explanation: "All three parts go on one line. `{:^5}` centres `x` with 2 spaces each side."
         concepts: [macro.print-family, fmt.width-precision]
 

@@ -86,7 +86,7 @@ println!("{}", 'A' as u8);          // 65
 println!("{}", 66u8 as char);       // B
 ```
 
-- `as` never fails or panics, so it can quietly change a value. Check that it fits first.
+- `as` never panics, so it can quietly change a value. Check that it fits first.
 - Cast before you divide: `(7 / 2) as f64` is already `3.0`.
 - `as` binds tighter than `+`: `max as u16 + 1` converts first, then adds.
 - Only `u8` can be cast to `char` (error **E0604** otherwise). `true as i32` is 1.

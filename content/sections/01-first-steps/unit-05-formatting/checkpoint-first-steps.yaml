@@ -24,6 +24,8 @@ reviewConcepts:
   - types.as-cast
   - types.tuple
   - types.array
+  - types.unit
+  - panic.index
   - types.array-bounds
   - fmt.debug
   - fmt.width-precision
@@ -162,15 +164,17 @@ lessons:
 
       - type: predict-output
         id: predict-tiles-shadow-len
-        prompt: Build the output
         code:
           rust: |
             let word = "héllo";
             let word = word.len();
             println!("{word:>3}|{:<3}|", word * 2);
           verify: run
-        tiles: ["  6", "  5", "|", "12 ", " 12", "10 "]
-        answer: "  6|12 |"
+        options:
+          - { id: a, text: "  6|12 |" }
+          - { id: b, text: "  5|10 |", why: "`.len()` counts bytes, and `é` takes 2, so `word` is 6." }
+          - { id: c, text: "  6| 12|", why: "`<3` left-aligns, so the padding space goes after 12." }
+        answer: a
         explanation: "`é` takes 2 bytes, so `word` becomes 6. Numbers right-align in `{word:>3}`, but `<3` puts 12 on the left."
         concepts: [var.shadowing, string.str-literal-intro, fmt.width-precision]
 

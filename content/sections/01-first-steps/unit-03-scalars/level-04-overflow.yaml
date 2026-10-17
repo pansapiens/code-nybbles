@@ -436,5 +436,5 @@ lessons:
           - { id: b, text: "4", why: "`small` is a `u16`, which goes up to 65535. There's no overflow." }
           - { id: c, text: "It panics", why: "260 fits in a `u16`." }
         answer: a
-        explanation: "A `u16` has plenty of room for 260. Overflow depends on the type, not the size of the numbers."
+        explanation: "A `u16` has plenty of room for 260. Whether a sum overflows depends on the range of its type."
         concepts: [types.overflow, types.int]

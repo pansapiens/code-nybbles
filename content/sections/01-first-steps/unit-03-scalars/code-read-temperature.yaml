@@ -86,7 +86,7 @@ chunks:
         options:
           - { id: a, text: "`bool`" }
           - { id: b, text: "`f64`", why: "`>` compares two `f64` values, but the result of a comparison is a `bool`." }
-          - { id: c, text: "`&str`", why: "`is_hot` prints as `true`, but it holds a `bool`, not text." }
+          - { id: c, text: "`i32`", why: "Rust doesn't use numbers for true and false. A comparison gives a `bool`." }
         answer: a
         explanation: "Comparison operators like `>` produce a `bool`: `true` or `false`."
         concepts: [types.bool]

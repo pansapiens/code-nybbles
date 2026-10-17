@@ -260,11 +260,11 @@ lessons:
         code:
           rust: |
             let temperature = 21.456;
-            println!("{temperature:.1}C");
+            println!("{temperature:.1} C");
           verify: run
-        tiles: ["21", ".5", ".4", ".46", "C", " C"]
-        answer: "21.5C"
-        explanation: "One decimal place: 21.456 rounds to 21.5. The `C` follows straight after the placeholder, with no space."
+        tiles: ["21.5", "21.4", "21.46", "21", "C", "21.456"]
+        answer: "21.5 C"
+        explanation: "One decimal place: 21.456 rounds to 21.5, and ` C` follows the placeholder."
         concepts: [fmt.width-precision]
 
       - type: decode-error
@@ -453,7 +453,7 @@ lessons:
           verify: run
         options:
           - { id: a, text: "(2.0, 3.5)\n(2.0, 3.5)" }
-          - { id: b, text: "(2, 3.5)\n(2.0, 3.5)", why: "Debug format always shows a float with a decimal point, so `2.0` stays `2.0`." }
+          - { id: b, text: "(2, 3.5)\n(2.0, 3.5)", why: "Debug format prints the float `2.0` with its `.0`." }
           - { id: c, text: "(2.0, 3.5)\n(2, 3.5)", why: "`.1` asks for exactly one decimal place, so `2.0` prints as `2.0`." }
         answer: a
         explanation: "Debug prints the tuple as written. `{:.1}` prints each float with one decimal place, which gives the same text here."
