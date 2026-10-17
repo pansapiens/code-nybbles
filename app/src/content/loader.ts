@@ -1,4 +1,4 @@
-import type { CompiledSection, ContentManifest } from '@code-nybbles/content-build/schema'
+import type { CompiledLevel, CompiledSection, ContentManifest } from '@code-nybbles/content-build/schema'
 
 // Bundles are produced by tools/content-build from our own repo and served same-origin, so they
 // are trusted as-is (no runtime zod pass). The SW precaches them for offline use (plans/03 §6).
@@ -19,4 +19,10 @@ export function loadSection(m: ContentManifest, sectionId: string): Promise<Comp
   let p = sections.get(entry.hash)
   if (!p) sections.set(entry.hash, (p = getJson<CompiledSection>(entry.url)))
   return p
+}
+
+/** Level ids start with their section id (enforced by content-build), so one bundle fetch finds them. */
+export async function loadLevel(levelId: string): Promise<CompiledLevel | undefined> {
+  const section = await loadSection(await loadManifest(), levelId.split('.')[0]!)
+  return section.units.map((u) => u.levels[levelId]).find(Boolean)
 }

@@ -21,6 +21,8 @@ function spaFallback(): Plugin {
 
 export default defineConfig({
   base: BASE,
+  // Small font subsets would otherwise be inlined as data: URIs, which the CSP's font-src 'self' blocks.
+  build: { assetsInlineLimit: (file) => (file.endsWith('.woff2') ? false : undefined) },
   plugins: [
     vue(),
     vueDevTools(),

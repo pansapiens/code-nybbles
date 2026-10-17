@@ -4,7 +4,7 @@
     :class="[`s-${state}`, { mono }]"
     type="button"
     :disabled="state === 'disabled'"
-    :aria-pressed="state === 'selected'"
+    :aria-pressed="$attrs.role ? undefined : state === 'selected'"
   >
     <slot />
   </button>
@@ -39,6 +39,7 @@ withDefaults(defineProps<{ state?: TileState; mono?: boolean }>(), { state: 'idl
   font-family: var(--font-code);
   font-variant-ligatures: none;
   font-weight: 500;
+  white-space: pre-wrap; /* program output keeps its line breaks */
 }
 .answer-tile:active:not(:disabled) {
   transform: translateY(2px);

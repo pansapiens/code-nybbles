@@ -18,9 +18,10 @@ const router = createRouter({
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/streak', name: 'streak', component: () => import('@/views/StreakView.vue') },
     {
-      path: '/lesson/:lessonId',
+      path: '/lesson/:levelId/:lessonId',
       name: 'lesson',
       component: () => import('@/views/LessonView.vue'),
+      props: true,
       meta: { fullscreen: true },
     },
     {

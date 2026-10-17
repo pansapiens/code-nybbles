@@ -16,8 +16,8 @@ function fixture(exercises: unknown[]): string {
   w('course.yaml', { id: 'rust', title: 'Rust', mascot: 'ferris', edition: '2024', sections: ['s1'] })
   w('concepts.yaml', [{ id: 'intro.main', title: 'main' }])
   w('sections/s1/section.yaml', { id: 's1', title: 'S1', description: 'd', colour: 'purple', units: ['u1'] })
-  w('sections/s1/u1/unit.yaml', { id: 'u1', title: 'U1', description: 'd', path: [{ level: 'level' }] })
-  w('sections/s1/u1/level.yaml', { id: 'u1.level', title: 'L', lessons: [{ id: 'l1', exercises }] })
+  w('sections/s1/u1/unit.yaml', { id: 's1.u1', title: 'U1', description: 'd', path: [{ level: 'level' }] })
+  w('sections/s1/u1/level.yaml', { id: 's1.u1.level', title: 'L', lessons: [{ id: 'l1', exercises }] })
   return root
 }
 

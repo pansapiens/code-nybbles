@@ -302,6 +302,10 @@ export interface VerifiedCode {
   stdout?: string
 }
 
+/**
+ * In compiled bundles the Markdown fields (prompt, explanation, hint, why, concept markdown, and option
+ * text except predict-output's) hold rendered HTML. Code and output text stay plain.
+ */
 export type CompiledExercise = Exercise & { verified?: VerifiedCode }
 export type CompiledLesson = Omit<Lesson, 'exercises'> & { exercises: CompiledExercise[] }
 export type CompiledLevel = Omit<Level, 'lessons'> & { lessons: CompiledLesson[] }
@@ -313,7 +317,7 @@ export type CompiledPathNode =
   | { kind: 'code-read' | 'build'; id: string }
 
 export interface CompiledUnit extends Omit<Unit, 'path' | 'guidebook'> {
-  guidebook?: string // Markdown source; pre-rendered HTML comes later
+  guidebook?: string // rendered HTML
   path: CompiledPathNode[]
   levels: Record<string, CompiledLevel>
 }

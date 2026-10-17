@@ -86,6 +86,7 @@ also works. CI doesn't need either.
 - [x] GitHub Actions: type-check, unit tests, build, deploy to Pages (01 §5.5) - `.github/workflows/deploy.yml`
   - [ ] (new) Not yet run: needs a GitHub remote (`pansapiens/code-nybbles`) and Pages source set to "GitHub Actions"
   - [ ] (new) Add content-build + rust-verify steps once they exist (M1)
+- [x] (new) Fonts were inlined as data: URIs by Vite and blocked by the CSP; `assetsInlineLimit` now skips woff2
 - [~] Done-check: installable, offline-loading shell on mobile viewport; Lighthouse PWA checks pass
   - Offline reload verified by e2e; Lighthouse not yet run
 
@@ -109,7 +110,10 @@ also works. CI doesn't need either.
   - [~] Licence allow-list for `sources:` (enforced by schema enum); [ ] generate `ATTRIBUTIONS.md` (01 §13.3)
   - [x] Emit `app/public/content/section-<id>.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
   - [ ] Build-time syntax highlighting (Shiki or Lezer) (03 §4.1)
-  - [ ] Guidebook Markdown -> HTML at build time (markdown-it); currently raw Markdown in the bundle
+  - [x] Markdown -> HTML at build time (markdown-it, `html: false`): prompts, explanations, hints, `why`,
+    concept cards, option text (not predict-output's, which is literal output), guidebooks
+  - [x] (new) Id nesting check: unit ids start with the section id, level ids with the unit id (the app
+    finds a level's bundle from the first segment)
   - [ ] Turn on `--strict` in CI once the vertical slice meets the length rules
   - [ ] (new) Warn when a decode-error snippet uses `wrap: auto`/`hidden.before` (line numbers in the
     baked compiler output wouldn't match the shown code)
@@ -128,11 +132,23 @@ also works. CI doesn't need either.
   - [ ] Guidebook ```rust blocks with mdBook annotations (03 §4.3)
   - [x] Parsons `alternatives` orders verified via harness
   - [ ] Weekly CI job against latest stable reporting drift (03 §4.2)
-- [ ] Lesson player: queue, CHECK -> feedback sheet -> CONTINUE, mistake re-queue, progress bar, exit confirm (01 §4.3.4)
-  - [ ] `domain/lesson-planner.ts` -> `LessonPlan` (03 §6)
-  - [ ] `exercises/registry.ts` (renderer + grader per type)
-- [ ] Renderers + graders: concept, mcq, predict-output, fill-tokens, parsons, compiles, spot-bug, match-pairs, decode-error, true-false
-- [ ] Sound (Web Audio) + haptics (`navigator.vibrate`) services, settings toggles
+- [x] Lesson player `views/LessonView.vue` at `/lesson/:levelId/:lessonId`: queue, CHECK -> feedback
+  footer (aria-live) -> CONTINUE, mistake re-queue, progress bar, exit confirm, simple complete screen
+  (accuracy, time) (01 §4.3.4)
+  - [x] `domain/lesson-planner.ts`: `planLesson`, `LessonRun`, `answerCurrent`, `progress`, `summarise` (tested)
+    - [ ] (new) Pool sampling + SRS review items + Legendary subsets (M4)
+  - [x] `exercises/registry.ts` (renderer per type) + `exercises/grade.ts` (grader + solution per type, tested)
+  - [ ] (new) Persist lesson completion (levelProgress, XP events) - M2 with the event log
+  - [ ] (new) Hint button (v1), combo toasts, Enter-to-check keyboard shortcut
+- [x] Renderers + graders for all 10 MVP types. Shared pieces: `OptionList` (mcq/decode-error/predict-output/
+  true-false/compiles follow-up), `OrderExercise` (parsons + predict-output assemble mode)
+  - predict-output assemble mode grades the words of the output, not its line breaks (use choose mode when
+    layout matters)
+  - Output options announce line breaks to screen readers ("Ready, new line, Go!")
+  - [ ] (new) Parsons drag-and-drop (tap-to-place works now and stays as the accessible path)
+  - [ ] (new) Indentation step for parsons (03 §1, optional)
+- [x] Sound (Web Audio tones, no files) + haptics (`navigator.vibrate`) in `services/feedback.ts`; uses the
+  existing settings toggles
 - [ ] Dev routes: `/dev/content/:levelId`, exercise gallery with answers (03 §5)
 - [~] Content: Section 1, Units 1.1-1.2 vertical slice (02 §4)
   - [x] course.yaml, concepts.yaml (Units 1.1-1.2), section 1, unit 1.1 with guidebook

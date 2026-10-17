@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { parseArgs } from 'node:util'
+import MarkdownIt from 'markdown-it'
 import { parse as parseYaml } from 'yaml'
 import type { z } from 'zod'
 import {
@@ -218,6 +219,34 @@ function checkAgainstOutcome(ex: Exercise, r: CaseResult, where: string, issues:
     issues.error(where, `answer ${JSON.stringify(expected)} differs from the real output ${JSON.stringify(actual)}`)
 }
 
+// ---- Markdown (rendered at build time; the app inserts the HTML as-is) ----
+
+const md = new MarkdownIt({ html: false })
+const inline = (s: string) => md.renderInline(s)
+const block = (s: string) => md.render(s)
+
+/** Markdown fields become HTML in place. Code, predict-output option text and match tiles stay plain. */
+export function renderMarkdown(ex: CompiledExercise) {
+  if (ex.type === 'concept') {
+    ex.markdown = block(ex.markdown)
+    return
+  }
+  ex.prompt = inline(ex.prompt)
+  if (ex.explanation) ex.explanation = block(ex.explanation)
+  if (ex.hint) ex.hint = inline(ex.hint)
+  const opts = (options: Option[], textIsMarkdown: boolean) => {
+    for (const o of options) {
+      if (o.why) o.why = inline(o.why)
+      if (o.text !== undefined && textIsMarkdown) o.text = inline(o.text)
+    }
+  }
+  if ('options' in ex && ex.options) opts(ex.options, ex.type !== 'predict-output')
+  if (ex.type === 'compiles' && ex.followUp) {
+    ex.followUp.prompt = inline(ex.followUp.prompt)
+    opts(ex.followUp.options, true)
+  }
+}
+
 // ---- Build ----
 
 export interface BuildOptions {
@@ -260,6 +289,7 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
       const unit = load(Unit, join(udir, 'unit.yaml'), issues, root)
       if (!unit) continue
       const uwhere = relative(root, join(udir, 'unit.yaml'))
+      if (!unit.id.startsWith(`${section.id}.`)) issues.error(uwhere, `unit id must start with "${section.id}."`)
       const levels: Record<string, CompiledLevel> = {}
       const path: CompiledPathNode[] = []
       let n = 0
@@ -280,6 +310,8 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
         if (!level) continue
         const lwhere = relative(root, lfile)
         if (levelIds.has(level.id)) issues.error(lwhere, `duplicate level id "${level.id}"`)
+        // The app finds a level's section bundle from the first segment of its id.
+        if (!level.id.startsWith(`${unit.id}.`)) issues.error(lwhere, `level id must start with "${unit.id}."`)
         levelIds.add(level.id)
         levels[level.id] = level
         path.push({ kind, levelId: level.id })
@@ -310,7 +342,7 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
       let guidebook: string | undefined
       if (unit.guidebook) {
         const g = join(udir, unit.guidebook)
-        if (existsSync(g)) guidebook = readFileSync(g, 'utf8')
+        if (existsSync(g)) guidebook = block(readFileSync(g, 'utf8'))
         else issues.error(uwhere, `guidebook ${unit.guidebook} not found`)
       }
       const { path: _path, guidebook: _g, ...rest } = unit
@@ -338,6 +370,9 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
   if (opts.strict) for (const i of issues.list) i.level = 'error'
   if (issues.errors.length) return { issues, sections, stats }
 
+  for (const s of sections)
+    for (const u of s.units)
+      for (const l of Object.values(u.levels)) for (const lesson of l.lessons) lesson.exercises.forEach(renderMarkdown)
   const bundles = sections.map((s) => ({ s, json: JSON.stringify(s) }))
   const manifest: ContentManifest = {
     contentVersion: hash(bundles.map((b) => b.json).join('') + JSON.stringify(conceptList)),
