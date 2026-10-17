@@ -103,3 +103,11 @@ test('compile checks catch deny-by-default MIR lints (constant index out of boun
   const ex = { type: 'compiles', id: 'c', code, answer: false, explanation: 'e', concepts: ['intro.main'] }
   assert.equal(await errors([ex]), '')
 })
+
+test('predict-output tiles must be able to spell the answer', async () => {
+  const { assemblable } = await import('./build.ts')
+  assert.equal(assemblable(['Fizz', 'Buzz', '11'], 'Fizz Buzz 11 Fizz'), false) // needs two Fizz tiles
+  assert.equal(assemblable(['Fizz', 'Buzz', '11', 'Fizz'], 'Fizz Buzz 11 Fizz\n'), true)
+  assert.equal(assemblable(['21.5', 'C'], '21.5C'), false) // tiles are joined with spaces
+  assert.equal(assemblable(['a b', 'c', 'a'], 'a b c'), true)
+})

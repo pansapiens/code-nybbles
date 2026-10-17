@@ -420,7 +420,7 @@ lessons:
         id: tf-let-as-value
         prompt: "A `let` can be used as a value, as in `let a = (let b = 1);`."
         answer: false
-        explanation: "`let` is a statement and has no value. Some languages allow `a = b = 1`, but Rust doesn't."
+        explanation: "`let` is a statement and has no value, so it can't go on the right of `=`. Put `let b = 1;` on its own line first."
         concepts: [expr.vs-stmt]
 
       - type: fill-tokens

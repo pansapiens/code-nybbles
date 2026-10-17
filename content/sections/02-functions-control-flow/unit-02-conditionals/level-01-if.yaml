@@ -548,7 +548,7 @@ lessons:
         blanks:
           "1": { answer: ["else if"] }
           "2": { answer: ["else"] }
-        bank: ["else if", "else", "elif", "elseif", "if"]
+        bank: ["else if", "else", "elif", "elseif", "then"]
         explanation: "`else if` checks a second condition, and the final `else` has no condition. `165 < 180` is true, so `Medium` prints."
         concepts: [ctrl.if]
 

@@ -12,7 +12,7 @@ lessons:
         markdown: |
           **FizzBuzz** is a classic warm-up. For each number: print `Fizz` if it divides by 3, `Buzz` if it divides by 5, `FizzBuzz` if both, otherwise the number.
 
-          `n % 3 == 0` means "divides by 3". Check 15 first, so that both-cases aren't caught by the 3 or 5 check.
+          `n % 3 == 0` means "divides by 3". Check 15 first, so numbers that divide by both aren't caught by the 3 or 5 check.
         code:
           rust: |
             for n in 1..=5 {
@@ -549,7 +549,7 @@ lessons:
             }
             println!();
           verify: run
-        tiles: ["Fizz", "Buzz", "11", "10", "9", "12"]
+        tiles: ["Fizz", "Fizz", "Buzz", "11", "10", "9", "12"]
         answer: "Fizz Buzz 11 Fizz"
         explanation: "9 and 12 divide by 3, 10 divides by 5, and 11 divides by neither."
         concepts: [practice.fizzbuzz]

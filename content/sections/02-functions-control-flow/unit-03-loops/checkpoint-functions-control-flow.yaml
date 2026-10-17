@@ -128,7 +128,7 @@ lessons:
 
       - type: spot-bug
         id: spot-index-panic
-        prompt: "This prints three scores, then panics. Tap the line that causes the panic."
+        prompt: "This prints three scores, then panics. Tap the line with the mistake."
         code:
           rust: |
             fn main() {

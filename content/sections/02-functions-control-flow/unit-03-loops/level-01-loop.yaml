@@ -489,7 +489,7 @@ lessons:
         options:
           - { id: a, text: "Change line 6 to `break n;`" }
           - { id: b, text: "Change line 2 to `let n: u32 = 0;`", why: "Removing `mut` would add an E0384 error and leave this one." }
-          - { id: c, text: "Change line 3 to `let total: u32 = while n <= 12 {`", why: "A `while` loop can't give a value with `break`, so `total` still wouldn't be a `u32`." }
+          - { id: c, text: "Change line 3 to `let total = loop {`", why: "Then `total` is `()`, and `{}` can't print `()`, so you get E0277 instead." }
         answer: a
         explanation: "A plain `break;` gives `()`, but `total` must be a `u32`. `break n;` gives 15 instead."
         concepts: [ctrl.break-value, err.E0308, types.unit]

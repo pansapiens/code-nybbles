@@ -190,6 +190,20 @@ function checkOptions(where: string, options: Option[], answer: string, issues: 
   if (!ids.includes(answer)) issues.error(where, `answer "${answer}" is not an option id`)
 }
 
+const words = (s: string) => s.trim().split(/\s+/).join(' ')
+
+/** Can distinct tiles, joined by spaces, spell the answer? Mirrors the app's predict-output tiles grader. */
+export function assemblable(tiles: string[], answer: string): boolean {
+  const go = (rest: string, used: Set<number>): boolean =>
+    rest === '' ||
+    tiles.some((t, i) => {
+      const w = words(t)
+      if (used.has(i) || !w || !(rest === w || rest.startsWith(`${w} `))) return false
+      return go(rest.slice(w.length).trimStart(), new Set(used).add(i))
+    })
+  return go(words(answer), new Set())
+}
+
 function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issues: Issues) {
   for (const c of ('concepts' in ex ? ex.concepts : undefined) ?? [])
     if (!concepts.has(c)) issues.error(where, `unknown concept "${c}" (add it to concepts.yaml)`)
@@ -227,8 +241,8 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
     case 'predict-output':
       if (ex.code.verify !== 'run') issues.error(where, 'predict-output code must be `verify: run`')
       if (ex.options) checkOptions(where, ex.options, ex.answer, issues)
-      if (ex.tiles && !ex.tiles.some((t) => ex.answer.includes(t)))
-        issues.error(where, 'no tile appears in the answer')
+      if (ex.tiles && !assemblable(ex.tiles, ex.answer))
+        issues.error(where, 'the answer can\'t be built from the tiles (each used once, joined by spaces)')
       break
     case 'compiles': {
       const fails = ex.code.verify === 'compile-fail'
