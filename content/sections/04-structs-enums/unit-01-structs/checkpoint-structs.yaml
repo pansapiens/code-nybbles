@@ -1,0 +1,366 @@
+id: structs-enums.structs.checkpoint
+title: "Checkpoint: Structs"
+icon: flag
+concepts: []
+reviewConcepts:
+  - struct.define
+  - struct.update
+  - struct.tuple
+  - struct.unit
+  - derive.debug
+  - macro.dbg
+  - struct.ownership
+  - own.move
+  - own.copy
+  - own.clone
+  - borrow.shared
+  - borrow.mut
+  - var.mut
+  - var.shadowing
+  - err.E0382
+  - err.E0106
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-update-debug
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Item {
+                name: String,
+                stock: u32,
+            }
+
+            fn main() {
+                let a = Item {
+                    name: String::from("pen"),
+                    stock: 4,
+                };
+                let b = Item { stock: 0, ..a };
+                println!("{} {b:?}", a.stock);
+            }
+          verify: run
+        options:
+          - { id: a, text: "4 Item { name: \"pen\", stock: 0 }" }
+          - { id: b, text: "4 Item { name: pen, stock: 0 }", why: "Debug format shows a `String` with quotes." }
+          - { id: c, text: "0 Item { name: \"pen\", stock: 0 }", why: "`b` has its own `stock`. `a.stock` is still 4." }
+        answer: a
+        explanation: "`..a` moves `name` into `b`, but `a.stock` was never taken, so it can still be read. `b` has `stock: 0` and the name `\"pen\"`."
+        concepts: [struct.update, derive.debug, struct.ownership]
+
+      - type: compiles
+        id: compiles-debug-after-update
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Item {
+                name: String,
+                stock: u32,
+            }
+
+            fn main() {
+                let a = Item {
+                    name: String::from("pen"),
+                    stock: 4,
+                };
+                let b = Item { stock: 0, ..a };
+                println!("{a:?} {b:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of partially moved value: `a`" }
+            - { id: b, text: "E0277: `Item` doesn't implement `Debug`", why: "`Item` has `#[derive(Debug)]` on line 1." }
+            - { id: c, text: "E0063: missing field `name`", why: "`..a` supplies `name`, so `b` has every field." }
+          answer: a
+        explanation: "`..a` moved `a.name` into `b`. Printing `a` needs every field, and one of them is gone."
+        concepts: [struct.update, struct.ownership, err.E0382]
+
+      - type: decode-error
+        id: decode-missing-height
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            struct Config {
+                width: u32,
+                height: u32,
+                title: String,
+            }
+
+            fn main() {
+                let c = Config {
+                    width: 80,
+                    title: String::from("Map"),
+                };
+                println!("{}", c.width);
+            }
+          verify: compile-fail
+          expectErrors: [E0063]
+        options:
+          - { id: a, text: "Add `height: 24,` inside the braces on lines 8-11" }
+          - { id: b, text: "Add `..` on its own before the closing `}`", why: "`..` needs another instance to copy from, such as `..other`." }
+          - { id: c, text: "Make it `let mut c` and set `c.height = 24;` afterwards", why: "Every field needs a value when the instance is created. You can change it later, but you can't leave it out." }
+        answer: a
+        explanation: "E0063 means a field was left out. Every field must be given a value when you create an instance."
+        concepts: [struct.define]
+
+      - type: fill-tokens
+        id: fill-temp
+        prompt: "Fill the blanks so the program prints `Temp(20.5)`"
+        code:
+          rust: |
+            #[derive(___1___)]
+            struct Temp(f64);
+
+            fn main() {
+                let t = Temp(18.5);
+                let warmer = Temp(t.___2___ + 2.0);
+                println!("{warmer:?}");
+            }
+          verify: run
+          expectStdout: "Temp(20.5)\n"
+        blanks:
+          "1": { answer: ["Debug"] }
+          "2": { answer: ["0"] }
+        bank: ["Debug", "Display", "0", "1", "f64", "value"]
+        explanation: "Deriving Debug allows `{warmer:?}`. `t.0` is the only field, 18.5, and adding 2.0 gives 20.5."
+        concepts: [derive.debug, struct.tuple]
+
+      - type: spot-bug
+        id: spot-area-plus
+        prompt: "This program should print the area, `12`, but prints `7`. Tap the buggy line."
+        code:
+          rust: |
+            struct Rect { width: u32, height: u32 }
+
+            fn area(r: &Rect) -> u32 {
+                r.width + r.height
+            }
+
+            fn main() {
+                let r = Rect {
+                    width: 3,
+                    height: 4,
+                };
+                println!("{}", area(&r));
+            }
+          verify: run
+          expectStdout: "7\n"
+        answer: 4
+        explanation: "Area is width times height. Line 4 adds the fields instead of multiplying them: `r.width * r.height`."
+        concepts: [struct.define, borrow.shared]
+
+      - type: predict-output
+        id: predict-dbg-in-field
+        prompt: What does this print to stdout?
+        code:
+          rust: |
+            struct Rect {
+                width: u32,
+                height: u32,
+            }
+
+            fn main() {
+                let scale = 2;
+                let r = Rect {
+                    width: dbg!(30 * scale),
+                    height: 50,
+                };
+                println!("{}", r.width * r.height);
+            }
+          verify: run
+        options:
+          - { id: a, text: "3000" }
+          - { id: b, text: "60\n3000", why: "`dbg!` reports `60` on stderr, not stdout." }
+          - { id: c, text: "1500", why: "`dbg!` returns `30 * scale`, which is 60, so `width` is 60." }
+        answer: a
+        explanation: "`dbg!(30 * scale)` returns 60, which becomes `width`. `60 * 50` is 3000."
+        concepts: [macro.dbg, struct.define]
+
+      - type: compiles
+        id: compiles-show-twice
+        code:
+          rust: |
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn show(p: Point) {
+                println!("{} {}", p.x, p.y);
+            }
+
+            fn main() {
+                let p = Point { x: 1, y: 2 };
+                show(p);
+                show(p);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: use of moved value: `p`" }
+            - { id: b, text: "E0308: mismatched types", why: "`show` takes a `Point` and gets one both times. The problem is ownership." }
+            - { id: c, text: "E0277: `Point` doesn't implement `Debug`", why: "Only the `i32` fields are printed, with `{}`, so Debug isn't needed." }
+          answer: a
+        explanation: "A struct isn't `Copy` even when its fields are, so the first `show(p)` moves `p`. Taking `p: &Point` would let you call it twice."
+        concepts: [struct.ownership, own.copy, err.E0382]
+
+      - type: mcq
+        id: mcq-which-unit
+        prompt: Which of these defines a unit struct?
+        options:
+          - { id: a, code: "struct Empty;" }
+          - { id: b, code: "struct Empty();", why: "That's a tuple struct with no fields. A unit struct has no `()` or `{}`." }
+          - { id: c, code: "struct Empty {}", why: "That's a struct with named fields, and the list is empty. A unit struct ends with `;` straight after its name." }
+          - { id: d, code: "let Empty = ();", why: "That makes a variable holding the unit value `()`, not a new type." }
+        answer: a
+        explanation: "A unit struct is a name followed by `;`. You create one with the name alone: `Empty`."
+        concepts: [struct.unit]
+
+      - type: true-false
+        id: tf-dbg-ref
+        prompt: "This program compiles: `dbg!(&player)` leaves `player` usable afterwards."
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Player {
+                name: String,
+            }
+
+            fn main() {
+                let player = Player {
+                    name: String::from("Ana"),
+                };
+                dbg!(&player);
+                println!("{}", player.name);
+            }
+          verify: run
+          expectStdout: "Ana\n"
+        answer: true
+        explanation: "`dbg!` takes ownership of what you pass it. Passing `&player` gives it a reference, so `player` itself doesn't move."
+        concepts: [macro.dbg, borrow.shared]
+
+      - type: predict-output
+        id: predict-score-shadow
+        prompt: Build the output
+        code:
+          rust: |
+            struct Score(u32);
+
+            fn main() {
+                let mut s = Score(5);
+                s.0 *= 2;
+                let s = Score(s.0 + 1);
+                println!("{} {}", s.0, s.0 * 2);
+            }
+          verify: run
+        tiles: ["11", "22", "10", "20", "5"]
+        answer: "11 22"
+        explanation: "`s.0` doubles to 10. The shadowing `let` makes a new `Score` holding 11, and `11 * 2` is 22."
+        concepts: [struct.tuple, var.shadowing, var.mut]
+
+      - type: decode-error
+        id: decode-get-name
+        prompt: Which change to line 6 fixes the error?
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+            }
+
+            fn get_name(p: &Pet) -> String {
+                p.name
+            }
+
+            fn main() {
+                let name = String::from("Rex");
+                let pet = Pet { name };
+                println!("{}", get_name(&pet));
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        options:
+          - { id: a, code: "p.name.clone()" }
+          - { id: b, code: "&p.name", why: "That's a `&String`, but the function promises to return a `String` (E0308)." }
+          - { id: c, code: "return p.name;", why: "That's the same move written with `return`. It's still E0507." }
+        answer: a
+        explanation: "`p` only borrows the `Pet`, so the `String` can't be moved out of it. `.clone()` returns a new `String` and leaves `pet` whole."
+        concepts: [struct.ownership, own.clone, borrow.shared]
+
+      - type: parsons
+        id: parsons-area
+        prompt: "The struct `Rect` (with `width` and `height`, and `#[derive(Debug)]`) is already defined. Arrange the lines so the program prints `12 Rect { width: 3, height: 4 }`."
+        lines:
+          - { id: l1, text: "fn area(r: &Rect) -> u32 {" }
+          - { id: l2, text: "    r.width * r.height" }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn main() {" }
+          - { id: l5, text: "    let r = Rect { width: 3, height: 4 };" }
+          - { id: l6, text: '    println!("{} {r:?}", area(&r));' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "fn area(r: Rect) -> u32 {" }
+          - { id: d2, text: "    r.width + r.height" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l4, l5, l6, l7, l1, l2, l3]
+        verify:
+          harness: |
+            #[derive(Debug)]
+            struct Rect {
+                width: u32,
+                height: u32,
+            }
+            {{solution}}
+          mode: run
+          expectStdout: "12 Rect { width: 3, height: 4 }\n"
+        explanation: "`area` borrows the `Rect`, so `main` can still print `r` afterwards. Taking `r: Rect` would move it into `area`."
+        concepts: [struct.ownership, derive.debug, borrow.shared]
+
+      - type: match-pairs
+        id: pairs-struct-errors
+        prompt: Match each error code to its cause
+        pairs:
+          - ["E0063", "a field left out when creating an instance"]
+          - ["E0609", "reading a field that doesn't exist"]
+          - ["E0277", "`{:?}` on a struct without the derive"]
+          - ["E0106", "a `&str` field with no lifetime"]
+          - ["E0382", "using a struct after it moved"]
+        concepts: [struct.define, derive.debug, struct.ownership]
+
+      - type: compiles
+        id: compiles-reset-shared-ref
+        code:
+          rust: |
+            struct Player {
+                score: u32,
+            }
+
+            fn reset(p: &Player) {
+                p.score = 0;
+            }
+
+            fn main() {
+                let mut p = Player { score: 3 };
+                reset(&p);
+                println!("{}", p.score);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0594: cannot assign to `p.score`, which is behind a `&` reference" }
+            - { id: b, text: "E0382: use of moved value: `p`", why: "`reset` only borrows `p`, so nothing moves." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`p` in `main` is `mut`. The problem is the shared reference inside `reset`." }
+          answer: a
+        explanation: "A `&Player` only allows reading. To change a field, `reset` needs `p: &mut Player`, called as `reset(&mut p)`."
+        concepts: [struct.define, borrow.mut]

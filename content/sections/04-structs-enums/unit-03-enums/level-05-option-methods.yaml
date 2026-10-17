@@ -1,0 +1,488 @@
+id: structs-enums.enums.option-methods
+title: Handy Option methods
+icon: sparkles
+concepts: [option.methods]
+reviewConcepts: [option.basics, option.type-safety, enum.impl, enum.define, types.overflow, ctrl.if, own.move, err.E0382, err.E0308, fn.return]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-unwrap-or
+        title: A fallback value
+        markdown: |
+          **`unwrap_or(fallback)` gives you the value inside `Some`, or the fallback for `None`.**
+
+          The result is a plain value, not an `Option`, so you can use it straight away.
+        code:
+          rust: |
+            let nickname: Option<&str> = None;
+            let name = nickname.unwrap_or("friend");
+            println!("Hi, {name}!");
+          verify: run
+          expectStdout: "Hi, friend!\n"
+        concepts: [option.methods]
+
+      - type: predict-output
+        id: predict-unwrap-or-some
+        code:
+          rust: |
+            let bonus: Option<u32> = Some(7);
+            println!("{}", bonus.unwrap_or(0));
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "0", why: "The fallback is used only for `None`. `bonus` is `Some(7)`." }
+          - { id: c, text: "Some(7)", why: "`unwrap_or` takes the value out of the `Some`, so it prints a plain number." }
+        answer: a
+        explanation: "`bonus` holds a value, so `unwrap_or` returns it: 7."
+        concepts: [option.methods]
+
+      - type: concept
+        id: concept-is-some
+        title: Asking which variant
+        markdown: |
+          **`is_some()` and `is_none()` answer with a `bool`.** They don't take the value out; they only tell you whether there is one.
+        code:
+          rust: |
+            let parcel: Option<u32> = Some(3);
+            let empty: Option<u32> = None;
+            println!("{}", parcel.is_some());
+            println!("{}", empty.is_none());
+          verify: run
+          expectStdout: "true\ntrue\n"
+        concepts: [option.methods]
+
+      - type: predict-output
+        id: predict-is-none
+        code:
+          rust: |
+            let reply: Option<&str> = Some("yes");
+            println!("{}", reply.is_none());
+          verify: run
+        options:
+          - { id: a, text: "false" }
+          - { id: b, text: "true", why: "`is_none()` is `true` only for `None`. `reply` holds `\"yes\"`." }
+          - { id: c, text: "yes", why: "`is_none()` returns a `bool`. It doesn't give you the value." }
+        answer: a
+        explanation: "`reply` is `Some(\"yes\")`, so it isn't `None` and `is_none()` returns `false`."
+        concepts: [option.methods]
+
+      - type: true-false
+        id: tf-unwrap-or-type
+        prompt: "If `score` is an `Option<i32>`, then `score.unwrap_or(0)` is an `i32`."
+        answer: true
+        explanation: "`unwrap_or` always produces a value of the inner type: the one in `Some`, or the fallback."
+        concepts: [option.methods]
+
+      - type: fill-tokens
+        id: fill-unwrap-or
+        prompt: Fill the blank so the program prints `0`
+        code:
+          rust: |
+            let score: Option<i32> = None;
+            let shown = score.___1___(0);
+            println!("{shown}");
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["unwrap_or"] }
+        bank: ["unwrap_or", "is_some", "is_none", "unwrap"]
+        explanation: "`unwrap_or(0)` turns `None` into `0`. `is_some` and `is_none` take no argument and give a `bool`."
+        concepts: [option.methods]
+
+      - type: compiles
+        id: compiles-option-as-condition
+        code:
+          rust: |
+            fn main() {
+                let ticket: Option<u32> = Some(12);
+                if ticket {
+                    println!("Welcome!");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which change makes it compile?
+          options:
+            - { id: a, text: "`if ticket.is_some() {`" }
+            - { id: b, text: "`if ticket != 0 {`", why: "`ticket` is an `Option<u32>`, so comparing it with a number is another type error." }
+            - { id: c, text: "`if ticket.unwrap_or(0) {`", why: "That gives a `u32`, and a number isn't a `bool` either." }
+          answer: a
+        explanation: "An `if` condition must be a `bool`, and Rust has no truthiness. `is_some()` gives the `bool` you need."
+        concepts: [option.methods, ctrl.if]
+
+      - type: mcq
+        id: mcq-is-some-type
+        prompt: "What type does `ticket.is_some()` return?"
+        options:
+          - { id: a, code: "bool" }
+          - { id: b, code: "Option<bool>", why: "It always has an answer, true or false, so it doesn't need an `Option`." }
+          - { id: c, code: "u32", why: "It doesn't return the value inside. Use `unwrap_or` for that." }
+        answer: a
+        explanation: "`is_some()` and `is_none()` only check the variant, so they return `bool`."
+        concepts: [option.methods]
+
+      - type: predict-output
+        id: predict-checked-fallback
+        code:
+          rust: |
+            let hp: u8 = 250;
+            let healed = hp
+                .checked_add(10)
+                .unwrap_or(255);
+            println!("{healed}");
+          verify: run
+        options:
+          - { id: a, text: "255" }
+          - { id: b, text: "260", why: "A `u8` can hold at most 255, so `checked_add` returns `None` here." }
+          - { id: c, text: "4", why: "`checked_add` doesn't wrap around. It gives `None`, and `unwrap_or` replaces that with 255." }
+        answer: a
+        explanation: "250 + 10 doesn't fit in a `u8`, so `checked_add` returns `None`, and `unwrap_or(255)` gives the fallback."
+        concepts: [option.methods, types.overflow]
+
+      - type: match-pairs
+        id: pairs-method-results
+        prompt: Match each expression to its result
+        pairs:
+          - ["Some(4).unwrap_or(0)", "4"]
+          - ["None.unwrap_or(0)", "0"]
+          - ["Some(4).is_some()", "true"]
+          - ["Some(4).is_none()", "false"]
+        concepts: [option.methods]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-map
+        title: Change the value, keep the Option
+        markdown: |
+          **`map` changes the value inside a `Some` and leaves `None` alone.**
+
+          `|n| n * 2` is a *closure*, a small unnamed function: "take `n`, give back `n * 2`". Use it as a recipe for now; Section 10 explains closures.
+        code:
+          rust: |
+            let price: Option<u32> = Some(5);
+            let none: Option<u32> = None;
+            println!("{:?}", price.map(|n| n * 2));
+            println!("{:?}", none.map(|n| n * 2));
+          verify: run
+          expectStdout: "Some(10)\nNone\n"
+        concepts: [option.methods]
+
+      - type: predict-output
+        id: predict-map-some
+        code:
+          rust: |
+            let level: Option<u32> = Some(3);
+            let next = level.map(|n| n + 1);
+            println!("{next:?}");
+          verify: run
+        options:
+          - { id: a, text: "Some(4)" }
+          - { id: b, text: "4", why: "`map` keeps the result inside an `Option`, so `next` is `Some(4)`." }
+          - { id: c, text: "Some(3)", why: "`map` replaces the value with what the closure returns: `3 + 1`." }
+        answer: a
+        explanation: "`map` runs the closure on the 3 inside the `Some` and wraps the result: `Some(4)`."
+        concepts: [option.methods]
+
+      - type: predict-output
+        id: predict-map-none
+        code:
+          rust: |
+            let level: Option<u32> = None;
+            let next = level.map(|n| n + 1);
+            println!("{next:?}");
+          verify: run
+        options:
+          - { id: a, text: "None" }
+          - { id: b, text: "Some(1)", why: "With `None` there's no value to pass to the closure, so it never runs." }
+          - { id: c, text: "1", why: "`map` never invents a value. `None` stays `None`." }
+        answer: a
+        explanation: "For `None`, `map` skips the closure and returns `None`."
+        concepts: [option.methods]
+
+      - type: mcq
+        id: mcq-map-type
+        prompt: "`price` is an `Option<u32>`. What is the type of `price.map(|p| p * 2)`?"
+        options:
+          - { id: a, code: "Option<u32>" }
+          - { id: b, code: "u32", why: "If `price` is `None` there's no number to return, so the result is still an `Option`." }
+          - { id: c, code: "bool", why: "That's `is_some()`. `map` returns an `Option` of whatever the closure gives back." }
+        answer: a
+        explanation: "`map` keeps the `Option` around the result. Use `unwrap_or` afterwards if you need a plain number."
+        concepts: [option.methods]
+
+      - type: concept
+        id: concept-unwrap
+        title: unwrap means "I'm sure"
+        markdown: |
+          **`unwrap()` returns the value inside `Some`. On `None`, it panics** and the program stops.
+
+          Use it only when a `None` would be a bug. When a missing value is normal, choose `unwrap_or`.
+        code:
+          rust: |
+            let first: Option<char> = Some('R');
+            println!("{}", first.unwrap());
+          verify: run
+          expectStdout: "R\n"
+        concepts: [option.methods]
+
+      - type: mcq
+        id: mcq-unwrap-none
+        prompt: What happens when this runs?
+        code:
+          rust: |
+            let seat: Option<u32> = None;
+            let n = seat.unwrap();
+            println!("Seat {n}");
+          verify: run
+          expectPanic: "called `Option::unwrap()` on a `None` value"
+        options:
+          - { id: a, text: "It panics: called `Option::unwrap()` on a `None` value" }
+          - { id: b, text: "It prints `Seat 0`", why: "`unwrap` has no fallback. That's what `unwrap_or(0)` is for." }
+          - { id: c, text: "It doesn't compile", why: "The types are fine: `unwrap` on an `Option<u32>` gives a `u32`. The problem only shows up when it runs." }
+        answer: a
+        explanation: "`unwrap` on `None` stops the program with a panic. The compiler can't know in general whether an `Option` will be `None`."
+        concepts: [option.methods]
+
+      - type: spot-bug
+        id: spot-unwrap-panic
+        prompt: This program panics. Tap the line with the mistake.
+        code:
+          rust: |
+            fn main() {
+                let a: Option<u32> = Some(2);
+                let b: Option<u32> = None;
+                let x = a.unwrap_or(0);
+                let y = b.unwrap();
+                println!("{}", x + y);
+            }
+          verify: run
+          expectPanic: "called `Option::unwrap()` on a `None` value"
+        answer: 5
+        explanation: "`b` is `None`, so `b.unwrap()` panics. `b.unwrap_or(0)` would give 0 instead."
+        concepts: [option.methods]
+
+      - type: true-false
+        id: tf-unwrap-compile-check
+        prompt: "The compiler rejects `x.unwrap()` when `x` might be `None`."
+        answer: false
+        explanation: "`unwrap` compiles for any `Option`. If the value is `None` when the line runs, the program panics."
+        concepts: [option.methods]
+
+      - type: fill-tokens
+        id: fill-map-unwrap-or
+        prompt: Fill the blanks so the program prints `30`
+        code:
+          rust: |
+            let minutes: Option<u32> = Some(3);
+            let total = minutes
+                .___1___(|m| m * 10)
+                .___2___(0);
+            println!("{total}");
+          verify: run
+          expectStdout: "30\n"
+        blanks:
+          "1": { answer: ["map"] }
+          "2": { answer: ["unwrap_or"] }
+        bank: ["map", "unwrap_or", "unwrap", "is_some", "Some"]
+        explanation: "`map` turns `Some(3)` into `Some(30)`, then `unwrap_or(0)` takes the 30 out."
+        concepts: [option.methods]
+
+      - type: compiles
+        id: compiles-map-not-plain
+        code:
+          rust: |
+            fn main() {
+                let price: Option<u32> = Some(4);
+                let n: u32 = price.map(|p| p * 2);
+                println!("{n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0599: no method named `map`", why: "`Option` has a `map` method. The problem is the type of its result." }
+            - { id: c, text: "E0282: type annotations needed", why: "The annotation is there, `u32`. It doesn't match the `Option<u32>` that `map` returns." }
+          answer: a
+        explanation: "`map` returns an `Option<u32>`, but `n` is declared as `u32`. Add `.unwrap_or(0)` to get a plain number."
+        concepts: [option.methods, option.type-safety, err.E0308]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-greeting
+        prompt: Arrange the lines so the program prints `Hello, guest`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let user: Option<&str> = None;" }
+          - { id: l3, text: "    let name = user.unwrap_or(\"guest\");" }
+          - { id: l4, text: "    println!(\"Hello, {name}\");" }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let name = user.unwrap();" }
+          - { id: d2, text: "    let user: Option<&str> = null;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Hello, guest\n"
+        explanation: "`user` is `None`, so `unwrap_or(\"guest\")` gives the fallback. `unwrap()` would panic, and Rust has no `null`."
+        concepts: [option.methods, option.basics]
+
+      - type: decode-error
+        id: decode-map-type
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let bonus: Option<u32> = None;
+                let extra = bonus.map(|b| b * 2);
+                let total = 100 + extra;
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Change line 3 to `let extra = bonus.map(|b| b * 2).unwrap_or(0);`" }
+          - { id: b, text: "Change line 3 to `let extra = bonus.map(|b| b * 2).unwrap();`", why: "That compiles, but `bonus` is `None`, so it panics when it runs." }
+          - { id: c, text: "Change line 3 to `let extra = bonus.is_some();`", why: "`is_some()` is a `bool`, and you can't add a `bool` to a number." }
+        answer: a
+        explanation: "`map` still returns an `Option`, which can't be added to a number (E0277). `unwrap_or(0)` turns `None` into 0, so `total` is 100."
+        concepts: [option.methods, option.type-safety]
+
+      - type: mcq
+        id: mcq-unwrap-or-vs-unwrap
+        prompt: "A shop looks up a discount code, and most customers don't have one. What should it use on the `Option<u32>` it gets back?"
+        options:
+          - { id: a, code: "discount.unwrap_or(0)" }
+          - { id: b, code: "discount.unwrap()", why: "A missing code is normal here, and `unwrap` would panic for most customers." }
+          - { id: c, code: "discount.is_some()", why: "That only says whether there is a discount. You still need the amount." }
+        answer: a
+        explanation: "When `None` is an everyday case, give it a sensible meaning. No code means a discount of 0."
+        concepts: [option.methods]
+
+      - type: predict-output
+        id: predict-enum-option
+        code:
+          rust: |
+            enum Road { Street, Highway, Track }
+            impl Road {
+                fn limit(&self) -> Option<u32> {
+                    match self {
+                        Road::Street => Some(50),
+                        Road::Highway => Some(110),
+                        Road::Track => None,
+                    }
+                }
+            }
+
+            fn main() {
+                let limit = Road::Track.limit();
+                println!("{}", limit.unwrap_or(80));
+            }
+          verify: run
+        options:
+          - { id: a, text: "80" }
+          - { id: b, text: "None", why: "`unwrap_or(80)` replaces `None` with 80, so a plain number is printed." }
+          - { id: c, text: "50", why: "`Road::Track` takes its own arm, which returns `None`." }
+        answer: a
+        explanation: "`Track` has no speed limit, so `limit()` returns `None`, and `unwrap_or(80)` gives the fallback, 80."
+        concepts: [option.methods, enum.impl]
+
+      - type: compiles
+        id: compiles-map-moves
+        code:
+          rust: |
+            fn main() {
+                let name: Option<String> =
+                    Some(String::from("Ann"));
+                let len = name.map(|s| s.len());
+                println!("{name:?} {len:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `name`" }
+            - { id: b, text: "E0308: mismatched types", why: "`len` is an `Option<usize>`, which `{:?}` prints fine. `name` is the problem." }
+            - { id: c, text: "E0599: no method named `len`", why: "`s` is a `String`, which has a `len` method." }
+          answer: a
+        explanation: "`map` takes the `Option` by value, so the `String` inside moves into the closure. `name` can't be printed afterwards."
+        concepts: [option.methods, own.move, err.E0382]
+
+      - type: predict-output
+        id: predict-chain-none
+        prompt: Build the output
+        code:
+          rust: |
+            let a: Option<u32> = Some(2);
+            let b: Option<u32> = None;
+            let x = a.map(|n| n * 5).unwrap_or(1);
+            let y = b.map(|n| n * 5).unwrap_or(1);
+            println!("{x} {y}");
+            println!("{}", b.is_none());
+          verify: run
+        tiles: ["10", "1", "true", "5", "false", "None"]
+        answer: "10 1\ntrue"
+        explanation: "`a` becomes `Some(10)`, then 10. `b` stays `None` through `map`, so `unwrap_or` gives 1."
+        concepts: [option.methods]
+
+      - type: fill-tokens
+        id: fill-is-none
+        prompt: Fill the blanks so the program prints `No winner yet`
+        code:
+          rust: |
+            let winner: Option<&str> = ___1___;
+            if winner.___2___() {
+                println!("No winner yet");
+            }
+          verify: run
+          expectStdout: "No winner yet\n"
+        blanks:
+          "1": { answer: ["None"] }
+          "2": { answer: ["is_none"] }
+        bank: ["None", "is_none", "is_some", "unwrap", "null"]
+        explanation: "`winner` is `None`, so `is_none()` is `true` and the message prints. `is_some()` would be `false`."
+        concepts: [option.methods, ctrl.if]
+
+      - type: true-false
+        id: tf-is-some-not-none
+        prompt: "For any `Option`, `x.is_some()` gives the same answer as `!x.is_none()`."
+        answer: true
+        explanation: "An `Option` is always exactly one of `Some` or `None`, so the two checks are opposites."
+        concepts: [option.methods]
+
+      - type: spot-bug
+        id: spot-unwrap-or-type
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let name: Option<&str> = None;
+                let age: Option<u32> = Some(9);
+                let n = name.unwrap_or("anon");
+                let a = age.unwrap_or("unknown");
+                println!("{n} {a}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "The fallback must have the same type as the value inside. `age` holds a `u32`, so `\"unknown\"` doesn't fit."
+        concepts: [option.methods, err.E0308]
+
+      - type: match-pairs
+        id: pairs-which-method
+        prompt: Match each need to the method
+        pairs:
+          - ["value, or a default for None", "unwrap_or"]
+          - ["value, or panic on None", "unwrap"]
+          - ["change the value, keep the Option", "map"]
+          - ["check whether there is a value", "is_some"]
+        concepts: [option.methods]

@@ -1,0 +1,630 @@
+id: structs-enums.match.bind
+title: Taking data out of variants
+icon: package
+concepts: [match.bind]
+reviewConcepts: [match.enum, match.exhaustive, err.E0004, enum.data, option.basics, own.move, err.E0382, borrow.shared]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-bind-tuple
+        title: Name the data inside
+        markdown: |
+          **A pattern can give names to a variant's data.** `Shape::Square(side)` matches any `Square` and puts its number in a new variable, `side`, which you can use in that arm.
+        code:
+          rust: |
+            enum Shape {
+                Square(u32),
+                Rect(u32, u32),
+            }
+
+            let shape = Shape::Rect(3, 4);
+            let area = match shape {
+                Shape::Square(side) => side * side,
+                Shape::Rect(w, h) => w * h,
+            };
+            println!("{area}");
+          verify: run
+          expectStdout: "12\n"
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-square
+        code:
+          rust: |
+            enum Shape {
+                Square(u32),
+                Rect(u32, u32),
+            }
+
+            let shape = Shape::Square(5);
+            let area = match shape {
+                Shape::Square(side) => side * side,
+                Shape::Rect(w, h) => w * h,
+            };
+            println!("{area}");
+          verify: run
+        options:
+          - { id: a, text: "25" }
+          - { id: b, text: "5", why: "`side` is 5, and the arm returns `side * side`." }
+          - { id: c, text: "10", why: "The arm multiplies `side` by itself, it doesn't add." }
+        answer: a
+        explanation: "The `Square` arm matches and binds `side` to 5, so the area is 5 * 5."
+        concepts: [match.bind]
+
+      - type: concept
+        id: concept-bind-option
+        title: Some(n) and None
+        markdown: |
+          **`Option` is an enum too, so you match it the same way.** `Some(points)` matches when there's a value and names it `points`. `None` has no data, so its arm has nothing to bind.
+        code:
+          rust: |
+            let bonus: Option<u32> = Some(5);
+            let total = match bonus {
+                Some(points) => 10 + points,
+                None => 10,
+            };
+            println!("{total}");
+          verify: run
+          expectStdout: "15\n"
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-none
+        code:
+          rust: |
+            let bonus: Option<u32> = None;
+            let total = match bonus {
+                Some(points) => 10 + points,
+                None => 10,
+            };
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "None", why: "`total` is a number from one of the arms. The `None` arm gives 10." }
+          - { id: c, text: "0", why: "Nothing turns `None` into 0 here. The `None` arm says 10." }
+        answer: a
+        explanation: "`bonus` is `None`, so the second arm runs and `total` is 10."
+        concepts: [match.bind]
+
+      - type: fill-tokens
+        id: fill-some-none
+        prompt: "Fill the blanks so the program prints `14`"
+        code:
+          rust: |
+            let reading: Option<u32> = Some(7);
+            let doubled = match reading {
+                ___1___(n) => n * 2,
+                ___2___ => 0,
+            };
+            println!("{doubled}");
+          verify: run
+          expectStdout: "14\n"
+        blanks:
+          "1": { answer: ["Some"] }
+          "2": { answer: ["None"] }
+        bank: ["Some", "None", "Null", "nil", "Option"]
+        explanation: "`Option` has two variants, `Some` and `None`. Rust has no `null`; `None` is the \"no value\" case."
+        concepts: [match.bind]
+
+      - type: true-false
+        id: tf-new-variable
+        prompt: "In the arm `Some(points) => ...`, `points` must be a variable you created earlier with `let`."
+        answer: false
+        explanation: "The pattern creates `points` itself. It exists only inside that arm and holds the value from the `Some`."
+        concepts: [match.bind]
+
+      - type: concept
+        id: concept-bind-struct
+        title: Variants with named fields
+        markdown: |
+          **For a variant with named fields, write the field names in braces.** `Cmd::Move { x, y }` binds the fields to variables called `x` and `y`.
+        code:
+          rust: |
+            enum Cmd {
+                Quit,
+                Move { x: i32, y: i32 },
+            }
+
+            let cmd = Cmd::Move { x: 2, y: -1 };
+            match cmd {
+                Cmd::Quit => println!("bye"),
+                Cmd::Move { x, y } => {
+                    println!("to {x},{y}")
+                }
+            }
+          verify: run
+          expectStdout: "to 2,-1\n"
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-move
+        code:
+          rust: |
+            enum Cmd {
+                Quit,
+                Move { x: i32, y: i32 },
+            }
+
+            let cmd = Cmd::Move { x: 4, y: 1 };
+            let steps = match cmd {
+                Cmd::Quit => 0,
+                Cmd::Move { x, y } => x + y,
+            };
+            println!("{steps}");
+          verify: run
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "0", why: "`cmd` is a `Move`, so the `Quit` arm doesn't run." }
+          - { id: c, text: "41", why: "`x` and `y` are numbers, and `+` adds them." }
+        answer: a
+        explanation: "The `Move` arm binds `x` to 4 and `y` to 1, then returns their sum."
+        concepts: [match.bind]
+
+      - type: mcq
+        id: mcq-what-binds
+        prompt: "In the arm `Cmd::Move { x, y } => ...`, what are `x` and `y`?"
+        options:
+          - { id: a, text: "New variables holding the `x` and `y` fields of the `Move`" }
+          - { id: b, text: "Values the `Move` must have for the arm to match", why: "Plain names match any value. They don't compare against anything." }
+          - { id: c, text: "Variables from outside the `match`", why: "The pattern creates new variables. Any outside `x` or `y` is hidden inside this arm." }
+        answer: a
+        explanation: "Each field name in the pattern becomes a variable, filled from the value being matched."
+        concepts: [match.bind]
+
+      - type: compiles
+        id: compiles-wrong-field
+        code:
+          rust: |
+            enum Cmd {
+                Quit,
+                Move { x: i32, y: i32 },
+            }
+
+            fn main() {
+                let cmd = Cmd::Move { x: 2, y: 3 };
+                match cmd {
+                    Cmd::Quit => println!("bye"),
+                    Cmd::Move { a, b } => {
+                        println!("{a}")
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0026]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`Move` has fields `x` and `y`, so the pattern must use those names" }
+            - { id: b, text: "`b` is never used", why: "An unused variable is only a warning." }
+            - { id: c, text: "The `Quit` arm must come last", why: "Arm order doesn't matter here: each arm names a different variant." }
+          answer: a
+        explanation: "In a braces pattern the names are field names, so `{ a, b }` doesn't fit `Move`. Use `{ x, y }`."
+        concepts: [match.bind]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-ignore
+        title: "_ and .. ignore data"
+        markdown: |
+          **`_` skips one value; `..` skips all the rest.** Use them when you only need part of a variant's data. `Rgb(r, ..)` is the same as `Rgb(r, _, _)`.
+        code:
+          rust: |
+            enum Pixel {
+                Grey(u8),
+                Rgb(u8, u8, u8),
+            }
+
+            let pixel = Pixel::Rgb(200, 30, 90);
+            let red = match pixel {
+                Pixel::Grey(level) => level,
+                Pixel::Rgb(r, ..) => r,
+            };
+            println!("{red}");
+          verify: run
+          expectStdout: "200\n"
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-middle
+        code:
+          rust: |
+            enum Pixel {
+                Grey(u8),
+                Rgb(u8, u8, u8),
+            }
+
+            let pixel = Pixel::Rgb(10, 20, 30);
+            let green = match pixel {
+                Pixel::Grey(level) => level,
+                Pixel::Rgb(_, g, _) => g,
+            };
+            println!("{green}");
+          verify: run
+        options:
+          - { id: a, text: "20" }
+          - { id: b, text: "10", why: "The first value goes to `_`, which ignores it. `g` is the second value." }
+          - { id: c, text: "60", why: "Only `g` is returned. The two `_` values are ignored." }
+        answer: a
+        explanation: "Values are bound by position: `_` skips 10, `g` gets 20, and `_` skips 30."
+        concepts: [match.bind]
+
+      - type: compiles
+        id: compiles-missing-field
+        code:
+          rust: |
+            enum Cmd {
+                Quit,
+                Move { x: i32, y: i32 },
+            }
+
+            fn main() {
+                let cmd = Cmd::Move { x: 2, y: 3 };
+                match cmd {
+                    Cmd::Quit => println!("bye"),
+                    Cmd::Move { x } => {
+                        println!("{x}")
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0027]
+        answer: false
+        followUp:
+          prompt: How do you fix it?
+          options:
+            - { id: a, text: "Write `Cmd::Move { x, .. }` to ignore the other fields" }
+            - { id: b, text: "Write `Cmd::Move { x, _ }`", why: "In a braces pattern, `_` needs a field name: `y: _`. `..` is the short way." }
+            - { id: c, text: "Add a `_ =>` arm at the end", why: "The problem is inside the `Move` pattern, not a missing variant." }
+          answer: a
+        explanation: "A braces pattern must mention every field (E0027) unless it ends with `..`."
+        concepts: [match.bind]
+
+      - type: mcq
+        id: mcq-same-pattern
+        prompt: "`Pixel::Rgb` holds three values. Which pattern matches the same values as `Pixel::Rgb(r, ..)`?"
+        options:
+          - { id: a, code: "Pixel::Rgb(r, _, _)" }
+          - { id: b, code: "Pixel::Rgb(r, _)", why: "A tuple pattern without `..` needs one entry per value. This one has two for three values (E0023)." }
+          - { id: c, code: "Pixel::Rgb(.., r)", why: "This binds `r` to the last value, not the first." }
+          - { id: d, code: "Pixel::Rgb(r)", why: "`r` alone is one entry for three values, which is E0023." }
+        answer: a
+        explanation: "`..` stands for however many values are left, here two, so it's the same as writing `_, _`."
+        concepts: [match.bind]
+
+      - type: spot-bug
+        id: spot-ignored-used
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Shape {
+                Square(u32),
+                Rect(u32, u32),
+            }
+
+            fn main() {
+                let shape = Shape::Rect(2, 5);
+                let area = match shape {
+                    Shape::Square(s) => s * s,
+                    Shape::Rect(w, _) => w * h,
+                };
+                println!("{area}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 10
+        explanation: "The pattern ignores the second value with `_`, so there's no `h`. Bind it with `Shape::Rect(w, h)`."
+        concepts: [match.bind]
+
+      - type: true-false
+        id: tf-two-dotdot
+        prompt: "`Pixel::Rgb(.., g, ..)` is a valid way to bind the middle value."
+        answer: false
+        explanation: "`..` can appear only once in a tuple pattern, or Rust couldn't tell which value you mean. Write `Pixel::Rgb(_, g, _)`."
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-literal-inside
+        code:
+          rust: |
+            let stock: Option<u32> = Some(0);
+            match stock {
+                Some(0) => println!("sold out"),
+                Some(n) => println!("{n} left"),
+                None => println!("not sold here"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "sold out" }
+          - { id: b, text: "0 left", why: "`Some(0)` is checked first and matches, so the `Some(n)` arm is skipped." }
+          - { id: c, text: "not sold here", why: "`stock` is `Some(0)`, which isn't `None`." }
+        answer: a
+        explanation: "A pattern can hold a value instead of a name. `Some(0)` matches only that value, and it comes first."
+        concepts: [match.bind]
+
+      - type: decode-error
+        id: decode-missing-none
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let target: Option<u32> = Some(3);
+                match target {
+                    Some(n) => println!("aim {n}"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "`target` could be `None`, and there's no arm for that" }
+          - { id: b, text: "`n` must be declared before the `match`", why: "The pattern `Some(n)` creates `n`." }
+          - { id: c, text: "`target` is `Some(3)`, so it can't be matched", why: "Any `Option` can be matched. The problem is the missing case." }
+        answer: a
+        explanation: "Matching an `Option` must cover both `Some` and `None`. Add `None => ...`."
+        concepts: [err.E0004, match.bind]
+
+      - type: fill-tokens
+        id: fill-dotdot
+        prompt: "Fill the blanks so the program prints `200`"
+        code:
+          rust: |
+            enum Pixel {
+                Grey(u8),
+                Rgb(u8, u8, u8),
+            }
+
+            let pixel = Pixel::Rgb(200, 0, 0);
+            let red = match pixel {
+                Pixel::Grey(___1___) => level,
+                Pixel::Rgb(r, ___2___) => r,
+            };
+            println!("{red}");
+          verify: run
+          expectStdout: "200\n"
+        blanks:
+          "1": { answer: ["level"] }
+          "2": { answer: [".."] }
+        bank: ["level", "_", "..", "...", "g", "r"]
+        explanation: "`Grey(level)` binds the name the arm uses, and `..` ignores the remaining two values of `Rgb`."
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-review-exhaustive
+        code:
+          rust: |
+            enum Weather {
+                Sunny,
+                Rain(u32),
+                Wind(u32),
+            }
+
+            let today = Weather::Wind(40);
+            match today {
+                Weather::Rain(mm) => {
+                    println!("{mm} mm")
+                }
+                _ => println!("dry"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "dry" }
+          - { id: b, text: "40 mm", why: "`today` is `Wind`, not `Rain`, so the `Rain` arm doesn't match." }
+          - { id: c, text: "Wind(40)", why: "The program never prints the value itself. `_` prints `dry`." }
+        answer: a
+        explanation: "Only `Rain` has its own arm. `_` covers `Sunny` and `Wind`, whatever data `Wind` holds."
+        concepts: [match.bind, match.exhaustive]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-total
+        prompt: "Arrange the lines into a function that adds an optional bonus to 10"
+        lines:
+          - { id: l1, text: "fn total(bonus: Option<u32>) -> u32 {" }
+          - { id: l2, text: "    match bonus {" }
+          - { id: l3, text: "        Some(n) => 10 + n," }
+          - { id: l4, text: "        None => 10," }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "        Some => 10 + n," }
+          - { id: d2, text: "        None(n) => 10," }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{} {}", total(Some(5)), total(None));
+            }
+          mode: run
+          expectStdout: "15 10\n"
+        explanation: "`Some(n)` binds the bonus so the arm can add it. `None` holds no data, so it takes no brackets."
+        concepts: [match.bind]
+
+      - type: compiles
+        id: compiles-moved-out
+        code:
+          rust: |
+            fn main() {
+                let name = Some(String::from("Al"));
+                match name {
+                    Some(n) => println!("hi {n}"),
+                    None => println!("hi"),
+                }
+                println!("{name:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`Some(n)` moves the `String` out of `name` into `n`" }
+            - { id: b, text: "`name` is dropped at the end of the `match`", why: "`name` lives until the end of `main`. Part of it was moved out." }
+            - { id: c, text: "`Option` values can't be printed with `{:?}`", why: "They can, as long as the value inside can." }
+          answer: a
+        explanation: "Binding a non-`Copy` value moves it, the same as `let n = ...`. Afterwards `name` is partly moved (E0382)."
+        concepts: [match.bind, own.move, err.E0382]
+
+      - type: true-false
+        id: tf-match-ref
+        prompt: "Writing `match &name` instead of `match name` makes `n` a `&String` that borrows from `name`, so `name` can still be used afterwards."
+        diagram:
+          caption: "In the `Some(n)` arm of `match &name`: `n` borrows from `name`"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+                - { name: n, points: name }
+          heap:
+            - { id: h1, value: '"Al"' }
+        answer: true
+        explanation: "Matching on a reference binds references to the data inside. Nothing moves, so `name` is still whole after the `match`."
+        concepts: [match.bind, borrow.shared]
+
+      - type: predict-output
+        id: predict-shadow-binding
+        code:
+          rust: |
+            let limit = 5;
+            let reading = Some(9);
+            match reading {
+                Some(limit) => println!("{limit}"),
+                None => println!("none"),
+            }
+            println!("{limit}");
+          verify: run
+        options:
+          - { id: a, text: "9\n5" }
+          - { id: b, text: "5\n5", why: "`Some(limit)` doesn't compare with the outer `limit`. It makes a new `limit` holding 9." }
+          - { id: c, text: "none\n5", why: "`reading` is `Some(9)`, which matches `Some(limit)`." }
+        answer: a
+        explanation: "The pattern creates a new `limit` that shadows the outer one inside the arm. After the `match`, the outer `limit` is 5 again."
+        concepts: [match.bind]
+
+      - type: decode-error
+        id: decode-arity
+        prompt: What's the best fix?
+        code:
+          rust: |
+            enum Shape {
+                Square(u32),
+                Rect(u32, u32),
+            }
+
+            fn main() {
+                let shape = Shape::Rect(2, 5);
+                let area = match shape {
+                    Shape::Square(s) => s * s,
+                    Shape::Rect(w) => w * w,
+                };
+                println!("{area}");
+            }
+          verify: compile-fail
+          expectErrors: [E0023]
+        options:
+          - { id: a, text: "Change line 10 to `Shape::Rect(w, h) => w * h,`" }
+          - { id: b, text: "Change line 10 to `Shape::Rect(w, ..) => w * h,`", why: "`..` ignores the second value, so there's no `h` to use." }
+          - { id: c, text: "Change line 3 to `Rect(u32),`", why: "That changes what a rectangle is, and line 7 would no longer compile." }
+        answer: a
+        explanation: "`Rect` holds two values, so its pattern needs two entries (E0023). Binding both lets the arm multiply them."
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-tiles-cmds
+        prompt: Build the output
+        code:
+          rust: |
+            enum Step {
+                Up(i32),
+                Down(i32),
+            }
+
+            let mut height = 0;
+            let plan = [Step::Up(3), Step::Down(1)];
+            for step in plan {
+                match step {
+                    Step::Up(n) => height += n,
+                    Step::Down(n) => height -= n,
+                }
+                println!("{height}");
+            }
+          verify: run
+        tiles: ["3", "2", "1", "-1", "4"]
+        answer: "3\n2"
+        explanation: "The first step adds 3, the second takes away 1. Each arm binds its own `n`."
+        concepts: [match.bind]
+
+      - type: match-pairs
+        id: pairs-patterns
+        prompt: Match each pattern to what it does
+        pairs:
+          - ["Some(n)", "any Some; names the value"]
+          - ["Some(_)", "any Some; ignores the value"]
+          - ["Some(0)", "only Some holding 0"]
+          - ["Rgb(r, ..)", "keeps the first value only"]
+          - ["Move { x, .. }", "keeps the x field only"]
+        concepts: [match.bind]
+
+      - type: fill-tokens
+        id: fill-struct-variant
+        prompt: "Fill the blanks so the program prints `jump 3`"
+        code:
+          rust: |
+            enum Cmd {
+                Quit,
+                Jump { height: u32, speed: u32 },
+            }
+
+            let cmd = Cmd::Jump {
+                height: 3,
+                speed: 9,
+            };
+            match cmd {
+                Cmd::Quit => println!("bye"),
+                Cmd::Jump { ___1___, ___2___ } => {
+                    println!("jump {height}")
+                }
+            }
+          verify: run
+          expectStdout: "jump 3\n"
+        blanks:
+          "1": { answer: ["height"] }
+          "2": { answer: [".."] }
+        bank: ["height", "..", "_", "h", "..."]
+        explanation: "The field name `height` binds the value the arm prints, and `..` ignores `speed`."
+        concepts: [match.bind]
+
+      - type: spot-bug
+        id: spot-none-data
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let lives: Option<u32> = Some(2);
+                match lives {
+                    Some(n) => println!("{n} left"),
+                    None(n) => println!("{n} left"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0532]
+        answer: 5
+        explanation: "`None` holds no data, so it can't bind anything. The arm should be `None => ...`."
+        concepts: [match.bind]
+
+      - type: mcq
+        id: mcq-review-exhaustive-bind
+        prompt: "`enum Weather { Sunny, Rain(u32) }`. Which set of arms covers every `Weather` value?"
+        options:
+          - { id: a, code: "Weather::Sunny => 0,\nWeather::Rain(mm) => mm," }
+          - { id: b, code: "Weather::Sunny => 0,\nWeather::Rain(5) => 5,", why: "`Rain(5)` covers only rain of 5 mm. `Rain(6)` would have no arm (E0004)." }
+          - { id: c, code: "Weather::Rain(mm) => mm,", why: "`Sunny` has no arm, so this is E0004." }
+        answer: a
+        explanation: "`Rain(mm)` matches rain of any amount, and `Sunny` has its own arm, so every value is covered."
+        concepts: [match.bind, match.exhaustive]

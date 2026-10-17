@@ -1,0 +1,140 @@
+id: structs-enums.patterns.code-read-traffic-lights
+title: Traffic lights state machine
+concepts: []
+reviewConcepts: [enum.define, enum.impl, derive.debug, match.enum, match.exhaustive, err.E0004, method.self, pattern.guards, ctrl.for, var.mut]
+program:
+  rust: |
+    #[derive(Debug)]
+    enum Light { Red, Green, Amber }
+    impl Light {
+        fn next(&self) -> Light {
+            match self {
+                Light::Red => Light::Green,
+                Light::Green => Light::Amber,
+                Light::Amber => Light::Red,
+            }
+        }
+        fn seconds(&self) -> u32 {
+            match self {
+                Light::Amber => 5,
+                Light::Red | Light::Green => 30,
+            }
+        }
+    }
+
+    fn main() {
+        let mut light = Light::Red;
+        for _ in 0..4 {
+            println!("{light:?} for {}s", light.seconds());
+            light = light.next();
+        }
+    }
+  verify: run
+  expectStdout: |
+    Red for 30s
+    Green for 30s
+    Amber for 5s
+    Red for 30s
+chunks:
+  - lines: 2
+    exercises:
+      - type: mcq
+        id: how-many-states
+        prompt: "How many different values can a `Light` be?"
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "1", why: "Each name in the braces is a separate variant, so a `Light` is one of three." }
+          - { id: c, text: "Any number", why: "An enum lists every possible value. `Light` has exactly the three variants listed." }
+        answer: a
+        explanation: "`Light` has three variants: `Red`, `Green` and `Amber`. A `Light` value is always exactly one of them."
+        concepts: [enum.define]
+      - type: true-false
+        id: derive-debug
+        prompt: "Line 1 lets you print a `Light` with `{:?}`."
+        answer: true
+        explanation: "`#[derive(Debug)]` generates Debug formatting, which prints the variant's name, such as `Red`."
+        concepts: [derive.debug]
+  - lines: 8
+    exercises:
+      - type: mcq
+        id: next-of-green
+        prompt: "What does `Light::Green.next()` return?"
+        options:
+          - { id: a, text: "`Light::Amber`" }
+          - { id: b, text: "`Light::Red`", why: "That's what `Amber` turns into. `Green` is on line 7." }
+          - { id: c, text: "`Light::Green`", why: "`next` always returns a different light, chosen by the `match`." }
+        answer: a
+        explanation: "The arm on line 7 matches `Light::Green` and returns `Light::Amber`."
+        concepts: [match.enum, enum.impl]
+      - type: true-false
+        id: delete-arm
+        prompt: "If you deleted line 8, the program would still compile."
+        answer: false
+        explanation: "The `match` would no longer cover `Light::Amber`, which is error E0004: non-exhaustive patterns."
+        concepts: [match.exhaustive, err.E0004]
+  - lines: 7
+    exercises:
+      - type: mcq
+        id: or-pattern
+        prompt: "What does the `|` on line 14 mean?"
+        options:
+          - { id: a, text: "The arm matches `Red` or `Green`" }
+          - { id: b, text: "The arm matches only when the light is both `Red` and `Green`", why: "A light is only ever one variant. `|` means \"or\"." }
+          - { id: c, text: "It's the boolean \"or\" operator, so the arm returns `true`", why: "In a pattern, `|` joins alternatives. The arm's value is 30." }
+        answer: a
+        explanation: "`|` in a pattern means \"or\", so red and green lights both last 30 seconds."
+        concepts: [pattern.guards]
+      - type: mcq
+        id: amber-seconds
+        prompt: "What does `Light::Amber.seconds()` return?"
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "30", why: "Line 13 matches `Amber` first and gives 5." }
+          - { id: c, text: "35", why: "Only one arm runs, so nothing is added up." }
+        answer: a
+        explanation: "The first arm matches `Light::Amber`, so `seconds` returns 5."
+        concepts: [match.enum]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: loop-count
+        prompt: "How many times does the loop body run?"
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "5", why: "`0..4` stops before 4: it is 0, 1, 2 and 3." }
+          - { id: c, text: "3", why: "`0..4` starts at 0, so it has four numbers." }
+        answer: a
+        explanation: "The range `0..4` has four values. `_` ignores the number, since only the count matters."
+        concepts: [ctrl.for]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: why-mut
+        prompt: "Why is `light` declared with `mut` on line 20?"
+        options:
+          - { id: a, text: "The loop assigns it a new `Light` each time round" }
+          - { id: b, text: "Calling a method needs `mut`", why: "`seconds` and `next` take `&self`, which only needs to read `light`." }
+          - { id: c, text: "Enums are always `mut`", why: "Enum variables follow the same rule as any other: `mut` only if you change them." }
+        answer: a
+        explanation: "The loop body replaces `light` with `light.next()`, and a variable can only be assigned again if it's `mut`."
+        concepts: [var.mut, method.self]
+      - type: mcq
+        id: second-line
+        prompt: "The first line printed is `Red for 30s`. What's the second?"
+        options:
+          - { id: a, text: "`Green for 30s`" }
+          - { id: b, text: "`Amber for 5s`", why: "After `Red`, `next` returns `Green`." }
+          - { id: c, text: "`Red for 30s`", why: "Line 23 replaces `light` with the next state before the loop repeats." }
+        answer: a
+        explanation: "After printing, line 23 changes `Red` to `Green`. A green light lasts 30 seconds."
+        concepts: [enum.impl]
+      - type: mcq
+        id: last-line
+        prompt: "What's the fourth and last line printed?"
+        options:
+          - { id: a, text: "`Red for 30s`" }
+          - { id: b, text: "`Amber for 5s`", why: "That's the third line. After `Amber` comes `Red` again." }
+          - { id: c, text: "`Green for 30s`", why: "The order is Red, Green, Amber, then back to Red." }
+        answer: a
+        explanation: "The lights go Red, Green, Amber, Red. The cycle starts again because `Amber` turns into `Red`."
+        concepts: [match.enum, ctrl.for]

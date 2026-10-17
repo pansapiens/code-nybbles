@@ -1,0 +1,10 @@
+id: structs-enums
+title: Structs, Enums & Pattern Matching
+description: Model your own data with structs and enums, give it methods, and take it apart with patterns.
+colour: teal
+units:
+  - unit-01-structs
+  - unit-02-methods
+  - unit-03-enums
+  - unit-04-match
+  - unit-05-patterns

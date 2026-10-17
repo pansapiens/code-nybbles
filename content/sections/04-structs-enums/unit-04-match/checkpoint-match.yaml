@@ -1,0 +1,320 @@
+id: structs-enums.match.checkpoint
+title: "Checkpoint: match & Control Flow"
+icon: flag
+concepts: []
+reviewConcepts:
+  - match.enum
+  - match.exhaustive
+  - err.E0004
+  - match.bind
+  - match.if-let
+  - match.let-else
+  - macro.matches
+  - match.intro
+  - own.move
+  - err.E0382
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-cmds
+        code:
+          rust: |
+            enum Cmd { Add(i32), Times(i32), Reset }
+            let mut total = 1;
+            let cmds = [
+                Cmd::Add(4), Cmd::Times(3),
+                Cmd::Reset, Cmd::Add(2),
+            ];
+            for cmd in cmds {
+                total = match cmd {
+                    Cmd::Add(n) => total + n,
+                    Cmd::Times(n) => total * n,
+                    Cmd::Reset => 0,
+                };
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "17", why: "`Reset` sets `total` to 0 before the last `Add(2)`." }
+          - { id: c, text: "15", why: "That's 1 + 4 then times 3. `Reset` and `Add(2)` still run after that." }
+        answer: a
+        explanation: "`total` goes 5, 15, 0, then 2. Each arm binds `n` from its own command."
+        concepts: [match.bind, match.enum]
+
+      - type: compiles
+        id: compiles-option-arms
+        code:
+          rust: |
+            fn main() {
+                let reading: Option<i32> = Some(-3);
+                let label = match reading {
+                    Some(0) => "zero",
+                    Some(n) => "other",
+                };
+                println!("{label}");
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0004: non-exhaustive patterns: `None` not covered" }
+            - { id: b, text: "E0004: non-exhaustive patterns: `Some(i32::MIN..=-1_i32)` not covered", why: "`Some(n)` covers every number, negative ones included." }
+            - { id: c, text: "E0308: mismatched types", why: "Both arms give text. The problem is a missing case." }
+          answer: a
+        explanation: "`Some(0)` and `Some(n)` cover every `Some`, but nothing covers `None`. The unused `n` is only a warning."
+        concepts: [match.exhaustive, err.E0004, match.bind]
+
+      - type: decode-error
+        id: decode-move-in-match
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let pet = Some(String::from("Rex"));
+                if let Some(name) = pet {
+                    println!("{name} is here");
+                }
+                println!("{pet:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 3 to `if let Some(name) = &pet {`" }
+          - { id: b, text: "Change line 3 to `if let Some(&name) = pet {`", why: "`pet` holds a `String`, not a reference, so `&name` doesn't fit (E0308)." }
+          - { id: c, text: "Delete line 6", why: "That compiles, but it drops the output the program is meant to print. Borrowing keeps both." }
+        answer: a
+        explanation: "`if let Some(name) = pet` moves the `String` into `name`. Matching on `&pet` borrows it, so `pet` is still whole on line 6."
+        concepts: [match.if-let, match.bind, own.move, err.E0382]
+
+      - type: fill-tokens
+        id: fill-let-else-loop
+        prompt: "Fill the blanks so the program prints `9`"
+        code:
+          rust: |
+            let scores = [Some(4), None, Some(5)];
+            let mut total = 0;
+            for score in scores {
+                let ___1___(n) = score else {
+                    ___2___;
+                };
+                total += n;
+            }
+            println!("{total}");
+          verify: run
+          expectStdout: "9\n"
+        blanks:
+          "1": { answer: ["Some"] }
+          "2": { answer: ["continue"] }
+        bank: ["Some", "None", "continue", "break", "0", "Option"]
+        explanation: "`let Some(n) = score else` binds the number or leaves. `continue` skips the `None` and carries on; `break` would stop the loop and print 4."
+        concepts: [match.let-else]
+
+      - type: spot-bug
+        id: spot-variant-binding
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Shape {
+                Circle { r: u32 },
+                Rect { w: u32, h: u32 },
+            }
+
+            fn main() {
+                let s = Shape::Rect { w: 2, h: 3 };
+                let size = match s {
+                    Shape::Circle { r } => r * 6,
+                    Shape::Rect { w } => w * 3,
+                };
+                println!("{size}");
+            }
+          verify: compile-fail
+          expectErrors: [E0027]
+        answer: 10
+        explanation: "The `Rect` pattern doesn't mention `h`. Write `Shape::Rect { w, .. }` or bind both fields."
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-tiles-while-let
+        prompt: Build the output
+        code:
+          rust: |
+            fn halve(n: u32) -> Option<u32> {
+                if n % 2 == 0 {
+                    Some(n / 2)
+                } else {
+                    None
+                }
+            }
+
+            fn main() {
+                let mut n = 24;
+                while let Some(h) = halve(n) {
+                    n = h;
+                    print!("{n} ");
+                }
+            }
+          verify: run
+        tiles: ["12", "6", "3", "1", "24", "0"]
+        answer: "12 6 3"
+        explanation: "24, 12 and 6 are even, so they halve. `halve(3)` is `None`, which ends the loop."
+        concepts: [match.if-let]
+
+      - type: mcq
+        id: mcq-wildcard-tradeoff
+        prompt: "An enum `Tool` has six variants. A function needs special code for `Hammer` only. Which `match` is the better choice?"
+        options:
+          - { id: a, code: "match tool {\n    Tool::Hammer => bang(),\n    _ => {}\n}" }
+          - { id: b, code: "match tool {\n    Tool::Hammer => bang(),\n}", why: "Five variants have no arm, so this is E0004." }
+          - { id: c, code: "match tool {\n    _ => {}\n    Tool::Hammer => bang(),\n}", why: "`_` comes first and catches `Hammer` too, so `bang()` never runs." }
+        answer: a
+        explanation: "With one interesting case, a `_` arm last is the usual choice. `if let Tool::Hammer = tool` would work too."
+        concepts: [match.exhaustive, match.enum]
+
+      - type: true-false
+        id: tf-bare-name
+        prompt: "In a `match` on a `u32`, an arm `limit => ...` only matches if the value equals an existing variable called `limit`."
+        answer: false
+        explanation: "A plain name in a pattern makes a new variable that matches any value. It doesn't compare with anything outside."
+        concepts: [match.bind]
+
+      - type: predict-output
+        id: predict-if-let-chain
+        code:
+          rust: |
+            enum Ticket {
+                Adult,
+                Child(u32),
+            }
+
+            let t = Ticket::Child(15);
+            let cost = if let Ticket::Child(a) = t {
+                if a < 12 { 5 } else { 8 }
+            } else {
+                12
+            };
+            let kid = matches!(t, Ticket::Child(_));
+            println!("{cost} {kid}");
+          verify: run
+        options:
+          - { id: a, text: "8 true" }
+          - { id: b, text: "5 true", why: "15 isn't less than 12, so the inner `if` gives 8." }
+          - { id: c, text: "8 false", why: "`t` is a `Child`, and `Child(_)` accepts any age." }
+          - { id: d, text: "12 true", why: "`12` is the `else` value, used only for `Adult`." }
+        answer: a
+        explanation: "`if let` is an expression too, so it gives `cost` a value. `matches!` then confirms `t` is a `Child`."
+        concepts: [match.if-let, macro.matches, match.bind]
+
+      - type: parsons
+        id: parsons-describe
+        prompt: "Arrange the lines into a function that returns how many wheels a vehicle has"
+        lines:
+          - { id: l1, text: "fn wheels(v: Vehicle) -> u32 {" }
+          - { id: l2, text: "    match v {" }
+          - { id: l3, text: "        Vehicle::Bike => 2," }
+          - { id: l4, text: "        Vehicle::Car => 4," }
+          - { id: l5, text: "        Vehicle::Truck(axles) => axles * 2," }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "        Vehicle::Truck => axles * 2," }
+          - { id: d2, text: "        Vehicle::Truck(axles) => axles * 2;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7]
+          - [l1, l2, l4, l3, l5, l6, l7]
+          - [l1, l2, l4, l5, l3, l6, l7]
+          - [l1, l2, l5, l3, l4, l6, l7]
+          - [l1, l2, l5, l4, l3, l6, l7]
+        verify:
+          harness: |
+            enum Vehicle { Bike, Car, Truck(u32) }
+            {{solution}}
+            fn main() {
+                let a = wheels(Vehicle::Bike) + wheels(Vehicle::Car);
+                println!("{a} {}", wheels(Vehicle::Truck(3)));
+            }
+          mode: run
+          expectStdout: "6 6\n"
+        explanation: "Each variant gets an arm, and `Truck(axles)` binds the number of axles so the arm can use it. The arms can go in any order."
+        concepts: [match.enum, match.bind]
+
+      - type: decode-error
+        id: decode-int-match
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let floor: i32 = 3;
+                let name = match floor {
+                    0 => "ground",
+                    1..=9 => "upper",
+                };
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "Negative floors and floors above 9 have no arm" }
+          - { id: b, text: "Floor 3 has no arm", why: "3 is inside `1..=9`. The missing values are the ones outside 0 to 9." }
+          - { id: c, text: "Ranges can't be used in a `match` that gives a value", why: "They can. The problem is the values that no arm covers." }
+        answer: a
+        explanation: "An `i32` can be negative or larger than 9, and those values have no arm. A `_` arm would cover them."
+        concepts: [err.E0004, match.intro]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each error to its cause
+        pairs:
+          - ["E0004", "a match misses some values"]
+          - ["E0005", "plain let with a pattern that can fail"]
+          - ["E0027", "braces pattern leaves out a field"]
+          - ["E0023", "tuple pattern has the wrong count"]
+          - ["E0369", "== used on your own enum"]
+        concepts: [err.E0004, match.let-else, match.bind, macro.matches]
+
+      - type: predict-output
+        id: predict-shadow-checkpoint
+        code:
+          rust: |
+            let target = 7;
+            let guesses = [Some(3), Some(7), None];
+            let mut hits = 0;
+            for guess in guesses {
+                if let Some(target) = guess {
+                    hits += target;
+                }
+            }
+            println!("{hits}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "7", why: "`Some(target)` doesn't compare with the outer `target`. It binds any number, so 3 is added too." }
+          - { id: c, text: "1", why: "The block adds the bound value, not 1, and it runs for both `Some` values." }
+        answer: a
+        explanation: "The pattern makes a new `target` for each `Some`, holding 3 and then 7. The outer `target` is never compared."
+        concepts: [match.bind, match.if-let]
+
+      - type: compiles
+        id: compiles-let-else-work
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            let lights = [Light::Red, Light::Green];
+            let mut stops = 0;
+            for light in lights {
+                let Light::Green = light else {
+                    stops += 1;
+                    continue;
+                };
+                println!("go");
+            }
+            println!("{stops}");
+          verify: compile
+        answer: true
+        explanation: "The `else` block can do work before it leaves, as long as it ends with `continue`. The program prints `go` then `1`."
+        concepts: [match.let-else]

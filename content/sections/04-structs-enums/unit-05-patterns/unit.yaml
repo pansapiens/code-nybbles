@@ -1,0 +1,19 @@
+id: structs-enums.patterns
+title: Patterns Deep-dive
+description: Take structs, tuples and enums apart with patterns, add guards and @ bindings, and know where each pattern is allowed.
+colour: pink
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch19-00-patterns.html
+sources:
+  - name: The Rust Programming Language, ch. 19
+    url: https://doc.rust-lang.org/book/ch19-00-patterns.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-destructure
+  - level: level-02-guards
+  - chest
+  - level: level-03-refutability
+  - level: level-04-params
+  - code-read: code-read-traffic-lights
+  - checkpoint: checkpoint-structs-enums

@@ -1,0 +1,613 @@
+id: structs-enums.structs.debug
+title: Printing structs
+icon: search
+concepts: [derive.debug, macro.dbg]
+reviewConcepts: [struct.define, struct.update, struct.tuple, struct.unit, fmt.debug, macro.print-family, own.move, err.E0382, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-derive-debug
+        title: "#[derive(Debug)]"
+        markdown: |
+          **`#[derive(Debug)]` lets you print a struct with `{:?}`.** Put it on the line above the struct.
+
+          Rust then writes the printing code for you. It shows the struct's name and every field.
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Player {
+                name: String,
+                score: u32,
+            }
+
+            fn main() {
+                let p = Player {
+                    name: String::from("Ana"),
+                    score: 40,
+                };
+                println!("{p:?}");
+            }
+          verify: run
+          expectStdout: "Player { name: \"Ana\", score: 40 }\n"
+        concepts: [derive.debug]
+
+      - type: predict-output
+        id: predict-debug-point
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let p = Point { x: 2, y: -1 };
+                println!("{p:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Point { x: 2, y: -1 }" }
+          - { id: b, text: "{ x: 2, y: -1 }", why: "Debug format starts with the struct's name." }
+          - { id: c, text: "Point(2, -1)", why: "That's how a tuple struct looks. Named fields are printed with their names." }
+          - { id: d, text: "(2, -1)", why: "Debug shows the struct's name and the field names, not a plain tuple." }
+        answer: a
+        explanation: "The derived Debug format is the struct name, then `field: value` pairs inside `{ }`."
+        concepts: [derive.debug]
+
+      - type: compiles
+        id: compiles-no-derive
+        code:
+          rust: |
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let p = Point { x: 2, y: -1 };
+                println!("{p:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0277: `Point` doesn't implement `Debug`" }
+            - { id: b, text: "E0609: no field `p` on type `Point`", why: "`p` is the variable, not a field. The problem is how it's printed." }
+            - { id: c, text: "E0308: mismatched types", why: "No types are compared here. `{:?}` needs Debug, which `Point` doesn't have." }
+          answer: a
+        explanation: "A new struct can't be printed until you ask for it. Without `#[derive(Debug)]`, `{:?}` is error E0277."
+        concepts: [derive.debug]
+
+      - type: concept
+        id: concept-pretty-debug
+        title: Pretty printing
+        markdown: |
+          **`{:#?}` is the pretty Debug format.** Each field goes on its own line, indented, with a comma after it.
+
+          It's easier to read when a struct has several fields.
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Pet {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let pet = Pet {
+                    name: String::from("Rex"),
+                    age: 3,
+                };
+                println!("{pet:#?}");
+            }
+          verify: run
+          expectStdout: "Pet {\n    name: \"Rex\",\n    age: 3,\n}\n"
+        concepts: [derive.debug, fmt.debug]
+
+      - type: predict-output
+        id: predict-pretty-screen
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Screen {
+                width: u32,
+                height: u32,
+            }
+
+            fn main() {
+                let tv = Screen {
+                    width: 800,
+                    height: 600,
+                };
+                println!("{tv:#?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Screen {\n    width: 800,\n    height: 600,\n}" }
+          - { id: b, text: "Screen { width: 800, height: 600 }", why: "That's `{:?}`. The `#` puts each field on its own line." }
+          - { id: c, text: "Screen {\n    width: 800,\n    height: 600\n}", why: "The pretty format puts a comma after every field, the last one too." }
+        answer: a
+        explanation: "`{:#?}` prints the name and `{`, then each field indented on its own line with a trailing comma, then `}`."
+        concepts: [derive.debug, fmt.debug]
+
+      - type: true-false
+        id: tf-derive-display
+        prompt: "After adding `#[derive(Debug)]` to a struct, `println!(\"{}\", p)` can print it too."
+        answer: false
+        explanation: "`{}` uses a different format, Display, which `derive(Debug)` doesn't provide. Use `{:?}` or `{:#?}`."
+        concepts: [derive.debug]
+
+      - type: concept
+        id: concept-dbg
+        title: "dbg!"
+        markdown: |
+          **`dbg!` shows a value while you investigate a bug.** It prints the file, line, expression and value to stderr, then returns the value, so it can sit inside an expression.
+
+          Line 2 below prints `[src/main.rs:2:17] 3 * 4 = 12` to stderr. Stdout only gets `13`.
+        code:
+          rust: |
+            fn main() {
+                let total = dbg!(3 * 4) + 1;
+                println!("{total}");
+            }
+          verify: run
+          expectStdout: "13\n"
+        concepts: [macro.dbg]
+
+      - type: predict-output
+        id: predict-dbg-stdout
+        prompt: What does this print to stdout?
+        code:
+          rust: |
+            fn main() {
+                let width = 5;
+                let area = dbg!(width * 2) * 3;
+                println!("{area}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "30" }
+          - { id: b, text: "10\n30", why: "`dbg!` writes to stderr, not stdout." }
+          - { id: c, text: "10", why: "`dbg!` returns 10, and the `* 3` is applied to it before `area` is stored." }
+        answer: a
+        explanation: "`dbg!(width * 2)` reports `10` on stderr and returns 10. Then `10 * 3` is stored in `area`."
+        concepts: [macro.dbg]
+
+      - type: mcq
+        id: mcq-dbg-line
+        prompt: "Line 4 of `src/main.rs` is `    dbg!(level + 1);` and `level` is 2. What appears on stderr?"
+        options:
+          - { id: a, code: "[src/main.rs:4:5] level + 1 = 3" }
+          - { id: b, code: "3", why: "`dbg!` also shows where it was called and the expression it was given." }
+          - { id: c, code: "level + 1 = 3", why: "`dbg!` starts with the file, line and column in square brackets." }
+          - { id: d, code: "[src/main.rs:4:5] 3", why: "The expression's text, `level + 1`, is shown before the value." }
+        answer: a
+        explanation: "`dbg!` prints `[file:line:column] expression = value`. The column is where `dbg!` starts."
+        concepts: [macro.dbg]
+
+      - type: fill-tokens
+        id: fill-derive-ticket
+        prompt: "Fill the blanks so the program prints `Ticket { seat: 14 }`"
+        code:
+          rust: |
+            #[derive(___1___)]
+            struct Ticket {
+                seat: u32,
+            }
+
+            fn main() {
+                let t = Ticket { seat: 14 };
+                println!("{t___2___}");
+            }
+          verify: run
+          expectStdout: "Ticket { seat: 14 }\n"
+        blanks:
+          "1": { answer: ["Debug"] }
+          "2": { answer: [":?"] }
+        bank: ["Debug", "Display", "Print", ":?", ":#?", "?"]
+        explanation: "`#[derive(Debug)]` gives `Ticket` the Debug format, and `{t:?}` prints it on one line. `{t:#?}` would spread it over three lines."
+        concepts: [derive.debug]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-debug-colour
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Colour(u8, u8, u8);
+
+            fn main() {
+                let c = Colour(255, 0, 10);
+                println!("{c:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Colour(255, 0, 10)" }
+          - { id: b, text: "(255, 0, 10)", why: "Debug format includes the struct's name." }
+          - { id: c, text: "Colour { 0: 255, 1: 0, 2: 10 }", why: "Tuple structs print like a call: the name, then the values in `( )`." }
+        answer: a
+        explanation: "A tuple struct's Debug output looks the way you created it: `Colour(255, 0, 10)`."
+        concepts: [derive.debug, struct.tuple]
+
+      - type: predict-output
+        id: predict-debug-unit
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Paused;
+
+            fn main() {
+                let state = Paused;
+                println!("{state:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Paused" }
+          - { id: b, text: "Paused {}", why: "There are no fields to show, so Debug prints only the name." }
+          - { id: c, text: "state", why: "Debug shows the value's type name, `Paused`, not the variable's name." }
+        answer: a
+        explanation: "A unit struct has no fields, so its Debug output is the name alone."
+        concepts: [derive.debug, struct.unit]
+
+      - type: decode-error
+        id: decode-missing-derive
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            struct Order {
+                item: String,
+                qty: u32,
+            }
+
+            fn main() {
+                let o = Order {
+                    item: String::from("tea"),
+                    qty: 2,
+                };
+                println!("{o:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Add `#[derive(Debug)]` on the line above `struct Order {`" }
+          - { id: b, text: "Change `{o:?}` to `{o}`", why: "`{}` needs Display, which `Order` doesn't have either. It's still E0277." }
+          - { id: c, text: "Add `#[derive(Debug)]` on the line above `fn main() {`", why: "`derive` only works on a struct (or similar type), not a function (E0774)." }
+        answer: a
+        explanation: "The compiler's help suggests the same thing: derive Debug on `Order`, then `{o:?}` works."
+        concepts: [derive.debug]
+
+      - type: compiles
+        id: compiles-nested-no-debug
+        code:
+          rust: |
+            struct Engine {
+                power: u32,
+            }
+
+            #[derive(Debug)]
+            struct Car {
+                engine: Engine,
+            }
+
+            fn main() {
+                let car = Car {
+                    engine: Engine { power: 90 },
+                };
+                println!("{car:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0277: `Engine` doesn't implement `Debug`" }
+            - { id: b, text: "E0277: `Car` doesn't implement `Debug`", why: "`Car` has the derive. The derived code needs to print each field, and `Engine` can't be printed." }
+            - { id: c, text: "E0609: no field `power` on type `Car`", why: "`power` is accessed through `Engine` when it's created, which is fine." }
+          answer: a
+        explanation: "Printing a `Car` prints its `engine` field too, so `Engine` also needs `#[derive(Debug)]`."
+        concepts: [derive.debug]
+
+      - type: mcq
+        id: mcq-dbg-where
+        prompt: "You send your program's stdout to a file. Where does `dbg!`'s output go?"
+        options:
+          - { id: a, text: "To stderr, so it isn't in the file" }
+          - { id: b, text: "To stdout, so it's in the file", why: "`dbg!` writes to stderr, like `eprintln!`, so it stays out of the program's normal output." }
+          - { id: c, text: "Nowhere, unless you turn debugging on", why: "`dbg!` always prints when it runs. It writes to stderr." }
+        answer: a
+        explanation: "`dbg!` writes to stderr. That keeps debugging output separate from the results on stdout."
+        concepts: [macro.dbg, macro.print-family]
+
+      - type: predict-output
+        id: predict-debug-nested
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Metres(f64);
+
+            #[derive(Debug)]
+            struct Room {
+                width: Metres,
+            }
+
+            fn main() {
+                let r = Room { width: Metres(2.5) };
+                println!("{r:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Room { width: Metres(2.5) }" }
+          - { id: b, text: "Room { width: 2.5 }", why: "The field holds a `Metres`, and its own Debug format includes the name." }
+          - { id: c, text: "Room { Metres(2.5) }", why: "Named fields are always shown with their names: `width: ...`." }
+        answer: a
+        explanation: "Each field is printed with its own Debug format, so the `Metres` shows as `Metres(2.5)`."
+        concepts: [derive.debug, struct.tuple]
+
+      - type: spot-bug
+        id: spot-lowercase-debug
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            #[derive(debug)]
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let p = Point { x: 1, y: 2 };
+                println!("{p:?}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "cannot find derive macro `debug`"
+        answer: 1
+        explanation: "The name is `Debug` with a capital D. Rust names are case-sensitive, so `debug` isn't found."
+        concepts: [derive.debug]
+
+      - type: match-pairs
+        id: pairs-debug
+        pairs:
+          - ["{:?}", "Debug format on one line"]
+          - ["{:#?}", "Debug format, one field per line"]
+          - ["#[derive(Debug)]", "lets a struct use `{:?}`"]
+          - ["dbg!", "prints file, line and value to stderr"]
+          - ["E0277", "`{:?}` used without the derive"]
+        concepts: [derive.debug, macro.dbg]
+
+      - type: predict-output
+        id: predict-debug-update
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Fan {
+                speed: u32,
+                tilt: u32,
+            }
+
+            fn main() {
+                let day = Fan { speed: 3, tilt: 9 };
+                let night = Fan { speed: 1, ..day };
+                println!("{night:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Fan { speed: 1, tilt: 9 }" }
+          - { id: b, text: "Fan { speed: 3, tilt: 9 }", why: "`night` sets its own `speed`; only `tilt` comes from `day`." }
+          - { id: c, text: "Fan { speed: 1, ..day }", why: "`..day` is filled in when `night` is created. Debug shows the real values." }
+        answer: a
+        explanation: "`night` has `speed: 1` and copies `tilt: 9` from `day`."
+        concepts: [derive.debug, struct.update]
+
+      - type: true-false
+        id: tf-dbg-returns
+        prompt: "This program prints `10` to stdout."
+        code:
+          rust: |
+            fn main() {
+                let x = dbg!(5 * 2);
+                println!("{x}");
+            }
+          verify: run
+          expectStdout: "10\n"
+        answer: true
+        explanation: "`dbg!` returns the value it was given, so `x` is 10. Its own report goes to stderr."
+        concepts: [macro.dbg]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-print-book
+        prompt: "Arrange the lines so the program prints `Book { title: \"Emma\" }`"
+        lines:
+          - { id: l1, text: "#[derive(Debug)]" }
+          - { id: l2, text: "struct Book {" }
+          - { id: l3, text: "    title: String," }
+          - { id: l4, text: "}" }
+          - { id: l5, text: "fn main() {" }
+          - { id: l6, text: '    let b = Book { title: String::from("Emma") };' }
+          - { id: l7, text: '    println!("{b:?}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "#[derive(debug)]" }
+          - { id: d2, text: '    println!("{b}");' }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l5, l6, l7, l8, l1, l2, l3, l4]
+        verify:
+          mode: run
+          expectStdout: "Book { title: \"Emma\" }\n"
+        explanation: "`#[derive(Debug)]` goes directly above the struct, with a capital D. `{b:?}` then prints it."
+        concepts: [derive.debug]
+
+      - type: fill-tokens
+        id: fill-dbg-total
+        prompt: "Fill the blanks so the program prints `13` to stdout and reports `price * 3` on stderr"
+        code:
+          rust: |
+            fn main() {
+                let price = 4;
+                let total = ___1___(price * 3) + 1;
+                println!("{___2___}");
+            }
+          verify: run
+          expectStdout: "13\n"
+        blanks:
+          "1": { answer: ["dbg!"] }
+          "2": { answer: ["total"] }
+        bank: ["dbg!", "println!", "eprintln!", "total", "price"]
+        explanation: "`dbg!` returns its value, so `total` is `12 + 1`. `println!` and `eprintln!` return `()`, which can't be added to 1."
+        concepts: [macro.dbg]
+
+      - type: compiles
+        id: compiles-dbg-moves
+        code:
+          rust: |
+            fn main() {
+                let name = String::from("Ivy");
+                dbg!(name);
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `name`" }
+            - { id: b, text: "E0277: `String` doesn't implement `Debug`", why: "`String` can be Debug-printed. The problem is ownership." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `name` was moved into `dbg!`." }
+          answer: a
+        explanation: "`dbg!` takes ownership of what you give it, so the `String` moves in. Write `dbg!(&name)` to look without moving."
+        concepts: [macro.dbg, own.move, err.E0382]
+
+      - type: predict-output
+        id: predict-dbg-struct
+        prompt: What does this print to stdout?
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let p = dbg!(Point { x: 1, y: 2 });
+                println!("{}", p.x + p.y);
+            }
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "Point { x: 1, y: 2 }\n3", why: "`dbg!`'s report goes to stderr. Stdout only gets the `println!` line." }
+          - { id: c, text: "12", why: "`p.x + p.y` adds two `i32`s, giving 3." }
+        answer: a
+        explanation: "`dbg!` reports the `Point` on stderr and returns it, so `p` is the `Point` and `1 + 2` prints as `3`."
+        concepts: [macro.dbg, derive.debug]
+
+      - type: mcq
+        id: mcq-dbg-format
+        prompt: "Which format does `dbg!` use to show a struct's value?"
+        options:
+          - { id: a, text: "Pretty Debug, like `{:#?}`, one field per line" }
+          - { id: b, text: "Display, like `{}`", why: "`dbg!` needs Debug. It works with any `#[derive(Debug)]` struct." }
+          - { id: c, text: "Debug on one line, like `{:?}`", why: "`dbg!` uses the pretty form, so a struct's fields go on separate lines." }
+        answer: a
+        explanation: "`dbg!` uses the `{:#?}` format, so a struct is spread over several lines in the report."
+        concepts: [macro.dbg, derive.debug]
+
+      - type: decode-error
+        id: decode-display
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Pet {
+                name: String,
+            }
+
+            fn main() {
+                let pet = Pet {
+                    name: String::from("Rex"),
+                };
+                println!("{pet}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "`{}` needs Display, which `Pet` doesn't have; `{pet:?}` would work" }
+          - { id: b, text: "`Pet` needs `#[derive(Debug)]`", why: "It already has it. `{}` asks for a different format, Display." }
+          - { id: c, text: "`pet` was moved before it was printed", why: "Nothing moved. The error is about how `pet` can be formatted." }
+        answer: a
+        explanation: "E0277 says `Pet` doesn't implement `std::fmt::Display`. Debug and Display are separate; the derive only gives Debug."
+        concepts: [derive.debug]
+
+      - type: true-false
+        id: tf-derive-scope
+        prompt: "`#[derive(Debug)]` above one struct also applies to the next struct in the file."
+        answer: false
+        explanation: "An attribute like `#[derive(Debug)]` applies only to the item directly below it. Each struct needs its own."
+        concepts: [derive.debug]
+
+      - type: spot-bug
+        id: spot-dbg-not-stdout
+        prompt: "This program should print `Score(7)` to stdout, but stdout stays empty. Tap the line with the mistake."
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Score(u32);
+
+            fn main() {
+                let score = Score(7);
+                dbg!(score);
+            }
+          verify: run
+          expectStdout: ""
+        answer: 6
+        explanation: "`dbg!` writes to stderr, not stdout. Use `println!(\"{score:?}\");` to put it on stdout."
+        concepts: [macro.dbg, derive.debug]
+
+      - type: compiles
+        id: compiles-kg-lb
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Kg(f64);
+
+            #[derive(Debug)]
+            struct Lb(f64);
+
+            fn main() {
+                let bag: Kg = Lb(20.0);
+                println!("{bag:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        explanation: "`bag` is declared as `Kg` but given an `Lb`. Deriving Debug doesn't make the two types interchangeable (E0308)."
+        concepts: [struct.tuple, derive.debug, err.E0308]
+
+      - type: predict-output
+        id: predict-pretty-tuple
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Colour(u8, u8, u8);
+
+            fn main() {
+                let c = Colour(1, 2, 3);
+                println!("{c:#?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Colour(\n    1,\n    2,\n    3,\n)" }
+          - { id: b, text: "Colour(1, 2, 3)", why: "That's `{:?}`. With `#`, each field goes on its own line." }
+          - { id: c, text: "Colour {\n    0: 1,\n    1: 2,\n    2: 3,\n}", why: "A tuple struct keeps its `( )` shape in the pretty format too, with no field names." }
+        answer: a
+        explanation: "`{:#?}` puts each value of a tuple struct on its own indented line, each followed by a comma."
+        concepts: [derive.debug, struct.tuple]

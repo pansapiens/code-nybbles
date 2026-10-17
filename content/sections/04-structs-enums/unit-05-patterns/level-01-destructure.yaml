@@ -1,0 +1,578 @@
+id: structs-enums.patterns.destructure
+title: Taking values apart
+icon: scissors
+concepts: [pattern.destructure]
+reviewConcepts: [struct.define, struct.tuple, enum.data, match.enum, match.bind, match.if-let, option.basics, types.tuple, types.array, var.shadowing, own.move, err.E0382]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-destructure-struct
+        title: Take a struct apart
+        markdown: |
+          **A pattern can take a struct apart.** `let Point { x, y } = p;` creates two variables, `x` and `y`, holding the values of `p`'s fields.
+
+          It does the same job as `let x = p.x;` followed by `let y = p.y;`.
+        code:
+          rust: |
+            struct Point { x: i32, y: i32 }
+
+            let p = Point { x: 3, y: 7 };
+            let Point { x, y } = p;
+            println!("x is {x}, y is {y}");
+          verify: run
+          expectStdout: "x is 3, y is 7\n"
+        concepts: [pattern.destructure]
+
+      - type: predict-output
+        id: predict-size-order
+        code:
+          rust: |
+            struct Size { width: u32, height: u32 }
+
+            let tile = Size { width: 4, height: 5 };
+            let Size { height, width } = tile;
+            println!("{width} {height}");
+          verify: run
+        options:
+          - { id: a, text: "4 5" }
+          - { id: b, text: "5 4", why: "Struct patterns match fields by name, not position. `width` gets the `width` field wherever you list it." }
+          - { id: c, text: "width height", why: "`{width}` prints the value of the variable `width`, not its name." }
+        answer: a
+        explanation: "The order inside the braces doesn't matter. Each variable is filled from the field with the same name."
+        concepts: [pattern.destructure]
+
+      - type: true-false
+        id: tf-names-match-fields
+        prompt: "In `let Point { x, y } = p;`, the variables must be called `x` and `y`, the same as the fields."
+        answer: true
+        explanation: "`Point { x, y }` is shorthand for `Point { x: x, y: y }`, so each variable is named after its field. The next card shows how to pick other names."
+        concepts: [pattern.destructure]
+
+      - type: concept
+        id: concept-rename-rest
+        title: Rename fields, skip the rest
+        markdown: |
+          **Write `field: name` to store a field under a different name.** Write `..` at the end to ignore every field you don't list.
+        code:
+          rust: |
+            struct Player {
+                name: String,
+                score: u32,
+                level: u32,
+            }
+
+            let p = Player {
+                name: String::from("Kim"),
+                score: 90,
+                level: 3,
+            };
+            let Player { score: points, .. } = p;
+            println!("{points}");
+          verify: run
+          expectStdout: "90\n"
+        concepts: [pattern.destructure]
+
+      - type: mcq
+        id: mcq-only-y
+        prompt: "`p` is a `Point { x: i32, y: i32 }`. Which line puts `p.y` into a new variable called `height`?"
+        options:
+          - { id: a, code: "let Point { y: height, .. } = p;" }
+          - { id: b, code: "let Point { height: y, .. } = p;", why: "The order is `field: variable`. This looks for a field called `height`, and `Point` has none." }
+          - { id: c, code: "let Point { y: height } = p;", why: "Without `..` the pattern must list every field, so this is error E0027: the pattern doesn't mention `x`." }
+          - { id: d, code: "let Point { height, .. } = p;", why: "The shorthand only works when the variable has the field's name. There's no field called `height`." }
+        answer: a
+        explanation: "`y: height` takes the field `y` and binds it to `height`. The `..` skips `x`."
+        concepts: [pattern.destructure]
+
+      - type: compiles
+        id: compiles-missing-field
+        code:
+          rust: |
+            struct Point { x: i32, y: i32 }
+
+            fn main() {
+                let p = Point { x: 1, y: 2 };
+                let Point { x } = p;
+                println!("{x}");
+            }
+          verify: compile-fail
+          expectErrors: [E0027]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0027: pattern does not mention field `y`" }
+            - { id: b, text: "E0026: struct `Point` does not have a field named `x`", why: "`Point` does have an `x` field. The problem is the field the pattern leaves out." }
+            - { id: c, text: "E0382: use of moved value", why: "Nothing is used after a move here. Both fields are `i32` anyway." }
+          answer: a
+        explanation: "A struct pattern must mention every field. Write `Point { x, .. }` to ignore the rest."
+        concepts: [pattern.destructure]
+
+      - type: concept
+        id: concept-tuples-nested
+        title: Tuples, and patterns inside patterns
+        markdown: |
+          **Tuple patterns work by position.** `let (a, b) = pair;` gives `a` the first item and `b` the second.
+
+          Patterns can nest, so one `let` can take apart a tuple that holds another tuple and a struct.
+        code:
+          rust: |
+            struct Point { x: i32, y: i32 }
+
+            let ((w, h), Point { x, y }) =
+                ((10, 4), Point { x: 2, y: 5 });
+            println!("{w}x{h} at ({x}, {y})");
+          verify: run
+          expectStdout: "10x4 at (2, 5)\n"
+        concepts: [pattern.destructure]
+
+      - type: predict-output
+        id: tiles-nested-tuple
+        prompt: Build the output
+        code:
+          rust: |
+            let trip = ("Hobart", (42, 12));
+            let (city, (km, mins)) = trip;
+            println!("{city} {km} km {mins} min");
+          verify: run
+        tiles: ["Hobart", "42", "km", "12", "min", "(42,", "12)", "city"]
+        answer: "Hobart 42 km 12 min"
+        explanation: "The inner `(km, mins)` takes apart the inner tuple, so `km` is 42 and `mins` is 12."
+        concepts: [pattern.destructure, types.tuple]
+
+      - type: fill-tokens
+        id: fill-point-dots
+        prompt: "Fill the blanks so the program prints `5` and ignores `y`"
+        code:
+          rust: |
+            struct Point { x: i32, y: i32 }
+
+            let p = Point { x: 5, y: -2 };
+            let ___1___ { x, ___2___ } = p;
+            println!("{x}");
+          verify: run
+          expectStdout: "5\n"
+        blanks:
+          "1": { answer: ["Point"] }
+          "2": { answer: [".."] }
+        bank: ["Point", "p", "..", "_", "point"]
+        explanation: "A struct pattern starts with the struct's name, and `..` stands for the fields you don't list."
+        concepts: [pattern.destructure]
+
+      - type: match-pairs
+        id: pairs-what-binds
+        prompt: "Match each line to what it creates (`p` is `Point { x: 1, y: 2 }`)"
+        pairs:
+          - ["let (a, b) = (1, 2);", "a = 1, b = 2"]
+          - ["let (b, a) = (1, 2);", "a = 2, b = 1"]
+          - ["let Point { x: a, .. } = p;", "a = 1"]
+          - ["let Point { y: a, .. } = p;", "a = 2"]
+        explanation: "Tuples match by position; structs match by field name."
+        concepts: [pattern.destructure]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-match-struct
+        title: Values inside struct patterns
+        markdown: |
+          **A struct pattern can also test a field.** In a `match`, `Point { x: 0, y }` only matches points whose `x` is 0, and binds `y`. The last arm here matches every other point.
+        code:
+          rust: |
+            struct Point { x: i32, y: i32 }
+
+            let p = Point { x: 0, y: 7 };
+            match p {
+                Point { x: 0, y } => {
+                    println!("y axis at {y}")
+                }
+                Point { x, y } => {
+                    println!("at ({x}, {y})")
+                }
+            }
+          verify: run
+          expectStdout: "y axis at 7\n"
+        concepts: [pattern.destructure]
+
+      - type: predict-output
+        id: predict-axis
+        code:
+          rust: |
+            struct Point { x: i32, y: i32 }
+
+            let p = Point { x: 4, y: 0 };
+            let place = match p {
+                Point { x: 0, .. } => "y axis",
+                Point { y: 0, .. } => "x axis",
+                _ => "elsewhere",
+            };
+            println!("{place}");
+          verify: run
+        options:
+          - { id: a, text: "x axis" }
+          - { id: b, text: "y axis", why: "`x: 0` only matches when `x` is 0, and here `x` is 4." }
+          - { id: c, text: "elsewhere", why: "The second arm matches first: `y` is 0, and `..` ignores `x`." }
+        answer: a
+        explanation: "The first arm fails because `x` is 4. The second arm matches because `y` is 0."
+        concepts: [pattern.destructure]
+
+      - type: concept
+        id: concept-nested-enum
+        title: Enums inside enums
+        markdown: |
+          **Patterns nest as deep as your data.** A variant's data can itself be matched against another enum's variant, all in one arm.
+        code:
+          rust: |
+            enum Tint { Rgb(u8, u8, u8), Grey(u8) }
+            enum Pen { Fill(Tint), Erase }
+
+            let cmd = Pen::Fill(Tint::Grey(128));
+            match cmd {
+                Pen::Fill(Tint::Rgb(r, g, b)) => {
+                    println!("rgb {r} {g} {b}")
+                }
+                Pen::Fill(Tint::Grey(n)) => {
+                    println!("grey {n}")
+                }
+                Pen::Erase => println!("erase"),
+            }
+          verify: run
+          expectStdout: "grey 128\n"
+        concepts: [pattern.destructure]
+
+      - type: predict-output
+        id: predict-option-pair
+        code:
+          rust: |
+            let left = Some(4);
+            let right: Option<i32> = None;
+            let total = match (left, right) {
+                (Some(a), Some(b)) => a + b,
+                (Some(a), None) => a,
+                (None, Some(b)) => b,
+                (None, None) => 0,
+            };
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "0", why: "`(None, None)` needs both to be `None`, but `left` is `Some(4)`." }
+          - { id: c, text: "None", why: "Every arm gives an `i32`, so `total` is a number." }
+        answer: a
+        explanation: "The tuple is `(Some(4), None)`, which matches the second arm, so `total` is `a`, which is 4."
+        concepts: [pattern.destructure, option.basics]
+
+      - type: compiles
+        id: compiles-moved-name
+        code:
+          rust: |
+            struct Player { name: String, age: u32 }
+
+            fn main() {
+                let p = Player {
+                    name: String::from("Ana"),
+                    age: 7,
+                };
+                let Player { name, age } = p;
+                println!("{name} {age}");
+                println!("{}", p.name);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `p.name`" }
+            - { id: b, text: "E0027: pattern does not mention a field", why: "The pattern lists both fields, so that's fine." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The `String` has moved." }
+          answer: a
+        explanation: "Destructuring moves the `String` out of `p.name` into `name`. Afterwards `p.name` can't be used. `p.age` could be, because `u32` is `Copy`."
+        concepts: [pattern.destructure, own.move, err.E0382]
+
+      - type: decode-error
+        id: decode-field-name
+        prompt: Which change to line 8 fixes this?
+        code:
+          rust: |
+            struct Day { temp: i32, wind: u32 }
+
+            fn main() {
+                let today = Day {
+                    temp: 18,
+                    wind: 25,
+                };
+                let Day { temperature, .. } = today;
+                println!("{temperature}");
+            }
+          verify: compile-fail
+          expectErrors: [E0026]
+        options:
+          - { id: a, code: "let Day { temp: temperature, .. } = today;" }
+          - { id: b, code: "let Day { temperature: temp, .. } = today;", why: "It's `field: variable`, so this still looks for a field called `temperature`." }
+          - { id: c, code: "let Day { temperature } = today;", why: "There's still no `temperature` field, and without `..` the `wind` field is missing too." }
+        answer: a
+        explanation: "`Day` has no field called `temperature`. `temp: temperature` reads the `temp` field into a variable named `temperature`."
+        concepts: [pattern.destructure]
+
+      - type: spot-bug
+        id: spot-tuple-arity
+        prompt: The tuple on line 2 is right. Tap the line with the mistake.
+        code:
+          rust: |
+            fn main() {
+                let record = (12, 7, 3);
+                let (wins, losses) = record;
+                println!("{wins} {losses}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 3
+        explanation: "The tuple has 3 items but the pattern has 2, which is E0308: mismatched types. Write `(wins, losses, _)` or `(wins, losses, ..)`."
+        concepts: [pattern.destructure, types.tuple]
+
+      - type: mcq
+        id: mcq-dots-middle
+        prompt: What do `first` and `last` hold?
+        code:
+          rust: |
+            let (first, .., last) = (2, 4, 6, 8);
+          verify: compile
+        options:
+          - { id: a, text: "`first` is 2 and `last` is 8" }
+          - { id: b, text: "`first` is 2 and `last` is 4", why: "`..` skips any number of items in the middle, so `last` gets the final item." }
+          - { id: c, text: "It doesn't compile: the pattern has 2 names but the tuple has 4 items", why: "`..` stands for the items you don't name, so the sizes don't have to match." }
+        answer: a
+        explanation: "In a tuple pattern, `..` can skip several items at once. It can appear once per tuple."
+        concepts: [pattern.destructure]
+
+      - type: fill-tokens
+        id: fill-struct-variant
+        prompt: "Fill the blanks so the program prints `6`"
+        code:
+          rust: |
+            enum Shape {
+                Rect { width: u32, height: u32 },
+                Square(u32),
+            }
+            let s = Shape::Rect {
+                width: 3,
+                height: 2,
+            };
+            let area = match s {
+                Shape::Rect { ___1___, height } => {
+                    width * height
+                }
+                Shape::Square(___2___) => side * side,
+            };
+            println!("{area}");
+          verify: run
+          expectStdout: "6\n"
+        blanks:
+          "1": { answer: ["width"] }
+          "2": { answer: ["side"] }
+        bank: ["width", "side", "w", "s", "..", "height"]
+        explanation: "A struct-like variant is taken apart with braces and field names, like a struct. A tuple-like variant uses brackets and any names you like."
+        concepts: [pattern.destructure, enum.data]
+
+      - type: predict-output
+        id: predict-array
+        code:
+          rust: |
+            let podium = ["Ari", "Bo", "Cy"];
+            let [gold, _, bronze] = podium;
+            println!("{gold} {bronze}");
+          verify: run
+        options:
+          - { id: a, text: "Ari Cy" }
+          - { id: b, text: "Ari Bo", why: "`_` skips the middle item, so `bronze` gets the third one." }
+          - { id: c, text: "Bo Cy", why: "Array patterns match by position, starting with the first item." }
+        answer: a
+        explanation: "Array patterns work like tuple patterns: one name per position, and `_` ignores one item."
+        concepts: [pattern.destructure, types.array]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-origin
+        prompt: "Arrange the lines so the program prints `origin`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let p = Point { x: 0, y: 0 };" }
+          - { id: l3, text: "    let place = match p {" }
+          - { id: l4, text: '        Point { x: 0, y: 0 } => "origin",' }
+          - { id: l5, text: '        Point { x: 0, .. } => "y axis",' }
+          - { id: l6, text: '        _ => "elsewhere",' }
+          - { id: l7, text: "    };" }
+          - { id: l8, text: '    println!("{place}");' }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: '        Point { 0, 0 } => "origin",' }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        verify:
+          harness: |
+            struct Point { x: i32, y: i32 }
+            {{solution}}
+          mode: run
+          expectStdout: "origin\n"
+        explanation: "Arms are tried top to bottom, so the most specific pattern goes first. If `Point { x: 0, .. }` came first, `(0, 0)` would print `y axis`."
+        concepts: [pattern.destructure, match.enum]
+
+      - type: predict-output
+        id: tiles-swap
+        prompt: Build the output
+        code:
+          rust: |
+            let (a, b) = (1, 2);
+            let (b, a) = (a, b);
+            println!("{a} {b}");
+          verify: run
+        tiles: ["1", "2", "a", "b"]
+        answer: "2 1"
+        explanation: "The second `let` creates new `b` and `a`: `b` gets the old `a` (1) and `a` gets the old `b` (2)."
+        concepts: [pattern.destructure, var.shadowing]
+
+      - type: compiles
+        id: compiles-partial-move
+        code:
+          rust: |
+            struct Player { name: String, age: u32 }
+
+            fn main() {
+                let p = Player {
+                    name: String::from("Ana"),
+                    age: 7,
+                };
+                let Player { name, .. } = p;
+                println!("{name} {}", p.age);
+            }
+          verify: run
+          expectStdout: "Ana 7\n"
+        answer: true
+        explanation: "Only `name` moves out of `p`. `p.age` is a `u32`, which is `Copy` and still there. Using `p.name` or the whole `p` afterwards would be E0382."
+        concepts: [pattern.destructure, own.move]
+
+      - type: decode-error
+        id: decode-missing-field
+        prompt: Which change to line 13 fixes this?
+        code:
+          rust: |
+            struct Order {
+                item: String,
+                qty: u32,
+                paid: bool,
+            }
+
+            fn main() {
+                let order = Order {
+                    item: String::from("tea"),
+                    qty: 2,
+                    paid: true,
+                };
+                let Order { item, qty } = order;
+                println!("{qty} x {item}");
+            }
+          verify: compile-fail
+          expectErrors: [E0027]
+        options:
+          - { id: a, code: "let Order { item, qty, .. } = order;" }
+          - { id: b, code: "let Order { item, qty, _ } = order;", why: "`_` can't stand in for a field name. Use `..`, or write `paid: _`." }
+          - { id: c, code: "let Order(item, qty) = order;", why: "Brackets are for tuple structs. `Order` has named fields, so its pattern uses braces." }
+        answer: a
+        explanation: "The pattern doesn't mention `paid` (E0027). Adding `..` says \"ignore the other fields\"."
+        concepts: [pattern.destructure]
+
+      - type: fill-tokens
+        id: fill-nested-enum
+        prompt: "Fill the blanks so the program prints `red 255`"
+        code:
+          rust: |
+            enum Tint { Rgb(u8, u8, u8), Grey(u8) }
+            enum Pen { Fill(Tint), Erase }
+
+            let p = Pen::Fill(Tint::Rgb(255, 0, 0));
+            if let Pen::___1___(Tint::___2___(r, ___3___)) = p {
+                println!("red {r}");
+            }
+          verify: run
+          expectStdout: "red 255\n"
+        blanks:
+          "1": { answer: ["Fill"] }
+          "2": { answer: ["Rgb"] }
+          "3": { answer: [".."] }
+        bank: ["Fill", "Rgb", "..", "Grey", "_", "Erase"]
+        explanation: "The outer pattern matches `Pen::Fill`, the inner one matches `Tint::Rgb`, and `..` skips the green and blue values. A single `_` would only cover one of them."
+        concepts: [pattern.destructure, match.if-let]
+
+      - type: spot-bug
+        id: spot-tuple-struct-braces
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Rgb(u8, u8, u8);
+
+            fn main() {
+                let sky = Rgb(135, 206, 235);
+                let Rgb { r, g, b } = sky;
+                println!("{r} {g} {b}");
+            }
+          verify: compile-fail
+          expectErrors: [E0769]
+        answer: 5
+        explanation: "`Rgb` is a tuple struct, so its fields have no names. Take it apart by position: `let Rgb(r, g, b) = sky;`."
+        concepts: [pattern.destructure, struct.tuple]
+
+      - type: mcq
+        id: mcq-which-vars
+        prompt: "After `let Point { x: a, y: b } = p;`, which new variables exist?"
+        options:
+          - { id: a, text: "`a` and `b`" }
+          - { id: b, text: "`x` and `y`", why: "In `x: a`, `x` names the field and `a` is the new variable." }
+          - { id: c, text: "`x`, `y`, `a` and `b`", why: "Renaming creates only the new names. `x` and `y` here are field names, not variables." }
+        answer: a
+        explanation: "`field: name` reads the field into a variable called `name`, and no variable named after the field is created."
+        concepts: [pattern.destructure]
+
+      - type: true-false
+        id: tf-dots-twice
+        prompt: "`let (first, .., middle, .., last) = scores;` is allowed."
+        answer: false
+        explanation: "`..` can appear only once in a tuple pattern. With two, Rust couldn't tell which item `middle` should be."
+        concepts: [pattern.destructure]
+
+      - type: predict-output
+        id: predict-click
+        code:
+          rust: |
+            enum Event {
+                Click { x: i32, y: i32 },
+                Key(char),
+            }
+
+            let e = Event::Click { x: 30, y: 12 };
+            match e {
+                Event::Key(c) => println!("{c}"),
+                Event::Click { y, x } => {
+                    println!("{x},{y}")
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "30,12" }
+          - { id: b, text: "12,30", why: "Field names, not positions, decide which value goes where. `x` is 30." }
+          - { id: c, text: "x,y", why: "`{x}` prints the value bound to `x`." }
+        answer: a
+        explanation: "`Event::Click { y, x }` binds each field to the variable with its name, whatever the order."
+        concepts: [pattern.destructure, enum.data]
+
+      - type: match-pairs
+        id: pairs-patterns
+        prompt: Match each pattern to what it matches
+        pairs:
+          - ["Point { x: 0, .. }", "any point with x = 0"]
+          - ["Point { x, y: 0 }", "y = 0, and binds x"]
+          - ["(_, 0)", "a pair ending in 0"]
+          - ["Some((a, b))", "Some holding a pair"]
+        explanation: "A literal in a pattern tests a value; a name binds whatever is there; `_` and `..` ignore parts."
+        concepts: [pattern.destructure]

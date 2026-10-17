@@ -1,0 +1,644 @@
+id: structs-enums.enums.define
+title: One of these
+icon: list
+concepts: [enum.define]
+reviewConcepts: [struct.define, derive.debug, fmt.debug, fn.params, fn.return, own.move, err.E0382, err.E0308, types.array, ctrl.for]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-enum
+        title: A value that is one of a set
+        markdown: |
+          **An enum lists every value a type can have.** Each choice is a *variant*.
+
+          Name a variant with the enum's name, `::`, then the variant. A `Direction` is always exactly one of the four.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction {
+                North,
+                East,
+                South,
+                West,
+            }
+
+            fn main() {
+                let heading = Direction::North;
+                println!("{heading:?}");
+            }
+          verify: run
+          expectStdout: "North\n"
+        concepts: [enum.define]
+
+      - type: predict-output
+        id: predict-wind
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction {
+                North,
+                East,
+                South,
+                West,
+            }
+
+            fn main() {
+                let wind = Direction::West;
+                println!("{wind:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "West" }
+          - { id: b, text: "Direction::West", why: "Debug output shows the variant's name only, without the enum name in front." }
+          - { id: c, text: "3", why: "Variants aren't printed as numbers. `{:?}` shows the variant's name." }
+        answer: a
+        explanation: "`#[derive(Debug)]` lets `{:?}` print an enum value. It prints the variant name, `West`."
+        concepts: [enum.define, derive.debug]
+
+      - type: true-false
+        id: tf-one-at-a-time
+        prompt: "A variable of type `Direction` can hold `North` and `East` at the same time."
+        answer: false
+        explanation: "An enum value is exactly one of its variants. To change direction you'd store a different variant."
+        concepts: [enum.define]
+
+      - type: mcq
+        id: mcq-make-south
+        prompt: "Which line creates the `South` variant of `Direction`?"
+        options:
+          - { id: a, code: "let d = Direction::South;" }
+          - { id: b, code: "let d = Direction.South;", why: "`.` reads a field or calls a method. Variants are named with `::`." }
+          - { id: c, code: "let d = South;", why: "On its own, `South` isn't in scope. Write the enum name first: `Direction::South`." }
+          - { id: d, code: "let d = Direction(South);", why: "That's call syntax, and `Direction` isn't a function. Use `Direction::South`." }
+        answer: a
+        explanation: "Variants live inside their enum, so you name them with `Enum::Variant`."
+        concepts: [enum.define]
+
+      - type: fill-tokens
+        id: fill-season
+        prompt: Fill the blanks so the program prints `Autumn`
+        code:
+          rust: |
+            #[derive(Debug)]
+            ___1___ Season {
+                Summer,
+                Autumn,
+                Winter,
+                Spring,
+            }
+
+            fn main() {
+                let now = Season___2___Autumn;
+                println!("{now:?}");
+            }
+          verify: run
+          expectStdout: "Autumn\n"
+        blanks:
+          "1": { answer: ["enum"] }
+          "2": { answer: ["::"] }
+        bank: ["enum", "struct", "let", "::", ".", ":"]
+        explanation: "`enum` starts the list of variants, and `::` picks one of them. A `struct` would need named fields with types."
+        concepts: [enum.define]
+
+      - type: concept
+        id: concept-enum-type
+        title: An enum is a type
+        markdown: |
+          **You can use an enum anywhere a type goes:** a parameter, a return type, a struct field.
+
+          Here `show` accepts any `Direction`, and nothing else.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction {
+                North,
+                South,
+            }
+
+            fn show(d: Direction) {
+                println!("Facing {d:?}");
+            }
+
+            fn main() {
+                show(Direction::South);
+            }
+          verify: run
+          expectStdout: "Facing South\n"
+        concepts: [enum.define]
+
+      - type: predict-output
+        id: predict-show-season
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Season {
+                Summer,
+                Winter,
+            }
+
+            fn report(s: Season) {
+                println!("It's {s:?}");
+            }
+
+            fn main() {
+                report(Season::Winter);
+                report(Season::Summer);
+            }
+          verify: run
+        options:
+          - { id: a, text: "It's Winter\nIt's Summer" }
+          - { id: b, text: "It's Summer\nIt's Winter", why: "The calls run in order, and `Winter` is passed first. The order of the variants in the enum doesn't matter." }
+          - { id: c, text: "It's s\nIt's s", why: "`{s:?}` prints the value of `s`, not its name." }
+        answer: a
+        explanation: "Each call passes one `Season` value, and `report` prints that variant's name."
+        concepts: [enum.define, fn.params]
+
+      - type: compiles
+        id: compiles-unknown-variant
+        code:
+          rust: |
+            enum Direction {
+                North,
+                East,
+                South,
+                West,
+            }
+
+            fn main() {
+                let d = Direction::Up;
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0599: no variant named `Up` found for enum `Direction`" }
+            - { id: b, text: "E0425: cannot find value `d` in this scope", why: "`d` is created on that line. The problem is the value on the right." }
+            - { id: c, text: "E0308: mismatched types", why: "There's no second type to compare with. `Up` isn't one of the variants at all." }
+          answer: a
+        explanation: "An enum has only the variants you list. `Direction` has no `Up`, so the compiler reports E0599."
+        concepts: [enum.define]
+
+      - type: match-pairs
+        id: pairs-enum-parts
+        prompt: Match each piece to what it does
+        pairs:
+          - ["enum", "starts an enum definition"]
+          - ["North", "a variant"]
+          - ["Direction::North", "a value of type `Direction`"]
+          - ["#[derive(Debug)]", "lets `{:?}` print it"]
+        concepts: [enum.define, derive.debug]
+
+      - type: mcq
+        id: mcq-good-enum
+        prompt: Which of these is the best fit for an enum?
+        options:
+          - { id: a, text: "The colour of a traffic light: red, amber or green" }
+          - { id: b, text: "A player's score", why: "A score can be any number, so an integer type like `u32` fits better." }
+          - { id: c, text: "A person's name", why: "Names aren't a short fixed list, so a `String` fits better." }
+        answer: a
+        explanation: "Enums suit values that are always one of a small, fixed set of choices."
+        concepts: [enum.define]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-enum-field
+        title: Enums inside structs
+        markdown: |
+          **A struct field can have an enum type.** Derive `Debug` on both, and `{:?}` prints the whole thing.
+
+          Enum and variant names use `CamelCase`, like struct names.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction {
+                North,
+                East,
+            }
+
+            #[derive(Debug)]
+            struct Player {
+                name: String,
+                facing: Direction,
+            }
+          verify: compile
+          wrap: none
+          hidden:
+            after: "fn main() {}\n"
+        concepts: [enum.define, struct.define]
+
+      - type: predict-output
+        id: predict-player
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction { North, East }
+
+            #[derive(Debug)]
+            struct Player {
+                name: String,
+                facing: Direction,
+            }
+
+            fn main() {
+                let name = String::from("Ana");
+                let facing = Direction::East;
+                let p = Player { name, facing };
+                println!("{p:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Player { name: \"Ana\", facing: East }" }
+          - { id: b, text: "Player { name: \"Ana\", facing: Direction::East }", why: "Debug output names the variant on its own, without `Direction::`." }
+          - { id: c, text: "Player { name: Ana, facing: East }", why: "Debug output puts quotes around a `String`." }
+        answer: a
+        explanation: "The struct's Debug output includes each field. The enum field prints as its variant name, `East`."
+        concepts: [enum.define, derive.debug, struct.define]
+
+      - type: spot-bug
+        id: spot-missing-prefix
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Size {
+                Small,
+                Large,
+            }
+
+            fn main() {
+                let cup = Large;
+                println!("{cup:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 8
+        explanation: "`Large` on its own isn't in scope. Write `Size::Large` to name the variant through its enum."
+        concepts: [enum.define, compiler.read-error]
+
+      - type: compiles
+        id: compiles-no-debug
+        code:
+          rust: |
+            enum Size {
+                Small,
+                Large,
+            }
+
+            fn main() {
+                let cup = Size::Small;
+                println!("{cup:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: What's missing?
+          options:
+            - { id: a, text: "`#[derive(Debug)]` above the enum, so `{:?}` can print it" }
+            - { id: b, text: "`mut` on `cup`", why: "`cup` is only read, never changed." }
+            - { id: c, text: "A value inside `Small`, like `Small(1)`", why: "Variants don't need data. The problem is printing." }
+          answer: a
+        explanation: "Enums, like structs, can't be printed with `{:?}` until they derive `Debug`. The compiler reports E0277."
+        concepts: [enum.define, derive.debug]
+
+      - type: decode-error
+        id: decode-lowercase-variant
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Size {
+                Small,
+                Large,
+            }
+
+            fn main() {
+                let cup = Size::small;
+                println!("{cup:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        options:
+          - { id: a, text: "There's no variant called `small`. Names are case-sensitive, so it should be `Size::Small`." }
+          - { id: b, text: "Variants must be created with `let`", why: "Line 8 does use `let`. The variant's name is wrong." }
+          - { id: c, text: "`Size` needs to be written in lowercase", why: "Enum names use `CamelCase`. The variant `small` doesn't exist." }
+        answer: a
+        explanation: "`small` and `Small` are different names. The compiler can't find `small` in `Size`, so it reports E0599."
+        concepts: [enum.define, compiler.read-error]
+
+      - type: mcq
+        id: mcq-call-turn
+        prompt: "Given `fn turn(d: Direction)`, which call compiles?"
+        options:
+          - { id: a, code: "turn(Direction::West);" }
+          - { id: b, code: "turn(\"West\");", why: "`\"West\"` is a `&str`, not a `Direction`. The parameter accepts only `Direction` values." }
+          - { id: c, code: "turn(West);", why: "`West` on its own isn't in scope. Name it through the enum." }
+          - { id: d, code: "turn(Direction);", why: "`Direction` is the type. You pass one of its values." }
+        answer: a
+        explanation: "The parameter's type is `Direction`, so the argument must be a `Direction` variant such as `Direction::West`."
+        concepts: [enum.define, fn.params]
+
+      - type: compiles
+        id: compiles-str-for-enum
+        code:
+          rust: |
+            enum Direction {
+                North,
+                South,
+            }
+
+            fn turn(d: Direction) {}
+
+            fn main() {
+                turn("North");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0599: no variant named `North`", why: "`North` is a variant. The problem is that a `&str` was passed instead." }
+            - { id: c, text: "E0425: cannot find value `North`", why: "`\"North\"` is a string literal, not a name the compiler looks up." }
+          answer: a
+        explanation: "Text that looks like a variant name is still a `&str`. `turn` expects a `Direction`, so the types don't match."
+        concepts: [enum.define, err.E0308]
+
+      - type: predict-output
+        id: predict-array-of-seasons
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Season {
+                Summer,
+                Autumn,
+                Winter,
+                Spring,
+            }
+
+            fn main() {
+                let holidays = [
+                    Season::Winter,
+                    Season::Summer,
+                ];
+                println!("{holidays:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "[Winter, Summer]" }
+          - { id: b, text: "[Summer, Winter]", why: "An array keeps the order you wrote, not the order of the enum's variants." }
+          - { id: c, text: "[2, 0]", why: "Variants print as their names, not as positions." }
+        answer: a
+        explanation: "Both elements are `Season` values, so they fit in one array. `{:?}` prints each variant's name in array order."
+        concepts: [enum.define, types.array]
+
+      - type: fill-tokens
+        id: fill-param-type
+        prompt: Fill the blank so the program prints `Stop at Red`
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light {
+                Red,
+                Green,
+            }
+
+            fn stop_at(light: ___1___) {
+                println!("Stop at {light:?}");
+            }
+
+            fn main() {
+                stop_at(Light::Red);
+            }
+          verify: run
+          expectStdout: "Stop at Red\n"
+        blanks:
+          "1": { answer: ["Light"] }
+        bank: ["Light", "Red", "Light::Red", "&str", "enum"]
+        explanation: "A parameter needs a type, and the type is the enum `Light`. `Light::Red` is a value of that type, not a type."
+        concepts: [enum.define, fn.params]
+
+      - type: true-false
+        id: tf-variant-case
+        prompt: "Rust style writes variant names in `snake_case`, like `Direction::north`."
+        answer: false
+        explanation: "Variants use `CamelCase`, like `Direction::North`. A lowercase variant compiles, but the compiler warns."
+        concepts: [enum.define, style.snake-case]
+
+  - id: l3
+    exercises:
+      - type: compiles
+        id: compiles-enum-moves
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction {
+                North,
+                South,
+            }
+
+            fn main() {
+                let a = Direction::North;
+                let b = a;
+                println!("{a:?} {b:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `a`" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `a`'s value moves into `b`." }
+            - { id: c, text: "E0599: no variant named `a`", why: "`a` is a variable here, not a variant." }
+          answer: a
+        explanation: "Your own enums aren't `Copy` unless you ask for it, so `let b = a;` moves the value. After that, `a` can't be used."
+        concepts: [enum.define, own.move, err.E0382]
+
+      - type: decode-error
+        id: decode-moved-enum
+        prompt: Which change makes this compile and print `North North`?
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction {
+                North,
+                South,
+            }
+
+            fn main() {
+                let a = Direction::North;
+                let b = a;
+                println!("{a:?} {b:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 9 to `let b = &a;`" }
+          - { id: b, text: "Change line 9 to `let b = *a;`", why: "`a` isn't a reference, so there's nothing to dereference." }
+          - { id: c, text: "Change line 8 to `let mut a = Direction::North;`", why: "`mut` lets you change `a`, but the move on line 9 still happens." }
+        answer: a
+        explanation: "Borrowing with `&a` leaves the value in `a`. Both can then be printed, and `{:?}` prints through a reference."
+        concepts: [enum.define, own.move, borrow.shared]
+
+      - type: predict-output
+        id: predict-for-directions
+        prompt: Build the output
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Turn { Left, Right }
+
+            fn main() {
+                let route = [
+                    Turn::Left,
+                    Turn::Left,
+                    Turn::Right,
+                ];
+                for step in route {
+                    println!("{step:?}");
+                }
+            }
+          verify: run
+        tiles: ["Left", "Left", "Right", "Right", "Turn::Left"]
+        answer: "Left\nLeft\nRight"
+        explanation: "The loop prints each element of `route` in order. The same variant can appear more than once."
+        concepts: [enum.define, ctrl.for]
+
+      - type: predict-output
+        id: predict-returns-enum
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light {
+                Red,
+                Green,
+            }
+
+            fn start() -> Light {
+                Light::Red
+            }
+
+            fn main() {
+                let light = start();
+                println!("{light:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Red" }
+          - { id: b, text: "Light", why: "`start` returns a value of type `Light`, and the value is the `Red` variant." }
+          - { id: c, text: "Red\nGreen", why: "A `Light` value is one variant, not the whole list." }
+        answer: a
+        explanation: "A function can return an enum type. `start` returns `Light::Red`, which prints as `Red`."
+        concepts: [enum.define, fn.return]
+
+      - type: mcq
+        id: mcq-why-not-str
+        prompt: "Why store a direction as `Direction` rather than as a `&str` like `\"north\"`?"
+        options:
+          - { id: a, text: "The compiler rejects any value that isn't one of the listed variants, so a typo can't slip through" }
+          - { id: b, text: "Enums can hold longer text than `&str`", why: "Plain variants hold no text at all. The benefit is the fixed list of allowed values." }
+          - { id: c, text: "`&str` can't be passed to functions", why: "It can. The problem is that any text is accepted, including `\"nroth\"`." }
+        answer: a
+        explanation: "With a `&str`, `\"nroth\"` compiles and the bug shows up later. With an enum, `Direction::Nroth` is a compile error."
+        concepts: [enum.define]
+
+      - type: spot-bug
+        id: spot-wrong-enum
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Size { Small, Large }
+
+            #[derive(Debug)]
+            enum Colour { Red, Blue }
+
+            fn paint(c: Colour) {
+                println!("Painted {c:?}");
+            }
+
+            fn main() {
+                paint(Colour::Red);
+                paint(Size::Large);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 13
+        explanation: "`paint` takes a `Colour`, but line 13 passes a `Size`. Different enums are different types, even if both are simple lists."
+        concepts: [enum.define, err.E0308]
+
+      - type: parsons
+        id: parsons-coin
+        prompt: Arrange the lines so the program prints `Heads`
+        lines:
+          - { id: l1, text: "#[derive(Debug)]" }
+          - { id: l2, text: "enum Coin {" }
+          - { id: l3, text: "    Heads," }
+          - { id: l4, text: "    Tails," }
+          - { id: l5, text: "}" }
+          - { id: l6, text: "fn main() {" }
+          - { id: l7, text: "    let toss = Coin::Heads;" }
+          - { id: l8, text: "    println!(\"{toss:?}\");" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "    let toss = Coin.Heads;" }
+          - { id: d2, text: "    println!(\"{toss}\");" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6, l7, l8, l9]
+        verify:
+          mode: run
+          expectStdout: "Heads\n"
+        explanation: "`#[derive(Debug)]` goes directly above the enum. Variants are named with `::`, and `{:?}` prints them, not `{}`."
+        concepts: [enum.define, derive.debug]
+
+      - type: true-false
+        id: tf-return-type
+        prompt: "An enum can be used as a function's return type, like `fn pick() -> Direction`."
+        answer: true
+        explanation: "An enum is a type like any other, so it can be a parameter type, a return type or a struct field."
+        concepts: [enum.define, fn.return]
+
+      - type: fill-tokens
+        id: fill-struct-field
+        prompt: "Fill the blanks so the program prints `Robot { facing: West }`"
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Direction { North, West }
+
+            #[derive(Debug)]
+            struct Robot {
+                facing: ___1___,
+            }
+
+            fn main() {
+                let r = Robot {
+                    facing: ___2___,
+                };
+                println!("{r:?}");
+            }
+          verify: run
+          expectStdout: "Robot { facing: West }\n"
+        blanks:
+          "1": { answer: ["Direction"] }
+          "2": { answer: ["Direction::West"] }
+        bank: ["Direction", "Direction::West", "West", "enum", "Direction.West"]
+        explanation: "The field's type is the enum, `Direction`. The value stored in it is one variant, `Direction::West`."
+        concepts: [enum.define, struct.define]
+
+      - type: match-pairs
+        id: pairs-enum-errors
+        prompt: Match each mistake to its error code
+        pairs:
+          - ["`Direction::Up` (no such variant)", "E0599"]
+          - ["`North` without `Direction::`", "E0425"]
+          - ["`{:?}` without `#[derive(Debug)]`", "E0277"]
+          - ["using `a` after `let b = a;`", "E0382"]
+        concepts: [enum.define, err.E0382]

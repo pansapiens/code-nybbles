@@ -1,0 +1,336 @@
+id: structs-enums.methods.checkpoint
+title: "Checkpoint: Methods"
+icon: flag
+concepts: []
+reviewConcepts:
+  - method.self
+  - method.associated
+  - style.new
+  - method.auto-ref
+  - struct.define
+  - struct.update
+  - derive.debug
+  - own.move
+  - borrow.exclusive
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-loop-method
+        code:
+          rust: |
+            struct Jar { coins: u32 }
+
+            impl Jar {
+                fn drop_in(&mut self, n: u32) {
+                    if n % 2 == 0 {
+                        self.coins += n;
+                    }
+                }
+            }
+
+            fn main() {
+                let mut jar = Jar { coins: 0 };
+                for n in 1..=5 { jar.drop_in(n); }
+                println!("{}", jar.coins);
+            }
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "15", why: "Only even values of `n` are added, so 1, 3 and 5 are skipped." }
+          - { id: c, text: "0", why: "`drop_in` takes `&mut self`, so each call changes `jar` itself." }
+          - { id: d, text: "9", why: "That's the odd numbers. The `if` keeps the even ones." }
+        answer: a
+        explanation: "`1..=5` gives 1 to 5, and only 2 and 4 pass the `if`, so `jar.coins` ends at 6."
+        concepts: [method.self, ctrl.for]
+
+      - type: compiles
+        id: compiles-self-in-loop
+        code:
+          rust: |
+            struct Ticket { owner: String }
+
+            impl Ticket {
+                fn show(self) {
+                    println!("{}", self.owner);
+                }
+            }
+
+            fn main() {
+                let owner = String::from("Ada");
+                let t = Ticket { owner };
+                for _ in 0..2 {
+                    t.show();
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: What's the simplest fix?
+          options:
+            - { id: a, code: "fn show(&self) {" }
+            - { id: b, code: "fn show(&mut self) {", why: "That would also need `let mut t`, and `show` doesn't change anything. `&self` is enough." }
+            - { id: c, code: "for _ in 0..1 {", why: "That avoids the error by running once, but changes what the program does." }
+          answer: a
+        explanation: "`show` takes `self`, so the first pass of the loop moves `t` and the second can't use it (E0382). `show` only reads, so `&self` fits."
+        concepts: [method.self, own.move, err.E0382]
+
+      - type: fill-tokens
+        id: fill-bank
+        prompt: Fill the blanks so the program prints `30`
+        code:
+          rust: |
+            struct Bank { sum: u32 }
+
+            impl Bank {
+                fn new() -> ___1___ { Self { sum: 0 } }
+                fn put(___2___, n: u32) {
+                    self.sum += n;
+                }
+            }
+
+            fn main() {
+                let mut b = Bank___3___new();
+                b.put(10);
+                b.put(20);
+                println!("{}", b.sum);
+            }
+          verify: run
+          expectStdout: "30\n"
+        blanks:
+          "1": { answer: ["Self", "Bank"] }
+          "2": { answer: ["&mut self"] }
+          "3": { answer: ["::"] }
+        bank: ["Self", "&mut self", "&self", "::", ".", "self"]
+        explanation: "`new` returns the type, written `Self`. `put` changes a field, so it takes `&mut self`. Associated functions are called with `::`."
+        concepts: [style.new, method.self, method.associated]
+
+      - type: decode-error
+        id: decode-name-then-rename
+        prompt: What's the best fix?
+        code:
+          rust: |
+            struct Player { tag: String }
+            impl Player {
+                fn tag(&self) -> &str { &self.tag }
+                fn rename(&mut self, name: &str) {
+                    self.tag = String::from(name);
+                }
+            }
+
+            fn main() {
+                let tag = String::from("Ann");
+                let mut p = Player { tag };
+                let old = p.tag();
+                p.rename("Kai");
+                println!("{old}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Move `println!(\"{old}\");` above line 13" }
+          - { id: b, text: "Change line 4 to `fn rename(&self, name: &str) {`", why: "Then `rename` can't assign to `self.tag` (E0594)." }
+          - { id: c, text: "Change line 11 to `let p = Player { tag };`", why: "`rename` needs a mutable borrow, so `p` must stay `mut`." }
+        answer: a
+        explanation: "`old` borrows from `p` through `tag()`. Using it after `rename` keeps that borrow alive across a mutable one (E0502). Print it first."
+        concepts: [method.auto-ref, borrow.exclusive, err.E0502]
+
+      - type: predict-output
+        id: predict-update-syntax
+        code:
+          rust: |
+            struct Rect { w: u32, h: u32 }
+
+            impl Rect {
+                fn area(&self) -> u32 {
+                    self.w * self.h
+                }
+            }
+
+            fn main() {
+                let a = Rect { w: 2, h: 3 };
+                let b = Rect { w: 5, ..a };
+                println!("{}", a.area());
+                println!("{}", b.area());
+            }
+          verify: run
+        options:
+          - { id: a, text: "6\n15" }
+          - { id: b, text: "6\n10", why: "`..a` copies `h: 3` from `a`, so `b` is 5 by 3." }
+          - { id: c, text: "6\n6", why: "`b` sets its own `w: 5`; only the other fields come from `a`." }
+        answer: a
+        explanation: "`b` takes `h` from `a` and has its own `w`, so its area is 15. `a` is still usable because its fields are `Copy`."
+        concepts: [method.self, struct.update]
+
+      - type: spot-bug
+        id: spot-area-semicolon
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Rect { w: u32, h: u32 }
+
+            impl Rect {
+                fn area(&self) -> u32 {
+                    self.w * self.h;
+                }
+            }
+
+            fn main() {
+                let r = Rect { w: 4, h: 4 };
+                println!("{}", r.area());
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "The `;` turns the product into a statement, so `area` returns `()` instead of a `u32`. The compiler points at line 4 but suggests removing the semicolon."
+        concepts: [method.self, err.E0308]
+
+      - type: mcq
+        id: mcq-upgrade-sig
+        prompt: "`upgrade` should use up an old `Ticket` and return a new one. Which signature fits?"
+        options:
+          - { id: a, code: "fn upgrade(self) -> Self" }
+          - { id: b, code: "fn upgrade(&self) -> Self", why: "That borrows the old ticket, so the caller keeps it. The task says to use it up." }
+          - { id: c, code: "fn upgrade() -> Self", why: "With no `self` it's an associated function, so it has no old ticket to work from." }
+          - { id: d, code: "fn upgrade(&mut self)", why: "That changes the ticket in place and returns nothing." }
+        answer: a
+        explanation: "Plain `self` takes ownership of the old ticket, and `-> Self` returns the new one."
+        concepts: [method.self, method.associated]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each error to its usual cause
+        pairs:
+          - ["E0596", "`&mut self` method on a non-`mut` variable"]
+          - ["E0599", "associated function called with `.`"]
+          - ["E0382", "value used after a `self` method moved it"]
+          - ["E0594", "assigning to a field in a `&self` method"]
+          - ["E0424", "`self` used in a function without `self`"]
+        explanation: "These are the errors you'll meet most often while writing methods."
+        concepts: [method.self, method.associated]
+
+      - type: parsons
+        id: parsons-main
+        prompt: Arrange the lines so the program prints `2`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut t = Timer::new();" }
+          - { id: l3, text: "    t.tick();" }
+          - { id: l4, text: "    t.tick();" }
+          - { id: l5, text: "    println!(\"{}\", t.secs);" }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let t = Timer::new();" }
+          - { id: d2, text: "    let mut t = Timer.new();" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          harness: |
+            struct Timer { secs: u32 }
+            impl Timer {
+                fn new() -> Self { Self { secs: 0 } }
+                fn tick(&mut self) { self.secs += 1; }
+            }
+            {{solution}}
+          mode: run
+          expectStdout: "2\n"
+        explanation: "Create the timer with `Timer::new()` in a `mut` variable, call the method twice, then print."
+        concepts: [style.new, method.self]
+
+      - type: predict-output
+        id: predict-debug-after
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Pos { x: i32, y: i32 }
+
+            impl Pos {
+                fn origin() -> Self {
+                    Self { x: 0, y: 0 }
+                }
+                fn step(&mut self) { self.x += 1; }
+            }
+
+            fn main() {
+                let mut p = Pos::origin();
+                p.step();
+                println!("{p:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Pos { x: 1, y: 0 }" }
+          - { id: b, text: "Pos { x: 0, y: 0 }", why: "`step` changes `p` through `&mut self` before it's printed." }
+          - { id: c, text: "(1, 0)", why: "Debug format for a struct shows its name and field names." }
+        answer: a
+        explanation: "`Pos::origin()` starts at 0, 0, then `step` adds 1 to `x`. `{:?}` prints the struct with its field names."
+        concepts: [method.associated, derive.debug]
+
+      - type: true-false
+        id: tf-auto-ref-function
+        prompt: "Rust borrows for you in `Rect::area(r)` in the same way as in `r.area()`."
+        answer: false
+        explanation: "Only the `.` method call adds `&` or `&mut` for you. With `Rect::area`, you pass `&r` yourself."
+        concepts: [method.auto-ref]
+
+      - type: compiles
+        id: compiles-chain-borrow-ok
+        code:
+          rust: |
+            struct Light { pct: u32 }
+
+            impl Light {
+                fn up(&mut self) -> &mut Self {
+                    self.pct += 10;
+                    self
+                }
+                fn pct(&self) -> u32 { self.pct }
+            }
+
+            fn main() {
+                let mut l = Light { pct: 0 };
+                println!("{}", l.up().up().pct());
+            }
+          verify: run
+          expectStdout: "20\n"
+        answer: true
+        explanation: "Each `up` returns `&mut Self`, and `pct` takes `&self`, which Rust can get from a `&mut`. It prints 20."
+        concepts: [method.auto-ref]
+
+      - type: mcq
+        id: mcq-self-type
+        prompt: "In `impl Order { fn new(id: u32) -> Self { ... } }`, which line could replace `-> Self` without changing anything?"
+        options:
+          - { id: a, code: "-> Order" }
+          - { id: b, code: "-> self", why: "Lowercase `self` is a value, not a type." }
+          - { id: c, code: "-> &Self", why: "That's a reference, not an owned `Order`, and `new` has nothing to borrow from." }
+        answer: a
+        explanation: "Inside `impl Order`, `Self` is another name for `Order`."
+        concepts: [style.new, method.associated]
+
+      - type: spot-bug
+        id: spot-ref-param
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Tank { litres: u32 }
+            impl Tank {
+                fn fill(&mut self) {
+                    self.litres = 50;
+                }
+            }
+
+            fn refuel(t: &Tank) {
+                t.fill();
+            }
+
+            fn main() {
+                let mut car = Tank { litres: 0 };
+                refuel(&mut car);
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: 8
+        explanation: "The error points at line 9, but the mistake is the parameter on line 8: `refuel` needs `t: &mut Tank` to call a `&mut self` method."
+        concepts: [method.auto-ref, own.param-choice]

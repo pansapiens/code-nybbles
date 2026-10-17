@@ -1,0 +1,321 @@
+id: structs-enums.enums.checkpoint
+title: "Checkpoint: Enums & Option"
+icon: flag
+concepts: []
+reviewConcepts:
+  - enum.define
+  - enum.data
+  - enum.impl
+  - option.basics
+  - option.type-safety
+  - option.methods
+  - own.fn-move
+  - err.E0382
+  - err.E0308
+  - types.overflow
+  - ctrl.for
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-pay
+        code:
+          rust: |
+            fn pay(a: u32, b: u32) -> Option<u32> {
+                a.checked_sub(b)
+            }
+
+            fn main() {
+                let a = pay(20, 5).unwrap_or(0);
+                let b = pay(20, 25);
+                println!("{a} {b:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "15 None" }
+          - { id: b, text: "Some(15) None", why: "`unwrap_or(0)` takes the 15 out of the `Some`, so `a` is a plain number." }
+          - { id: c, text: "15 0", why: "`b` keeps the `Option` from `pay`, and 20 - 25 doesn't fit in a `u32`, so it's `None`." }
+        answer: a
+        explanation: "`checked_sub` works like `checked_add`: `Some(15)` for 20 - 5, and `None` for 20 - 25, which would go below zero."
+        concepts: [option.methods, option.basics, types.overflow]
+
+      - type: compiles
+        id: compiles-enum-into-fn
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Write { text: String },
+            }
+
+            fn send(c: Command) {
+                println!("{c:?}");
+            }
+
+            fn main() {
+                let c = Command::Quit;
+                send(c);
+                send(c);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: use of moved value: `c`" }
+            - { id: b, text: "E0063: missing field `text`", why: "`c` is `Quit`, which has no fields. Only `Write` needs `text`." }
+            - { id: c, text: "E0308: mismatched types", why: "`send` takes a `Command`, and `c` is one." }
+          answer: a
+        explanation: "Passing `c` to `send` moves it. Even `Quit`, which holds no data, moves, because `Command` isn't `Copy`."
+        concepts: [enum.data, own.fn-move, err.E0382]
+
+      - type: decode-error
+        id: decode-option-sum
+        prompt: Which change makes this compile and print `12`?
+        code:
+          rust: |
+            fn bonus(level: u32) -> Option<u32> {
+                if level > 2 {
+                    Some(level)
+                } else {
+                    None
+                }
+            }
+
+            fn main() {
+                let score = 9 + bonus(3);
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Change line 10 to `let score = 9 + bonus(3).unwrap_or(0);`" }
+          - { id: b, text: "Change line 10 to `let score = 9 + bonus(3).is_some();`", why: "`is_some()` is a `bool`, which can't be added to a number." }
+          - { id: c, text: "Change line 11 to `println!(\"{score:?}\");`", why: "The error is on line 10, where an `Option` is added to a number. Printing doesn't fix that." }
+        answer: a
+        explanation: "`bonus(3)` is `Some(3)`, an `Option<u32>`. `unwrap_or(0)` gives the plain 3, and 9 + 3 is 12."
+        concepts: [option.type-safety, option.methods]
+
+      - type: spot-bug
+        id: spot-wrong-pattern-count
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Rug { Square(u32), Rect(u32, u32) }
+
+            impl Rug {
+                fn area(&self) -> u32 {
+                    match self {
+                        Rug::Square(s) => s * s,
+                        Rug::Rect(w) => w * w,
+                    }
+                }
+            }
+
+            fn main() {
+                let rug = Rug::Square(2);
+                println!("{}", rug.area());
+            }
+          verify: compile-fail
+          expectErrors: [E0023]
+        answer: 7
+        explanation: "`Rect` holds two numbers, so its arm must name both: `Rug::Rect(w, h) => w * h`."
+        concepts: [enum.impl, enum.data]
+
+      - type: fill-tokens
+        id: fill-ticket-price
+        prompt: Fill the blanks so the program prints `Some(12) None`
+        code:
+          rust: |
+            enum Ticket { Adult, Pass }
+            impl Ticket {
+                fn price(&self) -> ___1___<u32> {
+                    match self {
+                        Ticket::Adult => Some(12),
+                        Ticket::Pass => ___2___,
+                    }
+                }
+            }
+
+            fn main() {
+                let a = Ticket::Adult.price();
+                let p = Ticket::Pass.price();
+                println!("{a:?} {p:?}");
+            }
+          verify: run
+          expectStdout: "Some(12) None\n"
+        blanks:
+          "1": { answer: ["Option"] }
+          "2": { answer: ["None"] }
+        bank: ["Option", "None", "Some", "0", "Self"]
+        explanation: "A method can return an `Option`. A pass has no price to pay, so its arm returns `None`, not a made-up 0."
+        concepts: [enum.impl, option.basics]
+
+      - type: predict-output
+        id: predict-ticket-loop
+        prompt: "`price()` returns `Some(12)` for `Adult`, `Some(6)` for `Child` and `None` for `Pass`. Build the output."
+        code:
+          rust: |
+            fn main() {
+                let queue = [
+                    Ticket::Child,
+                    Ticket::Pass,
+                    Ticket::Adult,
+                ];
+                let mut total = 0;
+                for t in queue {
+                    total += t.price().unwrap_or(0);
+                }
+                println!("{total}");
+                let p = Ticket::Pass.price();
+                println!("{}", p.is_some());
+            }
+          verify: run
+          hidden:
+            before: |
+              enum Ticket { Adult, Child, Pass }
+              impl Ticket {
+                  fn price(&self) -> Option<u32> {
+                      match self {
+                          Ticket::Adult => Some(12),
+                          Ticket::Child => Some(6),
+                          Ticket::Pass => None,
+                      }
+                  }
+              }
+        tiles: ["18", "24", "true", "false", "None"]
+        answer: "18\nfalse"
+        explanation: "`unwrap_or(0)` counts the pass as 0, so the total is 6 + 0 + 12 = 18. A pass's price is `None`, so `is_some()` is `false`."
+        concepts: [enum.impl, option.methods, ctrl.for]
+
+      - type: true-false
+        id: tf-option-is-enum
+        prompt: "`Option<T>` is an ordinary enum from the standard library, with the variants `None` and `Some(T)`."
+        answer: true
+        explanation: "There's nothing magic about it. It's always in scope, and `Some(T)` is a tuple-like variant holding a `T`."
+        concepts: [option.basics, enum.data]
+
+      - type: mcq
+        id: mcq-model-payment
+        prompt: "A payment is either cash, or a card with a card number. Which type models that best?"
+        options:
+          - { id: a, code: "enum Payment {\n    Cash,\n    Card { number: String },\n}" }
+          - { id: b, code: "struct Payment {\n    is_card: bool,\n    number: String,\n}", why: "A cash payment would still need some `number`, and nothing stops `is_card: false` with a card number." }
+          - { id: c, code: "enum Payment {\n    Cash,\n    Card,\n}", why: "There's nowhere to keep the card number." }
+        answer: a
+        explanation: "An enum variant carries exactly the data it needs: `Cash` holds nothing, and `Card` holds its number."
+        concepts: [enum.data, enum.define]
+
+      - type: compiles
+        id: compiles-none-inferred
+        code:
+          rust: |
+            fn main() {
+                let mut best = None;
+                println!("{best:?}");
+                best = Some(5);
+                println!("{best:?}");
+            }
+          verify: run
+          expectStdout: "None\nSome(5)\n"
+        answer: true
+        explanation: "Line 2 gives no type, but line 4 stores `Some(5)` in `best`, so the compiler works out `Option<i32>`. E0282 only happens when nothing tells it."
+        concepts: [option.basics]
+
+      - type: parsons
+        id: parsons-label-or
+        prompt: Arrange the lines so the program prints `Hi, Kim` then `Hi, there`
+        lines:
+          - { id: l1, text: "fn greet(name: Option<&str>) {" }
+          - { id: l2, text: "    let shown = name.unwrap_or(\"there\");" }
+          - { id: l3, text: "    println!(\"Hi, {shown}\");" }
+          - { id: l4, text: "}" }
+          - { id: l5, text: "fn main() {" }
+          - { id: l6, text: "    greet(Some(\"Kim\"));" }
+          - { id: l7, text: "    greet(None);" }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    greet(\"Kim\");" }
+          - { id: d2, text: "    let shown = name.unwrap();" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l5, l6, l7, l8, l1, l2, l3, l4]
+        verify:
+          mode: run
+          expectStdout: "Hi, Kim\nHi, there\n"
+        explanation: "The parameter is an `Option<&str>`, so the call wraps the name in `Some`. `unwrap_or` handles the `None` call without panicking."
+        concepts: [option.methods, option.type-safety]
+
+      - type: predict-output
+        id: predict-map-len
+        code:
+          rust: |
+            let city: Option<&str> = Some("Hobart");
+            let none: Option<&str> = None;
+            println!("{:?}", city.map(|c| c.len()));
+            println!("{:?}", none.map(|c| c.len()));
+          verify: run
+        options:
+          - { id: a, text: "Some(6)\nNone" }
+          - { id: b, text: "6\n0", why: "`map` keeps the `Option` around the result, and `None` stays `None`." }
+          - { id: c, text: "Some(\"Hobart\")\nNone", why: "`map` replaces the value with what the closure returns, the length." }
+        answer: a
+        explanation: "The closure runs on `\"Hobart\"` and returns 6, wrapped in `Some`. For `None`, it doesn't run."
+        concepts: [option.methods]
+
+      - type: decode-error
+        id: decode-unwrap-or-on-u32
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let lives: u32 = 3;
+                let shown = lives.unwrap_or(0);
+                println!("{shown}");
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        options:
+          - { id: a, text: "`lives` is a plain `u32`, not an `Option`, so it has no `unwrap_or` method" }
+          - { id: b, text: "`unwrap_or` needs a fallback of type `Option<u32>`", why: "The fallback has the inner type, so `0` would be right for an `Option<u32>`." }
+          - { id: c, text: "`lives` must be declared `mut`", why: "`unwrap_or` only reads. The method doesn't exist on `u32` at all." }
+        answer: a
+        explanation: "`unwrap_or` belongs to `Option`. A `u32` always has a value, so there's nothing to unwrap. Use `lives` directly."
+        concepts: [option.methods, option.type-safety]
+
+      - type: spot-bug
+        id: spot-unwrap-div
+        prompt: This program panics. Tap the line with the mistake.
+        code:
+          rust: |
+            fn div(a: u32, b: u32) -> Option<u32> {
+                if b == 0 {
+                    None
+                } else {
+                    Some(a / b)
+                }
+            }
+
+            fn main() {
+                let each = div(12, 4).unwrap_or(0);
+                let share = div(12, 0).unwrap();
+                println!("{each} {share}");
+            }
+          verify: run
+          expectPanic: "called `Option::unwrap()` on a `None` value"
+        answer: 11
+        explanation: "`div(12, 0)` returns `None`, and `unwrap` on `None` panics. Line 10 is safe because `unwrap_or` has a fallback."
+        concepts: [option.methods]
+
+      - type: match-pairs
+        id: pairs-unit-review
+        prompt: Match each piece of code to what it is
+        pairs:
+          - ["enum Light { Red, Green }", "an enum with plain variants"]
+          - ["Move(i32, i32)", "a tuple-like variant"]
+          - ["Write { text: String }", "a struct-like variant"]
+          - ["Option<u32>", "maybe a `u32`"]
+          - ["impl Light { ... }", "methods for an enum"]
+        concepts: [enum.define, enum.data, enum.impl, option.basics]

@@ -1,0 +1,554 @@
+id: structs-enums.enums.option
+title: Some or None
+icon: circle
+concepts: [option.basics, option.type-safety]
+reviewConcepts: [enum.define, enum.data, enum.impl, types.overflow, fn.return, fn.early-return, ctrl.for, ctrl.if, err.E0308, fmt.debug, string.string-vs-literal, mem.stack-heap, match.intro]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-option
+        title: Maybe a value
+        markdown: |
+          **Rust has no `null`.** When a value might be missing, use `Option<T>`, an enum from the standard library:
+
+          - `Some(value)`: there is a value, of type `T`
+          - `None`: there isn't
+
+          `Option`, `Some` and `None` are always in scope, so you don't write `Option::` in front.
+        code:
+          rust: |
+            let age: Option<u32> = Some(30);
+            let middle_name: Option<&str> = None;
+            println!("{age:?} {middle_name:?}");
+          verify: run
+          expectStdout: "Some(30) None\n"
+        concepts: [option.basics]
+
+      - type: predict-output
+        id: predict-some-score
+        code:
+          rust: |
+            let best: Option<u32> = Some(42);
+            println!("{best:?}");
+          verify: run
+        options:
+          - { id: a, text: "Some(42)" }
+          - { id: b, text: "42", why: "`best` is an `Option`, and Debug output shows the `Some` around the value." }
+          - { id: c, text: "Option(42)", why: "The variant is printed, `Some`, not the enum's name." }
+        answer: a
+        explanation: "`Option` is an enum, so `{:?}` prints the variant with its data, like any other enum."
+        concepts: [option.basics]
+
+      - type: true-false
+        id: tf-null
+        prompt: "In Rust, any variable can be set to `null` to mean \"no value\"."
+        answer: false
+        explanation: "Rust has no `null`. A value that might be missing has the type `Option<T>`, and \"no value\" is `None`."
+        concepts: [option.basics]
+
+      - type: mcq
+        id: mcq-type-of-some
+        prompt: "What is the type of `Some(\"Ana\")`?"
+        options:
+          - { id: a, code: "Option<&str>" }
+          - { id: b, code: "&str", why: "The `&str` is wrapped in `Some`, so the whole value is an `Option`." }
+          - { id: c, code: "Some<&str>", why: "`Some` is a variant, not a type. The type is the enum, `Option`." }
+          - { id: d, code: "Option", why: "`Option` needs to know what it might hold. Here that's `&str`." }
+        answer: a
+        explanation: "`Some(\"Ana\")` is the `Some` variant of `Option`, holding a `&str`. Its type is `Option<&str>`."
+        concepts: [option.basics]
+
+      - type: concept
+        id: concept-none-type
+        title: None needs a type
+        markdown: |
+          **`None` holds nothing, so Rust can't tell what it would have held.** Write the type yourself when nothing else tells the compiler.
+
+          `Some(5)` doesn't need this: the `5` shows it's an `Option` of an integer.
+        code:
+          rust: |
+            let lucky = Some(7);
+            let prize: Option<u32> = None;
+            println!("{lucky:?} {prize:?}");
+          verify: run
+          expectStdout: "Some(7) None\n"
+        concepts: [option.basics]
+
+      - type: compiles
+        id: compiles-bare-none
+        code:
+          rust: |
+            fn main() {
+                let winner = None;
+                println!("{winner:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0282]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "Rust can't work out what type of `Option` `winner` is" }
+            - { id: b, text: "`None` can't be printed", why: "It can: `{:?}` prints `None`. The compiler needs to know the full type first." }
+            - { id: c, text: "Variables can't start out empty", why: "They can, with `None`. It needs a type such as `Option<&str>`." }
+          answer: a
+        explanation: "Nothing says what `winner` would hold, so the compiler reports E0282: type annotations needed. Write `let winner: Option<&str> = None;`."
+        concepts: [option.basics]
+
+      - type: fill-tokens
+        id: fill-middle-name
+        prompt: Fill the blanks so the program prints `None`
+        code:
+          rust: |
+            let middle_name: ___1___<&str> = ___2___;
+            println!("{middle_name:?}");
+          verify: run
+          expectStdout: "None\n"
+        blanks:
+          "1": { answer: ["Option"] }
+          "2": { answer: ["None"] }
+        bank: ["Option", "None", "Some", "null", "Maybe"]
+        explanation: "The type is `Option<&str>`, and `None` is the variant for \"no value\". Rust has no `null`."
+        concepts: [option.basics]
+
+      - type: predict-output
+        id: predict-checked-add
+        code:
+          rust: |
+            let hp: u8 = 250;
+            println!("{:?}", hp.checked_add(3));
+            println!("{:?}", hp.checked_add(10));
+          verify: run
+        options:
+          - { id: a, text: "Some(253)\nNone" }
+          - { id: b, text: "253\n260", why: "A `u8` can't hold 260, and `checked_add` returns an `Option`, not a plain number." }
+          - { id: c, text: "Some(253)\nSome(4)", why: "`checked_add` doesn't wrap around. When the result doesn't fit, it gives `None`." }
+        answer: a
+        explanation: "`checked_add` returns an `Option`: `Some` with the sum if it fits in a `u8`, and `None` if it would overflow."
+        concepts: [option.basics, types.overflow]
+
+      - type: match-pairs
+        id: pairs-option-parts
+        prompt: Match each piece to what it means
+        pairs:
+          - ["Option<i32>", "maybe an `i32`"]
+          - ["Some(5)", "there is a value: 5"]
+          - ["None", "there is no value"]
+          - ["null", "doesn't exist in Rust"]
+        concepts: [option.basics]
+
+      - type: mcq
+        id: mcq-return-type
+        prompt: "A function looks for the first negative number in an array. There might not be one. Which return type fits?"
+        options:
+          - { id: a, code: "-> Option<i32>" }
+          - { id: b, code: "-> i32", why: "Then the function must always return a number. You'd have to invent one, like 0, to mean \"not found\"." }
+          - { id: c, code: "-> Some<i32>", why: "`Some` is a variant, not a type. The type is `Option<i32>`." }
+        answer: a
+        explanation: "`Option<i32>` says \"maybe an `i32`\". The function returns `Some(n)` when it finds one and `None` when it doesn't."
+        concepts: [option.basics, fn.return]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-not-i32
+        title: "`Option<i32>` isn't `i32`"
+        markdown: |
+          **An `Option<i32>` might be `None`, so Rust won't let you use it as a number.** Adding an `i32` and an `Option<i32>` is error E0277.
+
+          This is the point of `Option`: you can't forget that a value might be missing.
+        code:
+          rust: |
+            fn main() {
+                let bonus: Option<i32> = Some(5);
+                let total = 10 + bonus;
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        concepts: [option.type-safety]
+
+      - type: compiles
+        id: compiles-some-as-i32
+        code:
+          rust: |
+            fn main() {
+                let score: i32 = Some(12);
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0282: type annotations needed", why: "The type is written: `i32`. It doesn't match the value." }
+            - { id: c, text: "E0599: no variant named `Some`", why: "`Some` is always in scope. The problem is the types." }
+          answer: a
+        explanation: "`Some(12)` is an `Option<i32>`, not an `i32`. The annotation and the value don't match."
+        concepts: [option.type-safety, err.E0308]
+
+      - type: decode-error
+        id: decode-add-option
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let base: i32 = 10;
+                let bonus: Option<i32> = Some(5);
+                let total = base + bonus;
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "You can't add an `Option<i32>` to an `i32`. Handle the `None` case first." }
+          - { id: b, text: "`bonus` needs to be `mut`", why: "Nothing is changed here. The problem is the types in `base + bonus`." }
+          - { id: c, text: "The sum is too big for an `i32`", why: "15 fits easily. Rust refuses to add the two types at all." }
+        answer: a
+        explanation: "`bonus` might be `None`, and `10 + None` has no answer. Rust makes you decide what happens in that case."
+        concepts: [option.type-safety]
+
+      - type: compiles
+        id: compiles-print-option
+        code:
+          rust: |
+            fn main() {
+                let speed: Option<u32> = Some(60);
+                println!("{speed}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: How do you fix it?
+          options:
+            - { id: a, text: "Print it with `{speed:?}`" }
+            - { id: b, text: "Make `speed` mutable", why: "Printing only reads `speed`. The format is the problem." }
+            - { id: c, text: "Change `Some(60)` to `Some(\"60\")`", why: "The type of the data doesn't matter here. `{}` doesn't work for any `Option`." }
+          answer: a
+        explanation: "`{}` would have to choose how `None` looks, so `Option` doesn't support it (E0277). `{:?}` prints `Some(60)`."
+        concepts: [option.type-safety, fmt.debug]
+
+      - type: concept
+        id: concept-match-option
+        title: Handling both cases
+        markdown: |
+          **To use the value, say what happens in both cases.** A `match` does that. In the `Some(n)` arm, `n` is the value inside.
+
+          Unit 4.4 covers `match` in full. The next level shows shorter methods.
+        code:
+          rust: |
+            let bonus: Option<i32> = None;
+            let extra = match bonus {
+                Some(n) => n,
+                None => 0,
+            };
+            println!("{}", 10 + extra);
+          verify: run
+          expectStdout: "10\n"
+        concepts: [option.type-safety]
+
+      - type: predict-output
+        id: predict-match-some
+        code:
+          rust: |
+            let bonus: Option<i32> = Some(4);
+            let extra = match bonus {
+                Some(n) => n,
+                None => 0,
+            };
+            println!("{}", 10 + extra);
+          verify: run
+        options:
+          - { id: a, text: "14" }
+          - { id: b, text: "10", why: "That's the `None` case. `bonus` is `Some(4)`, so `extra` is 4." }
+          - { id: c, text: "Some(14)", why: "`extra` is a plain `i32`, taken out of the `Some`, so the sum is a plain number." }
+        answer: a
+        explanation: "`bonus` is `Some(4)`, so the `Some(n)` arm runs with `n` as 4. `extra` is an `i32`, and `10 + 4` is 14."
+        concepts: [option.type-safety]
+
+      - type: true-false
+        id: tf-same-type
+        prompt: "`Some(5)` and `5` have the same type."
+        answer: false
+        explanation: "`5` is an integer such as `i32`. `Some(5)` is an `Option<i32>`, a different type."
+        concepts: [option.type-safety]
+
+      - type: spot-bug
+        id: spot-missing-some
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn div(a: i32, b: i32) -> Option<i32> {
+                if b == 0 {
+                    None
+                } else {
+                    a / b
+                }
+            }
+
+            fn main() {
+                println!("{:?}", div(9, 3));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "The function returns `Option<i32>`, so the answer must be wrapped: `Some(a / b)`."
+        concepts: [option.type-safety, option.basics, err.E0308]
+
+      - type: predict-output
+        id: predict-divide
+        code:
+          rust: |
+            fn div(a: i32, b: i32) -> Option<i32> {
+                if b == 0 {
+                    None
+                } else {
+                    Some(a / b)
+                }
+            }
+
+            fn main() {
+                println!("{:?}", div(9, 3));
+                println!("{:?}", div(9, 0));
+            }
+          verify: run
+        options:
+          - { id: a, text: "Some(3)\nNone" }
+          - { id: b, text: "3\n0", why: "`divide` returns an `Option`, and `{:?}` shows the `Some` and `None`." }
+          - { id: c, text: "Some(3)", why: "Dividing by 0 doesn't stop the program here. `divide` checks first and returns `None`." }
+        answer: a
+        explanation: "With `b` as 0 the function returns `None` instead of dividing, so nothing panics."
+        concepts: [option.basics, option.type-safety]
+
+      - type: mcq
+        id: mcq-why-option
+        prompt: What's the main advantage of `Option` over `null`?
+        options:
+          - { id: a, text: "The type tells you a value might be missing, and the compiler makes you handle that case" }
+          - { id: b, text: "`Option` values take no memory", why: "An `Option` still stores its value when it's `Some`. The advantage is safety." }
+          - { id: c, text: "`None` is converted to 0 automatically", why: "Rust never converts `None` into a number. You choose what `None` means." }
+        answer: a
+        explanation: "With `null`, any value might secretly be missing. In Rust only an `Option` can be `None`, and you can't use it as the plain value by mistake."
+        concepts: [option.type-safety]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-safe-divide
+        prompt: Fill the blanks so the program prints `Some(4) None`
+        code:
+          rust: |
+            fn div(a: i32, b: i32) -> Option<i32> {
+                if b == 0 {
+                    ___1___
+                } else {
+                    ___2___(a / b)
+                }
+            }
+
+            fn main() {
+                let x = div(8, 2);
+                let y = div(8, 0);
+                println!("{x:?} {y:?}");
+            }
+          verify: run
+          expectStdout: "Some(4) None\n"
+        blanks:
+          "1": { answer: ["None"] }
+          "2": { answer: ["Some"] }
+        bank: ["None", "Some", "null", "0", "Option"]
+        explanation: "Return `None` when there's no answer and wrap a real answer in `Some`. `0` would be a wrong answer pretending to be a real one."
+        concepts: [option.basics]
+
+      - type: parsons
+        id: parsons-first-negative
+        prompt: Arrange the lines so `first_negative` returns the first number below zero, if there is one
+        lines:
+          - { id: l1, text: "fn first_negative(nums: [i32; 4]) -> Option<i32> {" }
+          - { id: l2, text: "    for n in nums {" }
+          - { id: l3, text: "        if n < 0 {" }
+          - { id: l4, text: "            return Some(n);" }
+          - { id: l5, text: "        }" }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: "    None" }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "            return n;" }
+          - { id: d2, text: "    null" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{:?}", first_negative([3, -2, 5, -7]));
+                println!("{:?}", first_negative([1, 2, 3, 4]));
+            }
+          mode: run
+          expectStdout: "Some(-2)\nNone\n"
+        explanation: "Return `Some(n)` as soon as you find one. If the loop finishes without finding any, the function ends with `None`."
+        concepts: [option.basics, fn.early-return, ctrl.for]
+
+      - type: predict-output
+        id: predict-find-positions
+        code:
+          rust: |
+            fn find(letter: char) -> Option<u32> {
+                let mut i = 0;
+                for c in "crab".chars() {
+                    if c == letter {
+                        return Some(i);
+                    }
+                    i += 1;
+                }
+                None
+            }
+
+            fn main() {
+                println!("{:?}", find('a'));
+                println!("{:?}", find('z'));
+            }
+          verify: run
+        options:
+          - { id: a, text: "Some(2)\nNone" }
+          - { id: b, text: "Some(3)\nNone", why: "Counting starts at 0: `c` is 0, `r` is 1, `a` is 2." }
+          - { id: c, text: "2\n-1", why: "The function returns an `Option`. \"Not found\" is `None`, not a special number like -1." }
+        answer: a
+        explanation: "`a` is at position 2, so the first call returns `Some(2)`. There's no `z`, so the loop ends and the function returns `None`."
+        concepts: [option.basics, fn.early-return]
+
+      - type: compiles
+        id: compiles-missing-none
+        code:
+          rust: |
+            fn find_even(a: [u8; 3]) -> Option<u8> {
+                for n in a {
+                    if n % 2 == 0 {
+                        return Some(n);
+                    }
+                }
+            }
+
+            fn main() {
+                let e = find_even([1, 4, 5]);
+                println!("{e:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's missing?
+          options:
+            - { id: a, text: "`None` after the loop, for when no even number is found" }
+            - { id: b, text: "`mut` on `a`", why: "The loop only reads `a`." }
+            - { id: c, text: "Nothing is missing. Rust returns `None` automatically.", why: "Rust never fills in `None` for you. The function body ends with the loop, which gives `()`." }
+          answer: a
+        explanation: "If the loop finishes, the body's value is `()`, not an `Option<u8>`, so the compiler reports E0308. Add `None` as the last line."
+        concepts: [option.basics, err.E0308]
+
+      - type: true-false
+        id: tf-option-string
+        prompt: "In the diagram, the text `\"Rusty\"` is stored inside `nickname` on the stack."
+        code:
+          rust: |
+            let nickname: Option<String> =
+                Some(String::from("Rusty"));
+            println!("{nickname:?}");
+          verify: run
+          expectStdout: "Some(\"Rusty\")\n"
+        diagram:
+          caption: "`nickname` is `Some`, holding a `String`"
+          frames:
+            - name: main
+              vars:
+                - { name: nickname, points: h1 }
+          heap:
+            - { id: h1, value: '"Rusty"' }
+        answer: false
+        explanation: "The `String` inside the `Some` works as usual: its text is on the heap, and `nickname` holds a pointer to it."
+        concepts: [option.basics, mem.stack-heap]
+
+      - type: compiles
+        id: compiles-option-plus
+        code:
+          rust: |
+            fn main() {
+                let lives: Option<u32> = Some(3);
+                let more = lives + 1;
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`+` isn't defined for `Option<u32>`, because `lives` might be `None`" }
+            - { id: b, text: "`lives` must be `mut` to add to it", why: "`lives + 1` makes a new value without changing `lives`. The type is the problem." }
+            - { id: c, text: "`1` must be written `Some(1)`", why: "`Some(3) + Some(1)` fails too. `+` doesn't work on `Option`s at all." }
+          answer: a
+        explanation: "With the `Option` on the left, the compiler reports E0369: cannot add `{integer}` to `Option<u32>`. With it on the right, as in `1 + lives`, it's E0277. Both mean the same thing."
+        concepts: [option.type-safety]
+
+      - type: decode-error
+        id: decode-missing-some-return
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn last(word: &str) -> Option<char> {
+                let mut found = None;
+                for c in word.chars() {
+                    found = Some(c);
+                }
+                found
+            }
+
+            fn main() {
+                let c: char = last("hey");
+                println!("{c}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Change line 10 to `let c = last(\"hey\");` and line 11 to `println!(\"{c:?}\");`" }
+          - { id: b, text: "Change line 1 to return `char`", why: "An empty word has no last character. `Option<char>` is the honest return type." }
+          - { id: c, text: "Change line 1 to `fn last(word: &str) -> Some<char> {`", why: "`Some` is a variant, not a type. The return type is already right: `Option<char>`." }
+        answer: a
+        explanation: "`last` gives an `Option<char>`, so `c` must have that type, and `{:?}` prints it as `Some('y')`."
+        concepts: [option.type-safety, err.E0308]
+
+      - type: predict-output
+        id: predict-none-equals
+        code:
+          rust: |
+            let a: Option<i32> = Some(3);
+            let b: Option<i32> = Some(3);
+            let c: Option<i32> = None;
+            println!("{}", a == b);
+            println!("{}", a == c);
+          verify: run
+        options:
+          - { id: a, text: "true\nfalse" }
+          - { id: b, text: "false\nfalse", why: "Two `Option`s are equal when they're the same variant holding equal values. `a` and `b` are both `Some(3)`." }
+          - { id: c, text: "true\ntrue", why: "`None` and `Some(3)` are different variants, so they aren't equal." }
+        answer: a
+        explanation: "`==` works on `Option`s of comparable values: same variant and same data means equal."
+        concepts: [option.basics]
+
+      - type: true-false
+        id: tf-prelude
+        prompt: "You must write `Option::Some(5)` rather than `Some(5)`."
+        answer: false
+        explanation: "`Some` and `None` are always in scope, so `Some(5)` works on its own. `Option::Some(5)` also works, but nobody writes it."
+        concepts: [option.basics]
+
+      - type: match-pairs
+        id: pairs-option-errors
+        prompt: Match each line to what the compiler says
+        pairs:
+          - ["let x = None;", "E0282: type annotations needed"]
+          - ["let n: i32 = Some(1);", "E0308: mismatched types"]
+          - ["println!(\"{opt}\");", "E0277: doesn't implement `Display`"]
+          - ["let y = 1 + opt;", "E0277: cannot add `Option` to an integer"]
+        concepts: [option.type-safety, option.basics]

@@ -1,0 +1,628 @@
+id: structs-enums.match.match-enum
+title: Matching every variant
+icon: switch
+concepts: [match.enum, match.exhaustive, err.E0004]
+reviewConcepts: [match.intro, enum.define, ctrl.if-expr, fn.return, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-match-enum
+        title: One arm per variant
+        markdown: |
+          **`match` can compare an enum value against its variants.** Each arm's pattern names a variant, like `Light::Red`. Rust runs the arm whose variant matches the value.
+        code:
+          rust: |
+            enum Light {
+                Red,
+                Amber,
+                Green,
+            }
+
+            let light = Light::Amber;
+            match light {
+                Light::Red => println!("stop"),
+                Light::Amber => println!("slow"),
+                Light::Green => println!("go"),
+            }
+          verify: run
+          expectStdout: "slow\n"
+        concepts: [match.enum]
+
+      - type: predict-output
+        id: predict-green
+        code:
+          rust: |
+            enum Light {
+                Red,
+                Amber,
+                Green,
+            }
+
+            let light = Light::Green;
+            match light {
+                Light::Red => println!("stop"),
+                Light::Amber => println!("slow"),
+                Light::Green => println!("go"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "go" }
+          - { id: b, text: "stop", why: "The first arm only runs if `light` is `Light::Red`. Here it's `Light::Green`." }
+          - { id: c, text: "Light::Green", why: "The arm runs its code, `println!(\"go\")`. The variant name isn't printed." }
+        answer: a
+        explanation: "`light` is `Light::Green`, so the third arm is the one that runs."
+        concepts: [match.enum]
+
+      - type: fill-tokens
+        id: fill-path
+        prompt: "Fill the blank so the program prints `stop`"
+        code:
+          rust: |
+            enum Light {
+                Red,
+                Green,
+            }
+
+            let light = Light::Red;
+            match light {
+                Light___1___Red => println!("stop"),
+                Light::Green => println!("go"),
+            }
+          verify: run
+          expectStdout: "stop\n"
+        blanks:
+          "1": { answer: ["::"] }
+        bank: ["::", ".", ":", "->"]
+        explanation: "A variant is named with the enum, then `::`, then the variant, the same way you create one with `Light::Red`."
+        concepts: [match.enum]
+
+      - type: true-false
+        id: tf-one-arm
+        prompt: "When a `match` on an enum runs, exactly one arm's code runs."
+        answer: true
+        explanation: "Rust checks the arms from top to bottom and runs the first one whose pattern matches. The other arms are skipped."
+        concepts: [match.enum]
+
+      - type: concept
+        id: concept-exhaustive
+        title: Every variant, or no compile
+        markdown: |
+          **A `match` must cover every possible value.** For an enum, that means every variant. Leave one out and the compiler stops with error **E0004**, naming the variant you missed.
+
+          This means a value can never reach a `match` that has no arm for it.
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Red;
+                match light {
+                    Light::Red => println!("stop"),
+                    Light::Green => println!("go"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        concepts: [match.exhaustive, err.E0004]
+
+      - type: compiles
+        id: compiles-missing-west
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            fn main() {
+                let dir = Dir::East;
+                match dir {
+                    Dir::North => println!("up"),
+                    Dir::East => println!("right"),
+                    Dir::South => println!("down"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0004: non-exhaustive patterns: `Dir::West` not covered" }
+            - { id: b, text: "E0308: mismatched types", why: "Every arm has the same type, `()`. The problem is the missing variant." }
+            - { id: c, text: "E0425: cannot find value `West`", why: "`Dir::West` exists in the enum. It's the `match` that leaves it out." }
+          answer: a
+        explanation: "`dir` happens to be `East`, but the compiler checks every possible value. There's no arm for `Dir::West`."
+        concepts: [match.exhaustive, err.E0004]
+
+      - type: mcq
+        id: mcq-which-missing
+        prompt: "The compiler rejects this `match` with E0004. Which pattern does it say is not covered?"
+        code:
+          rust: |
+            enum Coin { Five, Ten, Twenty, Fifty }
+
+            fn main() {
+                let coin = Coin::Ten;
+                let cents = match coin {
+                    Coin::Five => 5,
+                    Coin::Ten => 10,
+                    Coin::Fifty => 50,
+                };
+                println!("{cents}");
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, code: "Coin::Twenty" }
+          - { id: b, code: "Coin::Ten", why: "There's an arm for `Coin::Ten` on line 7." }
+          - { id: c, code: "Coin::Fifty", why: "There's an arm for `Coin::Fifty` on line 8." }
+        answer: a
+        explanation: "Only `Coin::Twenty` has no arm. E0004 lists exactly the patterns that are missing."
+        concepts: [err.E0004]
+
+      - type: concept
+        id: concept-wildcard
+        title: "_ catches the rest"
+        markdown: |
+          **`_` matches any value, so it covers every variant you didn't list.** You met it with numbers in Unit 2.2. Put it last: arms are checked in order, so anything after `_` can never run.
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            let dir = Dir::West;
+            match dir {
+                Dir::North => println!("up"),
+                _ => println!("not up"),
+            }
+          verify: run
+          expectStdout: "not up\n"
+        concepts: [match.exhaustive]
+
+      - type: predict-output
+        id: predict-wildcard-south
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            let dir = Dir::South;
+            match dir {
+                Dir::North => println!("up"),
+                Dir::South => println!("down"),
+                _ => println!("sideways"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "down" }
+          - { id: b, text: "down\nsideways", why: "Only one arm runs. `_` is only reached when no earlier arm matched." }
+          - { id: c, text: "sideways", why: "`Dir::South` has its own arm before `_`, so that arm runs." }
+        answer: a
+        explanation: "`Dir::South` matches the second arm. `_` only handles `East` and `West` here."
+        concepts: [match.enum, match.exhaustive]
+
+      - type: match-pairs
+        id: pairs-match-parts
+        prompt: Match each piece to what it means
+        pairs:
+          - ["Light::Red =>", "an arm for one variant"]
+          - ["_ =>", "an arm for anything left"]
+          - ["E0004", "a value has no arm"]
+          - ["=>", "separates pattern and code"]
+        concepts: [match.enum, match.exhaustive, err.E0004]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-match-value
+        title: match gives a value
+        markdown: |
+          **`match` is an expression.** Like `if`, it can produce a value: each arm's code becomes the result when that arm runs. All arms must give the same type.
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            let light = Light::Red;
+            let seconds = match light {
+                Light::Red => 30,
+                Light::Amber => 4,
+                Light::Green => 25,
+            };
+            println!("{seconds}");
+          verify: run
+          expectStdout: "30\n"
+        concepts: [match.enum]
+
+      - type: predict-output
+        id: predict-coin-sum
+        code:
+          rust: |
+            enum Coin { Five, Ten, Twenty }
+
+            fn cents(coin: Coin) -> u32 {
+                match coin {
+                    Coin::Five => 5,
+                    Coin::Ten => 10,
+                    Coin::Twenty => 20,
+                }
+            }
+
+            fn main() {
+                let ten = cents(Coin::Ten);
+                let total = ten + cents(Coin::Five);
+                println!("{total}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "30", why: "Each call matches its own coin: 10 for `Ten` and 5 for `Five`." }
+          - { id: c, text: "105", why: "`cents` returns numbers, and `+` adds them." }
+        answer: a
+        explanation: "The `match` is the last expression in `cents`, so its value is returned: 10 + 5."
+        concepts: [match.enum, fn.return]
+
+      - type: compiles
+        id: compiles-arm-types
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Amber;
+                let action = match light {
+                    Light::Red => "stop",
+                    Light::Amber => 4,
+                    Light::Green => "go",
+                };
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: `match` arms have incompatible types" }
+            - { id: b, text: "E0004: non-exhaustive patterns", why: "All three variants have an arm. The arms disagree about the type." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`action` is assigned once. The problem is inside the `match`." }
+          answer: a
+        explanation: "`action` can only have one type. Two arms give text and one gives a number."
+        concepts: [match.enum, err.E0308]
+
+      - type: decode-error
+        id: decode-two-missing
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            fn main() {
+                let dir = Dir::North;
+                match dir {
+                    Dir::North => println!("up"),
+                    Dir::South => println!("down"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "The `match` has no arms for `Dir::East` and `Dir::West`" }
+          - { id: b, text: "`East` and `West` are never used, so they must be removed from the enum", why: "Unused variants only cause a warning. The error is about the `match`." }
+          - { id: c, text: "A `match` can have at most two arms", why: "There's no limit on arms. The two arms here don't cover every variant." }
+        answer: a
+        explanation: "E0004 lists every pattern that isn't covered. Add an arm for each, or a `_` arm."
+        concepts: [err.E0004]
+
+      - type: spot-bug
+        id: spot-wrong-variant
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Green;
+                let wait = match light {
+                    Light::Red => 30,
+                    Light::Yellow => 4,
+                    Light::Green => 0,
+                };
+                println!("{wait}");
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        answer: 7
+        explanation: "`Light` has no variant called `Yellow`. The arm should be `Light::Amber`."
+        concepts: [match.enum]
+
+      - type: mcq
+        id: mcq-new-variant
+        prompt: "You add a variant `Flashing` to `Light`. A `match` elsewhere lists `Red`, `Amber` and `Green`, with no `_` arm. What happens?"
+        options:
+          - { id: a, text: "The program no longer compiles: E0004 says `Light::Flashing` is not covered" }
+          - { id: b, text: "It compiles, and `Flashing` runs no arm at all", why: "Rust never lets a value reach a `match` without an arm for it." }
+          - { id: c, text: "It compiles, and `Flashing` runs the first arm", why: "Arms only run when their pattern matches. `Light::Red` doesn't match `Flashing`." }
+          - { id: d, text: "It compiles, but panics when `Flashing` reaches the `match`", why: "The check happens at compile time, not when the program runs." }
+        answer: a
+        explanation: "Exhaustiveness is checked by the compiler, so it points to every `match` that needs a new arm."
+        concepts: [match.exhaustive, err.E0004]
+
+      - type: true-false
+        id: tf-wildcard-hides
+        prompt: "With a `_` arm at the end, the compiler can no longer warn you when a new variant is added to the enum."
+        answer: true
+        explanation: "`_` covers any variant, including new ones. Listing every variant means a new one gives you E0004 to remind you."
+        concepts: [match.exhaustive]
+
+      - type: fill-tokens
+        id: fill-coin-fn
+        prompt: "Fill the blanks so the program prints `20`"
+        code:
+          rust: |
+            enum Coin { Five, Ten, Twenty }
+
+            fn cents(coin: Coin) -> u32 {
+                ___1___ coin {
+                    Coin::Five => 5,
+                    Coin::Ten => 10,
+                    ___2___ => 20,
+                }
+            }
+
+            fn main() {
+                println!("{}", cents(Coin::Twenty));
+            }
+          verify: run
+          expectStdout: "20\n"
+        blanks:
+          "1": { answer: ["match"] }
+          "2": { answer: ["Coin::Twenty", "_"] }
+        bank: ["match", "if", "switch", "Coin::Twenty", "Twenty", "else"]
+        explanation: "`match coin` starts the match. The last arm can name `Coin::Twenty` or use `_`; both cover the remaining variant."
+        concepts: [match.enum, match.exhaustive]
+
+      - type: predict-output
+        id: predict-wildcard-first
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            let dir = Dir::North;
+            match dir {
+                _ => println!("somewhere"),
+                Dir::North => println!("up"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "somewhere" }
+          - { id: b, text: "up", why: "Arms are checked in order, and `_` matches `North` before the second arm is reached." }
+          - { id: c, text: "somewhere\nup", why: "Only the first matching arm runs." }
+        answer: a
+        explanation: "`_` matches everything, so the `Dir::North` arm can never run. The compiler warns that it's unreachable."
+        concepts: [match.exhaustive]
+
+      - type: predict-output
+        id: predict-bool-review
+        code:
+          rust: |
+            let raining = false;
+            let take = match raining {
+                true => "umbrella",
+                false => "hat",
+            };
+            println!("{take}");
+          verify: run
+        options:
+          - { id: a, text: "hat" }
+          - { id: b, text: "umbrella", why: "`raining` is `false`, so the `false` arm runs." }
+          - { id: c, text: "umbrella\nhat", why: "Only one arm runs." }
+        answer: a
+        explanation: "A `bool` has two values, so arms for `true` and `false` cover everything. No `_` is needed."
+        concepts: [match.exhaustive, match.intro]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-seconds
+        prompt: "Arrange the lines into a function that returns how long each light lasts"
+        lines:
+          - { id: l1, text: "fn seconds(light: Light) -> u32 {" }
+          - { id: l2, text: "    match light {" }
+          - { id: l3, text: "        Light::Red => 30," }
+          - { id: l4, text: "        Light::Green => 25," }
+          - { id: l5, text: "        _ => 4," }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "        Red => 30," }
+          - { id: d2, text: "        Light::Green -> 25," }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6, l7]
+        verify:
+          harness: |
+            enum Light { Red, Amber, Green }
+            {{solution}}
+            fn main() {
+                let t = seconds(Light::Red) + seconds(Light::Amber);
+                println!("{t} {}", seconds(Light::Green));
+            }
+          mode: run
+          expectStdout: "34 25\n"
+        explanation: "The `_` arm must come last, or it would catch `Red` and `Green` too. Patterns name the variant with `Light::`, and arms use `=>`."
+        concepts: [match.enum, match.exhaustive]
+
+      - type: compiles
+        id: compiles-bare-variant
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Green;
+                let action = match light {
+                    Red => "stop",
+                    _ => "go",
+                };
+                println!("{action}");
+            }
+          verify: compile-fail
+          expectErrors: [E0170]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`Red` on its own is a new variable name that matches anything. It should be `Light::Red`." }
+            - { id: b, text: "`_` can't be used with enums", why: "`_` works with any type, including enums." }
+            - { id: c, text: "The arms need to list all three variants", why: "`_` covers the rest. The problem is how `Red` is written." }
+          answer: a
+        explanation: "A plain name in a pattern creates a variable that matches any value. The compiler spots that it has a variant's name (E0170) and stops."
+        concepts: [match.enum]
+
+      - type: decode-error
+        id: decode-u8-range
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let battery: u8 = 70;
+                match battery {
+                    0..=20 => println!("low"),
+                    21..=100 => println!("ok"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "Add `_ => println!(\"invalid\"),` as the last arm" }
+          - { id: b, text: "Change `battery` to `let battery: u8 = 50;`", why: "The compiler checks every value a `u8` could hold, not the value it has now." }
+          - { id: c, text: "Change line 5 to `21..=99 => println!(\"ok\"),`", why: "That leaves even more values uncovered: 100 to 255." }
+        answer: a
+        explanation: "A `u8` can be up to 255, and 101 to 255 have no arm. Exhaustiveness applies to numbers as well as enums."
+        concepts: [match.exhaustive, err.E0004, match.intro]
+
+      - type: fill-tokens
+        id: fill-match-syntax
+        prompt: "Fill the blanks so the program prints `180`"
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            let dir = Dir::South;
+            let turn = ___1___ dir {
+                Dir___2___North => 0,
+                Dir::East => 90,
+                ___3___ => 180,
+            };
+            println!("{turn}");
+          verify: run
+          expectStdout: "180\n"
+        blanks:
+          "1": { answer: ["match"] }
+          "2": { answer: ["::"] }
+          "3": { answer: ["_"] }
+        bank: ["match", "if", "::", ".", "_", "else", "default"]
+        explanation: "`match dir` starts the match, variants are named with `::`, and `_` catches `South` and `West`."
+        concepts: [match.enum, match.exhaustive]
+
+      - type: spot-bug
+        id: spot-semicolon-arm
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Coin { Five, Ten }
+
+            fn main() {
+                let coin = Coin::Five;
+                match coin {
+                    Coin::Five => println!("5c");
+                    Coin::Ten => println!("10c"),
+                }
+            }
+          verify: compile-fail
+          expectErrorMessage: "arm body without braces"
+        answer: 6
+        explanation: "Arms are separated by commas, not semicolons. Line 6 should end with `,`."
+        concepts: [match.enum]
+
+      - type: true-false
+        id: tf-return-match
+        prompt: "A `match` can be the last expression of a function, and its value is then returned."
+        answer: true
+        explanation: "`match` is an expression, the same as a block or an `if`. Without a `;` after it, its value is the function's result."
+        concepts: [match.enum, fn.return]
+
+      - type: mcq
+        id: mcq-why-exhaustive
+        prompt: Why does Rust insist that a `match` covers every possible value?
+        options:
+          - { id: a, text: "So no value can arrive at a `match` that has nothing to do with it" }
+          - { id: b, text: "So the program runs faster", why: "The check is about correctness. It happens at compile time and doesn't change the speed." }
+          - { id: c, text: "Because every variant must be used somewhere", why: "An unused variant is only a warning. Exhaustiveness is about each `match`." }
+          - { id: d, text: "So the arms can be in any order", why: "Order still matters: the first matching arm wins." }
+        answer: a
+        explanation: "Every value is handled by some arm. Forgetting a case is a compile error rather than a bug you find later."
+        concepts: [match.exhaustive]
+
+      - type: predict-output
+        id: predict-grade-chain
+        code:
+          rust: |
+            enum Grade { High, Pass, Fail }
+            fn grade(mark: u32) -> Grade {
+                match mark {
+                    80..=100 => Grade::High,
+                    50..=79 => Grade::Pass,
+                    _ => Grade::Fail,
+                }
+            }
+            fn main() {
+                match grade(65) {
+                    Grade::High => println!("HD"),
+                    Grade::Pass => println!("P"),
+                    Grade::Fail => println!("N"),
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "P" }
+          - { id: b, text: "HD", why: "65 isn't in `80..=100`. It falls in `50..=79`." }
+          - { id: c, text: "N", why: "`_` only catches marks that the two ranges miss, and 65 is in `50..=79`." }
+        answer: a
+        explanation: "The first `match` turns 65 into `Grade::Pass`, and the second `match` prints `P` for it."
+        concepts: [match.enum, match.intro]
+
+      - type: compiles
+        id: compiles-unreachable
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Red;
+                match light {
+                    _ => println!("any light"),
+                    Light::Red => println!("stop"),
+                }
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles with a warning that the `Light::Red` arm is unreachable. `_` comes first and catches every value."
+        concepts: [match.exhaustive]
+
+      - type: decode-error
+        id: decode-bool
+        prompt: Which change makes this compile?
+        code:
+          rust: |
+            fn main() {
+                let door_open = true;
+                match door_open {
+                    true => println!("Come in"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "Add `false => println!(\"Knock\"),` after line 4" }
+          - { id: b, text: "Change line 2 to `let door_open = false;`", why: "The compiler checks both values a `bool` can hold, whatever it holds now." }
+          - { id: c, text: "Add `;` after the `}` on line 5", why: "A `;` doesn't change which values have arms." }
+        answer: a
+        explanation: "E0004 says `false` is not covered. An arm for `false` (or `_`) makes the match exhaustive."
+        concepts: [err.E0004, match.exhaustive]

@@ -1,0 +1,539 @@
+id: structs-enums.patterns.refutability
+title: Patterns that can fail
+icon: shield
+concepts: [pattern.refutability]
+reviewConcepts: [match.if-let, match.let-else, match.exhaustive, err.E0004, option.basics, pattern.destructure, pattern.guards, struct.tuple, enum.data, ctrl.for, ctrl.continue, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-refutable
+        title: Refutable or irrefutable?
+        markdown: |
+          **Some patterns always match; others can fail.** `(x, y)` matches every pair, so it's *irrefutable*. `Some(t)` doesn't match `None`, so it's *refutable*.
+
+          A plain `let` and a `for` loop need irrefutable patterns, because they have nothing to do if the match fails.
+        code:
+          rust: |
+            let pair = (3, 4);
+            let (x, y) = pair; // always matches
+            let reading = Some(20);
+            if let Some(t) = reading { // can fail
+                println!("{x} {y} {t}");
+            }
+          verify: run
+          expectStdout: "3 4 20\n"
+        concepts: [pattern.refutability]
+
+      - type: mcq
+        id: mcq-which-irrefutable
+        prompt: "Which pattern is irrefutable for a value of type `Option<i32>`?"
+        options:
+          - { id: a, code: "reading" }
+          - { id: b, code: "Some(n)", why: "It fails when the value is `None`." }
+          - { id: c, code: "None", why: "It fails when the value is a `Some`." }
+          - { id: d, code: "Some(_)", why: "`_` matches any number inside, but the pattern still fails on `None`." }
+        answer: a
+        explanation: "A plain variable name matches any value of the type, so it can never fail."
+        concepts: [pattern.refutability]
+
+      - type: true-false
+        id: tf-tuple-irrefutable
+        prompt: "`let (a, b) = (1, 2);` uses an irrefutable pattern."
+        answer: true
+        explanation: "Every value of type `(i32, i32)` is a pair, so `(a, b)` always matches."
+        concepts: [pattern.refutability]
+
+      - type: compiles
+        id: compiles-let-some
+        code:
+          rust: |
+            fn main() {
+                let fuel = Some(40);
+                let Some(litres) = fuel;
+                println!("{litres}");
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0005: refutable pattern in local binding" }
+            - { id: b, text: "E0004: non-exhaustive patterns", why: "E0004 is for a `match` that misses values. A `let` whose pattern can fail is E0005." }
+            - { id: c, text: "E0308: mismatched types", why: "The types fit: `Some(litres)` is an `Option` pattern." }
+          answer: a
+        explanation: "The compiler checks types, not values. An `Option` could be `None`, and a plain `let` can't handle that."
+        concepts: [pattern.refutability]
+
+      - type: concept
+        id: concept-handle-failure
+        title: Say what happens on failure
+        markdown: |
+          **A refutable pattern needs a place to say what happens when it fails.** `if let` skips its block. `let ... else` runs the `else` block, which must leave, for example with `return`. `match` lists every case.
+        code:
+          rust: |
+            fn show(fuel: Option<u32>) {
+                let Some(litres) = fuel else {
+                    println!("empty");
+                    return;
+                };
+                println!("{litres} L");
+            }
+
+            fn main() {
+                show(Some(40));
+                show(None);
+            }
+          verify: run
+          expectStdout: "40 L\nempty\n"
+        concepts: [pattern.refutability, match.let-else]
+
+      - type: predict-output
+        id: predict-let-else
+        code:
+          rust: |
+            fn double(n: Option<i32>) -> i32 {
+                let Some(v) = n else {
+                    return -1;
+                };
+                v * 2
+            }
+
+            fn main() {
+                println!("{}", double(None));
+                println!("{}", double(Some(5)));
+            }
+          verify: run
+        options:
+          - { id: a, text: "-1\n10" }
+          - { id: b, text: "0\n10", why: "`None` runs the `else` block, which returns -1." }
+          - { id: c, text: "10", why: "Both calls print something. The first one returns -1 early." }
+        answer: a
+        explanation: "With `None` the pattern fails and `return -1` runs. With `Some(5)` it matches, `v` is 5, and the function returns 10."
+        concepts: [pattern.refutability, match.let-else]
+
+      - type: fill-tokens
+        id: fill-if-let-else
+        prompt: "Fill the blanks so the program prints `18 degrees` once, then `18 again`"
+        code:
+          rust: |
+            let reading = Some(18);
+            ___1___ let Some(t) = reading {
+                println!("{t} degrees");
+            }
+            let Some(r) = reading ___2___ {
+                return;
+            };
+            println!("{r} again");
+          verify: run
+          expectStdout: "18 degrees\n18 again\n"
+        blanks:
+          "1": { answer: ["if"] }
+          "2": { answer: ["else"] }
+        bank: ["if", "else", "match", "then", "for"]
+        explanation: "`if let` runs its block only when the pattern matches. `let ... else` binds `r` for the rest of the code, or leaves through the `else` block."
+        concepts: [pattern.refutability, match.if-let, match.let-else]
+
+      - type: spot-bug
+        id: spot-for-some
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let days = [Some(3), None, Some(7)];
+                for Some(r) in days {
+                    println!("{r}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        answer: 3
+        explanation: "A `for` loop's pattern must match every item, and `Some(r)` doesn't match `None` (E0005). Loop over `item` and use `if let Some(r) = item` inside."
+        concepts: [pattern.refutability]
+
+      - type: match-pairs
+        id: pairs-on-failure
+        prompt: Match each construct to what happens when its pattern fails
+        pairs:
+          - ["let", "not allowed to fail"]
+          - ["if let", "skips the block"]
+          - ["let ... else", "runs else, which must leave"]
+          - ["match", "tries the next arm"]
+          - ["while let", "stops the loop"]
+        explanation: "Only `let`, `for` and function parameters demand irrefutable patterns. The others have a plan for failure."
+        concepts: [pattern.refutability]
+
+      - type: predict-output
+        id: predict-if-let-none
+        code:
+          rust: |
+            let parcel: Option<u32> = None;
+            if let Some(kg) = parcel {
+                println!("{kg} kg");
+            } else {
+                println!("nothing");
+            }
+          verify: run
+        options:
+          - { id: a, text: "nothing" }
+          - { id: b, text: "0 kg", why: "`None` isn't zero. The pattern fails and the `else` block runs." }
+          - { id: c, text: "None kg", why: "`kg` is only bound when the pattern matches, and `None` doesn't match `Some(kg)`." }
+        answer: a
+        explanation: "`Some(kg)` can't match `None`, so `if let` skips to its `else` block."
+        concepts: [pattern.refutability, match.if-let]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-circle
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            enum Shape {
+                Circle(f64),
+                Square(f64),
+            }
+
+            fn main() {
+                let s = Shape::Circle(2.0);
+                let Shape::Circle(r) = s;
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        options:
+          - { id: a, text: "`s` has type `Shape`, which could be a `Square`, so the pattern can fail. Use `if let`, `let ... else` or `match`." }
+          - { id: b, text: "`Shape::Circle(r)` can't be used as a pattern", why: "Variants can be patterns. This one doesn't cover `Square`." }
+          - { id: c, text: "`r` needs a type annotation", why: "Rust knows `r` is an `f64` from the variant. The problem is that the pattern can fail." }
+        answer: a
+        explanation: "The compiler goes by the type, not by the value you wrote on line 7. Any `Shape` might be a `Square`."
+        concepts: [pattern.refutability, enum.data]
+
+      - type: compiles
+        id: compiles-tuple-struct-let
+        code:
+          rust: |
+            struct Metres(f64);
+
+            let height = Metres(1.8);
+            let Metres(m) = height;
+            println!("{m}");
+          verify: run
+          expectStdout: "1.8\n"
+        answer: true
+        explanation: "Every `Metres` value has exactly one shape, so `Metres(m)` can't fail. Struct and tuple struct patterns are irrefutable when their parts are."
+        concepts: [pattern.refutability, struct.tuple]
+
+      - type: predict-output
+        id: predict-while-let
+        code:
+          rust: |
+            let mut fuel = Some(3);
+            while let Some(f) = fuel {
+                print!("{f} ");
+                if f > 1 {
+                    fuel = Some(f - 1);
+                } else {
+                    fuel = None;
+                }
+            }
+            println!("done");
+          verify: run
+        options:
+          - { id: a, text: "3 2 1 done" }
+          - { id: b, text: "3 2 1 0 done", why: "When `f` is 1, `fuel` becomes `None`, which ends the loop before 0 is printed." }
+          - { id: c, text: "3 done", why: "`while let` keeps going for as long as the pattern matches, not only once." }
+        answer: a
+        explanation: "`while let` repeats while `Some(f)` matches. It stops once `fuel` is `None`."
+        concepts: [pattern.refutability, match.if-let]
+
+      - type: true-false
+        id: tf-irrefutable-if-let
+        prompt: "`if let x = 5 { ... }` is a compile error, because the pattern `x` can't fail."
+        answer: false
+        explanation: "It compiles, with a warning: `irrefutable if let pattern`. The `if` is pointless, so a plain `let` is clearer."
+        concepts: [pattern.refutability]
+
+      - type: compiles
+        id: compiles-else-no-exit
+        code:
+          rust: |
+            fn main() {
+                let level = Some(4);
+                let Some(n) = level else {
+                    println!("no level");
+                };
+                println!("{n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "The `else` block must leave (for example with `return`), so `n` always has a value afterwards" }
+            - { id: b, text: "`let ... else` only works inside a `match`", why: "`let ... else` is a statement of its own, used without `match`." }
+            - { id: c, text: "`println!` isn't allowed in an `else` block", why: "It is, as long as the block then leaves, for example with `return`." }
+          answer: a
+        explanation: "After a `let ... else`, the code below uses `n`. If the `else` block could carry on, `n` would have no value, so Rust requires it to leave."
+        concepts: [pattern.refutability, match.let-else, err.E0308]
+
+      - type: mcq
+        id: mcq-why-for
+        prompt: "Why must the pattern in a `for` loop be irrefutable?"
+        options:
+          - { id: a, text: "There's nowhere to say what happens to an item that doesn't match" }
+          - { id: b, text: "`for` loops can't use patterns at all", why: "They can: `for (i, x) in ...` takes each item apart with a tuple pattern." }
+          - { id: c, text: "`for` loops only work with numbers", why: "`for` loops work over arrays of any type, including `Option`s." }
+        answer: a
+        explanation: "A `for` loop binds every item. To skip some items, use `if let` or `let ... else` with `continue` inside the loop."
+        concepts: [pattern.refutability]
+
+      - type: fill-tokens
+        id: fill-match-instead
+        prompt: "Fill the blanks so the program prints `0`"
+        code:
+          rust: |
+            let fuel: Option<u32> = None;
+            let litres = ___1___ fuel {
+                Some(l) => l,
+                ___2___ => 0,
+            };
+            println!("{litres}");
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["match"] }
+          "2": { answer: ["None", "_"] }
+        bank: ["match", "if", "None", "Some", "let", "else"]
+        explanation: "A `match` covers both cases, so the refutable `Some(l)` is fine as one arm. `None` (or `_`) handles the rest."
+        concepts: [pattern.refutability, match.exhaustive]
+
+      - type: spot-bug
+        id: spot-array-then-some
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let scores = [Some(9), Some(4)];
+                let [first, second] = scores;
+                let Some(a) = first;
+                println!("{a} {second:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        answer: 4
+        explanation: "Line 3 is fine: an array of length 2 always matches `[first, second]`. Line 4 isn't: `first` is an `Option`, which could be `None`."
+        concepts: [pattern.refutability, pattern.destructure]
+
+      - type: predict-output
+        id: tiles-if-let-loop
+        prompt: Build the output
+        code:
+          rust: |
+            let bag = [Some(5), None, Some(2)];
+            for item in bag {
+                if let Some(n) = item {
+                    print!("{n} ");
+                } else {
+                    print!("- ");
+                }
+            }
+          verify: run
+        tiles: ["5", "-", "2", "None", "0"]
+        answer: "5 - 2"
+        explanation: "The loop's pattern `item` matches every item. The refutable `Some(n)` goes in an `if let` inside the loop."
+        concepts: [pattern.refutability, match.if-let]
+
+      - type: match-pairs
+        id: pairs-fails-on
+        prompt: Match each pattern to a value it fails on
+        pairs:
+          - ["Some(n)", "None"]
+          - ["None", "Some(3)"]
+          - ["(0, y)", "(1, 5)"]
+          - ["1..=9", "10"]
+          - ["(x, y)", "nothing: it can't fail"]
+        explanation: "A pattern is refutable if at least one value of its type doesn't match it."
+        concepts: [pattern.refutability]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-seat
+        prompt: "Arrange the lines so `describe(Some(12))` prints `seat 12` and `describe(None)` prints `no seat`"
+        lines:
+          - { id: l1, text: "fn describe(seat: Option<u32>) {" }
+          - { id: l2, text: "    let Some(n) = seat else {" }
+          - { id: l3, text: '        println!("no seat");' }
+          - { id: l4, text: "        return;" }
+          - { id: l5, text: "    };" }
+          - { id: l6, text: '    println!("seat {n}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    let Some(n) = seat;" }
+          - { id: d2, text: "    }" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                describe(Some(12));
+                describe(None);
+            }
+          mode: run
+          expectStdout: "seat 12\nno seat\n"
+        explanation: "The `else` block prints and then returns, and a `let ... else` ends with `};`. After it, `n` can be used."
+        concepts: [pattern.refutability, match.let-else]
+
+      - type: predict-output
+        id: predict-let-else-continue
+        code:
+          rust: |
+            let tickets = [Some(4), None, Some(9)];
+            let mut total = 0;
+            for t in tickets {
+                let Some(n) = t else { continue };
+                total += n;
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "13" }
+          - { id: b, text: "4", why: "`continue` skips only the `None` item. The loop carries on to `Some(9)`." }
+          - { id: c, text: "0", why: "The `else` runs only for `None`. The two `Some` items are added." }
+        answer: a
+        explanation: "`continue` leaves the current pass of the loop, which counts as leaving for `let ... else`. 4 + 9 = 13."
+        concepts: [pattern.refutability, match.let-else, ctrl.continue]
+
+      - type: compiles
+        id: compiles-for-tuple
+        code:
+          rust: |
+            let pairs = [(1, 'a'), (2, 'b')];
+            for (n, c) in pairs {
+                println!("{n}{c}");
+            }
+          verify: run
+          expectStdout: "1a\n2b\n"
+        answer: true
+        explanation: "Every item is an `(i32, char)` pair, so `(n, c)` can't fail. That's why tuple patterns are fine in `for` loops."
+        concepts: [pattern.refutability, pattern.destructure]
+
+      - type: decode-error
+        id: decode-command
+        prompt: Which change to line 8 fixes this?
+        code:
+          rust: |
+            enum Cmd {
+                Move { x: i32, y: i32 },
+                Quit,
+            }
+
+            fn main() {
+                let cmd = Cmd::Move { x: 2, y: 5 };
+                let Cmd::Move { x, y } = cmd;
+                println!("{x} {y}");
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        options:
+          - { id: a, code: "let Cmd::Move { x, y } = cmd else { return; };" }
+          - { id: b, code: "let Cmd::Move { x, y } = cmd else { println!(\"quit\"); };", why: "The `else` block must leave, for example with `return`. This one carries on, which is E0308." }
+          - { id: c, code: "let Cmd::Move { x, .. } = cmd;", why: "Still refutable: `cmd` could be `Quit`. It also no longer binds `y`." }
+        answer: a
+        explanation: "`let ... else` accepts a refutable pattern, as long as the `else` block leaves when it fails."
+        concepts: [pattern.refutability, match.let-else]
+
+      - type: fill-tokens
+        id: fill-while-let
+        prompt: "Fill the blanks so the program prints `3 2 1 go!`"
+        code:
+          rust: |
+            let mut lives = Some(3);
+            ___1___ let Some(n) = lives {
+                print!("{n} ");
+                if n == 1 {
+                    lives = ___2___;
+                } else {
+                    lives = Some(n - 1);
+                }
+            }
+            println!("go!");
+          verify: run
+          expectStdout: "3 2 1 go!\n"
+        blanks:
+          "1": { answer: ["while"] }
+          "2": { answer: ["None"] }
+        bank: ["while", "if", "for", "None", "Some", "0"]
+        explanation: "`while let` loops while `Some(n)` matches. Setting `lives` to `None` makes the pattern fail, which ends the loop."
+        concepts: [pattern.refutability, match.if-let]
+
+      - type: spot-bug
+        id: spot-for-literal
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let games = [(1, true), (2, false)];
+                for (round, true) in games {
+                    println!("won round {round}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        answer: 3
+        explanation: "`true` is a literal, so `(round, true)` fails on `(2, false)`. Loop over `(round, won)` and test `if won` inside."
+        concepts: [pattern.refutability]
+
+      - type: mcq
+        id: mcq-which-compiles
+        prompt: "`reading` is an `Option<i32>` inside a function that returns nothing. Which line compiles?"
+        options:
+          - { id: a, code: "let Some(t) = reading else { return; };" }
+          - { id: b, code: "let Some(t) = reading;", why: "`reading` could be `None`, so this is E0005." }
+          - { id: c, code: "if Some(t) = reading { }", why: "A pattern after `if` needs `let`: `if let Some(t) = reading`." }
+          - { id: d, code: "let Some(t) = reading else { };", why: "The `else` block must leave, for example with `return`." }
+        answer: a
+        explanation: "`let ... else` with a block that returns is the one form here that both handles `None` and keeps `t` afterwards."
+        concepts: [pattern.refutability, match.let-else]
+
+      - type: true-false
+        id: tf-let-else-scope
+        prompt: "After `let Some(n) = x else { return; };`, you can use `n` in the rest of the function."
+        answer: true
+        explanation: "That's the advantage over `if let`, whose variables exist only inside its block."
+        concepts: [pattern.refutability, match.let-else]
+
+      - type: predict-output
+        id: predict-literal-if-let
+        code:
+          rust: |
+            let pin = Some(1234);
+            let kind = if let Some(1234) = pin {
+                "default"
+            } else {
+                "custom"
+            };
+            println!("{kind}");
+          verify: run
+        options:
+          - { id: a, text: "default" }
+          - { id: b, text: "custom", why: "`Some(1234)` matches only that exact value, and `pin` holds it." }
+          - { id: c, text: "1234", why: "The `if let` gives `kind` one of the two strings." }
+        answer: a
+        explanation: "A literal inside a pattern makes it refutable even inside `Some`. Here the value is 1234, so it matches."
+        concepts: [pattern.refutability, match.if-let]
+
+      - type: match-pairs
+        id: pairs-error-codes
+        prompt: Match each error code to its cause
+        pairs:
+          - ["E0005", "a let pattern that can fail"]
+          - ["E0004", "a match that misses values"]
+          - ["E0027", "a struct pattern misses a field"]
+          - ["E0026", "no field with that name"]
+          - ["E0408", "a name missing from one | side"]
+        explanation: "These are the pattern errors from this unit and the last."
+        concepts: [pattern.refutability, err.E0004]

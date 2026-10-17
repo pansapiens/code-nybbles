@@ -1,0 +1,19 @@
+id: structs-enums.enums
+title: Enums & Option
+description: Say "one of these" with enums, give variants data and methods, and use Option instead of null.
+colour: blue
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
+sources:
+  - name: The Rust Programming Language, ch. 6.1
+    url: https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-define
+  - level: level-02-data
+  - level: level-03-impl
+  - chest
+  - level: level-04-option
+  - level: level-05-option-methods
+  - checkpoint: checkpoint-enums

@@ -1,0 +1,18 @@
+id: structs-enums.structs
+title: Structs
+description: Group related values into your own named types, and see who owns the data inside them.
+colour: purple
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch05-01-defining-structs.html
+sources:
+  - name: The Rust Programming Language, ch. 5.1-5.2
+    url: https://doc.rust-lang.org/book/ch05-01-defining-structs.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-define
+  - level: level-02-tuple-unit
+  - chest
+  - level: level-03-debug
+  - level: level-04-ownership
+  - checkpoint: checkpoint-structs

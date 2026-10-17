@@ -1,0 +1,565 @@
+id: structs-enums.patterns.guards
+title: Guards, ranges and @
+icon: filter
+concepts: [pattern.guards, pattern.at]
+reviewConcepts: [match.intro, match.bind, match.enum, match.exhaustive, err.E0004, option.basics, pattern.destructure, ctrl.for, types.char]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-or-range
+        title: "Recap: | and ranges"
+        markdown: |
+          **You met these in Unit 2.2:** `|` means "or", and `3..=5` matches 3 to 5, including both ends.
+
+          They also work inside bigger patterns, such as `Some(1 | 2)` or `Some(3..=5)`.
+        code:
+          rust: |
+            let roll = Some(6);
+            match roll {
+                Some(1 | 2) => println!("low"),
+                Some(3..=5) => println!("middle"),
+                Some(_) => println!("high"),
+                None => println!("no roll"),
+            }
+          verify: run
+          expectStdout: "high\n"
+        concepts: [pattern.guards]
+
+      - type: predict-output
+        id: predict-char-range
+        code:
+          rust: |
+            let grade = 'D';
+            let msg = match grade {
+                'A' | 'B' => "great",
+                'C'..='E' => "okay",
+                _ => "unknown",
+            };
+            println!("{msg}");
+          verify: run
+        options:
+          - { id: a, text: "okay" }
+          - { id: b, text: "unknown", why: "Ranges work on `char` too: `'C'..='E'` covers C, D and E." }
+          - { id: c, text: "great", why: "`'A' | 'B'` matches only A or B." }
+        answer: a
+        explanation: "`'D'` falls inside `'C'..='E'`, so the second arm runs."
+        concepts: [pattern.guards, types.char]
+
+      - type: concept
+        id: concept-guard
+        title: Match guards
+        markdown: |
+          **A match guard adds an `if` condition to an arm.** The arm runs only if the pattern matches *and* the condition is true. If the condition is false, Rust moves on to the next arm.
+        code:
+          rust: |
+            let temp = Some(31);
+            let feel = match temp {
+                Some(t) if t > 30 => "hot",
+                Some(_) => "fine",
+                None => "no reading",
+            };
+            println!("{feel}");
+          verify: run
+          expectStdout: "hot\n"
+        concepts: [pattern.guards]
+
+      - type: predict-output
+        id: predict-guard-falls
+        code:
+          rust: |
+            let temp = Some(25);
+            let feel = match temp {
+                Some(t) if t > 30 => "hot",
+                Some(t) if t < 10 => "cold",
+                Some(_) => "mild",
+                None => "no reading",
+            };
+            println!("{feel}");
+          verify: run
+        options:
+          - { id: a, text: "mild" }
+          - { id: b, text: "hot", why: "The pattern `Some(t)` matches, but the guard `t > 30` is false for 25, so that arm is skipped." }
+          - { id: c, text: "no reading", why: "Failing guards don't turn the value into `None`. The `Some(_)` arm matches next." }
+        answer: a
+        explanation: "Both guards are false for 25, so Rust carries on to `Some(_)`, which has no guard."
+        concepts: [pattern.guards]
+
+      - type: true-false
+        id: tf-guard-false-stops
+        prompt: "If a match guard's condition is false, the whole `match` stops and no arm runs."
+        answer: false
+        explanation: "A false guard only rules out that one arm. Rust tries the arms below it, as if the pattern hadn't matched."
+        concepts: [pattern.guards]
+
+      - type: concept
+        id: concept-at
+        title: "@ bindings"
+        markdown: |
+          **`name @ pattern` tests a value and keeps it.** `n @ 0..=12` matches 0 to 12 and binds the value to `n`, so the arm can use it. A range on its own tests the value but doesn't name it.
+        code:
+          rust: |
+            let age = 7;
+            match age {
+                n @ 0..=12 => println!("child {n}"),
+                n @ 13..=19 => println!("teen {n}"),
+                n => println!("adult {n}"),
+            }
+          verify: run
+          expectStdout: "child 7\n"
+        concepts: [pattern.at]
+
+      - type: mcq
+        id: mcq-at-why
+        prompt: "Why write `n @ 1..=9` instead of `1..=9`?"
+        options:
+          - { id: a, text: "So the arm can use the matched value as `n`" }
+          - { id: b, text: "So the range includes 9", why: "`..=` already includes the end. `@` doesn't change what matches." }
+          - { id: c, text: "Ranges only work with `@`", why: "`1..=9 => ...` works on its own, but it doesn't give the value a name." }
+        answer: a
+        explanation: "Both patterns match the same values. The `@` version also binds the value to `n`."
+        concepts: [pattern.at]
+
+      - type: fill-tokens
+        id: fill-guard
+        prompt: "Fill the blanks so the program prints `pass`"
+        code:
+          rust: |
+            let score = 72;
+            let result = match score {
+                s ___1___ s >= 50 => "pass",
+                ___2___ => "fail",
+            };
+            println!("{result}");
+          verify: run
+          expectStdout: "pass\n"
+        blanks:
+          "1": { answer: ["if"] }
+          "2": { answer: ["_"] }
+        bank: ["if", "where", "_", "else", "=>"]
+        explanation: "A guard is `if` followed by a condition, after the pattern. The `_` arm catches every other score."
+        concepts: [pattern.guards]
+
+      - type: compiles
+        id: compiles-guard-exhaustive
+        code:
+          rust: |
+            fn main() {
+                let change = -3;
+                match change {
+                    n if n > 0 => println!("up"),
+                    n if n <= 0 => println!("down"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "Rust doesn't use guard conditions when it checks that every value is covered (E0004)" }
+            - { id: b, text: "A variable bound by a pattern can't be used in its guard", why: "It can: `n if n > 0` is the usual way to write a guard." }
+            - { id: c, text: "Negative numbers can't be matched", why: "Integer patterns cover negative values too. The problem is coverage." }
+          answer: a
+        explanation: "The two conditions do cover every number, but the compiler doesn't reason about guards. Make the last arm `_` or `n` with no guard."
+        concepts: [pattern.guards, err.E0004]
+
+      - type: match-pairs
+        id: pairs-pattern-syntax
+        prompt: Match each pattern to what it matches
+        pairs:
+          - ["1 | 2", "1 or 2"]
+          - ["1..=5", "1 to 5"]
+          - ["n @ 1..=5", "1 to 5, named n"]
+          - ["n if n > 5", "above 5, named n"]
+          - ["_", "anything, unnamed"]
+        explanation: "`|` and ranges choose which values match, `@` names the value, and a guard adds a condition."
+        concepts: [pattern.guards, pattern.at]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-guard-order
+        code:
+          rust: |
+            let n = 15;
+            let label = match n {
+                x if x % 3 == 0 => "fizz",
+                x if x % 15 == 0 => "fizzbuzz",
+                _ => "number",
+            };
+            println!("{label}");
+          verify: run
+        options:
+          - { id: a, text: "fizz" }
+          - { id: b, text: "fizzbuzz", why: "Arms are checked top to bottom. `15 % 3 == 0` is already true, so the first arm wins." }
+          - { id: c, text: "fizz\nfizzbuzz", why: "Only one arm of a `match` runs." }
+        answer: a
+        explanation: "The first arm whose pattern and guard both succeed is the one that runs. Put the more specific guard first."
+        concepts: [pattern.guards]
+
+      - type: predict-output
+        id: predict-or-guard
+        code:
+          rust: |
+            let x = 4;
+            let flag = false;
+            let msg = match x {
+                4 | 5 | 6 if flag => "yes",
+                _ => "no",
+            };
+            println!("{msg}");
+          verify: run
+        options:
+          - { id: a, text: "no" }
+          - { id: b, text: "yes", why: "The guard applies to the whole `4 | 5 | 6`, not only to `6`. `flag` is false, so the arm is skipped." }
+        answer: a
+        explanation: "`4 | 5 | 6 if flag` means `(4 | 5 | 6) if flag`. The pattern matches, but the guard is false."
+        concepts: [pattern.guards]
+
+      - type: compiles
+        id: compiles-at-or
+        code:
+          rust: |
+            fn main() {
+                let dice = 2;
+                match dice {
+                    n @ 1 | 2 => println!("{n}"),
+                    _ => println!("high"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0408]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "It means `(n @ 1) | 2`, so `n` has no value when the dice is 2 (E0408)" }
+            - { id: b, text: "`@` can't be used with a single number", why: "`n @ 1` is allowed, though not very useful. The problem is how `|` groups." }
+            - { id: c, text: "`|` isn't allowed in match arms", why: "It is. `1 | 2 => ...` is fine on its own." }
+          answer: a
+        explanation: "`@` binds more tightly than `|`. Write `n @ (1 | 2)` so `n` is bound whichever number matched."
+        concepts: [pattern.at, pattern.guards]
+
+      - type: predict-output
+        id: predict-at-option
+        code:
+          rust: |
+            let level = Some(142);
+            match level {
+                Some(n @ 0..=9) => {
+                    println!("{n}: 1 digit")
+                }
+                Some(n @ 10..=99) => {
+                    println!("{n}: 2 digits")
+                }
+                Some(n) => println!("{n}: more"),
+                None => println!("none"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "142: more" }
+          - { id: b, text: "142: 2 digits", why: "`10..=99` stops at 99, so 142 doesn't match it." }
+          - { id: c, text: "none", why: "`level` is `Some(142)`, and `Some(n)` matches any `Some`." }
+        answer: a
+        explanation: "142 is outside both ranges, so the plain `Some(n)` arm matches and prints it."
+        concepts: [pattern.at, option.basics]
+
+      - type: spot-bug
+        id: spot-guard-order
+        prompt: "This should print `hot` but prints `warm`. Tap the arm that wins too early."
+        code:
+          rust: |
+            fn main() {
+                let temp = 35;
+                let advice = match temp {
+                    t if t > 20 => "warm",
+                    t if t > 30 => "hot",
+                    _ => "cool",
+                };
+                println!("{advice}");
+            }
+          verify: run
+          expectStdout: "warm\n"
+        answer: 4
+        explanation: "35 is above 20, so line 4 matches first and line 5 never gets a chance. Swap the two arms so the stricter guard comes first."
+        concepts: [pattern.guards]
+
+      - type: decode-error
+        id: decode-battery
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let battery: u8 = 75;
+                let icon = match battery {
+                    0..=20 => "low",
+                    21..=80 => "ok",
+                    81..=99 => "high",
+                };
+                println!("{icon}");
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "Add a last arm `_ => \"full\",`" }
+          - { id: b, text: "Delete the `21..=80` arm", why: "That leaves even more values uncovered." }
+          - { id: c, text: "Change `u8` to `i32`", why: "Then negative numbers and everything above 99 would be uncovered." }
+        answer: a
+        explanation: "A `u8` goes up to 255, and nothing covers 100 to 255. The compiler lists the missing range for you."
+        concepts: [pattern.guards, err.E0004]
+
+      - type: fill-tokens
+        id: fill-at
+        prompt: "Fill the blanks so the program prints `low 3`"
+        code:
+          rust: |
+            let floor = 3;
+            match floor {
+                0 => println!("ground"),
+                n ___1___ 1___2___5 => println!("low {n}"),
+                n => println!("high {n}"),
+            }
+          verify: run
+          expectStdout: "low 3\n"
+        blanks:
+          "1": { answer: ["@"] }
+          "2": { answer: ["..="] }
+        bank: ["@", "if", "=", "..=", "...", "|"]
+        explanation: "`n @ 1..=5` matches 1 to 5 and binds the floor number to `n`."
+        concepts: [pattern.at]
+
+      - type: true-false
+        id: tf-guard-outer-var
+        prompt: "A match guard can use variables from outside the `match`, not only the ones its pattern binds."
+        code:
+          rust: |
+            let limit = 100;
+            let speed = 120;
+            match speed {
+                s if s > limit => println!("fine"),
+                _ => println!("ok"),
+            }
+          verify: run
+          expectStdout: "fine\n"
+        answer: true
+        explanation: "The guard is an ordinary `bool` expression, so it can use any variable in scope, like `limit` here."
+        concepts: [pattern.guards]
+
+      - type: mcq
+        id: mcq-one-to-three
+        prompt: "Which pattern matches exactly 1, 2 and 3 and names the value `n`?"
+        options:
+          - { id: a, code: "n @ 1..=3" }
+          - { id: b, code: "1..=3", why: "It matches the right values, but doesn't bind a name." }
+          - { id: c, code: "n if 1..=3", why: "A guard needs a `bool` condition, like `n if n >= 1 && n <= 3`." }
+          - { id: d, code: "n @ 1 | 2 | 3", why: "This groups as `(n @ 1) | 2 | 3`, so `n` isn't bound for 2 or 3 (E0408)." }
+        answer: a
+        explanation: "`n @ 1..=3` tests the range and binds the value. `n @ (1 | 2 | 3)` would also work."
+        concepts: [pattern.at]
+
+      - type: predict-output
+        id: predict-guard-tuple
+        code:
+          rust: |
+            let point = (4, 4);
+            let place = match point {
+                (0, 0) => "origin",
+                (x, y) if x == y => "diagonal",
+                (_, 0) => "x axis",
+                _ => "elsewhere",
+            };
+            println!("{place}");
+          verify: run
+        options:
+          - { id: a, text: "diagonal" }
+          - { id: b, text: "elsewhere", why: "`(x, y)` matches any pair, and the guard `x == y` is true for `(4, 4)`." }
+          - { id: c, text: "origin", why: "`(0, 0)` needs both numbers to be 0." }
+        answer: a
+        explanation: "A guard can compare two values bound by the same pattern, which a pattern on its own can't do."
+        concepts: [pattern.guards, pattern.destructure]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-hot-days
+        prompt: "Arrange the lines so the program prints `ok`, `hot`, `ok` on separate lines"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let temps = [12, 31, 22];" }
+          - { id: l3, text: "    for t in temps {" }
+          - { id: l4, text: "        let feel = match t {" }
+          - { id: l5, text: '            t if t > 30 => "hot",' }
+          - { id: l6, text: '            _ => "ok",' }
+          - { id: l7, text: "        };" }
+          - { id: l8, text: '        println!("{feel}");' }
+          - { id: l9, text: "    }" }
+          - { id: l10, text: "}" }
+        distractors:
+          - { id: d1, text: '            t > 30 => "hot",' }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10]
+        verify:
+          mode: run
+          expectStdout: "ok\nhot\nok\n"
+        explanation: "The guarded arm goes before `_`, because `_` matches everything. A guard needs `if` between the pattern and the condition."
+        concepts: [pattern.guards, ctrl.for]
+
+      - type: predict-output
+        id: tiles-even-odd
+        prompt: Build the output
+        code:
+          rust: |
+            for n in [3, 8, 15] {
+                let word = match n {
+                    d @ 1..=9 if d % 2 == 0 => {
+                        "even"
+                    }
+                    1..=9 => "odd",
+                    _ => "big",
+                };
+                print!("{word} ");
+            }
+          verify: run
+        tiles: ["even", "odd", "big", "small", "8"]
+        answer: "odd even big"
+        explanation: "3 is in range but odd, so the guard fails and `1..=9` matches. 8 passes the guard, and 15 is outside the range."
+        concepts: [pattern.at, pattern.guards]
+
+      - type: compiles
+        id: compiles-at-paren
+        code:
+          rust: |
+            let dice = 2;
+            match dice {
+                n @ (1 | 2) => println!("low {n}"),
+                n => println!("high {n}"),
+            }
+          verify: run
+          expectStdout: "low 2\n"
+        answer: true
+        explanation: "The brackets group the alternatives, so `n` is bound whichever one matched. Without them, `n @ 1 | 2` is error E0408."
+        concepts: [pattern.at]
+
+      - type: decode-error
+        id: decode-or-names
+        prompt: Which change to line 9 fixes this?
+        code:
+          rust: |
+            enum Bag {
+                Small(u32),
+                Big(u32),
+            }
+
+            fn main() {
+                let order = Bag::Big(3);
+                match order {
+                    Bag::Small(n) | Bag::Big(m) => {
+                        println!("{n} items")
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0408]
+        options:
+          - { id: a, code: "Bag::Small(n) | Bag::Big(n) => {" }
+          - { id: b, code: "Bag::Small(n) || Bag::Big(m) => {", why: "`||` is the boolean \"or\" for conditions. Patterns use a single `|`." }
+          - { id: c, code: "Bag::Small(n) | Bag::Big(_) => {", why: "`n` would still have no value when the order is `Big`, which is the same error." }
+        answer: a
+        explanation: "Every alternative in an or-pattern must bind the same names. Using `n` in both means the arm always has a value for `n`."
+        concepts: [pattern.guards, enum.data]
+
+      - type: fill-tokens
+        id: fill-weekend
+        prompt: "Fill the blanks so the program prints `weekend` for day 6 or 7"
+        code:
+          rust: |
+            let day = 6;
+            match day {
+                6 ___1___ 7 => println!("weekend"),
+                d ___2___ 1..=5 => println!("day {d}"),
+                _ => println!("not a day"),
+            }
+          verify: run
+          expectStdout: "weekend\n"
+        blanks:
+          "1": { answer: ["|"] }
+          "2": { answer: ["@"] }
+        bank: ["|", "||", "@", "if", "or", "&"]
+        explanation: "`6 | 7` matches either day. `d @ 1..=5` matches a weekday and names it `d`."
+        concepts: [pattern.guards, pattern.at]
+
+      - type: spot-bug
+        id: spot-range-no-name
+        prompt: "This should print `B with 87`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let mark = Some(87);
+                match mark {
+                    Some(80..=89) => {
+                        println!("B with {n}")
+                    }
+                    Some(n) => println!("{n}"),
+                    None => println!("absent"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 4
+        explanation: "The compiler complains about `n` on line 5, but the fix is on line 4: a range on its own doesn't bind a name. Write `Some(n @ 80..=89)`."
+        concepts: [pattern.at]
+
+      - type: mcq
+        id: mcq-even-arm
+        prompt: "Which arm matches only even numbers?"
+        options:
+          - { id: a, code: "n if n % 2 == 0 =>" }
+          - { id: b, code: "even =>", why: "A plain name is a new variable that matches every value. Patterns can't test conditions." }
+          - { id: c, code: "2..=100 =>", why: "That matches every number from 2 to 100, odd ones included." }
+          - { id: d, code: "n @ 0 | 2 | 4 =>", why: "This groups as `(n @ 0) | 2 | 4` (E0408), and would miss even numbers above 4 anyway." }
+        answer: a
+        explanation: "Patterns can't express \"is even\". A guard can test any `bool` condition."
+        concepts: [pattern.guards]
+
+      - type: true-false
+        id: tf-guards-coverage
+        prompt: "Rust takes `if` guards into account when it checks that a `match` covers every value."
+        answer: false
+        explanation: "The exhaustiveness check ignores guards, because conditions can be arbitrary code. An arm with a guard counts as covering nothing."
+        concepts: [pattern.guards, match.exhaustive]
+
+      - type: predict-output
+        id: predict-ticket-row
+        code:
+          rust: |
+            struct Ticket { row: u32, seat: u32 }
+
+            let t = Ticket { row: 3, seat: 18 };
+            match t {
+                Ticket { row: r @ 1..=5, .. } => {
+                    println!("front, row {r}")
+                }
+                Ticket { row, .. } => {
+                    println!("back, row {row}")
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "front, row 3" }
+          - { id: b, text: "back, row 3", why: "3 is in `1..=5`, so the first arm matches." }
+          - { id: c, text: "front, row 1..=5", why: "`r @ 1..=5` binds the actual value, 3." }
+        answer: a
+        explanation: "`row: r @ 1..=5` tests the `row` field and binds its value to `r`."
+        concepts: [pattern.at, pattern.destructure]
+
+      - type: match-pairs
+        id: pairs-pattern-kinds
+        prompt: Match each pattern to its name
+        pairs:
+          - ["Some(n) if n > 0", "match guard"]
+          - ["n @ 1..=9", "@ binding"]
+          - ["1 | 2 | 3", "or-pattern"]
+          - ["'a'..='z'", "char range"]
+          - ["Point { x: 0, .. }", "struct pattern with a literal"]
+        explanation: "These pieces combine: a struct pattern can hold a range with `@`, and any arm can add a guard."
+        concepts: [pattern.guards, pattern.at, pattern.destructure]

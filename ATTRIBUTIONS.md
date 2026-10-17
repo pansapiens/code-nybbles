@@ -19,3 +19,8 @@ draw on these sources, under the licences shown:
 - [Rust Book, Brown University edition (ownership chapter)](https://rust-book.cs.brown.edu/ch04-01-what-is-ownership.html), MIT OR Apache-2.0, adapted (Permissions model described in our own words, with new exercises.). Used in: References & Borrowing.
 - [The Rust Programming Language, ch. 4.3](https://doc.rust-lang.org/book/ch04-03-slices.html), MIT OR Apache-2.0. Used in: Slices.
 - [The Rust Programming Language, ch. 4](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html), MIT OR Apache-2.0. Used in: Ownership in Practice.
+- [The Rust Programming Language, ch. 5.1-5.2](https://doc.rust-lang.org/book/ch05-01-defining-structs.html), MIT OR Apache-2.0. Used in: Structs.
+- [The Rust Programming Language, ch. 5.3](https://doc.rust-lang.org/book/ch05-03-method-syntax.html), MIT OR Apache-2.0. Used in: Methods & Associated Functions.
+- [The Rust Programming Language, ch. 6.1](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html), MIT OR Apache-2.0. Used in: Enums & Option.
+- [The Rust Programming Language, ch. 6.2-6.3](https://doc.rust-lang.org/book/ch06-02-match.html), MIT OR Apache-2.0. Used in: match & Control Flow.
+- [The Rust Programming Language, ch. 19](https://doc.rust-lang.org/book/ch19-00-patterns.html), MIT OR Apache-2.0. Used in: Patterns Deep-dive.

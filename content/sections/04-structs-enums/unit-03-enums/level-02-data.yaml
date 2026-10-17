@@ -1,0 +1,618 @@
+id: structs-enums.enums.data
+title: Variants with data
+icon: package
+concepts: [enum.data]
+reviewConcepts: [enum.define, struct.define, derive.debug, own.move, err.E0382, err.E0308, types.array, types.float, string.string-vs-literal, mem.stack-heap, fn.params]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-tuple-variant
+        title: Variants can carry values
+        markdown: |
+          **A variant can hold data.** Put the types in brackets after its name, like a tuple: `Move(i32, i32)`.
+
+          Each variant decides for itself. `Quit` holds nothing; `Move` holds two numbers.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Move(i32, i32),
+            }
+
+            fn main() {
+                let step = Command::Move(3, -1);
+                println!("{step:?}");
+            }
+          verify: run
+          expectStdout: "Move(3, -1)\n"
+        concepts: [enum.data]
+
+      - type: predict-output
+        id: predict-circle
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Shape {
+                Dot,
+                Circle(u32),
+            }
+
+            fn main() {
+                let s = Shape::Circle(4);
+                println!("{s:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Circle(4)" }
+          - { id: b, text: "Circle", why: "Debug output includes the data a variant holds, in brackets." }
+          - { id: c, text: "4", why: "Debug output shows the variant's name as well as its data." }
+        answer: a
+        explanation: "`{:?}` prints the variant name followed by its data in brackets, like a tuple."
+        concepts: [enum.data, derive.debug]
+
+      - type: true-false
+        id: tf-different-data
+        prompt: "In one enum, different variants can hold different types and amounts of data."
+        answer: true
+        explanation: "Each variant has its own shape: one can hold nothing, another two `i32`s, another a `String`."
+        concepts: [enum.data]
+
+      - type: fill-tokens
+        id: fill-move-types
+        prompt: Fill the blanks so the program prints `Move(2, 5)`
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Move(___1___, i32),
+            }
+
+            fn main() {
+                let c = Command::Move(2, ___2___);
+                println!("{c:?}");
+            }
+          verify: run
+          expectStdout: "Move(2, 5)\n"
+        blanks:
+          "1": { answer: ["i32"] }
+          "2": { answer: ["5"] }
+        bank: ["i32", "5", "x", "\"5\"", "2"]
+        explanation: "The variant lists its field types, and creating it passes one value per field, in order."
+        concepts: [enum.data]
+
+      - type: concept
+        id: concept-struct-variant
+        title: Variants with named fields
+        markdown: |
+          **A variant can also have named fields**, like a struct: `Write { text: String }`.
+
+          Create it with the field names in curly brackets.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Write { text: String },
+            }
+
+            fn main() {
+                let note = Command::Write {
+                    text: String::from("hi"),
+                };
+                println!("{note:?}");
+            }
+          verify: run
+          expectStdout: "Write { text: \"hi\" }\n"
+        concepts: [enum.data]
+
+      - type: predict-output
+        id: predict-resize
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Edit {
+                Undo,
+                Resize { width: u32 },
+            }
+
+            fn main() {
+                let e = Edit::Resize { width: 80 };
+                println!("{e:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Resize { width: 80 }" }
+          - { id: b, text: "Resize(80)", why: "Named fields print with their names in curly brackets. Brackets with no names are for tuple-like variants." }
+          - { id: c, text: "Edit { width: 80 }", why: "The variant's name, `Resize`, is printed, not the enum's." }
+        answer: a
+        explanation: "A struct-like variant prints like a struct: the variant name, then each field and its value."
+        concepts: [enum.data, derive.debug]
+
+      - type: compiles
+        id: compiles-struct-variant-as-tuple
+        code:
+          rust: |
+            enum Command {
+                Quit,
+                Write { text: String },
+            }
+
+            fn main() {
+                let s = String::from("hi");
+                let c = Command::Write(s);
+            }
+          verify: compile-fail
+          expectErrors: [E0533]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`Write` has named fields, so it needs `Command::Write { text: s }`" }
+            - { id: b, text: "`s` must be a `&str`, not a `String`", why: "The field's type is `String`, so a `String` is right. The brackets are the problem." }
+            - { id: c, text: "`Write` must be created with `let mut`", why: "`mut` only matters for changing a variable later." }
+          answer: a
+        explanation: "Struct-like variants are created with `{ field: value }`, tuple-like variants with `(value)`. The compiler reports E0533."
+        concepts: [enum.data]
+
+      - type: mcq
+        id: mcq-make-move
+        prompt: "`Command` has a variant `Move(i32, i32)`. Which line creates one?"
+        options:
+          - { id: a, code: "let c = Command::Move(1, 2);" }
+          - { id: b, code: "let c = Command::Move { 1, 2 };", why: "Curly brackets are for variants with named fields. `Move` is tuple-like, so use `(1, 2)`." }
+          - { id: c, code: "let c = Move(1, 2);", why: "`Move` on its own isn't in scope. Write `Command::Move`." }
+          - { id: d, code: "let c = Command::Move;", why: "`Move` needs its two numbers to make a `Command`." }
+        answer: a
+        explanation: "A tuple-like variant is created like a function call: the enum, `::`, the variant, then its values in brackets."
+        concepts: [enum.data]
+
+      - type: compiles
+        id: compiles-wrong-count
+        code:
+          rust: |
+            enum Command {
+                Quit,
+                Move(i32, i32),
+            }
+
+            fn main() {
+                let c = Command::Move(4);
+            }
+          verify: compile-fail
+          expectErrors: [E0061]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0061: this enum variant takes 2 arguments but 1 argument was supplied" }
+            - { id: b, text: "E0308: mismatched types", why: "`4` is an `i32`, which is the right type. One value is missing." }
+            - { id: c, text: "E0599: no variant named `Move`", why: "`Move` exists. It needs two values." }
+          answer: a
+        explanation: "`Move` holds two `i32`s, so you must give it exactly two. Rust doesn't fill in missing values."
+        concepts: [enum.data]
+
+      - type: match-pairs
+        id: pairs-variant-kinds
+        prompt: Match each variant to the kind of data it holds
+        pairs:
+          - ["Quit", "no data"]
+          - ["Move(i32, i32)", "two unnamed values"]
+          - ["Write { text: String }", "one named field"]
+          - ["Colour(u8, u8, u8)", "three unnamed values"]
+        concepts: [enum.data]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-data-in-memory
+        title: One type, many shapes
+        markdown: |
+          **All three values below have the same type, `Command`.** A function taking `Command` accepts any of them.
+
+          A `String` inside a variant works as usual: its text lives on the heap, and the variant owns it.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Move(i32, i32),
+                Write { text: String },
+            }
+
+            fn main() {
+                let quit = Command::Quit;
+                let step = Command::Move(3, 4);
+                let text = String::from("hi");
+                let note = Command::Write { text };
+                println!("{quit:?} {step:?}");
+                println!("{note:?}");
+            }
+          verify: run
+          expectStdout: "Quit Move(3, 4)\nWrite { text: \"hi\" }\n"
+        diagram:
+          caption: "Each variable holds one `Command`. The `Write` variant's text is on the heap."
+          frames:
+            - name: main
+              vars:
+                - { name: quit, value: "Quit" }
+                - { name: step, value: "Move(3, 4)" }
+                - { name: text, moved: true }
+                - { name: note, points: h1 }
+          heap:
+            - { id: h1, value: '"hi"' }
+        concepts: [enum.data, mem.stack-heap]
+
+      - type: true-false
+        id: tf-diagram-moved
+        prompt: "In the diagram, `text` can still be printed after `note` is created."
+        diagram:
+          caption: "After let note = Command::Write { text };"
+          frames:
+            - name: main
+              vars:
+                - { name: text, moved: true }
+                - { name: note, points: h1 }
+          heap:
+            - { id: h1, value: '"hi"' }
+        answer: false
+        explanation: "`Write { text }` moves the `String` into the variant, like moving it into a struct field. `text` can't be used afterwards."
+        concepts: [enum.data, own.move]
+
+      - type: predict-output
+        id: predict-mixed-array
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Move(i32, i32),
+            }
+
+            fn main() {
+                let plan = [
+                    Command::Move(1, 0),
+                    Command::Quit,
+                ];
+                println!("{plan:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "[Move(1, 0), Quit]" }
+          - { id: b, text: "[Move, Quit]", why: "Debug output includes each variant's data." }
+          - { id: c, text: "[1, 0, Quit]", why: "Each element is one `Command`. `Move(1, 0)` prints as a whole, with its name." }
+        answer: a
+        explanation: "Every element is a `Command`, so they fit in one array even though the variants hold different data."
+        concepts: [enum.data, types.array]
+
+      - type: compiles
+        id: compiles-move-into-variant
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Write { text: String },
+            }
+
+            fn main() {
+                let text = String::from("hello");
+                let c = Command::Write { text };
+                println!("{text}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `text`" }
+            - { id: b, text: "E0063: missing field `text`", why: "`{ text }` is the field init shorthand for `{ text: text }`, so the field is there." }
+            - { id: c, text: "E0277: `Command` doesn't implement `Debug`", why: "`Command` derives `Debug`, and line 9 prints `text`, not `c`." }
+          answer: a
+        explanation: "Putting a `String` into a variant moves it, the same as putting it into a struct. `text` is no longer usable on line 9."
+        concepts: [enum.data, own.move, err.E0382]
+
+      - type: spot-bug
+        id: spot-wrong-data-type
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Reading {
+                Missing,
+                Celsius(f64),
+                Level(u8),
+            }
+
+            fn main() {
+                let a = Reading::Celsius(21.5);
+                let b = Reading::Level(2.5);
+                println!("{a:?} {b:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 10
+        explanation: "`Level` holds a `u8`, a whole number, but line 10 gives it `2.5`. Each variant's data must match its declared type."
+        concepts: [enum.data, err.E0308]
+
+      - type: decode-error
+        id: decode-missing-field
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Edit {
+                Undo,
+                Resize { width: u32, height: u32 },
+            }
+
+            fn main() {
+                let e = Edit::Resize { width: 80 };
+                println!("{e:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0063]
+        options:
+          - { id: a, text: "`Resize` needs a value for every field, and `height` is missing" }
+          - { id: b, text: "`width` must come last", why: "Field order doesn't matter when you name the fields. A field is missing." }
+          - { id: c, text: "`Resize` can't have two fields", why: "Struct-like variants can have as many named fields as you need." }
+        answer: a
+        explanation: "As with structs, every named field must be given a value. The compiler reports E0063: missing field `height`."
+        concepts: [enum.data]
+
+      - type: fill-tokens
+        id: fill-write-field
+        prompt: "Fill the blanks so the program prints `Write { text: \"bye\" }`"
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Write { text: String },
+            }
+
+            fn main() {
+                let c = Command::Write ___1___
+                    ___2___: String::from("bye"),
+                };
+                println!("{c:?}");
+            }
+          verify: run
+          expectStdout: "Write { text: \"bye\" }\n"
+        blanks:
+          "1": { answer: ["{"] }
+          "2": { answer: ["text"] }
+        bank: ["{", "(", "text", "String", "Write"]
+        explanation: "A struct-like variant opens with `{` and names each field, here `text`."
+        concepts: [enum.data]
+
+      - type: predict-output
+        id: predict-temperature
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Temperature {
+                Celsius(f64),
+                Fahrenheit(f64),
+            }
+
+            fn main() {
+                let t = Temperature::Celsius(21.5);
+                println!("{t:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Celsius(21.5)" }
+          - { id: b, text: "21.5C", why: "Debug output shows the variant name and its data in brackets. It doesn't add units." }
+          - { id: c, text: "Temperature(21.5)", why: "The variant's name is printed, not the enum's." }
+        answer: a
+        explanation: "The variant name tells you how to read the number. `Celsius(21.5)` and `Fahrenheit(21.5)` are different values."
+        concepts: [enum.data, types.float]
+
+      - type: true-false
+        id: tf-variant-alone
+        prompt: "`Command::Move` on its own, without `(3, 4)`, is a complete `Command` value."
+        answer: false
+        explanation: "A variant that holds data needs its data to make a value. `let c: Command = Command::Move;` is a type mismatch (E0308)."
+        concepts: [enum.data]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-shape
+        prompt: "Arrange the lines so the program prints `Rect { w: 2, h: 3 }`"
+        lines:
+          - { id: l1, text: "#[derive(Debug)]" }
+          - { id: l2, text: "enum Shape {" }
+          - { id: l3, text: "    Circle(u32)," }
+          - { id: l4, text: "    Rect { w: u32, h: u32 }," }
+          - { id: l5, text: "}" }
+          - { id: l6, text: "fn main() {" }
+          - { id: l7, text: "    let s = Shape::Rect { w: 2, h: 3 };" }
+          - { id: l8, text: "    println!(\"{s:?}\");" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "    Rect(w: u32, h: u32)," }
+          - { id: d2, text: "    let s = Shape::Rect(2, 3);" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6, l7, l8, l9]
+        verify:
+          mode: run
+          expectStdout: "Rect { w: 2, h: 3 }\n"
+        explanation: "Named fields go in curly brackets, both when you define the variant and when you create it. Tuple-like brackets don't take field names."
+        concepts: [enum.data]
+
+      - type: predict-output
+        id: predict-field-order
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Shape {
+                Rect { w: u32, h: u32 },
+            }
+
+            fn main() {
+                let s = Shape::Rect { h: 4, w: 9 };
+                println!("{s:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Rect { w: 9, h: 4 }" }
+          - { id: b, text: "Rect { h: 4, w: 9 }", why: "Debug output follows the order of the fields in the definition, not the order you wrote them in." }
+          - { id: c, text: "Rect { w: 4, h: 9 }", why: "The values stay with their field names. `h` is 4 and `w` is 9." }
+        answer: a
+        explanation: "You can give named fields in any order. Debug prints them in the order the variant declares them."
+        concepts: [enum.data, derive.debug]
+
+      - type: mcq
+        id: mcq-valid-definition
+        prompt: Which enum definition compiles?
+        options:
+          - { id: a, code: "enum Shape { Circle(f64), Rect { w: f64, h: f64 } }" }
+          - { id: b, code: "enum Shape { Circle(r: f64) }", why: "Tuple-like variants list only types. To name the field, use `Circle { r: f64 }`." }
+          - { id: c, code: "enum Shape { Circle { f64 } }", why: "Curly brackets need field names: `Circle { r: f64 }`." }
+        answer: a
+        explanation: "Tuple-like variants list types in `( )`. Struct-like variants list `name: type` pairs in `{ }`. One enum can mix both."
+        concepts: [enum.data]
+
+      - type: decode-error
+        id: decode-too-many
+        prompt: What's the best fix?
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Colour {
+                Grey(u8),
+                Rgb(u8, u8, u8),
+            }
+
+            fn main() {
+                let bg = Colour::Grey(90, 160, 220);
+                println!("{bg:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0061]
+        options:
+          - { id: a, text: "Change line 8 to `Colour::Rgb(90, 160, 220)`" }
+          - { id: b, text: "Change line 3 to `Grey(u8, u8, u8),`", why: "That compiles, but then `Grey` and `Rgb` hold the same data and a grey needs only one number." }
+          - { id: c, text: "Change line 8 to `Colour::Grey { 90, 160, 220 }`", why: "Curly brackets need field names, and `Grey` still holds only one value." }
+        answer: a
+        explanation: "Three colour values match the `Rgb` variant. `Grey` takes one `u8`, so three arguments is E0061."
+        concepts: [enum.data]
+
+      - type: fill-tokens
+        id: fill-two-kinds
+        prompt: 'Fill the blanks so the program prints `Rgb(0, 0, 255) Named { name: "teal" }`'
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Colour {
+                Rgb(u8, u8, u8),
+                Named { name: String },
+            }
+
+            fn main() {
+                let a = Colour::Rgb___1___0, 0, 255);
+                let b = Colour::Named ___2___
+                    name: String::from("teal"),
+                };
+                println!("{a:?} {b:?}");
+            }
+          verify: run
+          expectStdout: "Rgb(0, 0, 255) Named { name: \"teal\" }\n"
+        blanks:
+          "1": { answer: ["("] }
+          "2": { answer: ["{"] }
+        bank: ["(", "{", "[", "<"]
+        explanation: "Tuple-like variants use `( )` and struct-like variants use `{ }`, both when defining and when creating."
+        concepts: [enum.data]
+
+      - type: compiles
+        id: compiles-send-any
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Command {
+                Quit,
+                Move(i32, i32),
+            }
+
+            fn send(c: Command) {
+                println!("Sending {c:?}");
+            }
+
+            fn main() {
+                send(Command::Move(0, 1));
+                send(Command::Quit);
+            }
+          verify: run
+          expectStdout: "Sending Move(0, 1)\nSending Quit\n"
+        answer: true
+        explanation: "Both values are `Command`s, so `send` accepts either. The variants holding different data doesn't matter."
+        concepts: [enum.data, fn.params]
+
+      - type: spot-bug
+        id: spot-struct-variant-parens
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Alert {
+                Beep,
+                Show { message: String },
+            }
+
+            fn main() {
+                let a = Alert::Beep;
+                let msg = String::from("Saved");
+                let b = Alert::Show(msg);
+                println!("{a:?} {b:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0533]
+        answer: 10
+        explanation: "`Show` has a named field, so it's created with `Alert::Show { message: msg }`. Round brackets are for tuple-like variants."
+        concepts: [enum.data]
+
+      - type: true-false
+        id: tf-struct-vs-enum
+        prompt: "A struct holds all of its fields at once, but an enum value holds the data of only one variant."
+        answer: true
+        explanation: "A struct is \"this and that\". An enum is \"this or that\": the value is one variant, with that variant's data."
+        concepts: [enum.data, struct.define]
+
+      - type: predict-output
+        id: predict-tiles-moves
+        prompt: Build the output
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Step {
+                Stay,
+                Go(i32),
+            }
+
+            fn main() {
+                let a = Step::Go(2);
+                let b = Step::Stay;
+                println!("{b:?}");
+                println!("{a:?}");
+            }
+          verify: run
+        tiles: ["Stay", "Go(2)", "Go", "2", "Step::Stay"]
+        answer: "Stay\nGo(2)"
+        explanation: "`b` prints first because its `println!` comes first. `Go(2)` prints with its data."
+        concepts: [enum.data]
+
+      - type: match-pairs
+        id: pairs-make-values
+        prompt: Match each variant definition to a value it can make
+        pairs:
+          - ["Quit", "Command::Quit"]
+          - ["Move(i32, i32)", "Command::Move(1, 2)"]
+          - ["Write { text: String }", "Command::Write { text: s }"]
+          - ["Volume(u8)", "Command::Volume(7)"]
+        concepts: [enum.data]

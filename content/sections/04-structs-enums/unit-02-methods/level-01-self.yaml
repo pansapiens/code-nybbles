@@ -1,0 +1,700 @@
+id: structs-enums.methods.self
+title: Methods and self
+icon: wrench
+concepts: [method.self]
+reviewConcepts: [struct.define, borrow.shared, borrow.mut, own.move, err.E0382, own.param-choice]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-impl
+        title: Methods live in impl
+        markdown: |
+          **A method is a function that belongs to a type.** You write it inside an `impl` block for that type.
+
+          Its first parameter is `self`, the value the method was called on. `&self` borrows it, so the method can read its fields with `self.radius`.
+        code:
+          rust: |
+            struct Circle {
+                radius: f64,
+            }
+
+            impl Circle {
+                fn diameter(&self) -> f64 {
+                    self.radius * 2.0
+                }
+            }
+
+            fn main() {
+                let wheel = Circle { radius: 3.5 };
+                println!("{}", wheel.diameter());
+            }
+          verify: run
+          expectStdout: "7\n"
+        diagram:
+          caption: "Inside `wheel.diameter()`"
+          frames:
+            - name: main
+              vars:
+                - { name: wheel, id: wheel, value: "radius 3.5" }
+            - name: diameter
+              vars:
+                - { name: self, points: wheel }
+        concepts: [method.self]
+
+      - type: predict-output
+        id: predict-perimeter
+        code:
+          rust: |
+            struct Square {
+                side: u32,
+            }
+
+            impl Square {
+                fn perimeter(&self) -> u32 {
+                    self.side * 4
+                }
+            }
+
+            fn main() {
+                let tile = Square { side: 5 };
+                println!("{}", tile.perimeter());
+            }
+          verify: run
+        options:
+          - { id: a, text: "20" }
+          - { id: b, text: "5", why: "That's `tile.side`. The method multiplies it by 4." }
+          - { id: c, text: "9", why: "`self.side * 4` multiplies; it doesn't add." }
+        answer: a
+        explanation: "`tile.perimeter()` runs the method with `self` borrowing `tile`, so `self.side` is 5 and the result is 20."
+        concepts: [method.self]
+
+      - type: true-false
+        id: tf-dot-call
+        prompt: "A method is called with a dot after the value, like `tile.perimeter()`."
+        answer: true
+        explanation: "Method syntax puts the value first, then `.`, then the method name and its arguments in brackets."
+        concepts: [method.self]
+
+      - type: mcq
+        id: mcq-what-is-self
+        prompt: "Inside `perimeter`, what is `self`?"
+        options:
+          - { id: a, text: "The `Square` value the method was called on" }
+          - { id: b, text: "The `impl` block itself", why: "`self` is a value, not a block of code. In `tile.perimeter()` it is `tile`." }
+          - { id: c, text: "A new, empty `Square`", why: "No new value is made. `self` refers to the value before the dot." }
+          - { id: d, text: "The `side` field", why: "`self` is the whole struct. You reach a field with `self.side`." }
+        answer: a
+        explanation: "In `tile.perimeter()`, Rust passes `tile` as `self`. With `&self` it's a shared borrow of `tile`."
+        concepts: [method.self]
+
+      - type: concept
+        id: concept-mut-self
+        title: "&mut self to change"
+        markdown: |
+          **`&self` can only read.** To change a field, the method takes **`&mut self`**, a mutable borrow.
+
+          The value you call it on must be declared with `let mut`, the same as any `&mut` borrow.
+        code:
+          rust: |
+            struct Counter { count: u32 }
+
+            impl Counter {
+                fn add(&mut self) {
+                    self.count += 1;
+                }
+            }
+
+            fn main() {
+                let mut taps = Counter { count: 0 };
+                taps.add();
+                taps.add();
+                println!("{}", taps.count);
+            }
+          verify: run
+          expectStdout: "2\n"
+        concepts: [method.self]
+
+      - type: predict-output
+        id: predict-counter
+        code:
+          rust: |
+            struct Counter { count: u32 }
+
+            impl Counter {
+                fn add(&mut self) {
+                    self.count += 10;
+                }
+            }
+
+            fn main() {
+                let mut laps = Counter { count: 1 };
+                laps.add();
+                println!("{}", laps.count);
+            }
+          verify: run
+        options:
+          - { id: a, text: "11" }
+          - { id: b, text: "1", why: "`&mut self` borrows `laps` itself, so the change in `add` is made to `laps`, not a copy." }
+          - { id: c, text: "10", why: "`+=` adds to the existing count of 1." }
+        answer: a
+        explanation: "`add` borrows `laps` mutably and adds 10 to its `count`, so it goes from 1 to 11."
+        concepts: [method.self]
+
+      - type: compiles
+        id: compiles-not-mut
+        code:
+          rust: |
+            struct Counter { count: u32 }
+
+            impl Counter {
+                fn add(&mut self) {
+                    self.count += 1;
+                }
+            }
+
+            fn main() {
+                let laps = Counter { count: 0 };
+                laps.add();
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0596: cannot borrow `laps` as mutable, as it is not declared as mutable" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing assigns to `laps` directly. The problem is the mutable borrow that `add` needs." }
+            - { id: c, text: "E0382: borrow of moved value", why: "`&mut self` borrows `laps`; nothing is moved." }
+          answer: a
+        explanation: "`add` takes `&mut self`, so calling it borrows `laps` mutably. That needs `let mut laps`."
+        concepts: [method.self, borrow.mut]
+
+      - type: fill-tokens
+        id: fill-reset
+        prompt: Fill the blanks so `reset` sets the score back to 0
+        code:
+          rust: |
+            struct Game {
+                score: u32,
+            }
+
+            impl Game {
+                fn reset(___1___) {
+                    ___2___ = 0;
+                }
+            }
+
+            fn main() {
+                let mut game = Game { score: 40 };
+                game.reset();
+                println!("{}", game.score);
+            }
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["&mut self"] }
+          "2": { answer: ["self.score"] }
+        bank: ["&mut self", "&self", "self.score", "score", "Game.score"]
+        explanation: "Changing a field needs `&mut self`. Inside the method, fields are reached through `self`, as in `self.score`."
+        concepts: [method.self]
+
+      - type: match-pairs
+        id: pairs-receivers
+        prompt: Match each first parameter to what the method can do
+        pairs:
+          - ["&self", "read the fields"]
+          - ["&mut self", "change the fields"]
+          - ["self", "take ownership of the value"]
+        explanation: "These are the same three choices you make for any parameter: `&T`, `&mut T` or `T`."
+        concepts: [method.self]
+
+      - type: mcq
+        id: mcq-pick-receiver
+        prompt: "A method `is_empty` returns `true` when `self.count` is 0. Which first parameter should it take?"
+        options:
+          - { id: a, code: "&self" }
+          - { id: b, code: "&mut self", why: "It only reads `count`, so a mutable borrow is more than it needs, and would force callers to use `let mut`." }
+          - { id: c, code: "self", why: "Taking ownership would use the value up, so the caller couldn't use it after asking." }
+        answer: a
+        explanation: "Pick the weakest borrow that works. Reading a field only needs `&self`."
+        concepts: [method.self, own.param-choice]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-self-owned
+        title: self takes ownership
+        markdown: |
+          **A method that takes plain `self` takes ownership.** The value moves into the method, so the caller can't use it afterwards.
+
+          This is useful when a method turns the value into something else, like handing out a field.
+        code:
+          rust: |
+            struct Ticket { owner: String }
+
+            impl Ticket {
+                fn into_owner(self) -> String {
+                    self.owner
+                }
+            }
+
+            fn main() {
+                let owner = String::from("Ada");
+                let pass = Ticket { owner };
+                let name = pass.into_owner();
+                println!("{name}");
+            }
+          verify: run
+          expectStdout: "Ada\n"
+        diagram:
+          caption: "After `let name = pass.into_owner();`"
+          frames:
+            - name: main
+              vars:
+                - { name: pass, moved: true }
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ada"' }
+        concepts: [method.self]
+
+      - type: compiles
+        id: compiles-use-after-self
+        code:
+          rust: |
+            struct Ticket { owner: String }
+
+            impl Ticket {
+                fn into_owner(self) -> String {
+                    self.owner
+                }
+            }
+
+            fn main() {
+                let owner = String::from("Bo");
+                let pass = Ticket { owner };
+                let name = pass.into_owner();
+                println!("{} {}", name, pass.owner);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `pass`" }
+            - { id: b, text: "E0596: cannot borrow `pass` as mutable", why: "No method here needs a mutable borrow." }
+            - { id: c, text: "E0599: no method named `into_owner` found", why: "The method exists. The problem is using `pass` after it moved." }
+          answer: a
+        explanation: "`into_owner` takes `self`, so `pass` moves into it. Reading `pass.owner` afterwards uses a moved value."
+        concepts: [method.self, err.E0382]
+
+      - type: mcq
+        id: mcq-receiver-for-rename
+        prompt: "`fn rename(___, new_name: String)` replaces `self.name`. The caller keeps using the value afterwards. What goes in the blank?"
+        options:
+          - { id: a, code: "&mut self" }
+          - { id: b, code: "&self", why: "`&self` is read-only, so assigning to `self.name` is an error (E0594)." }
+          - { id: c, code: "self", why: "That would move the value into `rename`, and the caller couldn't use it afterwards." }
+        answer: a
+        explanation: "The method changes a field and the caller keeps the value, so it borrows mutably with `&mut self`."
+        concepts: [method.self, own.param-choice]
+
+      - type: decode-error
+        id: decode-e0594
+        prompt: What's the best fix?
+        code:
+          rust: |
+            struct Lamp {
+                on: bool,
+            }
+
+            impl Lamp {
+                fn switch_on(&self) {
+                    self.on = true;
+                }
+            }
+
+            fn main() {
+                let mut desk = Lamp { on: false };
+                desk.switch_on();
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        options:
+          - { id: a, text: "Change line 6 to `fn switch_on(&mut self) {`" }
+          - { id: b, text: "Change line 12 to `let desk = Lamp { on: false };`", why: "Removing `mut` doesn't help: the method still only borrows read-only, and now `desk` can't change at all." }
+          - { id: c, text: "Change line 7 to `let self.on = true;`", why: "`let` creates a new variable; it can't assign to a field." }
+        answer: a
+        explanation: "`&self` is a shared borrow, so the method can't change `self.on`. Taking `&mut self` lets it."
+        concepts: [method.self]
+
+      - type: predict-output
+        id: predict-add-points
+        code:
+          rust: |
+            struct Player { score: u32 }
+
+            impl Player {
+                fn add(&mut self, points: u32) {
+                    self.score += points;
+                }
+            }
+
+            fn main() {
+                let mut ada = Player { score: 5 };
+                ada.add(3);
+                ada.add(2);
+                println!("{}", ada.score);
+            }
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "7", why: "Both calls change `ada`. The first adds 3, the second adds 2." }
+          - { id: c, text: "5", why: "`&mut self` changes `ada` itself, so the additions stick." }
+        answer: a
+        explanation: "Arguments after `self` go in the brackets. The score goes 5, 8, 10."
+        concepts: [method.self]
+
+      - type: true-false
+        id: tf-extra-params
+        prompt: "A method can only have the one `self` parameter and nothing else."
+        answer: false
+        explanation: "After `self` you can list more parameters, like `fn add(&mut self, points: u32)`. You pass them in the brackets when you call it."
+        concepts: [method.self]
+
+      - type: spot-bug
+        id: spot-missing-self-dot
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Oven {
+                degrees: u32,
+            }
+
+            impl Oven {
+                fn heat(&mut self) {
+                    degrees += 20;
+                }
+            }
+
+            fn main() {
+                let mut oven = Oven { degrees: 0 };
+                oven.heat();
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 7
+        explanation: "Inside a method, fields aren't variables on their own. Write `self.degrees += 20;`."
+        concepts: [method.self]
+
+      - type: predict-output
+        id: predict-read-twice
+        code:
+          rust: |
+            struct Bottle {
+                ml: u32,
+            }
+
+            impl Bottle {
+                fn litres(&self) -> u32 {
+                    self.ml / 1000
+                }
+            }
+
+            fn main() {
+                let water = Bottle { ml: 2500 };
+                println!("{}", water.litres());
+                println!("{}", water.ml);
+            }
+          verify: run
+        options:
+          - { id: a, text: "2\n2500" }
+          - { id: b, text: "2.5\n2500", why: "`ml` is a `u32`, so `/` is integer division and drops the remainder." }
+          - { id: c, text: "2", why: "`&self` only borrows `water`, so it's still usable on the next line." }
+        answer: a
+        explanation: "`2500 / 1000` with integers is 2. `litres` borrows `water` with `&self`, so `water.ml` still works after it."
+        concepts: [method.self, borrow.shared]
+
+      - type: decode-error
+        id: decode-e0596
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            struct Timer {
+                seconds: u32,
+            }
+
+            impl Timer {
+                fn tick(&mut self) {
+                    self.seconds += 1;
+                }
+            }
+
+            fn main() {
+                let timer = Timer { seconds: 0 };
+                timer.tick();
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - { id: a, text: "`tick` needs a mutable borrow of `timer`, so `timer` must be declared `let mut`" }
+          - { id: b, text: "`tick` should take `self` instead of `&mut self`", why: "Then `tick` would use up the timer. The real fix is `let mut timer`." }
+          - { id: c, text: "Methods can't change fields", why: "They can, with `&mut self`. The variable needs `mut` too." }
+        answer: a
+        explanation: "Calling a `&mut self` method borrows the value mutably, and only a `mut` variable can be borrowed that way (E0596)."
+        concepts: [method.self, borrow.mut]
+
+      - type: true-false
+        id: tf-self-borrow-review
+        prompt: "After `let n = water.litres();`, where `litres` takes `&self`, `water` is no longer borrowed on the next line."
+        answer: true
+        explanation: "The method's borrow of `water` ends when the call returns. `n` is a plain `u32`, so it doesn't keep `water` borrowed."
+        concepts: [method.self, borrow.shared]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-deposit
+        prompt: Arrange the lines to add a `deposit` method
+        lines:
+          - { id: l1, text: "impl Account {" }
+          - { id: l2, text: "    fn deposit(&mut self, amount: u32) {" }
+          - { id: l3, text: "        self.balance += amount;" }
+          - { id: l4, text: "    }" }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    fn deposit(&self, amount: u32) {" }
+          - { id: d2, text: "        balance += amount;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            struct Account {
+                balance: u32,
+            }
+            {{solution}}
+            fn main() {
+                let mut acc = Account { balance: 10 };
+                acc.deposit(5);
+                println!("{}", acc.balance);
+            }
+          mode: run
+          expectStdout: "15\n"
+        explanation: "Changing `balance` needs `&mut self`, and the field is reached through `self.balance`."
+        concepts: [method.self]
+
+      - type: fill-tokens
+        id: fill-two-receivers
+        prompt: Fill in the first parameter of each method so the program compiles
+        code:
+          rust: |
+            struct Wallet { balance: u32 }
+            impl Wallet {
+                fn balance(___1___) -> u32 {
+                    self.balance
+                }
+                fn deposit(___2___, amount: u32) {
+                    self.balance += amount;
+                }
+            }
+            fn main() {
+                let mut acc = Wallet { balance: 0 };
+                acc.deposit(50);
+                let view = &acc;
+                println!("{}", view.balance());
+            }
+          verify: run
+          expectStdout: "50\n"
+        blanks:
+          "1": { answer: ["&self"] }
+          "2": { answer: ["&mut self"] }
+        bank: ["&self", "&mut self", "self", "mut self"]
+        explanation: "`balance` is called through a shared reference, so it can only take `&self`. `deposit` changes a field and `acc` is used afterwards, so it needs `&mut self`."
+        concepts: [method.self]
+
+      - type: true-false
+        id: tf-field-and-method
+        prompt: "A struct can have a field and a method with the same name, like `balance` above."
+        answer: true
+        explanation: "`acc.balance` reads the field and `acc.balance()` calls the method. The brackets tell Rust which you mean."
+        concepts: [method.self]
+
+      - type: spot-bug
+        id: spot-grow-signature
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Plant {
+                height: u32,
+            }
+
+            impl Plant {
+                fn grow(&self, cm: u32) {
+                    self.height += cm;
+                }
+            }
+
+            fn main() {
+                let mut fern = Plant { height: 10 };
+                fern.grow(3);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 6
+        explanation: "The compiler reports line 7, but the mistake is the signature on line 6: `grow` changes a field, so it needs `&mut self`."
+        concepts: [method.self]
+
+      - type: decode-error
+        id: decode-e0507
+        prompt: What's the best fix for line 7?
+        code:
+          rust: |
+            struct Badge {
+                label: String,
+            }
+
+            impl Badge {
+                fn label(&self) -> String {
+                    self.label
+                }
+            }
+
+            fn main() {
+                let label = String::from("VIP");
+                let b = Badge { label };
+                println!("{}", b.label());
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        options:
+          - { id: a, code: "self.label.clone()" }
+          - { id: b, code: "return self.label;", why: "`return` doesn't change anything: it still tries to move the `String` out of a borrow." }
+          - { id: c, code: "&self.label", why: "That's a `&String`, but the signature promises an owned `String` (E0308)." }
+        answer: a
+        explanation: "`&self` only borrows the badge, so the method can't move `label` out of it. Cloning returns a new `String` and leaves the field in place."
+        concepts: [method.self, own.clone]
+
+      - type: predict-output
+        id: predict-tiles-heater
+        prompt: Build the output
+        code:
+          rust: |
+            struct Heater {
+                target: i32,
+            }
+
+            impl Heater {
+                fn warmer(&mut self) {
+                    self.target += 2;
+                }
+            }
+
+            fn main() {
+                let mut den = Heater { target: 18 };
+                den.warmer();
+                println!("Target: {}", den.target);
+            }
+          verify: run
+        tiles: ["Target:", "20", "18", "2", "target"]
+        answer: "Target: 20"
+        explanation: "`warmer` changes `den` through `&mut self`, so `den.target` goes from 18 to 20."
+        concepts: [method.self]
+
+      - type: compiles
+        id: compiles-borrow-then-mut
+        code:
+          rust: |
+            struct Counter { count: u32 }
+
+            impl Counter {
+                fn add(&mut self) {
+                    self.count += 1;
+                }
+            }
+
+            fn main() {
+                let mut taps = Counter { count: 0 };
+                let first = &taps;
+                taps.add();
+                println!("{}", first.count);
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `taps` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0596: cannot borrow `taps` as mutable, as it is not declared as mutable", why: "`taps` is declared `let mut`, so a mutable borrow is allowed in general." }
+            - { id: c, text: "E0382: borrow of moved value: `taps`", why: "`add` takes `&mut self`, which borrows `taps`; nothing moves." }
+          answer: a
+        explanation: "`taps.add()` borrows `taps` mutably while `first` still holds a shared borrow that's used on the next line. One writer or many readers."
+        concepts: [method.self, borrow.exclusive]
+
+      - type: mcq
+        id: mcq-why-self
+        prompt: "Why would a method take plain `self` instead of `&self`?"
+        options:
+          - { id: a, text: "It needs to own the value, for example to move a `String` field out" }
+          - { id: b, text: "It's faster because nothing is borrowed", why: "Speed isn't the reason. Taking `self` changes who owns the value, so pick it only when the method must own it." }
+          - { id: c, text: "It lets the caller keep using the value", why: "It's the other way round: `self` moves the value, so the caller can't use it afterwards." }
+        answer: a
+        explanation: "`self` moves the value into the method. Use it when the method uses the value up, such as moving its fields out."
+        concepts: [method.self, own.move]
+
+      - type: predict-output
+        id: predict-copy-fields
+        code:
+          rust: |
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            impl Point {
+                fn sum(self) -> i32 {
+                    self.x + self.y
+                }
+            }
+
+            fn main() {
+                let p = Point { x: 3, y: 4 };
+                println!("{}", p.sum());
+            }
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "34", why: "`+` on two `i32` values adds them." }
+          - { id: c, text: "12", why: "The method adds `x` and `y`; it doesn't multiply." }
+        answer: a
+        explanation: "`sum` takes ownership of `p` and returns `3 + 4`. That's fine here because `p` isn't used afterwards."
+        concepts: [method.self]
+
+      - type: fill-tokens
+        id: fill-call-method
+        prompt: Fill the blanks so the program prints `3`
+        code:
+          rust: |
+            struct Stack {
+                height: u32,
+            }
+
+            impl Stack {
+                fn push_box(&mut self) {
+                    self.height += 1;
+                }
+            }
+
+            fn main() {
+                let ___1___ boxes = Stack { height: 2 };
+                boxes.___2___();
+                println!("{}", boxes.height);
+            }
+          verify: run
+          expectStdout: "3\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["push_box"] }
+        bank: ["mut", "&mut", "push_box", "Stack::push_box", "self"]
+        explanation: "Calling a `&mut self` method needs a `mut` variable. The call is the variable, a dot, and the method name."
+        concepts: [method.self, var.mut]

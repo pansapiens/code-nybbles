@@ -1,0 +1,18 @@
+id: structs-enums.methods
+title: Methods & Associated Functions
+description: Give your structs behaviour with impl blocks, methods that take self, and constructors like new.
+colour: teal
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch05-03-method-syntax.html
+sources:
+  - name: The Rust Programming Language, ch. 5.3
+    url: https://doc.rust-lang.org/book/ch05-03-method-syntax.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-self
+  - level: level-02-associated
+  - chest
+  - level: level-03-auto-ref
+  - code-read: code-read-rectangle
+  - checkpoint: checkpoint-methods

@@ -1,0 +1,641 @@
+id: structs-enums.methods.associated
+title: Associated functions and new
+icon: package
+concepts: [method.associated, style.new]
+reviewConcepts: [method.self, struct.define, own.move, err.E0382, fn.return]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-associated
+        title: Functions without self
+        markdown: |
+          **A function in an `impl` block with no `self` parameter is an associated function.** It belongs to the type, not to one value.
+
+          You call it with the type name and `::`, as in `Circle::unit()`. You've already used one: `String::from`.
+        code:
+          rust: |
+            struct Circle { radius: f64 }
+
+            impl Circle {
+                fn unit() -> Circle {
+                    Circle { radius: 1.0 }
+                }
+            }
+
+            fn main() {
+                let c = Circle::unit();
+                println!("{}", c.radius);
+            }
+          verify: run
+          expectStdout: "1\n"
+        concepts: [method.associated]
+
+      - type: predict-output
+        id: predict-zero
+        code:
+          rust: |
+            struct Score { points: u32 }
+
+            impl Score {
+                fn starting() -> Score {
+                    Score { points: 100 }
+                }
+            }
+
+            fn main() {
+                let s = Score::starting();
+                println!("{}", s.points);
+            }
+          verify: run
+        options:
+          - { id: a, text: "100" }
+          - { id: b, text: "0", why: "`starting` builds a `Score` with `points: 100` and returns it." }
+          - { id: c, text: "Score { points: 100 }", why: "The program prints `s.points`, a single number, not the whole struct." }
+        answer: a
+        explanation: "`Score::starting()` returns a new `Score` with 100 points, and the program prints that field."
+        concepts: [method.associated]
+
+      - type: true-false
+        id: tf-double-colon
+        prompt: "An associated function with no `self` parameter is called with `::` after the type name."
+        answer: true
+        explanation: "With no value to call it on, you name the type instead: `Score::starting()`."
+        concepts: [method.associated]
+
+      - type: concept
+        id: concept-new-self
+        title: Self and new
+        markdown: |
+          **Inside an `impl` block, `Self` means the type the block is for.** Here `Self` is `Player`.
+
+          By convention, an associated function that builds a new value is called **`new`**. It's an ordinary name, not a keyword.
+        code:
+          rust: |
+            struct Player { id: u32, lives: u32 }
+
+            impl Player {
+                fn new(id: u32) -> Self {
+                    Self { id, lives: 3 }
+                }
+            }
+
+            fn main() {
+                let p = Player::new(7);
+                println!("{} {}", p.id, p.lives);
+            }
+          verify: run
+          expectStdout: "7 3\n"
+        concepts: [style.new]
+
+      - type: mcq
+        id: mcq-what-is-self-type
+        prompt: "Inside `impl Player { ... }`, what does `Self` (capital S) mean?"
+        options:
+          - { id: a, text: "The type `Player`" }
+          - { id: b, text: "The `Player` value the method was called on", why: "That's lowercase `self`. Capital `Self` is the type." }
+          - { id: c, text: "Any type at all", why: "`Self` always means the type the `impl` block is for." }
+        answer: a
+        explanation: "`Self` is a short name for the `impl` block's type, so `-> Self` and `Self { ... }` mean `Player`."
+        concepts: [style.new, method.associated]
+
+      - type: fill-tokens
+        id: fill-new-call
+        prompt: Fill the blanks so the program prints `0`
+        code:
+          rust: |
+            struct Timer { seconds: u32 }
+
+            impl Timer {
+                fn new() -> ___1___ {
+                    Self { seconds: 0 }
+                }
+            }
+
+            fn main() {
+                let t = Timer___2___new();
+                println!("{}", t.seconds);
+            }
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["Self", "Timer"] }
+          "2": { answer: ["::"] }
+        bank: ["Self", "self", "::", "."]
+        explanation: "`new` returns a `Timer`, which you can write as `Self`. It has no `self` parameter, so you call it with `Timer::new()`."
+        concepts: [style.new, method.associated]
+
+      - type: compiles
+        id: compiles-dot-new
+        code:
+          rust: |
+            struct Timer { seconds: u32 }
+
+            impl Timer {
+                fn new() -> Self {
+                    Self { seconds: 0 }
+                }
+            }
+
+            fn main() {
+                let t = Timer { seconds: 5 };
+                let fresh = t.new();
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0599: no method named `new` found for struct `Timer`" }
+            - { id: b, text: "E0382: use of moved value: `t`", why: "Nothing moves `t`. The call itself isn't allowed." }
+            - { id: c, text: "E0308: mismatched types", why: "The types line up. The problem is calling `new` with a dot." }
+          answer: a
+        explanation: "`new` has no `self` parameter, so it isn't a method and can't be called with a dot. Write `Timer::new()`."
+        concepts: [method.associated]
+
+      - type: match-pairs
+        id: pairs-call-kinds
+        prompt: Match each piece to what it is
+        pairs:
+          - ["Timer::new()", "calls an associated function"]
+          - ["t.tick()", "calls a method"]
+          - ["Self", "the type of the impl block"]
+          - ["self", "the value a method was called on"]
+        explanation: "Methods are called on a value with `.`. Associated functions are called on the type with `::`."
+        concepts: [method.associated, method.self]
+
+      - type: mcq
+        id: mcq-which-associated
+        prompt: Which of these is an associated function and not a method?
+        options:
+          - { id: a, code: "fn square(size: u32) -> Self" }
+          - { id: b, code: "fn area(&self) -> u32", why: "It takes `&self`, so it's a method, called as `rect.area()`." }
+          - { id: c, code: "fn widen(&mut self, by: u32)", why: "It takes `&mut self`, so it's a method." }
+          - { id: d, code: "fn into_width(self) -> u32", why: "Plain `self` still makes it a method; it takes ownership of the value." }
+        answer: a
+        explanation: "Only a function with no `self` parameter of any kind is an associated function."
+        concepts: [method.associated]
+
+      - type: predict-output
+        id: predict-new-defaults
+        code:
+          rust: |
+            struct Account { id: u32, balance: u32 }
+
+            impl Account {
+                fn new(id: u32) -> Self {
+                    Self { id, balance: 0 }
+                }
+            }
+
+            fn main() {
+                let a = Account::new(42);
+                println!("{}: {}", a.id, a.balance);
+            }
+          verify: run
+        options:
+          - { id: a, text: "42: 0" }
+          - { id: b, text: "id: balance", why: "`{}` prints the values of `a.id` and `a.balance`, not field names." }
+          - { id: c, text: "42:", why: "`new` sets `balance` to 0, and 0 is printed like any other number." }
+        answer: a
+        explanation: "`new` fills in `id` from its parameter and starts `balance` at 0."
+        concepts: [style.new]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-e0599
+        prompt: What's the best fix for line 11?
+        code:
+          rust: |
+            struct Dice { sides: u32 }
+
+            impl Dice {
+                fn d6() -> Self {
+                    Self { sides: 6 }
+                }
+            }
+
+            fn main() {
+                let old = Dice { sides: 4 };
+                let die = old.d6();
+                println!("{}", die.sides);
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        options:
+          - { id: a, code: "let die = Dice::d6();" }
+          - { id: b, code: "let die = old::d6();", why: "`::` goes after a type name, not a variable." }
+          - { id: c, code: "let die = Self::d6();", why: "`Self` only works inside an `impl` block. In `main`, name the type." }
+        answer: a
+        explanation: "The compiler says `d6` is an associated function, not a method. Call it on the type: `Dice::d6()`."
+        concepts: [method.associated]
+
+      - type: true-false
+        id: tf-new-keyword
+        prompt: "`new` is a Rust keyword, and every struct must have a `new` function."
+        answer: false
+        explanation: "`new` is only a naming convention. A struct doesn't need one, and you can name constructors anything, like `Circle::unit()`."
+        concepts: [style.new]
+
+      - type: compiles
+        id: compiles-new-not-mut
+        code:
+          rust: |
+            struct Player { lives: u32 }
+
+            impl Player {
+                fn new() -> Self {
+                    Self { lives: 3 }
+                }
+                fn lose_life(&mut self) {
+                    self.lives -= 1;
+                }
+            }
+
+            fn main() {
+                let hero = Player::new();
+                hero.lose_life();
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`hero` must be `let mut` to call a `&mut self` method on it" }
+            - { id: b, text: "`new` must return `&mut Self` for `lose_life` to work", why: "`new` returns an owned value. Whether you can change it depends on the `let`." }
+            - { id: c, text: "`lose_life` must be called as `Player::lose_life()`", why: "It's a method, so `hero.lose_life()` is the right form. The variable needs `mut`." }
+          answer: a
+        explanation: "The value from `new` is stored in an immutable variable, so it can't be borrowed mutably (E0596)."
+        concepts: [style.new, method.self]
+
+      - type: predict-output
+        id: predict-two-constructors
+        code:
+          rust: |
+            struct Parcel { w: u32, h: u32 }
+
+            impl Parcel {
+                fn new(w: u32, h: u32) -> Self {
+                    Self { w, h }
+                }
+                fn cube(size: u32) -> Self {
+                    Self::new(size, size)
+                }
+            }
+
+            fn main() {
+                let b = Parcel::cube(4);
+                println!("{} {}", b.w, b.h);
+            }
+          verify: run
+        options:
+          - { id: a, text: "4 4" }
+          - { id: b, text: "4 0", why: "`cube` passes `size` as both the width and the height." }
+          - { id: c, text: "8 8", why: "`cube` passes `size` through unchanged; nothing is doubled." }
+        answer: a
+        explanation: "`cube` calls another associated function, `Self::new`, with the same number twice."
+        concepts: [method.associated, style.new]
+
+      - type: spot-bug
+        id: spot-missing-type
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Lamp { on: bool }
+
+            impl Lamp {
+                fn new() -> Self {
+                    Self { on: false }
+                }
+            }
+
+            fn main() {
+                let desk = new();
+                println!("{}", desk.on);
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 10
+        explanation: "`new` belongs to `Lamp`, so outside the `impl` block you must call it as `Lamp::new()`."
+        concepts: [method.associated]
+
+      - type: compiles
+        id: compiles-self-in-associated
+        code:
+          rust: |
+            struct Wallet { coins: u32 }
+
+            impl Wallet {
+                fn doubled(start: u32) -> Self {
+                    Self { coins: self.coins * 2 }
+                }
+            }
+
+            fn main() {
+                let w = Wallet::doubled(5);
+            }
+          verify: compile-fail
+          expectErrors: [E0424]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`doubled` has no `self` parameter, so it can't use `self`" }
+            - { id: b, text: "`Self { ... }` can't be used to build a struct", why: "`Self { coins: ... }` is a normal way to build the struct inside its `impl`." }
+            - { id: c, text: "Associated functions can't take parameters", why: "They can take any parameters, like `start` here. They don't take `self`." }
+          answer: a
+        explanation: "There's no value to read in an associated function. It should use its parameter: `Self { coins: start * 2 }`."
+        concepts: [method.associated]
+
+      - type: true-false
+        id: tf-mixed-impl
+        prompt: "One `impl` block can contain both methods and associated functions."
+        answer: true
+        explanation: "An `impl` block holds any functions for the type. The ones with `self` are methods; the others are associated functions."
+        concepts: [method.associated, method.self]
+
+      - type: compiles
+        id: compiles-name-moved
+        code:
+          rust: |
+            struct Player { name: String }
+
+            impl Player {
+                fn new(name: String) -> Self {
+                    Self { name }
+                }
+            }
+
+            fn main() {
+                let name = String::from("Ada");
+                let p = Player::new(name);
+                println!("{name} joined");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `name`" }
+            - { id: b, text: "E0599: no function named `new` found", why: "`Player::new` exists and is called correctly." }
+            - { id: c, text: "E0596: cannot borrow `name` as mutable", why: "Nothing needs a mutable borrow. The `String` was moved." }
+          answer: a
+        explanation: "`new` takes a `String`, so `name` moves into the new `Player`. Print `p.name` instead, or pass `name.clone()`."
+        concepts: [style.new, own.move, err.E0382]
+
+      - type: mcq
+        id: mcq-why-new
+        prompt: "Why write `Account::new(42)` instead of the struct literal `Account { id: 42, balance: 0 }`?"
+        options:
+          - { id: a, text: "`new` can fill in starting values for you, so callers only pass what they must" }
+          - { id: b, text: "Struct literals don't work outside `impl` blocks", why: "They work anywhere the fields are visible, including `main`." }
+          - { id: c, text: "Values made with `new` are faster to use", why: "A value is the same struct however you build it." }
+        answer: a
+        explanation: "A constructor keeps the setup in one place: callers write `Account::new(42)` and get a sensible starting balance."
+        concepts: [style.new]
+
+      - type: predict-output
+        id: predict-method-after-new
+        code:
+          rust: |
+            struct Tank { litres: u32 }
+            impl Tank {
+                fn new() -> Self {
+                    Self { litres: 50 }
+                }
+                fn refill(&mut self) {
+                    self.litres = 60;
+                }
+            }
+
+            fn main() {
+                let mut car = Tank::new();
+                car.refill();
+                println!("{}", car.litres);
+            }
+          verify: run
+        options:
+          - { id: a, text: "60" }
+          - { id: b, text: "50", why: "`refill` changes `car` through `&mut self` after it's created." }
+          - { id: c, text: "110", why: "`refill` sets `litres` to 60 with `=`; it doesn't add." }
+        answer: a
+        explanation: "`Tank::new()` starts at 50, then the method `refill` sets `litres` to 60."
+        concepts: [style.new, method.self]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-new
+        prompt: Arrange the lines to write a `new` function for `Clock`
+        lines:
+          - { id: l1, text: "impl Clock {" }
+          - { id: l2, text: "    fn new(hour: u32) -> Self {" }
+          - { id: l3, text: "        Self { hour, minute: 0 }" }
+          - { id: l4, text: "    }" }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    fn new(&self, hour: u32) -> Self {" }
+          - { id: d2, text: "        Self { hour, minute: 0 };" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            struct Clock { hour: u32, minute: u32 }
+            {{solution}}
+            fn main() {
+                let c = Clock::new(9);
+                println!("{}:{}", c.hour, c.minute);
+            }
+          mode: run
+          expectStdout: "9:0\n"
+        explanation: "A constructor has no `self` parameter. The struct expression has no `;`, so it's the value `new` returns."
+        concepts: [style.new, fn.return]
+
+      - type: fill-tokens
+        id: fill-from-celsius
+        prompt: Fill the blanks so the program prints `273`
+        code:
+          rust: |
+            struct Kelvin { degrees: i32 }
+
+            impl Kelvin {
+                fn from_celsius(c: i32) -> Self {
+                    ___1___ { degrees: c + 273 }
+                }
+            }
+
+            fn main() {
+                let k = ___2___::from_celsius(0);
+                println!("{}", k.degrees);
+            }
+          verify: run
+          expectStdout: "273\n"
+        blanks:
+          "1": { answer: ["Self", "Kelvin"] }
+          "2": { answer: ["Kelvin"] }
+        bank: ["Self", "Kelvin", "self", "k"]
+        explanation: "Inside the `impl`, `Self` and `Kelvin` mean the same type. In `main` you must name the type, `Kelvin`."
+        concepts: [method.associated, style.new]
+
+      - type: decode-error
+        id: decode-e0424
+        prompt: What's the best fix for line 5?
+        code:
+          rust: |
+            struct Wallet { coins: u32 }
+
+            impl Wallet {
+                fn with_coins(n: u32) -> Self {
+                    Self { coins: self.coins + n }
+                }
+            }
+
+            fn main() {
+                let w = Wallet::with_coins(5);
+                println!("{}", w.coins);
+            }
+          verify: compile-fail
+          expectErrors: [E0424]
+        options:
+          - { id: a, code: "Self { coins: n }" }
+          - { id: b, code: "self { coins: n }", why: "Lowercase `self` is a value, not a type, so it can't build a struct." }
+          - { id: c, code: "Self { coins: Self.coins + n }", why: "`Self` is a type. A type has no `coins` value to read." }
+        answer: a
+        explanation: "An associated function has no `self` to read from (E0424). Build the new value from the parameter `n`."
+        concepts: [method.associated]
+
+      - type: predict-output
+        id: predict-player-hp
+        code:
+          rust: |
+            struct Player { name: String, hp: u32 }
+
+            impl Player {
+                fn new(name: &str) -> Self {
+                    let name = String::from(name);
+                    Self { name, hp: 100 }
+                }
+            }
+
+            fn main() {
+                let p = Player::new("Mia");
+                println!("{}: {}", p.name, p.hp);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Mia: 100" }
+          - { id: b, text: "Mia: 0", why: "`new` sets `hp` to 100 for every new player." }
+          - { id: c, text: "name: hp", why: "`{}` prints the values of the fields, not their names." }
+        answer: a
+        explanation: "`new` takes a `&str`, makes its own `String` from it, and starts every player with 100 `hp`."
+        concepts: [style.new, slice.str-param]
+
+      - type: compiles
+        id: compiles-self-outside
+        code:
+          rust: |
+            struct Coin { cents: u32 }
+
+            fn new_coin() -> Self {
+                Coin { cents: 5 }
+            }
+
+            fn main() {
+                let c = new_coin();
+                println!("{}", c.cents);
+            }
+          verify: compile-fail
+          expectErrors: [E0411]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`Self` only exists inside an `impl` block; here it must be `Coin`" }
+            - { id: b, text: "Functions that build structs must be called `new`", why: "Any name works. The problem is `Self` outside an `impl`." }
+            - { id: c, text: "`Coin { cents: 5 }` needs a `;`", why: "Without `;` it's the return value, which is what we want." }
+          answer: a
+        explanation: "`new_coin` is a plain function, not in an `impl` block, so there's no `Self` type to refer to (E0411)."
+        concepts: [style.new, method.associated]
+
+      - type: true-false
+        id: tf-string-from
+        prompt: "`String::from(\"hi\")` calls an associated function of the `String` type."
+        answer: true
+        explanation: "It's called on the type with `::` and takes no `self`, the same as your own `Player::new`."
+        concepts: [method.associated]
+
+      - type: spot-bug
+        id: spot-semicolon-new
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Gate { open: bool }
+
+            impl Gate {
+                fn new() -> Self {
+                    Self { open: false };
+                }
+            }
+
+            fn main() {
+                let g = Gate::new();
+                println!("{}", g.open);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "The `;` turns the struct expression into a statement, so `new` returns `()` instead of `Self` (E0308). Remove it."
+        concepts: [style.new, fn.return, err.E0308]
+
+      - type: predict-output
+        id: predict-counter-new-methods
+        code:
+          rust: |
+            struct Counter { count: u32 }
+            impl Counter {
+                fn new(start: u32) -> Self {
+                    Self { count: start }
+                }
+                fn add(&mut self, n: u32) {
+                    self.count += n;
+                }
+            }
+
+            fn main() {
+                let mut c = Counter::new(5);
+                c.add(5);
+                println!("{}", c.count);
+            }
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "5", why: "`c.add(5)` changes `c` through `&mut self`, so the count grows." }
+          - { id: c, text: "0", why: "`new` starts the count at `start`, which is 5 here." }
+        answer: a
+        explanation: "`Counter::new(5)` starts at 5, then the method call adds 5 more."
+        concepts: [style.new, method.self]
+
+      - type: mcq
+        id: mcq-call-form
+        prompt: "`impl Song` has `fn new(title: String) -> Self` and `fn play(&self)`. Which line is correct?"
+        options:
+          - { id: a, code: "Song::new(title).play();" }
+          - { id: b, code: "Song.new(title).play();", why: "A type name needs `::`, not `.`, to reach its associated functions." }
+          - { id: c, code: "Song::new(title)::play();", why: "`play` is a method, so it's called on the value with `.`." }
+          - { id: d, code: "new(title).play();", why: "`new` belongs to `Song`, so you must write `Song::new`." }
+        answer: a
+        explanation: "`Song::new(title)` returns a `Song` value, and `.play()` calls a method on that value."
+        concepts: [method.associated, method.self]
+
+      - type: match-pairs
+        id: pairs-impl-terms
+        prompt: Match each term to its meaning
+        pairs:
+          - ["impl Song", "starts the functions for `Song`"]
+          - ["fn new() -> Self", "a constructor by convention"]
+          - ["fn play(&self)", "a method that reads"]
+          - ["Song::new()", "calling on the type"]
+        concepts: [method.associated, style.new]

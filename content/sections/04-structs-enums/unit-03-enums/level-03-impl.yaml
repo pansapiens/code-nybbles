@@ -1,0 +1,712 @@
+id: structs-enums.enums.impl
+title: Methods on enums
+icon: wrench
+concepts: [enum.impl]
+reviewConcepts: [enum.define, enum.data, method.self, method.associated, match.intro, borrow.mut, err.E0308, ctrl.for, ctrl.if]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-impl-enum
+        title: Enums get methods too
+        markdown: |
+          **An `impl` block works for enums as it does for structs.**
+
+          Inside a method, `match self` picks an arm for the variant you called it on. Each arm is `Variant => value`, like matching numbers.
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            impl Light {
+                fn wait(&self) -> u32 {
+                    match self {
+                        Light::Red => 30,
+                        Light::Amber => 5,
+                        Light::Green => 0,
+                    }
+                }
+            }
+
+            fn main() {
+                println!("{}", Light::Amber.wait());
+            }
+          verify: run
+          expectStdout: "5\n"
+        concepts: [enum.impl]
+
+      - type: predict-output
+        id: predict-wait-red
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            impl Light {
+                fn wait(&self) -> u32 {
+                    match self {
+                        Light::Red => 30,
+                        Light::Amber => 5,
+                        Light::Green => 0,
+                    }
+                }
+            }
+
+            fn main() {
+                println!("{}", Light::Red.wait());
+            }
+          verify: run
+        options:
+          - { id: a, text: "30" }
+          - { id: b, text: "35", why: "Only one arm runs: the one for the variant `light` holds." }
+          - { id: c, text: "Red", why: "`wait` returns the number from the matching arm, not the variant's name." }
+        answer: a
+        explanation: "`light` is `Red`, so `match self` takes the `Light::Red` arm and returns `30`."
+        concepts: [enum.impl]
+
+      - type: true-false
+        id: tf-impl-enum
+        prompt: "Only structs can have methods. Enums can't have an `impl` block."
+        answer: false
+        explanation: "Enums can have `impl` blocks with methods and associated functions, written the same way as for structs."
+        concepts: [enum.impl, method.self]
+
+      - type: mcq
+        id: mcq-match-self
+        prompt: "In `match self { Light::Red => 30, ... }`, what does `self` refer to?"
+        options:
+          - { id: a, text: "The `Light` value the method was called on" }
+          - { id: b, text: "The `Light` enum with all its variants", why: "`self` is one value. It holds one variant, and the `match` finds out which." }
+          - { id: c, text: "The `main` function", why: "`self` is the method's receiver, the value before the `.`." }
+        answer: a
+        explanation: "For `light.wait()`, `self` is a reference to `light`. The `match` compares it against each variant in turn."
+        concepts: [enum.impl, method.self]
+
+      - type: fill-tokens
+        id: fill-impl-self
+        prompt: Fill the blanks so the program prints `0`
+        code:
+          rust: |
+            enum Light { Red, Green }
+
+            ___1___ Light {
+                fn wait(&self) -> u32 {
+                    match ___2___ {
+                        Light::Red => 30,
+                        Light::Green => 0,
+                    }
+                }
+            }
+
+            fn main() {
+                println!("{}", Light::Green.wait());
+            }
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["impl"] }
+          "2": { answer: ["self"] }
+        bank: ["impl", "enum", "fn", "self", "Light", "&"]
+        explanation: "Methods go in an `impl` block for the enum. `match self` checks which variant the method was called on."
+        concepts: [enum.impl]
+
+      - type: concept
+        id: concept-self-variants
+        title: "`Self` and returning variants"
+        markdown: |
+          **Inside `impl`, `Self` means the enum's own name**, so `Self::Red` is `Light::Red`.
+
+          A method can return a variant too. Here `next` gives the light that comes after.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light { Red, Amber, Green }
+            impl Light {
+                fn next(&self) -> Self {
+                    match self {
+                        Self::Red => Self::Green,
+                        Self::Amber => Self::Red,
+                        Self::Green => Self::Amber,
+                    }
+                }
+            }
+
+            fn main() {
+                println!("{:?}", Light::Red.next());
+            }
+          verify: run
+          expectStdout: "Green\n"
+        concepts: [enum.impl, method.associated]
+
+      - type: predict-output
+        id: predict-next-twice
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light { Red, Amber, Green }
+            impl Light {
+                fn next(&self) -> Self {
+                    match self {
+                        Self::Red => Self::Green,
+                        Self::Amber => Self::Red,
+                        Self::Green => Self::Amber,
+                    }
+                }
+            }
+            fn main() {
+                let l = Light::Red.next().next();
+                println!("{l:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Amber" }
+          - { id: b, text: "Green", why: "That's after one call. The second `next()` is called on `Green`." }
+          - { id: c, text: "Red", why: "Two steps from `Red` is `Amber`. It takes three to get back to `Red`." }
+        answer: a
+        explanation: "`Red.next()` is `Green`, and `Green.next()` is `Amber`. Each call works on the value the last one returned."
+        concepts: [enum.impl]
+
+      - type: compiles
+        id: compiles-arm-types
+        code:
+          rust: |
+            enum Light { Red, Green }
+
+            impl Light {
+                fn wait(&self) -> u32 {
+                    match self {
+                        Light::Red => 30,
+                        Light::Green => "go",
+                    }
+                }
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: `match` arms have incompatible types" }
+            - { id: b, text: "E0599: no variant named `Green`", why: "`Green` is declared on line 1. The problem is what its arm returns." }
+            - { id: c, text: "E0424: expected value, found module `self`", why: "`wait` takes `&self`, so `self` is available." }
+          answer: a
+        explanation: "Every arm must give a value of the same type, here `u32` from the signature. `\"go\"` is a `&str`."
+        concepts: [enum.impl, err.E0308]
+
+      - type: predict-output
+        id: predict-is-stop
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+            impl Light {
+                fn must_stop(&self) -> bool {
+                    match self {
+                        Light::Red => true,
+                        Light::Amber => true,
+                        Light::Green => false,
+                    }
+                }
+            }
+
+            fn main() {
+                let now = Light::Amber;
+                println!("{}", now.must_stop());
+            }
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "false", why: "Only `Green` gives `false`. `now` is `Amber`." }
+          - { id: c, text: "Amber", why: "The method returns a `bool` from the matching arm." }
+        answer: a
+        explanation: "`now` is `Amber`, whose arm returns `true`."
+        concepts: [enum.impl]
+
+      - type: match-pairs
+        id: pairs-impl-parts
+        prompt: Match each piece to its job
+        pairs:
+          - ["impl Light", "starts the block of methods"]
+          - ["&self", "borrows the value the method is called on"]
+          - ["match self", "picks an arm by variant"]
+          - ["Self::Red", "same as `Light::Red` inside `impl`"]
+        concepts: [enum.impl, method.self]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-data-arms
+        title: Reaching data in an arm
+        markdown: |
+          **Give the data a name in the arm, and you can use it on the right.** `Rug::Square(s)` names the number inside `s`.
+
+          Unit 4.4 covers patterns like this in full.
+        code:
+          rust: |
+            enum Rug { Square(u32), Rect(u32, u32) }
+
+            impl Rug {
+                fn area(&self) -> u32 {
+                    match self {
+                        Rug::Square(s) => s * s,
+                        Rug::Rect(w, h) => w * h,
+                    }
+                }
+            }
+
+            fn main() {
+                let rug = Rug::Rect(3, 4);
+                println!("{}", rug.area());
+            }
+          verify: run
+          expectStdout: "12\n"
+        concepts: [enum.impl, enum.data]
+
+      - type: predict-output
+        id: predict-square-area
+        code:
+          rust: |
+            enum Rug { Square(u32), Rect(u32, u32) }
+
+            impl Rug {
+                fn area(&self) -> u32 {
+                    match self {
+                        Rug::Square(s) => s * s,
+                        Rug::Rect(w, h) => w * h,
+                    }
+                }
+            }
+
+            fn main() {
+                let rug = Rug::Square(5);
+                println!("{}", rug.area());
+            }
+          verify: run
+        options:
+          - { id: a, text: "25" }
+          - { id: b, text: "10", why: "The arm multiplies `s` by itself: 5 times 5." }
+          - { id: c, text: "5", why: "`s` is 5, but the arm returns `s * s`." }
+        answer: a
+        explanation: "The value is `Square(5)`, so its arm runs with `s` set to 5 and returns 25."
+        concepts: [enum.impl, enum.data]
+
+      - type: spot-bug
+        id: spot-missing-self
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Coin { Gold, Silver }
+
+            impl Coin {
+                fn value() -> u32 {
+                    match self {
+                        Coin::Gold => 100,
+                        Coin::Silver => 10,
+                    }
+                }
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrors: [E0424]
+        answer: 4
+        explanation: "The compiler points at `self` on line 5, but the mistake is line 4: `value` has no `&self` parameter, so there's no `self` to match on."
+        concepts: [enum.impl, method.self]
+
+      - type: decode-error
+        id: decode-missing-self
+        prompt: What's the best fix?
+        code:
+          rust: |
+            enum Coin { Gold, Silver }
+
+            impl Coin {
+                fn value() -> u32 {
+                    match self {
+                        Coin::Gold => 100,
+                        Coin::Silver => 10,
+                    }
+                }
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrors: [E0424]
+        options:
+          - { id: a, text: "Change line 4 to `fn value(&self) -> u32 {`" }
+          - { id: b, text: "Change line 5 to `match Coin {`", why: "`Coin` is the type, not a value, so there's nothing to match on." }
+          - { id: c, text: "Change line 5 to `match Self {`", why: "`Self` is the type name too. You need the value, `self`." }
+        answer: a
+        explanation: "A method needs a `self` parameter to use `self`. Without it, `value` is an associated function with no value to look at."
+        concepts: [enum.impl, method.self, method.associated]
+
+      - type: compiles
+        id: compiles-call-on-variant
+        code:
+          rust: |
+            enum Coin { Gold, Silver }
+            impl Coin {
+                fn value(&self) -> u32 {
+                    match self {
+                        Coin::Gold => 100,
+                        Coin::Silver => 10,
+                    }
+                }
+            }
+
+            fn main() {
+                let gold = Coin::Gold.value();
+                let silver = Coin::Silver.value();
+                println!("{}", gold + silver);
+            }
+          verify: run
+          expectStdout: "110\n"
+        answer: true
+        explanation: "`Coin::Gold` is a value, so you can call a method on it directly. This prints `110`."
+        concepts: [enum.impl]
+
+      - type: true-false
+        id: tf-impl-per-variant
+        prompt: "Each variant needs its own `impl` block, like `impl Coin::Gold`."
+        answer: false
+        explanation: "The `impl` block is for the whole enum. Inside a method, `match self` handles each variant."
+        concepts: [enum.impl]
+
+      - type: fill-tokens
+        id: fill-rect-area
+        prompt: Fill the blanks so the program prints `18`
+        code:
+          rust: |
+            enum Rug { Square(u32), Rect(u32, u32) }
+
+            impl Rug {
+                fn area(&self) -> u32 {
+                    match self {
+                        Rug::Square(s) => s * s,
+                        Rug::Rect(w, h) => ___1___ * ___2___,
+                    }
+                }
+            }
+
+            fn main() {
+                let rug = Rug::Rect(3, 6);
+                println!("{}", rug.area());
+            }
+          verify: run
+          expectStdout: "18\n"
+        blanks:
+          "1": { answer: ["w"] }
+          "2": { answer: ["h"] }
+        anyOrder: [["1", "2"]]
+        bank: ["w", "h", "s", "self", "Rect"]
+        explanation: "The arm names the two numbers `w` and `h`, so the area is `w * h`. `s` only exists in the `Square` arm."
+        concepts: [enum.impl, enum.data]
+
+      - type: predict-output
+        id: predict-associated
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light { Red, Green }
+
+            impl Light {
+                fn start() -> Self {
+                    Self::Red
+                }
+            }
+
+            fn main() {
+                let l = Light::start();
+                println!("{l:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Red" }
+          - { id: b, text: "Self::Red", why: "`Self::Red` is a value of type `Light`, and Debug prints the variant name only." }
+          - { id: c, text: "start", why: "`start` is the function's name. It returns `Red`." }
+        answer: a
+        explanation: "`start` has no `self`, so it's an associated function, called with `Light::start()`. It returns the `Red` variant."
+        concepts: [enum.impl, method.associated]
+
+      - type: mcq
+        id: mcq-wildcard-arm
+        prompt: "In a match on `self`, what does a final `_ => false` arm do?"
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            impl Light {
+                fn is_red(&self) -> bool {
+                    match self {
+                        Light::Red => true,
+                        _ => false,
+                    }
+                }
+            }
+          verify: compile
+          wrap: none
+          hidden:
+            after: "fn main() {}\n"
+        options:
+          - { id: a, text: "It handles every variant not matched by an earlier arm" }
+          - { id: b, text: "It handles only `Amber`, the next variant", why: "`_` matches anything, so it covers both `Amber` and `Green`." }
+          - { id: c, text: "It's an error, because `_` only works with numbers", why: "`_` works in any `match`, as it did with integers in Unit 2.2." }
+        answer: a
+        explanation: "`_` matches any value. Arms are tried in order, so it catches everything that isn't `Red`."
+        concepts: [enum.impl, match.intro]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-label
+        prompt: Arrange the lines to complete the `label` method
+        lines:
+          - { id: l1, text: "impl Coin {" }
+          - { id: l2, text: "    fn label(&self) -> &str {" }
+          - { id: l3, text: "        match self {" }
+          - { id: l4, text: "            Coin::Gold => \"gold\"," }
+          - { id: l5, text: "            Coin::Silver => \"silver\"," }
+          - { id: l6, text: "        }" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    fn label() -> &str {" }
+          - { id: d2, text: "        match Coin {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7, l8]
+        verify:
+          harness: |
+            enum Coin { Gold, Silver }
+            {{solution}}
+            fn main() { println!("{} {}", Coin::Gold.label(), Coin::Silver.label()); }
+          mode: run
+          expectStdout: "gold silver\n"
+        explanation: "The method takes `&self` and matches on `self`, the value it was called on. The arms can go in either order."
+        concepts: [enum.impl]
+
+      - type: compiles
+        id: compiles-advance-not-mut
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light { Red, Green }
+            impl Light {
+                fn advance(&mut self) {
+                    *self = match self {
+                        Light::Red => Light::Green,
+                        Light::Green => Light::Red,
+                    };
+                }
+            }
+
+            fn main() {
+                let light = Light::Red;
+                light.advance();
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`advance` takes `&mut self`, but `light` isn't declared `mut`" }
+            - { id: b, text: "Enums can't be changed after they're created", why: "A `mut` enum variable can be given a different variant, as `*self = ...` does." }
+            - { id: c, text: "`*self` can't be assigned a variant", why: "Through `&mut self` you can replace the whole value. The variable `light` is the problem." }
+          answer: a
+        explanation: "Calling a `&mut self` method borrows `light` mutably, which needs `let mut light`. The compiler reports E0596."
+        concepts: [enum.impl, method.self, borrow.mut]
+
+      - type: predict-output
+        id: predict-advance-loop
+        prompt: "`advance(&mut self)` changes a `Light` from `Red` to `Green`, `Green` to `Amber`, and `Amber` to `Red`. Build the output."
+        code:
+          rust: |
+            fn main() {
+                let mut light = Light::Red;
+                for _ in 0..3 {
+                    light.advance();
+                    println!("{light:?}");
+                }
+            }
+          verify: run
+          hidden:
+            before: |
+              #[derive(Debug)]
+              enum Light { Red, Amber, Green }
+              impl Light {
+                  fn advance(&mut self) {
+                      *self = match self {
+                          Light::Red => Light::Green,
+                          Light::Green => Light::Amber,
+                          Light::Amber => Light::Red,
+                      };
+                  }
+              }
+        tiles: ["Green", "Amber", "Red", "Red", "Green"]
+        answer: "Green\nAmber\nRed"
+        explanation: "Each call replaces `light` with the next variant: `Red` to `Green`, then `Amber`, then back to `Red`."
+        concepts: [enum.impl, borrow.mut]
+
+      - type: fill-tokens
+        id: fill-reset
+        prompt: Fill the blanks so `reset` turns any light back to red
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Light { Red, Green }
+
+            impl Light {
+                fn reset(___1___) {
+                    ___2___ = Light::Red;
+                }
+            }
+
+            fn main() {
+                let mut light = Light::Green;
+                light.reset();
+                println!("{light:?}");
+            }
+          verify: run
+          expectStdout: "Red\n"
+        blanks:
+          "1": { answer: ["&mut self"] }
+          "2": { answer: ["*self"] }
+        bank: ["&mut self", "&self", "*self", "self", "Self"]
+        explanation: "Changing the value needs `&mut self`. Assigning through the reference with `*self = ...` replaces the whole value with a new variant."
+        concepts: [enum.impl, borrow.mut]
+
+      - type: spot-bug
+        id: spot-missing-comma
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Size { Small, Large }
+
+            impl Size {
+                fn price(&self) -> u32 {
+                    match self {
+                        Size::Small => 3
+                        Size::Large => 5,
+                    }
+                }
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrorMessage: "expected `,` following `match` arm"
+        answer: 6
+        explanation: "Match arms are separated by commas. Line 6 needs one after `3`."
+        concepts: [enum.impl, match.intro]
+
+      - type: predict-output
+        id: predict-sum-coins
+        prompt: "`value(&self)` returns 100 for `Coin::Gold` and 10 for `Coin::Silver`. What does this print?"
+        code:
+          rust: |
+            fn main() {
+                let purse = [
+                    Coin::Silver,
+                    Coin::Gold,
+                    Coin::Silver,
+                ];
+                let mut total = 0;
+                for c in purse {
+                    total += c.value();
+                }
+                println!("{total}");
+            }
+          verify: run
+          hidden:
+            before: |
+              enum Coin { Gold, Silver }
+              impl Coin {
+                  fn value(&self) -> u32 {
+                      match self {
+                          Coin::Gold => 100,
+                          Coin::Silver => 10,
+                      }
+                  }
+              }
+        options:
+          - { id: a, text: "120" }
+          - { id: b, text: "110", why: "There are two `Silver` coins in the array, so 10 is added twice." }
+          - { id: c, text: "3", why: "`total` adds each coin's `value()`, not 1 per coin." }
+        answer: a
+        explanation: "The loop adds 10, then 100, then 10, giving 120."
+        concepts: [enum.impl, ctrl.for]
+
+      - type: mcq
+        id: mcq-is-hot
+        prompt: "What does `Temp::Celsius(35).is_hot()` return?"
+        code:
+          rust: |
+            enum Temp {
+                Missing,
+                Celsius(i32),
+            }
+
+            impl Temp {
+                fn is_hot(&self) -> bool {
+                    match self {
+                        Temp::Missing => false,
+                        Temp::Celsius(t) => *t > 30,
+                    }
+                }
+            }
+          verify: compile
+          wrap: none
+          hidden:
+            after: "fn main() { println!(\"{}\", Temp::Celsius(35).is_hot()); }\n"
+        options:
+          - { id: a, text: "`true`" }
+          - { id: b, text: "`false`", why: "That's the `Missing` arm. The value is `Celsius(35)`, and 35 is more than 30." }
+          - { id: c, text: "`35`", why: "The arm compares `*t` with 30, which gives a `bool`." }
+        answer: a
+        explanation: "The `Celsius(t)` arm runs with `t` referring to 35. `*t` reads the number, and `35 > 30` is `true`."
+        concepts: [enum.impl, enum.data]
+
+      - type: true-false
+        id: tf-self-type
+        prompt: "Inside `impl Light`, the return type `-> Self` means the same as `-> Light`."
+        answer: true
+        explanation: "`Self` is short for the type the `impl` block is for. Inside `impl Light`, that's `Light`."
+        concepts: [enum.impl, method.associated]
+
+      - type: compiles
+        id: compiles-wrong-enum-arm
+        code:
+          rust: |
+            enum Size { Small, Large }
+            enum Coin { Gold, Silver }
+
+            impl Coin {
+                fn value(&self) -> u32 {
+                    match self {
+                        Coin::Gold => 100,
+                        Size::Small => 10,
+                    }
+                }
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0599: no variant named `Small` found for `Coin`", why: "The arm names `Size::Small`, which exists. It's the wrong type for `self`." }
+            - { id: c, text: "E0424: expected value, found module `self`", why: "`value` takes `&self`, so `self` is available." }
+          answer: a
+        explanation: "`self` is a `Coin`, so every arm must be a `Coin` variant. `Size::Small` has a different type."
+        concepts: [enum.impl, err.E0308]
+
+      - type: match-pairs
+        id: pairs-receivers
+        prompt: Match each signature to what it can do
+        pairs:
+          - ["fn wait(&self) -> u32", "read the variant"]
+          - ["fn advance(&mut self)", "change the variant"]
+          - ["fn start() -> Self", "make a new value, called as `Light::start()`"]
+        concepts: [enum.impl, method.self, method.associated]

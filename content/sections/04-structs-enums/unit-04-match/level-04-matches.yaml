@@ -1,0 +1,562 @@
+id: structs-enums.match.matches
+title: Yes-or-no with matches!
+icon: check
+concepts: [macro.matches]
+reviewConcepts: [match.enum, match.exhaustive, err.E0004, match.bind, match.if-let, match.let-else, match.intro, option.methods, types.char, ctrl.for]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-matches
+        title: Does it fit the pattern?
+        markdown: |
+          **`matches!(value, pattern)` gives `true` if the value fits the pattern, and `false` if not.** It's a `match` that only answers yes or no.
+
+          `|` lets one pattern list several options, as it did with numbers in Unit 2.2.
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            let dir = Dir::South;
+            let vertical = matches!(
+                dir,
+                Dir::North | Dir::South
+            );
+            println!("{vertical}");
+          verify: run
+          expectStdout: "true\n"
+        concepts: [macro.matches]
+
+      - type: predict-output
+        id: predict-east
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            let dir = Dir::East;
+            let vertical = matches!(
+                dir,
+                Dir::North | Dir::South
+            );
+            println!("{vertical}");
+          verify: run
+        options:
+          - { id: a, text: "false" }
+          - { id: b, text: "true", why: "`Dir::East` isn't one of the two options in the pattern." }
+          - { id: c, text: "East", why: "`matches!` gives a `bool`, never the value itself." }
+        answer: a
+        explanation: "The pattern only accepts `North` or `South`, so `matches!` gives `false` for `East`."
+        concepts: [macro.matches]
+
+      - type: true-false
+        id: tf-returns-bool
+        prompt: "`matches!` gives back a `bool`, so you can use it directly as an `if` condition."
+        answer: true
+        explanation: "`if matches!(light, Light::Red) { ... }` is fine, because the condition is a `bool`."
+        concepts: [macro.matches]
+
+      - type: concept
+        id: concept-why-not-eq
+        title: Why not ==?
+        markdown: |
+          **`==` doesn't work on your own enums yet.** The compiler doesn't know how to compare them and reports **E0369**. You'll see how to switch `==` on later.
+
+          `matches!` compares by pattern, so it works with any enum straight away.
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Red;
+                if light == Light::Red {
+                    println!("stop");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        concepts: [macro.matches]
+
+      - type: fill-tokens
+        id: fill-matches-red
+        prompt: "Fill the blank so the program prints `stop`"
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            let light = Light::Red;
+            if ___1___(light, Light::Red) {
+                println!("stop");
+            }
+          verify: run
+          expectStdout: "stop\n"
+        blanks:
+          "1": { answer: ["matches!"] }
+        bank: ["matches!", "matches", "match", "equals!"]
+        explanation: "`matches!` is a macro, so its name ends with `!`. It gives `true` here, so the block runs."
+        concepts: [macro.matches]
+
+      - type: predict-output
+        id: predict-grade-char
+        code:
+          rust: |
+            let grade = 'C';
+            let passed = matches!(
+                grade,
+                'A' | 'B' | 'C'
+            );
+            println!("{passed}");
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "false", why: "`'C'` is one of the three options joined by `|`." }
+          - { id: c, text: "C", why: "`matches!` gives a `bool`, not the value." }
+        answer: a
+        explanation: "`matches!` works with any pattern, including `char` values joined with `|`."
+        concepts: [macro.matches, types.char]
+
+      - type: mcq
+        id: mcq-is-some
+        prompt: "`slot` is an `Option<u32>`. Which gives the same result as `matches!(slot, Some(_))`?"
+        options:
+          - { id: a, code: "slot.is_some()" }
+          - { id: b, code: "slot.unwrap_or(0) > 0", why: "That gives `false` for `Some(0)`, but `Some(_)` accepts any value." }
+          - { id: c, code: "matches!(slot, None)", why: "That's `true` for `None`, the opposite of `Some(_)`." }
+          - { id: d, code: "matches!(slot, Some(0))", why: "That's only `true` when the value inside is 0. `Some(_)` accepts any value." }
+        answer: a
+        explanation: "`Some(_)` matches any `Some`, which is what `is_some` checks."
+        concepts: [macro.matches, option.methods]
+
+      - type: compiles
+        id: compiles-matches-if
+        code:
+          rust: |
+            enum Weather {
+                Sunny,
+                Rain(u32),
+            }
+
+            fn main() {
+                let day = Weather::Rain(2);
+                if matches!(day, Weather::Rain(_)) {
+                    println!("take an umbrella");
+                }
+            }
+          verify: compile
+        answer: true
+        explanation: "`Weather::Rain(_)` matches rain of any amount. The program prints `take an umbrella`."
+        concepts: [macro.matches]
+
+      - type: match-pairs
+        id: pairs-matches
+        prompt: Match each expression to the question it answers
+        pairs:
+          - ["matches!(d, Dir::West)", "Is d West?"]
+          - ["matches!(d, Dir::East | Dir::West)", "Is d East or West?"]
+          - ["!matches!(d, Dir::West)", "Is d anything but West?"]
+          - ["matches!(d, _)", "Nothing: always true"]
+        concepts: [macro.matches]
+
+      - type: predict-output
+        id: predict-count-loop
+        code:
+          rust: |
+            enum Coin { Five, Ten, Twenty }
+
+            let purse = [
+                Coin::Ten,
+                Coin::Five,
+                Coin::Ten,
+            ];
+            let mut tens = 0;
+            for coin in purse {
+                if matches!(coin, Coin::Ten) {
+                    tens += 1;
+                }
+            }
+            println!("{tens}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "3", why: "Only the coins that are `Coin::Ten` are counted. One coin is `Five`." }
+          - { id: c, text: "20", why: "`tens` counts coins, adding 1 each time, not their value." }
+        answer: a
+        explanation: "Two of the three coins are `Coin::Ten`, so `tens` goes up twice."
+        concepts: [macro.matches, ctrl.for]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-range-matches
+        code:
+          rust: |
+            let temp = 31;
+            let hot = matches!(temp, 30..=45);
+            let cold = matches!(temp, 0..=10);
+            println!("{hot} {cold}");
+          verify: run
+        options:
+          - { id: a, text: "true false" }
+          - { id: b, text: "false false", why: "31 is inside `30..=45`." }
+          - { id: c, text: "true true", why: "`0..=10` covers 0 to 10. 31 is above it." }
+        answer: a
+        explanation: "Ranges work in `matches!` as in `match`. 31 is in `30..=45` but not in `0..=10`."
+        concepts: [macro.matches, match.intro]
+
+      - type: mcq
+        id: mcq-matches-as-match
+        prompt: "Which `match` gives the same value as `matches!(light, Light::Red | Light::Amber)`?"
+        options:
+          - { id: a, code: "match light {\n    Light::Red | Light::Amber => true,\n    _ => false,\n}" }
+          - { id: b, code: "match light {\n    Light::Red | Light::Amber => true,\n}", why: "There's no arm for `Green`, so this is E0004." }
+          - { id: c, code: "match light {\n    Light::Red => true,\n    _ => false,\n}", why: "This gives `false` for `Amber`, but the `matches!` gives `true`." }
+        answer: a
+        explanation: "`matches!` is shorthand for a `match` with one arm giving `true` and `_` giving `false`."
+        concepts: [macro.matches, match.exhaustive]
+
+      - type: compiles
+        id: compiles-eq-enum
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            fn main() {
+                let dir = Dir::West;
+                if dir == Dir::West {
+                    println!("sunset");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0369: binary operation `==` cannot be applied to type `Dir`" }
+            - { id: b, text: "E0004: non-exhaustive patterns", why: "There's no `match` here, so nothing needs to be exhaustive." }
+            - { id: c, text: "E0308: mismatched types", why: "Both sides are a `Dir`. The problem is that `Dir` can't be compared with `==` yet." }
+          answer: a
+        explanation: "Your own enums don't support `==` until you ask for it. `matches!(dir, Dir::West)` works now."
+        concepts: [macro.matches]
+
+      - type: decode-error
+        id: decode-eq-fix
+        prompt: Which change makes this compile and print `sunset`?
+        code:
+          rust: |
+            enum Dir { North, East, South, West }
+
+            fn main() {
+                let dir = Dir::West;
+                if dir == Dir::West {
+                    println!("sunset");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        options:
+          - { id: a, text: "Change line 5 to `if matches!(dir, Dir::West) {`" }
+          - { id: b, text: "Change line 5 to `if dir = Dir::West {`", why: "A single `=` assigns. An `if` condition must be a `bool`." }
+          - { id: c, text: "Change line 5 to `if let dir = Dir::West {`", why: "`dir` here is a new variable that matches anything, so this would also print `sunset` for `North`." }
+        answer: a
+        explanation: "`matches!` checks the pattern without needing `==`, and gives a `bool` for the `if`."
+        concepts: [macro.matches]
+
+      - type: true-false
+        id: tf-matches-exhaustive
+        prompt: "`matches!(dir, Dir::North)` fails to compile because it doesn't cover `East`, `South` and `West`."
+        answer: false
+        explanation: "`matches!` gives `false` for anything the pattern doesn't fit, so there's nothing to cover. Only `match` must be exhaustive."
+        concepts: [macro.matches, match.exhaustive]
+
+      - type: spot-bug
+        id: spot-matches-bang
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Amber;
+                let wait = matches(
+                    light,
+                    Light::Red,
+                );
+                println!("{wait}");
+            }
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: 5
+        explanation: "`matches` without `!` isn't a function Rust knows. The macro is `matches!`."
+        concepts: [macro.matches]
+
+      - type: predict-output
+        id: predict-matches-data
+        code:
+          rust: |
+            enum Sky {
+                Clear,
+                Rain(u32),
+            }
+
+            let today = Sky::Rain(0);
+            let wet = matches!(today, Sky::Rain(_));
+            let dry = matches!(today, Sky::Rain(0));
+            println!("{wet} {dry}");
+          verify: run
+        options:
+          - { id: a, text: "true true" }
+          - { id: b, text: "true false", why: "`Rain(0)` fits the pattern `Sky::Rain(0)` exactly." }
+          - { id: c, text: "false true", why: "`Rain(_)` accepts rain of any amount, including 0." }
+        answer: a
+        explanation: "`Rain(_)` accepts any amount, and `Rain(0)` accepts only 0. `today` is `Rain(0)`, so both are `true`."
+        concepts: [macro.matches, match.bind]
+
+      - type: predict-output
+        id: predict-review-if-let
+        code:
+          rust: |
+            let best: Option<u32> = Some(42);
+            let has_best = matches!(best, Some(_));
+            if let Some(score) = best {
+                println!("{has_best} {score}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "true 42" }
+          - { id: b, text: "true Some(42)", why: "The `if let` pattern takes 42 out of the `Some`." }
+          - { id: c, text: "Some(42) 42", why: "`matches!` gives a `bool`, not the value." }
+        answer: a
+        explanation: "`matches!` only says yes or no. To use the value inside, you need `if let` or `match`."
+        concepts: [macro.matches, match.if-let]
+
+      - type: fill-tokens
+        id: fill-weekend
+        prompt: "Fill the blanks so the program prints `true`"
+        code:
+          rust: |
+            enum Day {
+                Mon, Tue, Wed, Thu, Fri,
+                Sat, Sun,
+            }
+
+            let today = Day::Sun;
+            let weekend = ___1___(
+                today,
+                Day::Sat ___2___ Day::Sun,
+            );
+            println!("{weekend}");
+          verify: run
+          expectStdout: "true\n"
+        blanks:
+          "1": { answer: ["matches!"] }
+          "2": { answer: ["|"] }
+        bank: ["matches!", "match", "|", "||", "&&", ","]
+        explanation: "In a pattern, `|` joins options. `||` is the \"or\" for `bool` values, which isn't what a pattern needs."
+        concepts: [macro.matches]
+
+      - type: decode-error
+        id: decode-review-e0004
+        prompt: What's the best fix?
+        code:
+          rust: |
+            enum Day { Sat, Sun, Weekday }
+
+            fn main() {
+                let today = Day::Weekday;
+                let open = match today {
+                    Day::Sat => true,
+                    Day::Sun => false,
+                };
+                println!("{open}");
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "Add `Day::Weekday => true,` after line 7" }
+          - { id: b, text: "Change line 4 to `let today = Day::Sat;`", why: "The compiler checks every possible `Day`, whatever `today` holds now." }
+          - { id: c, text: "Change `match` to `matches!` on line 5", why: "`matches!` takes a value and one pattern, not a list of arms." }
+        answer: a
+        explanation: "E0004 says `Day::Weekday` is not covered. Adding its arm makes the `match` exhaustive."
+        concepts: [err.E0004]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-is-vertical
+        prompt: "Arrange the lines into a function that says whether a direction is north or south"
+        lines:
+          - { id: l1, text: "fn is_vertical(dir: Dir) -> bool {" }
+          - { id: l2, text: "    matches!(dir, Dir::North | Dir::South)" }
+          - { id: l3, text: "}" }
+        distractors:
+          - { id: d1, text: "    matches!(dir, Dir::North || Dir::South)" }
+          - { id: d2, text: "    matches!(dir, Dir::North | Dir::South);" }
+        answer: [l1, l2, l3]
+        verify:
+          harness: |
+            enum Dir { North, East, South, West }
+            {{solution}}
+            fn main() {
+                let a = is_vertical(Dir::South);
+                let b = is_vertical(Dir::East);
+                println!("{a} {b}");
+            }
+          mode: run
+          expectStdout: "true false\n"
+        explanation: "The `matches!` call is the function's last expression, so it has no `;`. Patterns join options with `|`, not `||`."
+        concepts: [macro.matches, fn.return]
+
+      - type: predict-output
+        id: predict-tiles-mixed
+        prompt: Build the output
+        code:
+          rust: |
+            enum Tile { Wall, Floor, Door(u32) }
+
+            let row = [
+                Tile::Floor,
+                Tile::Door(1),
+                Tile::Wall,
+            ];
+            for tile in row {
+                let open = matches!(
+                    tile,
+                    Tile::Floor | Tile::Door(_)
+                );
+                print!("{open} ");
+            }
+          verify: run
+        tiles: ["true", "true", "false", "false", "Door"]
+        answer: "true true false"
+        explanation: "`Floor` and any `Door` fit the pattern, and `Wall` doesn't."
+        concepts: [macro.matches]
+
+      - type: compiles
+        id: compiles-matches-binding
+        code:
+          rust: |
+            fn main() {
+                let slot: Option<u32> = Some(4);
+                if matches!(slot, Some(n)) {
+                    println!("{n}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`n` only exists inside `matches!`, so the block can't use it" }
+            - { id: b, text: "`matches!` can't look inside `Some`", why: "It can, but it only gives back `true` or `false`." }
+            - { id: c, text: "`slot` could be `None`, so this isn't exhaustive", why: "`matches!` gives `false` for `None`. It doesn't need to be exhaustive." }
+          answer: a
+        explanation: "`matches!` gives a `bool` and nothing else. Use `if let Some(n) = slot` to use the value."
+        concepts: [macro.matches, match.if-let]
+
+      - type: mcq
+        id: mcq-which-tool
+        prompt: "You need to count how many `Light` values in an array are `Red` or `Amber`. Which fits best inside the loop?"
+        options:
+          - { id: a, code: "if matches!(\n    light,\n    Light::Red | Light::Amber,\n) {\n    count += 1;\n}" }
+          - { id: b, code: "if light == Light::Red\n    || light == Light::Amber\n{\n    count += 1;\n}", why: "`==` doesn't work on `Light` yet (E0369)." }
+          - { id: c, code: "let Light::Red = light else {\n    return;\n};\ncount += 1;", why: "This leaves the function at the first light that isn't `Red`." }
+        answer: a
+        explanation: "When you only need yes or no, `matches!` is the shortest way to ask."
+        concepts: [macro.matches, match.let-else]
+
+      - type: fill-tokens
+        id: fill-count-coins
+        prompt: "Fill the blanks so the program prints `3`"
+        code:
+          rust: |
+            enum Coin { Five, Ten, Twenty }
+            let purse = [
+                Coin::Five, Coin::Ten,
+                Coin::Twenty, Coin::Five,
+            ];
+            let mut count = 0;
+            for coin in purse {
+                if ___1___(
+                    coin,
+                    Coin::Five ___2___ Coin::Twenty,
+                ) {
+                    count += 1;
+                }
+            }
+            println!("{count}");
+          verify: run
+          expectStdout: "3\n"
+        blanks:
+          "1": { answer: ["matches!"] }
+          "2": { answer: ["|"] }
+        bank: ["matches!", "match", "if let", "|", "||", "&"]
+        explanation: "`matches!` with `Coin::Five | Coin::Twenty` is `true` for three of the four coins."
+        concepts: [macro.matches]
+
+      - type: true-false
+        id: tf-matches-vs-match
+        prompt: "`matches!` is a good choice when each variant needs its own, different code."
+        answer: false
+        explanation: "`matches!` only answers yes or no. When each variant needs its own code, use `match`, which also checks that every variant is handled."
+        concepts: [macro.matches, match.exhaustive]
+
+      - type: spot-bug
+        id: spot-bool-or
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+
+            fn main() {
+                let light = Light::Amber;
+                let wait = matches!(
+                    light,
+                    Light::Red || Light::Amber
+                );
+                println!("{wait}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "||"
+        answer: 7
+        explanation: "Patterns join options with a single `|`. `||` is the \"or\" for `bool` values."
+        concepts: [macro.matches]
+
+      - type: predict-output
+        id: predict-review-let-else
+        code:
+          rust: |
+            enum Light { Red, Amber, Green }
+            fn go(light: Light) -> bool {
+                let Light::Green = light else {
+                    return false;
+                };
+                true
+            }
+            fn main() {
+                let a = go(Light::Green);
+                let b = matches!(
+                    Light::Amber,
+                    Light::Green,
+                );
+                println!("{a} {b}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "true false" }
+          - { id: b, text: "false false", why: "`Light::Green` matches the `let ... else` pattern, so `go` reaches `true`." }
+          - { id: c, text: "true true", why: "`Amber` doesn't fit the pattern `Light::Green`." }
+        answer: a
+        explanation: "`go` and `matches!` answer the same question here in two ways. `matches!` is the shorter one."
+        concepts: [macro.matches, match.let-else]
+
+      - type: match-pairs
+        id: pairs-tools
+        prompt: Match each tool to when you'd use it
+        pairs:
+          - ["match", "different code for every case"]
+          - ["if let", "code for one pattern only"]
+          - ["while let", "loop until a pattern fails"]
+          - ["let ... else", "bind a value or leave"]
+          - ["matches!", "a yes-or-no answer"]
+        concepts: [macro.matches, match.if-let, match.let-else, match.exhaustive]

@@ -1,0 +1,589 @@
+id: structs-enums.structs.tuple-unit
+title: Tuple and unit structs
+icon: tag
+concepts: [struct.tuple, struct.unit]
+reviewConcepts: [struct.define, struct.update, types.tuple, types.float, var.mut, fn.return, own.move, err.E0382, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-tuple-struct
+        title: Tuple structs
+        markdown: |
+          **A tuple struct is a tuple with a name.** Its fields have types but no names.
+
+          You read the fields by position, `.0`, `.1`, `.2`, as you do with tuples.
+        code:
+          rust: |
+            struct Colour(u8, u8, u8);
+
+            fn main() {
+                let teal = Colour(0, 128, 128);
+                println!("{}", teal.1);
+            }
+          verify: run
+          expectStdout: "128\n"
+        diagram:
+          caption: "`teal` holds three `u8` fields"
+          frames:
+            - name: main
+              vars:
+                - { name: teal.0, value: "0" }
+                - { name: teal.1, value: "128" }
+                - { name: teal.2, value: "128" }
+        concepts: [struct.tuple]
+
+      - type: predict-output
+        id: predict-point-order
+        code:
+          rust: |
+            struct Point(i32, i32);
+
+            fn main() {
+                let p = Point(3, -7);
+                println!("{} {}", p.1, p.0);
+            }
+          verify: run
+        options:
+          - { id: a, text: "-7 3" }
+          - { id: b, text: "3 -7", why: "`.0` is the first field and `.1` the second. The print lists `p.1` first." }
+          - { id: c, text: "p.1 p.0", why: "`{}` prints the field's value, not the expression." }
+        answer: a
+        explanation: "`p.1` is the second field, `-7`, and `p.0` is the first, `3`."
+        concepts: [struct.tuple]
+
+      - type: mcq
+        id: mcq-read-green
+        prompt: "`let c = Colour(10, 20, 30);` How do you read the `20`?"
+        options:
+          - { id: a, code: "c.1" }
+          - { id: b, code: "c.2", why: "Positions start at 0, so `20` is at position 1." }
+          - { id: c, code: "c[1]", why: "Square brackets index arrays. Tuple struct fields use a dot: `c.1`." }
+          - { id: d, code: "c.green", why: "Tuple struct fields have no names, only positions." }
+        answer: a
+        explanation: "Fields are numbered from 0, so `c.0` is 10, `c.1` is 20 and `c.2` is 30."
+        concepts: [struct.tuple]
+
+      - type: compiles
+        id: compiles-no-field-two
+        code:
+          rust: |
+            struct Point(i32, i32);
+
+            fn main() {
+                let p = Point(1, 2);
+                println!("{}", p.2);
+            }
+          verify: compile-fail
+          expectErrors: [E0609]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0609: no field `2` on type `Point`" }
+            - { id: b, text: "E0063: missing field `2` in initializer of `Point`", why: "Both fields were given values. The problem is reading a field that doesn't exist." }
+            - { id: c, text: "E0308: mismatched types", why: "The types are fine. `Point` has only fields `0` and `1`." }
+          answer: a
+        explanation: "`Point` has two fields, `.0` and `.1`. Asking for `.2` is E0609, caught at compile time."
+        concepts: [struct.tuple]
+
+      - type: concept
+        id: concept-newtype
+        title: The newtype idea
+        markdown: |
+          **Wrap a value to give it a meaning.** `Metres(f64)` and `Feet(f64)` both hold an `f64`, but they are different types.
+
+          Passing `Feet` where `Metres` is expected is error E0308, so you can't mix units by accident. A one-field tuple struct used like this is called a *newtype*.
+        code:
+          rust: |
+            struct Metres(f64);
+            struct Feet(f64);
+
+            fn climb(height: Metres) {
+                println!("{} m", height.0);
+            }
+
+            fn main() {
+                climb(Metres(8848.0));
+            }
+          verify: run
+          expectStdout: "8848 m\n"
+        concepts: [struct.tuple]
+
+      - type: compiles
+        id: compiles-feet-for-metres
+        code:
+          rust: |
+            struct Metres(f64);
+            struct Feet(f64);
+
+            fn climb(height: Metres) {
+                println!("{} m", height.0);
+            }
+
+            fn main() {
+                climb(Feet(29032.0));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types (expected `Metres`, found `Feet`)" }
+            - { id: b, text: "E0609: no field `0` on type `Feet`", why: "`Feet` has a field `0`. The problem is passing it where `Metres` is expected." }
+            - { id: c, text: "E0382: use of moved value", why: "Nothing is used twice. The argument has the wrong type." }
+          answer: a
+        explanation: "`climb` asks for `Metres`. A `Feet` holds an `f64` too, but it's a different type, so this is E0308."
+        concepts: [struct.tuple, err.E0308]
+
+      - type: true-false
+        id: tf-same-type
+        prompt: "`struct Kelvin(f64);` and `struct Celsius(f64);` are the same type, because both hold one `f64`."
+        answer: false
+        explanation: "Each `struct` definition makes a new type. Two structs with the same fields are still different types, which is what makes newtypes useful."
+        concepts: [struct.tuple]
+
+      - type: concept
+        id: concept-unit-struct
+        title: Unit structs
+        markdown: |
+          **A unit struct has no fields at all.** You define it with a name and `;`, and create one by writing the name.
+
+          It holds no data. Unit structs become useful later in the course, when you give types behaviour.
+        code:
+          rust: |
+            struct GameOver;
+
+            fn main() {
+                let state = GameOver;
+                println!("The game has ended");
+            }
+          verify: run
+          expectStdout: "The game has ended\n"
+        concepts: [struct.unit]
+
+      - type: mcq
+        id: mcq-make-unit
+        prompt: "Given `struct Paused;`, which line creates a `Paused` value?"
+        options:
+          - { id: a, code: "let state = Paused;" }
+          - { id: b, code: "let state = Paused();", why: "`Paused` has no fields, so there's nothing to pass. With `()` the compiler reports E0618: expected function." }
+          - { id: c, code: "let state = new Paused;", why: "Rust has no `new` keyword. You write the struct's name." }
+        answer: a
+        explanation: "A unit struct value is written as the name alone: `Paused`."
+        concepts: [struct.unit]
+
+      - type: fill-tokens
+        id: fill-celsius
+        prompt: "Fill the blanks so the program prints `21.5`"
+        code:
+          rust: |
+            struct Celsius(___1___);
+
+            fn main() {
+                let today = Celsius(21.5);
+                println!("{}", today.___2___);
+            }
+          verify: run
+          expectStdout: "21.5\n"
+        blanks:
+          "1": { answer: ["f64"] }
+          "2": { answer: ["0"] }
+        bank: ["f64", "i32", "String", "0", "1", "value"]
+        explanation: "`21.5` needs a float type, so the field is `f64`. The only field is at position 0."
+        concepts: [struct.tuple]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-laps
+        code:
+          rust: |
+            struct Metres(f64);
+
+            fn main() {
+                let lap = Metres(400.0);
+                let run = Metres(lap.0 * 3.0);
+                println!("{}", run.0);
+            }
+          verify: run
+        options:
+          - { id: a, text: "1200" }
+          - { id: b, text: "400", why: "`run` is a new `Metres` built from `lap.0 * 3.0`." }
+          - { id: c, text: "Metres(1200)", why: "`run.0` reads the `f64` inside, so only the number is printed." }
+        answer: a
+        explanation: "`lap.0` is 400.0, times 3 is 1200.0, and `{}` prints a whole `f64` without `.0`."
+        concepts: [struct.tuple, types.float]
+
+      - type: compiles
+        id: compiles-tuple-not-struct
+        code:
+          rust: |
+            struct Colour(u8, u8, u8);
+
+            fn main() {
+                let c: Colour = (255, 0, 0);
+                println!("{}", c.0);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types (expected `Colour`, found tuple)" }
+            - { id: b, text: "E0609: no field `0` on type `Colour`", why: "`Colour` has a field `0`. The problem is the value on the right of `=`." }
+            - { id: c, text: "E0063: missing field in initializer of `Colour`", why: "All three values are there, but they aren't wrapped in `Colour(...)`." }
+          answer: a
+        explanation: "`(255, 0, 0)` is a plain tuple, not a `Colour`. Write `Colour(255, 0, 0)` to make one."
+        concepts: [struct.tuple, types.tuple, err.E0308]
+
+      - type: decode-error
+        id: decode-area-feet
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            struct Metres(f64);
+            struct Feet(f64);
+
+            fn area(w: Metres, h: Metres) -> f64 {
+                w.0 * h.0
+            }
+
+            fn main() {
+                let wall = Feet(4.0);
+                let a = area(Metres(3.0), wall);
+                println!("{a}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`area` wants `Metres` for its second argument, but `wall` is `Feet`" }
+          - { id: b, text: "`area` can't multiply two `f64`s", why: "Multiplying `f64`s is fine. The error points at the argument `wall` on line 10." }
+          - { id: c, text: "`Feet` and `Metres` both hold an `f64`, so the compiler can't tell them apart", why: "It can: they are different types. That's why it reports a mismatch." }
+        answer: a
+        explanation: "E0308 says it expected `Metres` and found `Feet`. Newtypes catch this mix-up before the program runs."
+        concepts: [struct.tuple, err.E0308]
+
+      - type: mcq
+        id: mcq-why-newtype
+        prompt: "What do you gain by storing a distance as `Metres(f64)` rather than a plain `f64`?"
+        options:
+          - { id: a, text: "The compiler rejects a `Feet` or a plain `f64` where `Metres` is expected" }
+          - { id: b, text: "Arithmetic on the distance runs faster", why: "A newtype doesn't change speed. It changes what the compiler will accept." }
+          - { id: c, text: "Values in feet are converted to metres automatically", why: "Nothing is converted for you. You'd write that conversion yourself." }
+        answer: a
+        explanation: "A newtype gives a value its own type, so unit mix-ups become compile errors."
+        concepts: [struct.tuple]
+
+      - type: spot-bug
+        id: spot-named-on-tuple
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Point(i32, i32);
+
+            fn main() {
+                let p = Point(2, 5);
+                let sum = p.x + p.y;
+                println!("{sum}");
+            }
+          verify: compile-fail
+          expectErrors: [E0609]
+        answer: 5
+        explanation: "`Point` is a tuple struct, so its fields are `p.0` and `p.1`. There is no field `x` (E0609)."
+        concepts: [struct.tuple]
+
+      - type: true-false
+        id: tf-mixed-types
+        prompt: "A tuple struct can hold fields of different types, like `struct Item(String, u32);`."
+        answer: true
+        explanation: "As with tuples, each position has its own type. `Item(String::from(\"pen\"), 3)` is a valid value."
+        concepts: [struct.tuple]
+
+      - type: predict-output
+        id: predict-colour-mut
+        prompt: Build the output
+        code:
+          rust: |
+            struct Colour(u8, u8, u8);
+
+            fn main() {
+                let mut c = Colour(10, 20, 30);
+                c.0 += 5;
+                c.2 = c.0;
+                println!("{} {} {}", c.0, c.1, c.2);
+            }
+          verify: run
+        tiles: ["15", "20", "15", "30", "10"]
+        answer: "15 20 15"
+        explanation: "`c.0` becomes 15, and then `c.2` is set to that same value. `c.1` doesn't change."
+        concepts: [struct.tuple, var.mut]
+
+      - type: predict-output
+        id: predict-room-width
+        code:
+          rust: |
+            struct Metres(f64);
+
+            struct Room {
+                name: String,
+                width: Metres,
+            }
+
+            fn main() {
+                let hall = Room {
+                    name: String::from("Hall"),
+                    width: Metres(2.5),
+                };
+                println!("{}", hall.name);
+                println!("{}", hall.width.0);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Hall\n2.5" }
+          - { id: b, text: "Hall\nMetres(2.5)", why: "`.0` reads the `f64` inside the `Metres`, so only the number prints." }
+          - { id: c, text: "Hall\n2", why: "The field is an `f64`, so the `.5` is kept." }
+        answer: a
+        explanation: "`hall.width` is a `Metres`, and `hall.width.0` is the `f64` inside it: 2.5."
+        concepts: [struct.tuple, struct.define]
+
+      - type: compiles
+        id: compiles-tuple-struct-move
+        code:
+          rust: |
+            struct Name(String);
+
+            fn main() {
+                let tag = Name(String::from("Ivy"));
+                let copy = tag;
+                println!("{}", tag.0);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `tag`" }
+            - { id: b, text: "E0609: no field `0` on type `Name`", why: "`Name` has one field, at position 0." }
+            - { id: c, text: "E0308: mismatched types", why: "The types are fine. `tag` was moved into `copy`." }
+          answer: a
+        explanation: "A `Name` holds a `String`, so `let copy = tag;` moves it. After that, `tag` can't be used."
+        concepts: [struct.tuple, own.move, err.E0382]
+
+      - type: match-pairs
+        id: pairs-struct-kinds
+        prompt: Match each piece of code to what it is
+        pairs:
+          - ["struct Point { x: i32 }", "struct with named fields"]
+          - ["struct Point(i32, i32);", "tuple struct"]
+          - ["struct Done;", "unit struct"]
+          - ["p.0", "first field of a tuple struct"]
+          - ["Metres(f64)", "newtype around one value"]
+        concepts: [struct.tuple, struct.unit, struct.define]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-to-fahrenheit
+        prompt: "`struct Celsius(f64);` and `struct Fahrenheit(f64);` are already defined. Arrange the lines so the program prints `212`."
+        lines:
+          - { id: l1, text: "fn to_f(c: Celsius) -> Fahrenheit {" }
+          - { id: l2, text: "    Fahrenheit(c.0 * 1.8 + 32.0)" }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn main() {" }
+          - { id: l5, text: "    let f = to_f(Celsius(100.0));" }
+          - { id: l6, text: '    println!("{}", f.0);' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    c.0 * 1.8 + 32.0" }
+          - { id: d2, text: '    println!("{}", f);' }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l4, l5, l6, l7, l1, l2, l3]
+        verify:
+          harness: |
+            struct Celsius(f64);
+            struct Fahrenheit(f64);
+            {{solution}}
+          mode: run
+          expectStdout: "212\n"
+        explanation: "`to_f` must return a `Fahrenheit`, so the result is wrapped in `Fahrenheit(...)`. `f.0` reads the number back out to print it."
+        concepts: [struct.tuple, fn.return]
+
+      - type: fill-tokens
+        id: fill-score-finished
+        prompt: "Fill the blanks so the program prints `15`"
+        code:
+          rust: |
+            struct Score(___1___);
+            struct Finished;
+
+            fn main() {
+                let mut s = Score(10);
+                s.___2___ += 5;
+                let state: Finished = ___3___;
+                println!("{}", s.0);
+            }
+          verify: run
+          expectStdout: "15\n"
+        blanks:
+          "1": { answer: ["u32"] }
+          "2": { answer: ["0"] }
+          "3": { answer: ["Finished"] }
+        bank: ["u32", "f64", "String", "0", "1", "Finished", "Finished()"]
+        explanation: "`10` and `5` are whole numbers, so `u32` fits. `s.0` is the only field, and a unit struct is created by its name alone."
+        concepts: [struct.tuple, struct.unit]
+
+      - type: compiles
+        id: compiles-unit-parens
+        code:
+          rust: |
+            struct Marker;
+
+            fn main() {
+                let m = Marker();
+                println!("placed");
+            }
+          verify: compile-fail
+          expectErrors: [E0618]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0618: expected function, found struct `Marker`" }
+            - { id: b, text: "E0063: missing fields in initializer of `Marker`", why: "`Marker` has no fields, so none can be missing." }
+            - { id: c, text: "E0308: mismatched types", why: "The problem is the `()`, which tries to call `Marker` like a function." }
+          answer: a
+        explanation: "A unit struct is created with its name alone: `Marker`. Adding `()` makes Rust look for a function to call."
+        concepts: [struct.unit]
+
+      - type: predict-output
+        id: predict-inches
+        code:
+          rust: |
+            struct Feet(f64);
+            struct Inches(f64);
+
+            fn to_inches(f: Feet) -> Inches {
+                Inches(f.0 * 12.0)
+            }
+
+            fn main() {
+                let i = to_inches(Feet(10.0));
+                println!("{}", i.0);
+            }
+          verify: run
+        options:
+          - { id: a, text: "120" }
+          - { id: b, text: "10", why: "`to_inches` returns a new `Inches` holding `10.0 * 12.0`." }
+          - { id: c, text: "120.0", why: "`{}` prints a whole `f64` without the `.0`." }
+          - { id: d, text: "Inches(120)", why: "`i.0` is the `f64` inside the `Inches`, so only the number prints." }
+        answer: a
+        explanation: "`f.0` is 10.0, and `Inches(f.0 * 12.0)` holds 120.0, which prints as `120`."
+        concepts: [struct.tuple, fn.return]
+
+      - type: spot-bug
+        id: spot-add-newtypes
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Metres(f64);
+
+            fn main() {
+                let a = Metres(3.0);
+                let b = Metres(2.0);
+                let total = a + b;
+                println!("{}", total.0);
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        answer: 6
+        explanation: "A new struct doesn't get `+` automatically (E0369). Add the numbers inside instead: `Metres(a.0 + b.0)`."
+        concepts: [struct.tuple]
+
+      - type: mcq
+        id: mcq-kelvin
+        prompt: "What does `struct Kelvin(f64);` define?"
+        options:
+          - { id: a, text: "A new type named `Kelvin` that holds one `f64`" }
+          - { id: b, text: "Another name for `f64` that can be used in its place", why: "`Kelvin` is its own type. A plain `f64` isn't accepted where a `Kelvin` is expected." }
+          - { id: c, text: "A variable named `Kelvin` with an `f64` value", why: "`struct` defines a type. You still create values of it with `Kelvin(300.0)`." }
+        answer: a
+        explanation: "It's a tuple struct with one field, a newtype. You make one with `Kelvin(300.0)` and read it with `.0`."
+        concepts: [struct.tuple]
+
+      - type: true-false
+        id: tf-unit-by-name
+        prompt: "Given `struct Paused;`, the line `let state = Paused;` creates a `Paused` value."
+        answer: true
+        explanation: "A unit struct has no fields, so its name alone is the whole value."
+        concepts: [struct.unit]
+
+      - type: decode-error
+        id: decode-two-of-three
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            struct Colour(u8, u8, u8);
+
+            fn main() {
+                let red = Colour(255, 0);
+                println!("{}", red.0);
+            }
+          verify: compile-fail
+          expectErrors: [E0061]
+        options:
+          - { id: a, code: "let red = Colour(255, 0, 0);" }
+          - { id: b, code: "let red: Colour = (255, 0, 0);", why: "That's a plain tuple, not a `Colour` (E0308)." }
+          - { id: c, code: "let red = Colour(255, 0,);", why: "A trailing comma doesn't add a value. There are still only two." }
+        answer: a
+        explanation: "`Colour` has three fields, so creating one takes three values. E0061 counts the arguments for you."
+        concepts: [struct.tuple]
+
+      - type: predict-output
+        id: predict-coupe
+        code:
+          rust: |
+            struct Car {
+                brand: String,
+                doors: u32,
+            }
+
+            fn main() {
+                let kia = Car {
+                    brand: String::from("Kia"),
+                    doors: 5,
+                };
+                let coupe = Car { doors: 3, ..kia };
+                println!("{}", coupe.brand);
+                println!("{}", coupe.doors);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Kia\n3" }
+          - { id: b, text: "Kia\n5", why: "`coupe` sets its own `doors` to 3; only `brand` comes from `kia`." }
+          - { id: c, text: "\n3", why: "`..kia` moves the brand into `coupe`, so `coupe.brand` is `Kia`." }
+        answer: a
+        explanation: "`coupe` gets `doors: 3` and takes `brand` from `kia` through `..kia`."
+        concepts: [struct.update]
+
+      - type: predict-output
+        id: predict-swap-pair
+        prompt: Build the output
+        code:
+          rust: |
+            struct Pair(i32, i32);
+
+            fn main() {
+                let p = Pair(4, 9);
+                let s = Pair(p.1, p.0);
+                println!("{} {}", s.0, s.1);
+            }
+          verify: run
+        tiles: ["9", "4", "0", "1"]
+        answer: "9 4"
+        explanation: "`s` is built from `p.1` (9) then `p.0` (4), so its fields are swapped."
+        concepts: [struct.tuple]

@@ -1,0 +1,698 @@
+id: structs-enums.structs.define
+title: Your own types
+icon: package
+concepts: [struct.define, struct.update]
+reviewConcepts: [var.mut, own.move, own.copy, own.clone, fn.return, fn.params, borrow.mut, err.E0382, err.E0384]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-struct
+        title: Group related values
+        markdown: |
+          **A struct groups related values under one name.** Each value is a *field* with a name and a type.
+
+          You create an *instance* by giving every field a value, then read a field with a dot: `player.score`.
+        code:
+          rust: |
+            struct Player {
+                name: String,
+                score: u32,
+            }
+
+            fn main() {
+                let player = Player {
+                    name: String::from("Ana"),
+                    score: 40,
+                };
+                println!("{}", player.name);
+                println!("{}", player.score);
+            }
+          verify: run
+          expectStdout: "Ana\n40\n"
+        diagram:
+          caption: "`player` holds both fields; its `String` text is on the heap"
+          frames:
+            - name: main
+              vars:
+                - { name: player.name, points: h1 }
+                - { name: player.score, value: "40" }
+          heap:
+            - { id: h1, value: '"Ana"' }
+        concepts: [struct.define]
+
+      - type: predict-output
+        id: predict-book
+        code:
+          rust: |
+            struct Book {
+                title: String,
+                pages: u32,
+            }
+
+            fn main() {
+                let book = Book {
+                    title: String::from("Dune"),
+                    pages: 412,
+                };
+                println!("{}", book.pages);
+                println!("{}", book.title);
+            }
+          verify: run
+        options:
+          - { id: a, text: "412\nDune" }
+          - { id: b, text: "Dune\n412", why: "The `println!` lines run in order, and `pages` is printed first." }
+          - { id: c, text: "pages\ntitle", why: "`book.pages` reads the value stored in the field, not the field's name." }
+          - { id: d, text: "412\n\"Dune\"", why: "`{}` prints text without quotes." }
+        answer: a
+        explanation: "`book.pages` is `412` and `book.title` is `Dune`. The dot reads a field's value."
+        concepts: [struct.define]
+
+      - type: mcq
+        id: mcq-create-point
+        prompt: "Given `struct Point { x: i32, y: i32 }`, which line creates a `Point`?"
+        options:
+          - { id: a, code: "let p = Point { x: 1, y: 2 };" }
+          - { id: b, code: "let p = Point { x = 1, y = 2 };", why: "Inside the braces each field uses `:`, as in the definition, not `=`." }
+          - { id: c, code: "let p = Point { 1, 2 };", why: "Each value needs its field name, so Rust knows which field it fills." }
+          - { id: d, code: "let p = Point;", why: "Every field needs a value when you create an instance." }
+        answer: a
+        explanation: "You write the struct's name, then `field: value` pairs inside `{ }`, separated by commas."
+        concepts: [struct.define]
+
+      - type: compiles
+        id: compiles-missing-field
+        code:
+          rust: |
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let p = Point { x: 5 };
+                println!("{}", p.x);
+            }
+          verify: compile-fail
+          expectErrors: [E0063]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0063: missing field `y` in initializer of `Point`" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. A field was left out." }
+            - { id: c, text: "E0308: mismatched types", why: "`5` is a fine `i32`. The problem is the field that has no value." }
+          answer: a
+        explanation: "Every field needs a value when you create an instance. `y` is missing, so this is E0063."
+        concepts: [struct.define]
+
+      - type: true-false
+        id: tf-field-order
+        prompt: "This program compiles and prints `1 2`."
+        code:
+          rust: |
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let p = Point { y: 2, x: 1 };
+                println!("{} {}", p.x, p.y);
+            }
+          verify: run
+          expectStdout: "1 2\n"
+        answer: true
+        explanation: "Fields are matched by name, so you can list them in any order. `x` is still 1 and `y` is still 2."
+        concepts: [struct.define]
+
+      - type: concept
+        id: concept-mut-instance
+        title: Changing a field
+        markdown: |
+          **To change a field, make the whole instance `mut`.** Rust has no way to mark one field as mutable.
+
+          With `let mut`, you can assign to any field: `clicks.count += 1;`.
+        code:
+          rust: |
+            struct Counter {
+                label: String,
+                count: u32,
+            }
+
+            fn main() {
+                let mut clicks = Counter {
+                    label: String::from("Clicks"),
+                    count: 0,
+                };
+                clicks.count += 1;
+                println!("{}", clicks.label);
+                println!("{}", clicks.count);
+            }
+          verify: run
+          expectStdout: "Clicks\n1\n"
+        concepts: [struct.define]
+
+      - type: predict-output
+        id: predict-tank
+        code:
+          rust: |
+            struct Tank {
+                litres: u32,
+            }
+
+            fn main() {
+                let mut tank = Tank { litres: 10 };
+                tank.litres += 5;
+                tank.litres = tank.litres * 2;
+                println!("{}", tank.litres);
+            }
+          verify: run
+        options:
+          - { id: a, text: "30" }
+          - { id: b, text: "25", why: "The `+= 5` runs first, giving 15, and then 15 is doubled." }
+          - { id: c, text: "20", why: "`tank.litres += 5;` changed the field before the doubling." }
+        answer: a
+        explanation: "`litres` goes from 10 to 15, then `15 * 2` is stored back in the field."
+        concepts: [struct.define, var.mut]
+
+      - type: compiles
+        id: compiles-not-mut
+        code:
+          rust: |
+            struct Score {
+                points: u32,
+            }
+
+            fn main() {
+                let score = Score { points: 0 };
+                score.points = 10;
+                println!("{}", score.points);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0594: cannot assign to `score.points`, as `score` is not declared as mutable" }
+            - { id: b, text: "E0063: missing field `points`", why: "`points` gets the value `0` when `score` is created." }
+            - { id: c, text: "E0308: mismatched types", why: "`10` is a fine `u32`. The problem is that `score` isn't `mut`." }
+          answer: a
+        explanation: "`score` isn't `mut`, so none of its fields can change. E0594 is the error for assigning to a field; the fix is `let mut score`."
+        concepts: [struct.define, var.mut]
+
+      - type: fill-tokens
+        id: fill-city
+        prompt: "Fill the blanks so the program prints `Perth`"
+        code:
+          rust: |
+            ___1___ City {
+                name: String,
+                population: u32,
+            }
+
+            fn main() {
+                let city = City {
+                    name: String::from("Perth"),
+                    population: 2_300_000,
+                };
+                println!("{}", city.___2___);
+            }
+          verify: run
+          expectStdout: "Perth\n"
+        blanks:
+          "1": { answer: ["struct"] }
+          "2": { answer: ["name"] }
+        bank: ["struct", "let", "fn", "name", "population", "City"]
+        explanation: "`struct City { ... }` defines the type, and `city.name` reads the field that holds `Perth`."
+        concepts: [struct.define]
+
+      - type: match-pairs
+        id: pairs-struct-basics
+        pairs:
+          - ["struct Point { x: i32 }", "defines a new type"]
+          - ["Point { x: 1 }", "creates an instance"]
+          - ["p.x", "reads a field"]
+          - ["let mut p = ...", "lets you change fields"]
+          - ["E0063", "a field was left out"]
+        concepts: [struct.define]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-shorthand
+        title: Field init shorthand
+        markdown: |
+          **When a variable has the same name as a field, write the name once.** `User { name, age: 18 }` means `User { name: name, age: 18 }`.
+
+          This is common in functions that build an instance from their parameters.
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn make_user(name: String) -> User {
+                User { name, age: 18 }
+            }
+
+            fn main() {
+                let name = String::from("Kim");
+                let user = make_user(name);
+                println!("{}", user.name);
+                println!("{}", user.age);
+            }
+          verify: run
+          expectStdout: "Kim\n18\n"
+        concepts: [struct.update]
+
+      - type: predict-output
+        id: predict-shorthand-order
+        code:
+          rust: |
+            struct Grid {
+                rows: u32,
+                cols: u32,
+            }
+
+            fn main() {
+                let rows = 4;
+                let cols = 3;
+                let g = Grid { cols, rows };
+                println!("{} {}", g.rows, g.cols);
+            }
+          verify: run
+        options:
+          - { id: a, text: "4 3" }
+          - { id: b, text: "3 4", why: "Shorthand matches by name, not by position. `rows` goes into the `rows` field wherever it's listed." }
+          - { id: c, text: "12", why: "The program prints the two fields; it doesn't multiply them." }
+        answer: a
+        explanation: "`Grid { cols, rows }` means `Grid { cols: cols, rows: rows }`, so each field gets the variable with its name."
+        concepts: [struct.update, struct.define]
+
+      - type: mcq
+        id: mcq-shorthand-meaning
+        prompt: "`age` is a variable. What does `Person { age, name: String::from(\"Jo\") }` do with it?"
+        options:
+          - { id: a, text: "Sets the field `age` to the value of the variable `age`" }
+          - { id: b, text: "Leaves the field `age` at zero", why: "Rust has no automatic default values. Shorthand is a short way to write `age: age`." }
+          - { id: c, text: "Makes the field `age` a reference to the variable `age`", why: "No reference is made. The value is copied or moved in, the same as `age: age`." }
+        answer: a
+        explanation: "Field init shorthand: `age` on its own means `age: age`."
+        concepts: [struct.update]
+
+      - type: concept
+        id: concept-update
+        title: Struct update syntax
+        markdown: |
+          **`..other` fills in every field you didn't list, using the values in `other`.** It must come last.
+
+          Here `night` sets its own `speed` and takes `tilt` from `day`.
+        code:
+          rust: |
+            struct Fan {
+                speed: u32,
+                tilt: u32,
+            }
+
+            fn main() {
+                let day = Fan { speed: 3, tilt: 9 };
+                let night = Fan { speed: 1, ..day };
+                println!("{}", night.speed);
+                println!("{}", night.tilt);
+            }
+          verify: run
+          expectStdout: "1\n9\n"
+        concepts: [struct.update]
+
+      - type: predict-output
+        id: predict-update-basic
+        code:
+          rust: |
+            struct Stats {
+                hp: u32,
+                xp: u32,
+            }
+
+            fn main() {
+                let base = Stats {
+                    hp: 10,
+                    xp: 3,
+                };
+                let orc = Stats { hp: 90, ..base };
+                println!("{} {}", orc.hp, orc.xp);
+            }
+          verify: run
+        tiles: ["90", "10", "3", "0"]
+        answer: "90 3"
+        explanation: "`orc` sets its own `hp` to 90 and takes `xp` (3) from `base`."
+        concepts: [struct.update]
+
+      - type: true-false
+        id: tf-update-last
+        prompt: "`Sound { ..day, volume: 2 }` is the same as `Sound { volume: 2, ..day }`."
+        answer: false
+        explanation: "`..day` must be the last thing inside the braces. Writing it first is a syntax error."
+        concepts: [struct.update]
+
+      - type: compiles
+        id: compiles-update-moves
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let rex = Pet {
+                    name: String::from("Rex"),
+                    age: 3,
+                };
+                let older = Pet { age: 4, ..rex };
+                println!("{}", older.name);
+                println!("{}", rex.name);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `rex.name`" }
+            - { id: b, text: "E0063: missing field `name`", why: "`..rex` supplies `name`, so `older` has every field." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The problem is a moved `String`." }
+          answer: a
+        explanation: "`..rex` moves the `String` in `rex.name` into `older`, the same as `let` would. After that `rex.name` can't be used."
+        concepts: [struct.update, own.move, err.E0382]
+
+      - type: compiles
+        id: compiles-update-copy-only
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let name = String::from("Rex");
+                let rex = Pet { name, age: 3 };
+                let max = Pet {
+                    name: String::from("Max"),
+                    ..rex
+                };
+                println!("{}", rex.name);
+                println!("{}", max.age);
+            }
+          verify: run
+          expectStdout: "Rex\n3\n"
+        answer: true
+        explanation: "`max` gives its own `name`, so `..rex` only takes `age`. A `u32` is copied, so `rex` keeps everything and stays usable."
+        concepts: [struct.update, own.copy]
+
+      - type: spot-bug
+        id: spot-unknown-field
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Order {
+                item: String,
+                quantity: u32,
+            }
+
+            fn main() {
+                let order = Order {
+                    item: String::from("tea"),
+                    amount: 2,
+                };
+                println!("{}", order.item);
+            }
+          verify: compile-fail
+          expectErrors: [E0560]
+        answer: 9
+        explanation: "`Order` has no field called `amount`; it's called `quantity`. The compiler reports E0560 and lists the fields that exist."
+        concepts: [struct.define]
+
+      - type: predict-output
+        id: predict-update-clone
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let name = String::from("Rex");
+                let rex = Pet { name, age: 3 };
+                let twin = Pet {
+                    name: rex.name.clone(),
+                    ..rex
+                };
+                println!("{}", rex.name);
+                println!("{}", twin.age);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Rex\n3" }
+          - { id: b, text: "\n3", why: "Cloning doesn't empty `rex.name`. It makes a second `String` holding `Rex`." }
+          - { id: c, text: "Rex\n0", why: "`..rex` copies `age` from `rex`, so `twin.age` is 3. Rust never fills fields with zero for you." }
+        answer: a
+        explanation: "`twin` gets a clone of the name and copies `age` from `rex`. Nothing moved out of `rex`, so `rex.name` is still usable."
+        concepts: [struct.update, own.clone]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-make-user
+        prompt: "Arrange the lines so the program prints `Mia 21`"
+        lines:
+          - { id: l1, text: "struct User {" }
+          - { id: l2, text: "    name: String," }
+          - { id: l3, text: "    age: u32," }
+          - { id: l4, text: "}" }
+          - { id: l5, text: "fn make_user(name: String) -> User {" }
+          - { id: l6, text: "    User { name, age: 21 }" }
+          - { id: l7, text: "}" }
+          - { id: l8, text: "fn main() {" }
+          - { id: l9, text: '    let user = make_user(String::from("Mia"));' }
+          - { id: l10, text: '    println!("{} {}", user.name, user.age);' }
+          - { id: l11, text: "}" }
+        distractors:
+          - { id: d1, text: "    User { name: String, age: 21 }" }
+          - { id: d2, text: "    name = String," }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11]
+        alternatives:
+          - [l1, l2, l3, l4, l8, l9, l10, l11, l5, l6, l7]
+          - [l5, l6, l7, l1, l2, l3, l4, l8, l9, l10, l11]
+          - [l8, l9, l10, l11, l1, l2, l3, l4, l5, l6, l7]
+          - [l8, l9, l10, l11, l5, l6, l7, l1, l2, l3, l4]
+          - [l5, l6, l7, l8, l9, l10, l11, l1, l2, l3, l4]
+        verify:
+          mode: run
+          expectStdout: "Mia 21\n"
+        explanation: "The definition uses `field: Type`. Inside `make_user`, `name` is shorthand for `name: name`."
+        concepts: [struct.define, struct.update, fn.return]
+
+      - type: fill-tokens
+        id: fill-update
+        prompt: "Fill the blanks so the program prints `5`, then `2`"
+        code:
+          rust: |
+            struct Hand {
+                cards: u32,
+                wild: u32,
+            }
+
+            fn main() {
+                let cards = 5;
+                let old = Hand {
+                    cards: 7,
+                    wild: 2,
+                };
+                let hand = Hand { ___1___, ___2___old };
+                println!("{}", hand.cards);
+                println!("{}", hand.wild);
+            }
+          verify: run
+          expectStdout: "5\n2\n"
+        blanks:
+          "1": { answer: ["cards"] }
+          "2": { answer: [".."] }
+        bank: ["cards", "wild", "..", "&", "mut", "..="]
+        explanation: "`cards` is shorthand for `cards: cards` (5). `..old` fills `wild` from `old`."
+        concepts: [struct.update]
+
+      - type: decode-error
+        id: decode-update-moved
+        prompt: "Which change fixes the error and still prints `Ana`, then `2`?"
+        code:
+          rust: |
+            struct Hero {
+                name: String,
+                level: u32,
+            }
+
+            fn main() {
+                let hero = Hero {
+                    name: String::from("Ana"),
+                    level: 1,
+                };
+                let lv2 = Hero { level: 2, ..hero };
+                println!("{}", hero.name);
+                println!("{}", lv2.level);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Line 11: `let lv2 = Hero { name: hero.name.clone(), level: 2 };`" }
+          - { id: b, text: "Line 11: `let mut lv2 = Hero { level: 2, ..hero };`", why: "`mut` lets `lv2` change later, but `..hero` still moves the name out of `hero`." }
+          - { id: c, text: "Line 7: `let mut hero = Hero {`", why: "Making `hero` mutable doesn't stop its `String` from moving." }
+        answer: a
+        explanation: "`..hero` moves `hero.name` into `lv2`. Cloning gives `lv2` its own copy of the text, so `hero.name` stays usable."
+        concepts: [struct.update, own.move, own.clone]
+
+      - type: predict-output
+        id: predict-update-then-change
+        code:
+          rust: |
+            struct Timer {
+                mins: u32,
+                secs: u32,
+            }
+
+            fn main() {
+                let mut egg = Timer {
+                    mins: 5,
+                    secs: 30,
+                };
+                let tea = Timer { mins: 1, ..egg };
+                egg.secs = 0;
+                println!("{}", tea.mins);
+                println!("{}", tea.secs);
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n30" }
+          - { id: b, text: "1\n0", why: "`tea.secs` was copied when `tea` was created. Changing `egg` later doesn't reach `tea`." }
+          - { id: c, text: "5\n30", why: "`tea` sets its own `mins` to 1." }
+        answer: a
+        explanation: "`..egg` copies the value 30 into `tea`. The two instances are separate, so `egg.secs = 0` only changes `egg`."
+        concepts: [struct.update, own.copy]
+
+      - type: compiles
+        id: compiles-mut-ref-field
+        code:
+          rust: |
+            struct Wallet {
+                cents: u32,
+            }
+
+            fn deposit(w: &mut Wallet, add: u32) {
+                w.cents += add;
+            }
+
+            fn main() {
+                let mut cash = Wallet { cents: 10 };
+                deposit(&mut cash, 5);
+                println!("{}", cash.cents);
+            }
+          verify: run
+          expectStdout: "15\n"
+        answer: true
+        explanation: "A `&mut Wallet` lets `deposit` change any field through the reference. It prints 15."
+        concepts: [struct.define]
+
+      - type: mcq
+        id: mcq-definition-syntax
+        prompt: Which is a valid struct definition?
+        options:
+          - { id: a, code: "struct Song { title: String, length: u32 }" }
+          - { id: b, code: "struct Song { title: String; length: u32 }", why: "Fields are separated by commas, not semicolons." }
+          - { id: c, code: "struct Song { let title: String, let length: u32 }", why: "Fields don't use `let`. You write `name: Type`." }
+          - { id: d, code: "struct Song { title = String, length = u32 }", why: "A field's type follows a `:`, as with a variable's type." }
+        answer: a
+        explanation: "A definition lists `name: Type` pairs separated by commas. A trailing comma after the last field is allowed too."
+        concepts: [struct.define]
+
+      - type: true-false
+        id: tf-mut-one-field
+        prompt: "You can write `mut` before one field in a struct definition to make only that field changeable."
+        answer: false
+        explanation: "Mutability belongs to the variable that holds the instance. `let mut` makes every field changeable; without it, none are."
+        concepts: [struct.define, var.mut]
+
+      - type: spot-bug
+        id: spot-shorthand-name
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn make_user(n: String) -> User {
+                User { name, age: 30 }
+            }
+
+            fn main() {
+                let name = String::from("Lu");
+                let user = make_user(name);
+                println!("{}", user.name);
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 7
+        explanation: "Shorthand `name` needs a variable called `name`, but the parameter is `n`. Write `name: n`, or rename the parameter."
+        concepts: [struct.update, fn.params]
+
+      - type: predict-output
+        id: predict-whole-move
+        code:
+          rust: |
+            struct Ticket {
+                seat: u32,
+                holder: String,
+            }
+
+            fn main() {
+                let mine = Ticket {
+                    seat: 12,
+                    holder: String::from("Sam"),
+                };
+                let yours = mine;
+                println!("{}", yours.seat);
+                println!("{}", yours.holder);
+            }
+          verify: run
+        options:
+          - { id: a, text: "12\nSam" }
+          - { id: b, text: "Sam\n12", why: "The prints show `seat` first, then `holder`." }
+          - { id: c, text: "12", why: "Moving `mine` into `yours` moves the whole instance, `holder` included." }
+        answer: a
+        explanation: "`let yours = mine;` moves the whole `Ticket`. `yours` now owns both fields."
+        concepts: [struct.define, own.move]
+
+      - type: compiles
+        id: compiles-update-other-type
+        code:
+          rust: |
+            struct Grid {
+                rows: u32,
+                cols: u32,
+            }
+
+            fn main() {
+                let big = Grid { rows: 3, cols: 4 };
+                let dup = Grid { ..big };
+                println!("{}", big.rows + dup.cols);
+            }
+          verify: run
+          expectStdout: "7\n"
+        answer: true
+        explanation: "`Grid { ..big }` copies every field from `big`. Both fields are `u32`, which is `Copy`, so `big` stays usable."
+        concepts: [struct.update, own.copy]

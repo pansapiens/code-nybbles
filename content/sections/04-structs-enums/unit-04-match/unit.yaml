@@ -1,0 +1,18 @@
+id: structs-enums.match
+title: match & Control Flow
+description: Take enums apart with match, if let, while let, let else and matches!.
+colour: rust
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch06-02-match.html
+sources:
+  - name: The Rust Programming Language, ch. 6.2-6.3
+    url: https://doc.rust-lang.org/book/ch06-02-match.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-match-enum
+  - level: level-02-bind
+  - chest
+  - level: level-03-if-let
+  - level: level-04-matches
+  - checkpoint: checkpoint-match

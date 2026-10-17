@@ -1,0 +1,368 @@
+id: structs-enums.patterns.checkpoint
+title: "Checkpoint: Structs, Enums & Pattern Matching"
+icon: flag
+concepts: []
+reviewConcepts:
+  - pattern.destructure
+  - pattern.guards
+  - pattern.at
+  - pattern.refutability
+  - pattern.params
+  - struct.define
+  - struct.update
+  - struct.tuple
+  - derive.debug
+  - method.self
+  - method.associated
+  - enum.data
+  - option.basics
+  - option.type-safety
+  - option.methods
+  - match.enum
+  - match.exhaustive
+  - err.E0004
+  - match.let-else
+  - macro.matches
+  - own.move
+  - err.E0382
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-update-destructure
+        code:
+          rust: |
+            struct Mode { size: u32, dark: bool }
+
+            let day = Mode { size: 9, dark: false };
+            let night = Mode { dark: true, ..day };
+            let Mode { size, dark } = night;
+            println!("{size} {dark}");
+          verify: run
+        options:
+          - { id: a, text: "9 true" }
+          - { id: b, text: "9 false", why: "`dark: true` is set directly. `..day` only fills in the fields you didn't list." }
+          - { id: c, text: "0 true", why: "`..day` copies `size` from `day`, which is 9." }
+        answer: a
+        explanation: "`night` takes `size` from `day` and its own `dark: true`. The pattern then takes `night` apart."
+        concepts: [struct.update, pattern.destructure]
+
+      - type: compiles
+        id: compiles-mut-self
+        code:
+          rust: |
+            struct Counter { count: u32 }
+
+            impl Counter {
+                fn bump(&mut self) {
+                    self.count += 1;
+                }
+            }
+
+            fn main() {
+                let c = Counter { count: 0 };
+                c.bump();
+                println!("{}", c.count);
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0596: cannot borrow `c` as mutable, as it is not declared as mutable" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned to `c` directly. The method needs a `&mut` borrow of it." }
+            - { id: c, text: "E0382: borrow of moved value", why: "`&mut self` borrows `c`; it doesn't move it." }
+          answer: a
+        explanation: "A `&mut self` method needs a mutable borrow, which needs `let mut c`."
+        concepts: [method.self]
+
+      - type: decode-error
+        id: decode-coin
+        prompt: What's the best fix?
+        code:
+          rust: |
+            enum Coin { Penny, Nickel, Dime }
+
+            fn value(c: Coin) -> u32 {
+                match c {
+                    Coin::Penny => 1,
+                    Coin::Nickel => 5,
+                }
+            }
+
+            fn main() {
+                println!("{}", value(Coin::Dime));
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "Add an arm `Coin::Dime => 10,`" }
+          - { id: b, text: "Add `else => 10,` at the end", why: "`match` has no `else`. The catch-all pattern is `_`, but naming `Dime` is clearer." }
+          - { id: c, text: "Change `match` to `if let`", why: "An `if let` without `else` can't give a value for every coin, so the function still has nothing to return." }
+        answer: a
+        explanation: "A `match` must cover every variant. The compiler names the missing one: `Coin::Dime`."
+        concepts: [match.exhaustive, err.E0004]
+
+      - type: predict-output
+        id: predict-half
+        code:
+          rust: |
+            fn half(n: u32) -> Option<u32> {
+                if n % 2 == 0 {
+                    Some(n / 2)
+                } else {
+                    None
+                }
+            }
+
+            fn main() {
+                let a = half(10).unwrap_or(0);
+                let b = half(7).unwrap_or(0);
+                println!("{a} {b}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "5 0" }
+          - { id: b, text: "5 3", why: "7 is odd, so `half` returns `None`, and `unwrap_or(0)` gives 0." }
+          - { id: c, text: "5 None", why: "`unwrap_or` always gives a plain `u32`, never an `Option`." }
+        answer: a
+        explanation: "`unwrap_or(0)` takes the value out of a `Some`, or uses 0 for `None`."
+        concepts: [option.methods]
+
+      - type: fill-tokens
+        id: fill-rect
+        prompt: "Fill the blanks so the program prints `9`"
+        code:
+          rust: |
+            struct Rect { w: u32, h: u32 }
+
+            impl Rect {
+                fn square(size: u32) -> ___1___ {
+                    Rect { w: size, h: size }
+                }
+                fn area(___2___) -> u32 {
+                    self.w * self.h
+                }
+            }
+
+            fn main() {
+                let r = Rect::square(3);
+                println!("{}", r.area());
+            }
+          verify: run
+          expectStdout: "9\n"
+        blanks:
+          "1": { answer: ["Self", "Rect"] }
+          "2": { answer: ["&self"] }
+        bank: ["Self", "&self", "&mut self", "u32", "Option"]
+        explanation: "`square` is an associated function that returns a new `Self` (the `Rect`). `area` only reads the fields, so it takes `&self`."
+        concepts: [method.associated, method.self]
+
+      - type: spot-bug
+        id: spot-missing-self
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            struct Timer { secs: u32 }
+
+            impl Timer {
+                fn minutes() -> u32 {
+                    self.secs / 60
+                }
+            }
+
+            fn main() {
+                let t = Timer { secs: 150 };
+                println!("{}", t.minutes());
+            }
+          verify: compile-fail
+          expectErrors: [E0424]
+        answer: 4
+        explanation: "`minutes` has no `self` parameter, so line 5 can't use `self` and line 11 can't call it as a method. Write `fn minutes(&self) -> u32`."
+        concepts: [method.self]
+
+      - type: mcq
+        id: mcq-matches
+        prompt: "`grade` is `'C'`. What does `matches!(grade, 'A' | 'B')` give?"
+        options:
+          - { id: a, code: "false" }
+          - { id: b, code: "true", why: "`'C'` doesn't match `'A' | 'B'`." }
+          - { id: c, code: "None", why: "`matches!` always gives a `bool`." }
+        answer: a
+        explanation: "`matches!` tests a value against a pattern and gives `true` or `false`. Here the pattern doesn't match."
+        concepts: [macro.matches, pattern.guards]
+
+      - type: predict-output
+        id: predict-report
+        code:
+          rust: |
+            enum Report {
+                Temp(i32),
+                Wind(u32),
+            }
+
+            let r = Report::Wind(45);
+            let alert = match r {
+                Report::Temp(t) if t > 35 => "heat",
+                Report::Wind(k) if k > 60 => "gale",
+                Report::Wind(30..=60) => "windy",
+                _ => "calm",
+            };
+            println!("{alert}");
+          verify: run
+        options:
+          - { id: a, text: "windy" }
+          - { id: b, text: "gale", why: "The guard `k > 60` is false for 45, so that arm is skipped." }
+          - { id: c, text: "calm", why: "45 is inside `30..=60`, so the third arm matches before `_`." }
+        answer: a
+        explanation: "The `Wind` arm with a guard fails, then `Report::Wind(30..=60)` matches 45."
+        concepts: [pattern.guards, enum.data]
+
+      - type: compiles
+        id: compiles-into-owner
+        code:
+          rust: |
+            struct Ticket { id: u32, owner: String }
+            impl Ticket {
+                fn into_owner(self) -> String {
+                    self.owner
+                }
+            }
+
+            fn main() {
+                let t = Ticket {
+                    id: 7,
+                    owner: String::from("Lee"),
+                };
+                let name = t.into_owner();
+                println!("{} {name}", t.id);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `t`" }
+            - { id: b, text: "E0596: cannot borrow `t` as mutable", why: "Nothing needs a mutable borrow. `self` takes ownership." }
+            - { id: c, text: "E0599: no method named `into_owner`", why: "The method exists. Calling it moves `t`." }
+          answer: a
+        explanation: "`into_owner` takes `self` by value, so the call moves `t` into it. Afterwards even the `Copy` field `t.id` can't be read through `t`."
+        concepts: [method.self, own.move, err.E0382]
+
+      - type: decode-error
+        id: decode-option-add
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let bonus: Option<i32> = Some(3);
+                let total = 5 + bonus;
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "An `Option<i32>` isn't an `i32`. Get the number out first, for example with `match` or `unwrap_or`." }
+          - { id: b, text: "`5` should be written `Some(5)`", why: "Adding two `Option`s doesn't work either. `+` needs plain numbers." }
+          - { id: c, text: "`bonus` needs to be `mut`", why: "Nothing changes `bonus`. The problem is its type." }
+        answer: a
+        explanation: "`+` isn't defined between `i32` and `Option<i32>`. Rust makes you decide what to do about `None` before you can add."
+        concepts: [option.type-safety]
+
+      - type: fill-tokens
+        id: fill-let-else-flag
+        prompt: "Fill the blanks so the function prints `level 3` for `Some(3)`"
+        code:
+          rust: |
+            fn show(level: Option<u8>) {
+                let ___1___(n) = level ___2___ {
+                    println!("no level");
+                    return;
+                };
+                println!("level {n}");
+            }
+
+            fn main() {
+                show(Some(3));
+            }
+          verify: run
+          expectStdout: "level 3\n"
+        blanks:
+          "1": { answer: ["Some"] }
+          "2": { answer: ["else"] }
+        bank: ["Some", "None", "else", "if", "match", "Option"]
+        explanation: "`let Some(n) = level else { ... };` binds `n` for the rest of the function, or prints and returns when `level` is `None`."
+        concepts: [match.let-else, pattern.refutability]
+
+      - type: parsons
+        id: parsons-flip
+        prompt: "Arrange the lines into a `flip` method, so `Dir::Left.flip()` gives `Right`"
+        lines:
+          - { id: l1, text: "impl Dir {" }
+          - { id: l2, text: "    fn flip(&self) -> Dir {" }
+          - { id: l3, text: "        match self {" }
+          - { id: l4, text: "            Dir::Left => Dir::Right," }
+          - { id: l5, text: "            Dir::Right => Dir::Left," }
+          - { id: l6, text: "        }" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    fn flip() -> Dir {" }
+          - { id: d2, text: "            Dir::Left -> Dir::Right," }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7, l8]
+        verify:
+          harness: |
+            #[derive(Debug)]
+            enum Dir { Left, Right }
+            {{solution}}
+            fn main() {
+                println!("{:?}", Dir::Left.flip());
+            }
+          mode: run
+          expectStdout: "Right\n"
+        explanation: "A method takes `&self`, and each `match` arm uses `=>`. The two arms can go in either order."
+        concepts: [method.self, match.enum]
+
+      - type: true-false
+        id: tf-newtypes
+        prompt: "With `struct Celsius(f64);` and `struct Fahrenheit(f64);`, you can't pass a `Celsius` where a `Fahrenheit` is expected."
+        answer: true
+        explanation: "Each tuple struct is its own type, even with the same field types inside. Mixing them up is E0308."
+        concepts: [struct.tuple]
+
+      - type: predict-output
+        id: predict-debug-variant
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Shape {
+                Circle(f64),
+                Rect { w: u32, h: u32 },
+            }
+
+            let s = Shape::Rect { w: 2, h: 3 };
+            println!("{s:?}");
+          verify: run
+        options:
+          - { id: a, text: "Rect { w: 2, h: 3 }" }
+          - { id: b, text: "Shape::Rect { w: 2, h: 3 }", why: "Debug prints the variant's name without the enum's name in front." }
+          - { id: c, text: "Rect(2, 3)", why: "A struct-like variant prints with its field names, like a struct." }
+        answer: a
+        explanation: "Derived Debug output for a struct-like variant looks like a struct: the variant name, then the fields in braces."
+        concepts: [derive.debug, enum.data]
+
+      - type: mcq
+        id: mcq-at-field
+        prompt: "Which arm matches a `Point` whose `x` is 1 to 5, and keeps that `x` as `px`?"
+        options:
+          - { id: a, code: "Point { x: px @ 1..=5, .. } =>" }
+          - { id: b, code: "Point { px @ x: 1..=5, .. } =>", why: "The field name comes first, then `:`, then the pattern for that field." }
+          - { id: c, code: "Point { x: 1..=5 @ px, .. } =>", why: "The name goes before `@`, and the pattern after it." }
+          - { id: d, code: "Point { x: 1..=5, .. } if px =>", why: "Nothing binds `px` here, and a guard needs a `bool` condition." }
+        answer: a
+        explanation: "`x: px @ 1..=5` reads the `x` field, tests it against the range and binds it to `px`."
+        concepts: [pattern.at, pattern.destructure]

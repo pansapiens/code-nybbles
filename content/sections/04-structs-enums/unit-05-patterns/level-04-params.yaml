@@ -1,0 +1,551 @@
+id: structs-enums.patterns.params
+title: Patterns in parameters and loops
+icon: brackets
+concepts: [pattern.params]
+reviewConcepts: [pattern.destructure, pattern.refutability, fn.params, fn.return, borrow.shared, own.iter-ref, own.move, err.E0382, ctrl.for, practice.first-word]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-param-pattern
+        title: Parameters are patterns
+        markdown: |
+          **A function parameter is a pattern too.** Usually it's a plain name like `x: i32`, but it can take a tuple apart as the argument arrives. The pattern goes before the `:`, and the type after it.
+        code:
+          rust: |
+            fn print_point((x, y): (i32, i32)) {
+                println!("x = {x}, y = {y}");
+            }
+
+            fn main() {
+                print_point((3, 5));
+            }
+          verify: run
+          expectStdout: "x = 3, y = 5\n"
+        concepts: [pattern.params]
+
+      - type: predict-output
+        id: predict-gap
+        code:
+          rust: |
+            fn gap((from, to): (i32, i32)) -> i32 {
+                to - from
+            }
+
+            fn main() {
+                println!("{}", gap((10, 25)));
+            }
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "-15", why: "`from` gets the first item (10) and `to` the second (25), so `to - from` is 15." }
+          - { id: c, text: "35", why: "The function subtracts: `to - from`." }
+        answer: a
+        explanation: "The pattern `(from, to)` takes the tuple apart by position as `gap` is called."
+        concepts: [pattern.params]
+
+      - type: mcq
+        id: mcq-param-type
+        prompt: "How many parameters does `fn show((x, y): (i32, i32))` have?"
+        options:
+          - { id: a, text: "One: a tuple, taken apart into `x` and `y`" }
+          - { id: b, text: "Two: `x` and `y`", why: "There's one parameter of type `(i32, i32)`. You call it as `show((1, 2))`, not `show(1, 2)`." }
+          - { id: c, text: "None, because patterns replace parameters", why: "The pattern is how this one parameter is written." }
+        answer: a
+        explanation: "The parameter's type is `(i32, i32)`. The pattern `(x, y)` names its two parts."
+        concepts: [pattern.params]
+
+      - type: compiles
+        id: compiles-two-args
+        code:
+          rust: |
+            fn show((x, y): (i32, i32)) {
+                println!("{x} {y}");
+            }
+
+            fn main() {
+                show(1, 2);
+            }
+          verify: compile-fail
+          expectErrors: [E0061]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0061: function takes 1 argument but 2 arguments were supplied" }
+            - { id: b, text: "E0005: refutable pattern in function argument", why: "A tuple pattern can't fail. The problem is the call." }
+            - { id: c, text: "E0308: mismatched types", why: "The compiler reports the wrong number of arguments first." }
+          answer: a
+        explanation: "`show` takes one tuple. Call it as `show((1, 2))`, with the tuple's own brackets inside the call's brackets."
+        concepts: [pattern.params, fn.params]
+
+      - type: concept
+        id: concept-ref-param
+        title: Taking apart a reference
+        markdown: |
+          **`&(x, y)` takes apart a reference to a tuple.** The `&` in the pattern matches the `&` in the type, so `x` and `y` are plain `i32` copies. The caller only lends the tuple.
+        code:
+          rust: |
+            fn show(&(x, y): &(i32, i32)) {
+                println!("({x}, {y})");
+            }
+
+            fn main() {
+                let corner = (2, 8);
+                show(&corner);
+                println!("{corner:?}");
+            }
+          verify: run
+          expectStdout: "(2, 8)\n(2, 8)\n"
+        concepts: [pattern.params, borrow.shared]
+
+      - type: true-false
+        id: tf-ref-copy
+        prompt: "In `fn show(&(x, y): &(i32, i32))`, `x` has type `&i32`."
+        answer: false
+        explanation: "The `&` in the pattern strips the reference, so `x` is an `i32`. That only works because `i32` is `Copy`."
+        concepts: [pattern.params]
+
+      - type: concept
+        id: concept-for-pattern
+        title: Patterns in for loops
+        markdown: |
+          **The part after `for` is a pattern.** From the `first_word` recipe: `.iter().enumerate()` gives pairs of (position, reference to item), so `(i, name)` takes each pair apart.
+        code:
+          rust: |
+            let team = ["Ana", "Ben"];
+            let each = team.iter().enumerate();
+            for (i, name) in each {
+                println!("{i}: {name}");
+            }
+          verify: run
+          expectStdout: "0: Ana\n1: Ben\n"
+        concepts: [pattern.params]
+
+      - type: predict-output
+        id: predict-enumerate
+        code:
+          rust: |
+            let podium = ["Kai", "Mia", "Zoe"];
+            let each = podium.iter().enumerate();
+            for (i, name) in each {
+                println!("{i} {name}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "0 Kai\n1 Mia\n2 Zoe" }
+          - { id: b, text: "1 Kai\n2 Mia\n3 Zoe", why: "Positions from `enumerate` start at 0, like array indexes." }
+          - { id: c, text: "Kai 0\nMia 1\nZoe 2", why: "The position comes first in each pair, and the `println!` prints `i` first." }
+        answer: a
+        explanation: "Each pair is `(position, item)`, and `(i, name)` binds them in that order."
+        concepts: [pattern.params]
+
+      - type: fill-tokens
+        id: fill-for-tuple
+        prompt: "Fill the blanks so the program prints each name and score"
+        code:
+          rust: |
+            let scores = [("Ana", 7), ("Ben", 9)];
+            for (___1___, points) ___2___ scores {
+                println!("{name}: {points}");
+            }
+          verify: run
+          expectStdout: "Ana: 7\nBen: 9\n"
+        blanks:
+          "1": { answer: ["name"] }
+          "2": { answer: ["in"] }
+        bank: ["name", "in", "of", "&name", "Ana", "="]
+        explanation: "The tuple pattern `(name, points)` takes each item apart. A `for` loop is always `for pattern in values`."
+        concepts: [pattern.params]
+
+      - type: match-pairs
+        id: pairs-where-patterns
+        prompt: Match each piece of code to where its pattern sits
+        pairs:
+          - ["let (a, b) = pair;", "let statement"]
+          - ["fn f((a, b): (i32, i32))", "function parameter"]
+          - ["for (i, x) in each", "for loop"]
+          - ["Some(n) => n,", "match arm"]
+          - ["if let Some(n) = opt", "if let"]
+        explanation: "Patterns appear in all of these places. The first three need irrefutable patterns."
+        concepts: [pattern.params, pattern.refutability]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-flip
+        code:
+          rust: |
+            struct Pair { a: i32, b: i32 }
+
+            fn flip(Pair { a, b }: Pair) -> Pair {
+                Pair { a: b, b: a }
+            }
+
+            fn main() {
+                let p = flip(Pair { a: 1, b: 9 });
+                println!("{} {}", p.a, p.b);
+            }
+          verify: run
+        options:
+          - { id: a, text: "9 1" }
+          - { id: b, text: "1 9", why: "`flip` builds a new `Pair` with `a: b` and `b: a`, swapping them." }
+        answer: a
+        explanation: "The parameter pattern binds `a` to 1 and `b` to 9. The new pair has `a` 9 and `b` 1."
+        concepts: [pattern.params, pattern.destructure]
+
+      - type: compiles
+        id: compiles-refutable-param
+        code:
+          rust: |
+            fn double(Some(n): Option<i32>) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                println!("{}", double(Some(4)));
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0005: refutable pattern in function argument" }
+            - { id: b, text: "E0004: non-exhaustive patterns", why: "E0004 is for `match`. A parameter pattern that can fail is E0005, like a `let`." }
+            - { id: c, text: "E0061: wrong number of arguments", why: "There's one parameter and one argument." }
+          answer: a
+        explanation: "Any caller could pass `None`, and a parameter has no way to handle that. Take `n: Option<i32>` and `match` on it inside."
+        concepts: [pattern.params, pattern.refutability]
+
+      - type: mcq
+        id: mcq-for-ref-type
+        prompt: "`temps` is `[i32; 3]`. In `for &t in temps.iter()`, what's the type of `t`?"
+        options:
+          - { id: a, code: "i32" }
+          - { id: b, code: "&i32", why: "Each item is a `&i32`, but the `&` in the pattern matches that `&` and strips it." }
+          - { id: c, code: "&&i32", why: "The pattern removes a `&`; it never adds one." }
+        answer: a
+        explanation: "`.iter()` gives `&i32` items. The pattern `&t` matches the reference and copies the `i32` out, like `&item` in `first_word`."
+        concepts: [pattern.params, own.iter-ref]
+
+      - type: decode-error
+        id: decode-param-ref
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn show(&(x, y): (i32, i32)) {
+                println!("{x} {y}");
+            }
+
+            fn main() {
+                show((1, 2));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Remove the `&` from the pattern: `(x, y): (i32, i32)`" }
+          - { id: b, text: "Write `&mut (x, y)` instead", why: "The type still isn't a reference, so a `&mut` pattern doesn't match it either." }
+          - { id: c, text: "Rename `x` and `y`", why: "The names are fine. The `&` in the pattern expects a reference, but the type is a plain tuple." }
+        answer: a
+        explanation: "A `&` in the pattern only matches a reference type. Either drop it, or change the type to `&(i32, i32)` and call `show(&(1, 2))`."
+        concepts: [pattern.params]
+
+      - type: fill-tokens
+        id: fill-enumerate-s
+        prompt: "Fill the blanks so the program prints `s at 2`"
+        code:
+          rust: |
+            let bytes = "rust".as_bytes();
+            let each = bytes.iter().___1___();
+            for (___2___, &b) in each {
+                if b == b's' {
+                    println!("s at {i}");
+                }
+            }
+          verify: run
+          expectStdout: "s at 2\n"
+        blanks:
+          "1": { answer: ["enumerate"] }
+          "2": { answer: ["i"] }
+        bank: ["enumerate", "iter", "len", "i", "&i", "b"]
+        explanation: "`enumerate` pairs each byte with its position, and `(i, &b)` takes the pair apart: `i` is the position, `b` the byte."
+        concepts: [pattern.params, practice.first-word]
+
+      - type: spot-bug
+        id: spot-three-parts
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let stock = [(3, 'a'), (5, 'b')];
+                for (count, item, price) in stock {
+                    println!("{item}: {count}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 3
+        explanation: "Each item is a pair `(i32, char)`, but the pattern has three parts, which is E0308. Write `for (count, item) in stock`."
+        concepts: [pattern.params]
+
+      - type: true-false
+        id: tf-any-irrefutable
+        prompt: "A function parameter can use any pattern, as long as the pattern can't fail."
+        answer: true
+        explanation: "Tuples, structs, arrays, `&` and `_` all work in parameters. Refutable ones like `Some(n)` are E0005."
+        concepts: [pattern.params, pattern.refutability]
+
+      - type: predict-output
+        id: predict-add-pairs
+        code:
+          rust: |
+            fn add(
+                (a, b): (i32, i32),
+                (c, d): (i32, i32),
+            ) -> (i32, i32) {
+                (a + c, b + d)
+            }
+
+            fn main() {
+                let pos = add((1, 2), (10, 20));
+                println!("{pos:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "(11, 22)" }
+          - { id: b, text: "(3, 30)", why: "`(a, b)` is the first argument and `(c, d)` the second, so `a + c` is 1 + 10." }
+          - { id: c, text: "33", why: "The function returns a tuple of two sums." }
+        answer: a
+        explanation: "Each parameter has its own pattern. `a` is 1, `b` is 2, `c` is 10 and `d` is 20."
+        concepts: [pattern.params]
+
+      - type: mcq
+        id: mcq-ignore-param
+        prompt: "Which parameter takes an `i32` and ignores it, with no unused-variable warning?"
+        options:
+          - { id: a, code: "_: i32" }
+          - { id: b, code: "..: i32", why: "`..` skips the remaining parts of a tuple or struct. It can't be a whole parameter." }
+          - { id: c, code: "i32", why: "A parameter needs a pattern and a type, separated by `:`." }
+        answer: a
+        explanation: "`_` is a pattern that matches anything and binds nothing, so it works as a parameter too."
+        concepts: [pattern.params]
+
+      - type: predict-output
+        id: predict-cart
+        code:
+          rust: |
+            let cart = [("tea", 2), ("milk", 1)];
+            let mut total = 0;
+            for (_, qty) in cart {
+                total += qty;
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "The loop runs for both items, adding each `qty`." }
+          - { id: c, text: "tea milk", why: "`_` ignores the names; only `qty` is used." }
+        answer: a
+        explanation: "`(_, qty)` skips the name and binds the quantity: 2 + 1 = 3."
+        concepts: [pattern.params]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-best-lap
+        prompt: "Arrange the lines so the program prints `lap 1: 58s`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let laps = [62, 58, 60];" }
+          - { id: l3, text: "    let mut best = (0, laps[0]);" }
+          - { id: l4, text: "    for (i, &t) in laps.iter().enumerate() {" }
+          - { id: l5, text: "        if t < best.1 {" }
+          - { id: l6, text: "            best = (i, t);" }
+          - { id: l7, text: "        }" }
+          - { id: l8, text: "    }" }
+          - { id: l9, text: "    let (lap, time) = best;" }
+          - { id: l10, text: '    println!("lap {lap}: {time}s");' }
+          - { id: l11, text: "}" }
+        distractors:
+          - { id: d1, text: "    for (i, t) in laps.iter() {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11]
+        verify:
+          mode: run
+          expectStdout: "lap 1: 58s\n"
+        explanation: "The loop's pattern `(i, &t)` takes apart each pair from `enumerate`. After the loop, `let (lap, time)` takes apart the best pair."
+        concepts: [pattern.params, pattern.destructure]
+
+      - type: predict-output
+        id: tiles-sum-refs
+        prompt: Build the output
+        code:
+          rust: |
+            fn sum(&(a, b): &(i32, i32)) -> i32 {
+                a + b
+            }
+
+            fn main() {
+                let pairs = [(1, 2), (3, 4)];
+                for p in &pairs {
+                    print!("{} ", sum(p));
+                }
+            }
+          verify: run
+        tiles: ["3", "7", "1", "2", "10"]
+        answer: "3 7"
+        explanation: "Looping over `&pairs` gives a `&(i32, i32)` each time, which is what `sum` expects. Its pattern copies the two numbers out."
+        concepts: [pattern.params, own.iter-ref]
+
+      - type: compiles
+        id: compiles-param-move
+        code:
+          rust: |
+            struct Player { name: String, age: u32 }
+
+            fn log(Player { name, age }: Player) {
+                println!("{name}: {age}");
+            }
+
+            fn main() {
+                let p = Player {
+                    name: String::from("Ana"),
+                    age: 7,
+                };
+                log(p);
+                println!("{}", p.age);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `p`" }
+            - { id: b, text: "E0005: refutable pattern in function argument", why: "A struct pattern can't fail." }
+            - { id: c, text: "E0027: pattern does not mention a field", why: "The pattern lists both fields." }
+          answer: a
+        explanation: "Calling `log(p)` moves the whole `Player` into the function, so `p` can't be used afterwards, even its `Copy` field. Read `p.age` before the call, or make `log` borrow the player instead."
+        concepts: [pattern.params, own.move, err.E0382]
+
+      - type: decode-error
+        id: decode-for-some
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let moves = [Some((1, 2)), None];
+                for Some((x, y)) in moves {
+                    println!("{x},{y}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        options:
+          - { id: a, text: "Some items might be `None`, so `Some((x, y))` can fail. Use `if let` inside the loop." }
+          - { id: b, text: "`for` loops can't take tuples apart", why: "`for (x, y) in ...` is fine. This pattern is refutable because of `Some`." }
+          - { id: c, text: "The pattern needs a `&`: `&Some((x, y))`", why: "Looping over the array by value gives plain `Option`s, and a `&` wouldn't make the pattern irrefutable anyway." }
+        answer: a
+        explanation: "A `for` loop's pattern must match every item. `None` doesn't match `Some((x, y))`, so it's E0005."
+        concepts: [pattern.params, pattern.refutability]
+
+      - type: fill-tokens
+        id: fill-span
+        prompt: "Fill the blanks so the program prints `7`"
+        code:
+          rust: |
+            fn span(___1___(lo, hi): &(i32, i32)) -> i32 {
+                hi - ___2___
+            }
+
+            fn main() {
+                let range = (3, 10);
+                println!("{}", span(&range));
+            }
+          verify: run
+          expectStdout: "7\n"
+        blanks:
+          "1": { answer: ["&"] }
+          "2": { answer: ["lo"] }
+        bank: ["&", "*", "&mut", "lo", "hi", "range"]
+        explanation: "The `&` in the pattern matches the `&` in the type, so `lo` and `hi` are plain `i32`s: 10 - 3 = 7."
+        concepts: [pattern.params]
+
+      - type: spot-bug
+        id: spot-enumerate-order
+        prompt: "This should print `0: Ana` and `1: Ben`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let names = ["Ana", "Ben"];
+                let each = names.iter().enumerate();
+                for (name, i) in each {
+                    println!("{i}: {name}");
+                }
+            }
+          verify: run
+          expectStdout: "Ana: 0\nBen: 1\n"
+        answer: 4
+        explanation: "`enumerate` gives `(position, item)`, so the first name in the pattern gets the position. Write `for (i, name) in each`."
+        concepts: [pattern.params]
+
+      - type: mcq
+        id: mcq-area-signature
+        prompt: "`size` is a `(u32, u32)`. Which signature lets you call `area(&size)` with `w` and `h` as `u32`s?"
+        options:
+          - { id: a, code: "fn area(&(w, h): &(u32, u32)) -> u32" }
+          - { id: b, code: "fn area(&(w, h): (u32, u32)) -> u32", why: "The pattern has a `&` but the type doesn't, which is E0308." }
+          - { id: c, code: "fn area((w, h): (u32, u32)) -> u32", why: "This takes the tuple itself, so `area(&size)` would be E0308. You'd call `area(size)`." }
+          - { id: d, code: "fn area(&w, &h: &(u32, u32)) -> u32", why: "That's two parameters, and the first has no type. The tuple pattern needs its own brackets." }
+        answer: a
+        explanation: "The type `&(u32, u32)` accepts `&size`, and the pattern `&(w, h)` matches it, copying out two `u32`s."
+        concepts: [pattern.params]
+
+      - type: true-false
+        id: tf-for-some-always
+        prompt: "`for Some(x) in readings` is a compile error when `readings` holds `Option`s, even if none of them is `None`."
+        code:
+          rust: |
+            fn main() {
+                let readings = [Some(1), Some(2)];
+                for Some(x) in readings {
+                    println!("{x}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        answer: true
+        explanation: "The compiler checks the pattern against the type `Option<i32>`, not the values in the array. That type includes `None`."
+        concepts: [pattern.params, pattern.refutability]
+
+      - type: predict-output
+        id: predict-middle
+        code:
+          rust: |
+            fn mid(&[_, m, _]: &[u32; 3]) -> u32 {
+                m
+            }
+
+            fn main() {
+                let dice = [2, 5, 6];
+                println!("{}", mid(&dice));
+            }
+          verify: run
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "2", why: "The first `_` skips 2. `m` is in the second position." }
+          - { id: c, text: "6", why: "The last `_` skips 6. `m` is in the middle." }
+        answer: a
+        explanation: "Array patterns work in parameters too. `&[_, m, _]` ignores the first and last dice and binds the middle one."
+        concepts: [pattern.params]
+
+      - type: match-pairs
+        id: pairs-param-calls
+        prompt: Match each function to a call that fits it
+        pairs:
+          - ["fn f(x: i32)", "f(1)"]
+          - ["fn f((a, b): (i32, i32))", "f((1, 2))"]
+          - ["fn f(&(a, b): &(i32, i32))", "f(&(1, 2))"]
+          - ["fn f(a: i32, b: i32)", "f(1, 2)"]
+        explanation: "The pattern doesn't change how you call a function. Only the parameter's type does."
+        concepts: [pattern.params]

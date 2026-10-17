@@ -1,0 +1,723 @@
+id: structs-enums.structs.ownership
+title: Who owns the fields?
+icon: key
+concepts: [struct.ownership]
+reviewConcepts: [struct.define, struct.update, struct.tuple, derive.debug, own.move, own.copy, own.clone, own.scope-drop, own.fn-move, own.fn-return, borrow.shared, borrow.mut, borrow.nll, err.E0382, err.E0106, match.intro]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-fields-own
+        title: A struct owns its fields
+        markdown: |
+          **A struct owns its fields.** A `String` field owns its text on the heap, so the struct that holds it owns that text too.
+
+          When the struct goes out of scope, every field is dropped with it and the text is freed.
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let user = User {
+                    name: String::from("Kim"),
+                    age: 30,
+                };
+                println!("{}", user.name);
+                println!("{}", user.age);
+            } // user dropped: "Kim" freed
+          verify: run
+          expectStdout: "Kim\n30\n"
+        diagram:
+          caption: "Before the closing `}`: `user.name` owns the heap text"
+          frames:
+            - name: main
+              vars:
+                - { name: user.name, points: h1 }
+                - { name: user.age, value: "30" }
+          heap:
+            - { id: h1, value: '"Kim"' }
+        concepts: [struct.ownership]
+
+      - type: concept
+        id: concept-string-not-str
+        title: String, not &str
+        markdown: |
+          **For now, give text fields the type `String`, not `&str`.** A `&str` field would borrow text owned by something else.
+
+          Rust then needs to know how long that borrow lasts, which uses *lifetimes*, a later topic. Without one you get E0106, the error you saw for dangling references.
+        code:
+          rust: |
+            struct User {
+                name: &str, // error[E0106]
+                age: u32,
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        concepts: [struct.ownership, err.E0106]
+
+      - type: compiles
+        id: compiles-str-field
+        code:
+          rust: |
+            struct Book {
+                title: &str,
+                pages: u32,
+            }
+
+            fn main() {
+                let b = Book {
+                    title: "Emma",
+                    pages: 474,
+                };
+                println!("{}", b.title);
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0106: missing lifetime specifier" }
+            - { id: b, text: "E0308: mismatched types", why: "`\"Emma\"` is a `&str`, which matches the field. The problem is the field's type itself." }
+            - { id: c, text: "E0382: use of moved value", why: "Nothing is moved. The error is in the struct definition, on line 2." }
+          answer: a
+        explanation: "A reference field needs a lifetime, which you'll meet later. Using `title: String` avoids the problem."
+        concepts: [struct.ownership, err.E0106]
+
+      - type: true-false
+        id: tf-dropped-together
+        prompt: "When a struct goes out of scope, the `String`s in its fields are freed too."
+        answer: true
+        explanation: "The struct owns its fields, so dropping the struct drops each field. A `String` field frees its heap text then."
+        concepts: [struct.ownership, own.scope-drop]
+
+      - type: compiles
+        id: compiles-whole-move
+        code:
+          rust: |
+            struct Note {
+                text: String,
+            }
+
+            fn main() {
+                let draft = Note {
+                    text: String::from("buy milk"),
+                };
+                let saved = draft;
+                println!("{}", draft.text);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `draft`" }
+            - { id: b, text: "E0609: no field `text` on type `Note`", why: "`Note` does have a `text` field. The problem is that `draft` moved." }
+            - { id: c, text: "E0106: missing lifetime specifier", why: "The field is a `String`, so no lifetime is needed." }
+          answer: a
+        explanation: "`let saved = draft;` moves the whole `Note`, `String` and all, into `saved`. `draft` can't be used after that."
+        concepts: [struct.ownership, own.move, err.E0382]
+
+      - type: concept
+        id: concept-partial-move
+        title: Moving a field out
+        markdown: |
+          **You can move one field out of a struct.** `let name = user.name;` moves the `String` into `name`. This is a *partial move*.
+
+          Fields you didn't move, like `user.age`, are still usable. `user` as a whole isn't.
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let user = User {
+                    name: String::from("Kim"),
+                    age: 30,
+                };
+                let name = user.name;
+                println!("{name} is {}", user.age);
+            }
+          verify: run
+          expectStdout: "Kim is 30\n"
+        diagram:
+          caption: "After `let name = user.name;`"
+          frames:
+            - name: main
+              vars:
+                - { name: user.name, moved: true }
+                - { name: user.age, value: "30" }
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Kim"' }
+        concepts: [struct.ownership]
+
+      - type: predict-output
+        id: predict-parcel
+        code:
+          rust: |
+            struct Parcel {
+                label: String,
+                grams: u32,
+            }
+
+            fn main() {
+                let p = Parcel {
+                    label: String::from("Books"),
+                    grams: 900,
+                };
+                let label = p.label;
+                println!("{label}: {}g", p.grams);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Books: 900g" }
+          - { id: b, text: ": 900g", why: "The text moved into `label`, and `label` is what's printed." }
+          - { id: c, text: "Books: 0g", why: "Moving `label` out doesn't touch `grams`. It's still 900." }
+        answer: a
+        explanation: "`label` now owns `Books`. `p.grams` wasn't moved, so it can still be read."
+        concepts: [struct.ownership]
+
+      - type: mcq
+        id: mcq-after-partial
+        prompt: "`user` has fields `name: String` and `age: u32`. After `let name = user.name;`, which line still compiles?"
+        options:
+          - { id: a, code: "println!(\"{}\", user.age);" }
+          - { id: b, code: "println!(\"{}\", user.name);", why: "`user.name` moved into `name`, so it can't be used." }
+          - { id: c, code: "let other = user;", why: "Part of `user` has moved, so `user` can't be moved or used as a whole." }
+        answer: a
+        explanation: "Only `user.name` moved. Other fields are still usable one at a time."
+        concepts: [struct.ownership]
+
+      - type: mcq
+        id: mcq-why-string
+        prompt: "Why does this course give text fields the type `String` rather than `&str` for now?"
+        options:
+          - { id: a, text: "A `&str` field borrows text, and that needs lifetime annotations, which come later" }
+          - { id: b, text: "A `&str` is slower to read than a `String`", why: "Speed isn't the reason. A reference field needs a lifetime, which hasn't been covered yet." }
+          - { id: c, text: "Structs can never hold references", why: "They can, once you add lifetimes. Until then, an owned `String` is simpler." }
+        answer: a
+        explanation: "With `String`, the struct owns its text and no lifetimes are needed."
+        concepts: [struct.ownership, err.E0106]
+
+      - type: fill-tokens
+        id: fill-pet-string
+        prompt: "Fill the blanks so the program prints `Rex`"
+        code:
+          rust: |
+            struct Pet {
+                name: ___1___,
+                age: u32,
+            }
+
+            fn main() {
+                let pet = Pet {
+                    name: String::___2___("Rex"),
+                    age: 3,
+                };
+                println!("{}", pet.name);
+            }
+          verify: run
+          expectStdout: "Rex\n"
+        blanks:
+          "1": { answer: ["String"] }
+          "2": { answer: ["from"] }
+        bank: ["String", "&str", "str", "from", "new", "to"]
+        explanation: "The field owns its text, so it's a `String`, made with `String::from`. A `&str` field would need a lifetime."
+        concepts: [struct.ownership]
+
+  - id: l2
+    exercises:
+      - type: compiles
+        id: compiles-partial-then-whole
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let user = User {
+                    name: String::from("Jo"),
+                    age: 9,
+                };
+                let name = user.name;
+                let again = user;
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: use of partially moved value: `user`" }
+            - { id: b, text: "E0609: no field `name` on type `User`", why: "`User` has a `name` field. The problem is that it was moved out." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `user` is used after part of it moved." }
+          answer: a
+        explanation: "`user.name` moved into `name`, so `user` is missing a field and can't be moved as a whole."
+        concepts: [struct.ownership, err.E0382]
+
+      - type: decode-error
+        id: decode-borrow-field
+        prompt: Which change to line 11 fixes the error without copying the text?
+        code:
+          rust: |
+            struct Player {
+                name: String,
+                score: u32,
+            }
+
+            fn main() {
+                let p = Player {
+                    name: String::from("Ana"),
+                    score: 7,
+                };
+                let winner = p.name;
+                println!("{} {}", p.name, p.score);
+                println!("{winner}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "let winner = &p.name;" }
+          - { id: b, code: "let winner = p.name.clone();", why: "That compiles, but it copies the text into a second `String`, which the question rules out." }
+          - { id: c, code: "let mut winner = p.name;", why: "`mut` doesn't stop the move. `p.name` is still moved out." }
+        answer: a
+        explanation: "`&p.name` borrows the field instead of moving it, so `p.name` is still there for line 12."
+        concepts: [struct.ownership, borrow.shared, err.E0382]
+
+      - type: compiles
+        id: compiles-borrow-then-move
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let user = User {
+                    name: String::from("Kim"),
+                    age: 30,
+                };
+                let n = &user.name;
+                println!("{n}");
+                let moved = user;
+                println!("{}", moved.age);
+            }
+          verify: run
+          expectStdout: "Kim\n30\n"
+        answer: true
+        explanation: "The borrow `n` is last used on line 12, so it has ended by line 13. Moving `user` after that is fine."
+        concepts: [struct.ownership, borrow.nll]
+
+      - type: compiles
+        id: compiles-copy-fields-still-move
+        code:
+          rust: |
+            struct Point {
+                x: i32,
+                y: i32,
+            }
+
+            fn main() {
+                let a = Point { x: 1, y: 2 };
+                let b = a;
+                println!("{} {}", a.x, b.y);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `a`" }
+            - { id: b, text: "E0609: no field `x` on type `Point`", why: "`Point` has an `x` field. The problem is that `a` has moved." }
+            - { id: c, text: "E0308: mismatched types", why: "The types match. `let b = a;` moved `a`." }
+          answer: a
+        explanation: "A struct you define isn't `Copy`, even when all its fields are. So `let b = a;` moves `a`, and `a.x` can't be read afterwards."
+        concepts: [struct.ownership, own.copy, err.E0382]
+
+      - type: spot-bug
+        id: spot-partial-report
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            struct Order {
+                item: String,
+                qty: u32,
+            }
+
+            fn main() {
+                let order = Order {
+                    item: String::from("tea"),
+                    qty: 2,
+                };
+                let item = order.item;
+                println!("{}", order.item);
+                println!("{item}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 12
+        explanation: "Line 11 moves `order.item` out, and line 12 then tries to use it (E0382). Borrowing with `&order.item` on line 11 would fix it."
+        concepts: [struct.ownership, err.E0382]
+
+      - type: true-false
+        id: tf-diagram-partial
+        prompt: "This diagram shows memory after `let title = book.title;`, where `book` has fields `title: String` and `pages: u32`."
+        diagram:
+          caption: "After `let title = book.title;`?"
+          frames:
+            - name: main
+              vars:
+                - { name: book.title, moved: true }
+                - { name: book.pages, value: "474" }
+                - { name: title, points: h1 }
+          heap:
+            - { id: h1, value: '"Emma"' }
+        answer: true
+        explanation: "The `String` moved from `book.title` to `title`; the heap text didn't move or get copied. `book.pages` is untouched."
+        concepts: [struct.ownership]
+
+      - type: predict-output
+        id: predict-wallet
+        code:
+          rust: |
+            struct Purse {
+                owner: String,
+                cents: u32,
+            }
+
+            fn dollars(w: &Purse) -> u32 {
+                w.cents / 100
+            }
+
+            fn main() {
+                let owner = String::from("Lee");
+                let w = Purse { owner, cents: 950 };
+                let d = dollars(&w);
+                println!("{d} {}", w.owner);
+            }
+          verify: run
+        options:
+          - { id: a, text: "9 Lee" }
+          - { id: b, text: "9.5 Lee", why: "`u32` division drops the remainder, so `950 / 100` is 9." }
+          - { id: c, text: "950 Lee", why: "`dollars` divides `cents` by 100 before returning it." }
+        answer: a
+        explanation: "`dollars` borrows the `Purse`, so `w` keeps its `owner` and can still print it."
+        concepts: [struct.ownership, borrow.shared]
+
+      - type: true-false
+        id: tf-update-copy-left
+        prompt: "`Pet` has fields `name: String` and `age: u32`. After `let b = Pet { age: 4, ..a };`, you can still read `a.age`."
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let name = String::from("Rex");
+                let a = Pet { name, age: 3 };
+                let b = Pet { age: 4, ..a };
+                println!("{} {}", a.age, b.name);
+            }
+          verify: run
+          expectStdout: "3 Rex\n"
+        answer: true
+        explanation: "`..a` only moved `a.name` into `b`. `a.age` was never taken, so it's still readable, even though `a` as a whole is not."
+        concepts: [struct.ownership, struct.update]
+
+      - type: predict-output
+        id: predict-clone-then-move
+        code:
+          rust: |
+            struct Song {
+                title: String,
+                plays: u32,
+            }
+
+            fn main() {
+                let s = Song {
+                    title: String::from("Yellow"),
+                    plays: 3,
+                };
+                let saved = s.title.clone();
+                let moved = s;
+                println!("{saved} {}", moved.plays);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Yellow 3" }
+          - { id: b, text: " 3", why: "`saved` is a clone with its own copy of the text, so it still holds `Yellow` after `s` moves." }
+          - { id: c, text: "Yellow 0", why: "Moving `s` into `moved` keeps every field's value." }
+        answer: a
+        explanation: "Cloning only reads `s.title`, so `s` is whole and can move into `moved`. `saved` owns its own `Yellow`."
+        concepts: [struct.ownership, own.clone]
+
+      - type: match-pairs
+        id: pairs-field-ownership
+        prompt: Match each line to what it does to `user.name`
+        pairs:
+          - ["let n = user.name;", "moves it out"]
+          - ["let n = &user.name;", "borrows it"]
+          - ["let n = user.name.clone();", "copies its text"]
+          - ["let other = user;", "moves it with the whole struct"]
+        concepts: [struct.ownership, own.clone, borrow.shared]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-birthday
+        prompt: "`struct User { name: String, age: u32 }` is already defined. Arrange the lines so the program prints `Kim 31`."
+        lines:
+          - { id: l1, text: "fn birthday(u: &mut User) {" }
+          - { id: l2, text: "    u.age += 1;" }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn main() {" }
+          - { id: l5, text: '    let name = String::from("Kim");' }
+          - { id: l6, text: "    let mut user = User { name, age: 30 };" }
+          - { id: l7, text: "    birthday(&mut user);" }
+          - { id: l8, text: '    println!("{} {}", user.name, user.age);' }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "    birthday(user);" }
+          - { id: d2, text: "    let user = User { name, age: 30 };" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        alternatives:
+          - [l4, l5, l6, l7, l8, l9, l1, l2, l3]
+        verify:
+          harness: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+            {{solution}}
+          mode: run
+          expectStdout: "Kim 31\n"
+        explanation: "`birthday` borrows `user` mutably, so `main` keeps ownership and can print it afterwards. Passing `user` itself would move it."
+        concepts: [struct.ownership, borrow.mut]
+
+      - type: fill-tokens
+        id: fill-borrow-clone
+        prompt: "Fill the blanks so the program prints `Ana Ana 7`"
+        code:
+          rust: |
+            struct Player {
+                name: String,
+                score: u32,
+            }
+
+            fn main() {
+                let p = Player {
+                    name: String::from("Ana"),
+                    score: 7,
+                };
+                let r = ___1___p.name;
+                let copy = p.name.___2___();
+                println!("{r} {copy} {}", p.score);
+            }
+          verify: run
+          expectStdout: "Ana Ana 7\n"
+        blanks:
+          "1": { answer: ["&"] }
+          "2": { answer: ["clone"] }
+        bank: ["&", "*", "mut", "clone", "copy", "move"]
+        explanation: "`&p.name` borrows the field and `.clone()` copies its text. Neither moves it, so `p` stays whole."
+        concepts: [struct.ownership, borrow.shared, own.clone]
+
+      - type: compiles
+        id: compiles-refill-field
+        code:
+          rust: |
+            struct User {
+                name: String,
+                age: u32,
+            }
+
+            fn main() {
+                let mut u = User {
+                    name: String::from("Kim"),
+                    age: 30,
+                };
+                let old = u.name;
+                u.name = String::from("Lee");
+                let moved = u;
+                println!("{old} {}", moved.name);
+            }
+          verify: run
+          expectStdout: "Kim Lee\n"
+        answer: true
+        explanation: "Line 12 gives the moved field a new `String`, so `u` is whole again and can move on line 13. It prints `Kim Lee`."
+        concepts: [struct.ownership]
+
+      - type: predict-output
+        id: predict-cart
+        code:
+          rust: |
+            struct Cart {
+                owner: String,
+                items: u32,
+            }
+
+            fn add_one(c: Cart) -> Cart {
+                Cart { items: c.items + 1, ..c }
+            }
+
+            fn main() {
+                let owner = String::from("Bo");
+                let bag = Cart { owner, items: 2 };
+                let bag = add_one(add_one(bag));
+                println!("{}", bag.items);
+            }
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "`add_one` runs twice: once inside, then again on its result." }
+          - { id: c, text: "2", why: "Each call returns a new `Cart`, and the result is stored in the new `bag`." }
+        answer: a
+        explanation: "Each `add_one` takes ownership of a `Cart` and returns one with `items + 1`, moving `owner` along with `..c`. 2 becomes 3, then 4."
+        concepts: [struct.ownership, struct.update, own.fn-return]
+
+      - type: decode-error
+        id: decode-str-field
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            struct Profile {
+                name: &str,
+            }
+
+            fn main() {
+                let p = Profile { name: "Kim" };
+                println!("{}", p.name);
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        options:
+          - { id: a, text: "Line 2: `name: String,` and line 6: `name: String::from(\"Kim\")`" }
+          - { id: b, text: "Line 2: `name: &mut str,`", why: "That's still a reference, so it still needs a lifetime (E0106)." }
+          - { id: c, text: "Line 6: `name: &\"Kim\"`", why: "The error is in the struct definition on line 2, not in the value." }
+        answer: a
+        explanation: "With a `String` field, `Profile` owns its text and needs no lifetime. The value then has to be a `String` too."
+        concepts: [struct.ownership, err.E0106]
+
+      - type: true-false
+        id: tf-copy-field
+        prompt: "`user` has fields `name: String` and `age: u32`. After `let age = user.age;`, `user` can still be used as a whole."
+        answer: true
+        explanation: "`u32` is `Copy`, so reading `user.age` copies the number. Nothing moves out of `user`."
+        concepts: [struct.ownership, own.copy]
+
+      - type: spot-bug
+        id: spot-adopt
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+            }
+
+            fn adopt(p: Pet) {
+                println!("Adopted {}", p.name);
+            }
+
+            fn main() {
+                let name = String::from("Rex");
+                let pet = Pet { name };
+                adopt(pet);
+                println!("{}", pet.name);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 13
+        explanation: "`adopt(pet)` moves the whole `Pet` into the function, so line 13 can't read `pet.name`. Taking `p: &Pet` and calling `adopt(&pet)` would fix it."
+        concepts: [struct.ownership, own.fn-move, err.E0382]
+
+      - type: mcq
+        id: mcq-diagram-wrong
+        prompt: "What's wrong with this diagram of memory after `let name = user.name;`?"
+        diagram:
+          caption: "After `let name = user.name;`?"
+          frames:
+            - name: main
+              vars:
+                - { name: user.name, points: h1 }
+                - { name: user.age, value: "30" }
+                - { name: name, points: h2 }
+          heap:
+            - { id: h1, value: '"Kim"' }
+            - { id: h2, value: '"Kim"' }
+        options:
+          - { id: a, text: "There should be one `\"Kim\"`, owned by `name`, with `user.name` shown as moved" }
+          - { id: b, text: "Nothing: moving a field copies its text", why: "A move hands over the existing heap text. Only `.clone()` makes a second copy." }
+          - { id: c, text: "`user.age` should be shown as moved too", why: "Only the field you name moves. `user.age` stays where it is." }
+        answer: a
+        explanation: "Moving a `String` transfers ownership of the same heap text. `user.name` becomes unusable and no second copy is made."
+        concepts: [struct.ownership, own.move]
+
+      - type: compiles
+        id: compiles-move-from-ref
+        code:
+          rust: |
+            struct Pet {
+                name: String,
+            }
+
+            fn take_name(p: &Pet) -> String {
+                p.name
+            }
+
+            fn main() {
+                let name = String::from("Rex");
+                let rex = Pet { name };
+                println!("{}", take_name(&rex));
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0507: cannot move out of `p.name` which is behind a shared reference" }
+            - { id: b, text: "E0382: use of moved value: `rex`", why: "`rex` is only borrowed. The problem is inside `take_name`." }
+            - { id: c, text: "E0106: missing lifetime specifier", why: "The function returns an owned `String`, so no lifetime is needed." }
+          answer: a
+        explanation: "`p` only borrows the `Pet`, so `take_name` can't move the `String` out of it. Returning `p.name.clone()` would work."
+        concepts: [struct.ownership, borrow.shared]
+
+      - type: predict-output
+        id: predict-match-qty
+        code:
+          rust: |
+            struct Order {
+                qty: u32,
+            }
+
+            fn main() {
+                let o = Order { qty: 3 };
+                let size = match o.qty {
+                    0 => "none",
+                    1..=2 => "small",
+                    _ => "large",
+                };
+                println!("{size}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "large" }
+          - { id: b, text: "small", why: "`1..=2` covers 1 and 2 only, so 3 falls through to `_`." }
+          - { id: c, text: "3", why: "The `match` turns the number into one of the three words." }
+        answer: a
+        explanation: "`o.qty` is 3, which isn't 0 or in `1..=2`, so the `_` arm gives `\"large\"`."
+        concepts: [struct.define, match.intro]

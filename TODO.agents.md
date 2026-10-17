@@ -211,6 +211,8 @@ also works. CI doesn't need either.
   - [x] Section 2 Units 2.1-2.3 (2.3 ends with the Section 2 checkpoint)
   - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
   - [x] Section 3 complete: Units 3.1-3.5 (3.5 ends with the Section 3 checkpoint), diagrams on every level
+  - [x] Section 4 written: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); not yet QA-reviewed
+  - [ ] Section 5 (briefs ready in /tmp/cn-brief/unit-5.*.md; 5.3 ends with `collections.hashmap.checkpoint`)
   - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists
     so agents only touch their own unit directory (briefs in the session log of 2026-10-17)
 - [x] Guidebooks per unit; checkpoints
@@ -218,7 +220,7 @@ also works. CI doesn't need either.
   `code-read-*.yaml` = verified `program` + `chunks` (`lines` revealed, then questions). Compiles to a one-lesson
   level with `program` and `reveals`; player shows the program above each question; 15 XP; no hearts
   - [x] Code Reads: 1.1 Ferris says hello, 1.3 Temperature converter, 2.1 Area calculator, 2.3 Collatz sequence,
-    3.2 Who owns the String?, 3.5 Swap and sum
+    3.2 Who owns the String?, 3.5 Swap and sum, 4.2 Rectangle, 4.5 Traffic lights
 - [x] (new) Memory diagrams (`diagram:` on concept/mcq/true-false): stack frames, heap boxes, pointer and reference
   arrows, moved and freed states; schema-validated targets; SVG renderer (`MemoryDiagram.vue`) with a text description
   - [ ] (new) Per-variable label (e.g. R/W/O permissions in 3.3 level 6 are in the caption for now)
@@ -235,6 +237,7 @@ also works. CI doesn't need either.
     tile items with significant spacing were converted to options mode
   - [ ] (new) Clippy-clean check for snippets (03 §5) not automated
   - [ ] Units 1.1-1.2 haven't had an independent review
+  - [ ] (new) Section 4 QA pass (qa brief in /tmp/cn-brief/qa.md)
   - [x] Section 3 reviewed by two agents: 25 fixes (moved-value claims, drop timing, E0106 vs E0515,
     E0502 vs E0506, parsons distractors that formed valid programs, follow-ups made self-contained)
   - [ ] Judgement calls (Section 3): spot-bug items that expect the root-cause line, not the line rustc reports
@@ -245,11 +248,15 @@ also works. CI doesn't need either.
   (`unconditional_panic`, `arithmetic_overflow`); now `--emit=mir`
 - [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives
 - [ ] (new) Register error-code concepts the authors wanted: E0277, E0004, E0317, E0061, E0425, E0069, E0604,
-  E0505, E0506, E0507, E0596, E0597...
+  E0505, E0506, E0507, E0596, E0597, E0063, E0560, E0594, E0609, E0618, E0369, E0005...
   (items are tagged with the nearest topic concept for now)
 - [ ] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3); some are annotated mdBook-style already
 - [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports
-- [ ] (new) Build check: a fill-tokens bank tile that would also be correct (compile each alternative)
+- [ ] (new) Build check: a fill-tokens bank tile that would also be correct (compile each alternative);
+  plain identifiers in pattern positions are the common case (4.5 agent's script: /tmp/cn45tools/alts.py)
+- [ ] (new) Width check doesn't cover parsons `lines`, mcq `options[].code` or Code Read programs
+- [ ] (new) Shared prelude for snippets (struct definitions repeated across items in Section 4)
+- [ ] (new) predict-output tiles join with spaces but the answer needs real newlines; document or normalise
 - [ ] (new) predict-output can't express "this panics"; panics are mcq + `expectPanic` for now
 - [ ] (new) Two items rely on rustc 1.98 not catching `a[a.len()]` at compile time (unit-04 level-04
   `spot-off-by-one`, checkpoint `spot-last-panic`); the build will flag them if that changes
@@ -313,3 +320,7 @@ also works. CI doesn't need either.
 - 2026-10-18: Session 3 (cont.). QA pass on Units 1.3-2.3 (22 fixes, tile assembly check). Memory diagrams.
   Section 3 by five parallel agents (paused by the API session limit overnight, then resumed). 1966 exercises,
   1446 verified snippets, strict build clean. Section 3 QA running. Next: Sections 4-5.
+- 2026-10-18: Section 4 (Units 4.1-4.5, Code Reads Rectangle and Traffic lights) by five parallel agents.
+  rustc corrections found by agents: `Option<i32> + i32` is E0369 (only `i32 + Option` is E0277); brace
+  patterns on tuple structs are E0769. 2654 exercises, 1975 verified snippets, strict build clean, tests and
+  e2e pass. Paused at the user's request. Next: Section 4 QA, then Section 5.

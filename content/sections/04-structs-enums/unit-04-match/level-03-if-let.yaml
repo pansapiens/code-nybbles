@@ -1,0 +1,580 @@
+id: structs-enums.match.if-let
+title: if let, while let and let else
+icon: filter
+concepts: [match.if-let, match.let-else]
+reviewConcepts: [match.bind, match.enum, match.exhaustive, err.E0004, option.basics, ctrl.while, fn.early-return, types.overflow, err.E0308, err.E0384]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-if-let
+        title: One pattern, one block
+        markdown: |
+          **`if let` runs a block only when a value matches one pattern.** It's a shorter `match` for when you care about one case and want to skip the rest.
+
+          The pattern goes on the left of `=`, the value on the right. Variables in the pattern exist inside the block.
+        code:
+          rust: |
+            let bonus: Option<u32> = Some(5);
+            if let Some(points) = bonus {
+                println!("bonus {points}");
+            }
+          verify: run
+          expectStdout: "bonus 5\n"
+        concepts: [match.if-let]
+
+      - type: predict-output
+        id: predict-if-let-none
+        code:
+          rust: |
+            let bonus: Option<u32> = None;
+            if let Some(points) = bonus {
+                println!("bonus {points}");
+            }
+            println!("done");
+          verify: run
+        options:
+          - { id: a, text: "done" }
+          - { id: b, text: "bonus 0\ndone", why: "`None` doesn't match `Some(points)`, so the block is skipped. Nothing turns `None` into 0." }
+          - { id: c, text: "bonus None\ndone", why: "The block only runs when the pattern matches, and `None` doesn't match `Some(points)`." }
+        answer: a
+        explanation: "With no match, `if let` skips its block, and the program carries on with the next line."
+        concepts: [match.if-let]
+
+      - type: fill-tokens
+        id: fill-if-let
+        prompt: "Fill the blanks so the program prints `7 mm`"
+        code:
+          rust: |
+            let rain: Option<u32> = Some(7);
+            if ___1___ Some(mm) ___2___ rain {
+                println!("{mm} mm");
+            }
+          verify: run
+          expectStdout: "7 mm\n"
+        blanks:
+          "1": { answer: ["let"] }
+          "2": { answer: ["="] }
+        bank: ["let", "match", "=", "==", "=>"]
+        explanation: "`if let` is followed by the pattern, then a single `=`, then the value. It isn't a comparison, so it's not `==`."
+        concepts: [match.if-let]
+
+      - type: true-false
+        id: tf-if-let-exhaustive
+        prompt: "Like `match`, `if let` fails to compile unless every variant is covered."
+        answer: false
+        explanation: "`if let` handles one pattern and skips everything else, so there's nothing to cover. That's the trade-off: the compiler can't remind you about the other cases."
+        concepts: [match.if-let]
+
+      - type: mcq
+        id: mcq-if-let-as-match
+        prompt: "Which `match` does the same as `if let Some(n) = slot { println!(\"{n}\"); }`?"
+        options:
+          - { id: a, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n    _ => (),\n}" }
+          - { id: b, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n}", why: "A `match` must be exhaustive. Without a `None` or `_` arm this is E0004." }
+          - { id: c, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n    None => println!(\"none\"),\n}", why: "This prints `none` for `None`, but the `if let` prints nothing." }
+        answer: a
+        explanation: "`if let` is a `match` with one arm you care about and a `_` arm that does nothing, written `()`."
+        concepts: [match.if-let]
+
+      - type: concept
+        id: concept-if-let-else
+        title: "if let ... else"
+        markdown: |
+          **`if let` can have an `else`.** The `else` block runs when the pattern doesn't match, the same as with a plain `if`.
+        code:
+          rust: |
+            let winner: Option<&str> = None;
+            if let Some(name) = winner {
+                println!("{name} wins");
+            } else {
+                println!("no winner yet");
+            }
+          verify: run
+          expectStdout: "no winner yet\n"
+        concepts: [match.if-let]
+
+      - type: predict-output
+        id: predict-if-let-else-some
+        code:
+          rust: |
+            let winner: Option<&str> = Some("Kim");
+            if let Some(name) = winner {
+                println!("{name} wins");
+            } else {
+                println!("no winner yet");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Kim wins" }
+          - { id: b, text: "Some(\"Kim\") wins", why: "The pattern `Some(name)` takes the text out of the `Some`, so `name` is `\"Kim\"`." }
+          - { id: c, text: "Kim wins\nno winner yet", why: "Only one of the two blocks runs, as with `if` and `else`." }
+        answer: a
+        explanation: "`winner` matches `Some(name)`, so `name` is `\"Kim\"` and the first block runs."
+        concepts: [match.if-let]
+
+      - type: compiles
+        id: compiles-scope
+        code:
+          rust: |
+            fn main() {
+                let rain: Option<u32> = Some(4);
+                if let Some(mm) = rain {
+                    println!("{mm} mm today");
+                }
+                println!("total {mm}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`mm` only exists inside the `if let` block" }
+            - { id: b, text: "`mm` was moved by the first `println!`", why: "`u32` is `Copy`, and printing only borrows anyway. The problem is where `mm` exists." }
+            - { id: c, text: "`rain` is used twice", why: "`rain` is only used once, on line 3." }
+          answer: a
+        explanation: "Variables from an `if let` pattern live until the end of its block. Line 6 is outside it, so `mm` can't be found (E0425)."
+        concepts: [match.if-let]
+
+      - type: predict-output
+        id: predict-if-let-enum
+        code:
+          rust: |
+            enum Weather {
+                Sunny,
+                Rain(u32),
+            }
+
+            let today = Weather::Rain(12);
+            if let Weather::Rain(mm) = today {
+                println!("{mm} mm of rain");
+            } else {
+                println!("dry");
+            }
+          verify: run
+        options:
+          - { id: a, text: "12 mm of rain" }
+          - { id: b, text: "dry", why: "`today` is `Rain(12)`, which matches `Weather::Rain(mm)`." }
+          - { id: c, text: "Rain mm of rain", why: "`mm` is bound to the number inside the variant, 12." }
+        answer: a
+        explanation: "`if let` works with any enum, not only `Option`. The pattern binds `mm` to 12."
+        concepts: [match.if-let, match.bind]
+
+      - type: match-pairs
+        id: pairs-if-let
+        prompt: Match each piece to its job
+        pairs:
+          - ["match", "handles every case"]
+          - ["if let", "handles one pattern"]
+          - ["else", "runs when the pattern fails"]
+          - ["Some(n)", "binds the value inside"]
+        concepts: [match.if-let]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-while-let
+        title: Loop while it matches
+        markdown: |
+          **`while let` repeats its block as long as the pattern matches.** It stops the first time it doesn't.
+
+          `checked_sub` gives `Some(answer)`, or `None` if the result would go below zero, so this loop stops before `hp` (hit points) runs out.
+        code:
+          rust: |
+            let mut hp: u32 = 10;
+            while let Some(n) = hp.checked_sub(4) {
+                hp = n;
+                println!("{hp}");
+            }
+          verify: run
+          expectStdout: "6\n2\n"
+        concepts: [match.if-let]
+
+      - type: predict-output
+        id: predict-while-let-fn
+        code:
+          rust: |
+            fn next(n: u32) -> Option<u32> {
+                if n >= 10 {
+                    None
+                } else {
+                    Some(n * 2)
+                }
+            }
+
+            fn main() {
+                let mut x = 1;
+                while let Some(y) = next(x) {
+                    x = y;
+                }
+                println!("{x}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "16" }
+          - { id: b, text: "8", why: "`next(8)` is `Some(16)` because 8 is less than 10, so the loop runs once more." }
+          - { id: c, text: "10", why: "`x` only takes doubled values: 1, 2, 4, 8, 16. It never equals 10." }
+        answer: a
+        explanation: "`x` goes 1, 2, 4, 8, 16. `next(16)` is `None`, which ends the loop."
+        concepts: [match.if-let]
+
+      - type: concept
+        id: concept-let-else
+        title: "let ... else: bind or leave"
+        markdown: |
+          **`let` with a pattern and `else` binds the value or leaves.** If the pattern matches, its variables stay usable for the rest of the block. If not, the `else` block runs, and it must leave with `return`, `break` or `continue`.
+        code:
+          rust: |
+            fn describe(age: Option<u32>) {
+                let Some(years) = age else {
+                    println!("unknown");
+                    return;
+                };
+                println!("{years} years old");
+            }
+
+            fn main() {
+                describe(Some(7));
+                describe(None);
+            }
+          verify: run
+          expectStdout: "7 years old\nunknown\n"
+        concepts: [match.let-else]
+
+      - type: predict-output
+        id: predict-let-else
+        code:
+          rust: |
+            fn half(n: Option<u32>) {
+                let Some(value) = n else {
+                    println!("nothing");
+                    return;
+                };
+                println!("{}", value / 2);
+            }
+
+            fn main() {
+                half(None);
+                half(Some(10));
+            }
+          verify: run
+        options:
+          - { id: a, text: "nothing\n5" }
+          - { id: b, text: "nothing\n5\nnothing", why: "When the pattern matches, the `else` block is skipped." }
+          - { id: c, text: "nothing\n0\n5", why: "`return` leaves `half` straight away, so nothing more is printed for `None`." }
+        answer: a
+        explanation: "`half(None)` runs the `else` block and returns. `half(Some(10))` binds `value` to 10 and prints 5."
+        concepts: [match.let-else]
+
+      - type: compiles
+        id: compiles-else-no-exit
+        code:
+          rust: |
+            fn main() {
+                let reading: Option<u32> = None;
+                let Some(n) = reading else {
+                    println!("no reading");
+                };
+                println!("{n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The `else` block must leave, for example with `return;`" }
+            - { id: b, text: "`let` can't have an `else`", why: "`let ... else` is valid Rust. Its `else` block has to leave, though." }
+            - { id: c, text: "`n` is used before it has a value", why: "`n` has a value whenever line 6 is reached, as long as the `else` leaves." }
+          answer: a
+        explanation: "If the `else` block finished normally, line 6 would run without an `n`. The compiler reports that the `else` clause does not diverge (E0308)."
+        concepts: [match.let-else]
+
+      - type: true-false
+        id: tf-let-else-scope
+        prompt: "After `let Some(n) = slot else { return; };`, you can use `n` on the lines that follow."
+        answer: true
+        explanation: "That's the difference from `if let`: the variables stay in scope after the statement, because the `else` path has already left."
+        concepts: [match.let-else]
+
+      - type: mcq
+        id: mcq-which-form
+        prompt: "A function needs the number inside an `Option<u32>` for its next ten lines, and should stop straight away if there isn't one. Which fits best?"
+        options:
+          - { id: a, text: "`let Some(n) = value else { return; };`" }
+          - { id: b, text: "`if let Some(n) = value { ... }`", why: "It works, but all ten lines would have to go inside the block. `let ... else` keeps them at the top level." }
+          - { id: c, text: "`while let Some(n) = value { ... }`", why: "`while let` repeats while the pattern matches. `value` never changes, so it would loop forever." }
+        answer: a
+        explanation: "`let ... else` deals with the missing case first and leaves, so the rest of the function can use `n` directly."
+        concepts: [match.let-else, match.if-let]
+
+      - type: predict-output
+        id: predict-tiles-fuel
+        prompt: Build the output
+        code:
+          rust: |
+            let mut hp: u32 = 9;
+            while let Some(n) = hp.checked_sub(3) {
+                hp = n;
+                print!("{hp} ");
+            }
+          verify: run
+        tiles: ["6", "3", "0", "9", "-3"]
+        answer: "6 3 0"
+        explanation: "9 - 3 = 6, then 3, then 0. `0.checked_sub(3)` is `None` because a `u32` can't go below zero, so the loop ends."
+        concepts: [match.if-let, types.overflow]
+
+      - type: spot-bug
+        id: spot-while-let-mut
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn hit(hp: u32) -> Option<u32> {
+                hp.checked_sub(4)
+            }
+
+            fn main() {
+                let hp: u32 = 10;
+                let mut hits = 0;
+                while let Some(n) = hit(hp) {
+                    hp = n;
+                    hits += 1;
+                }
+                println!("{hits} hits");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: 6
+        explanation: "Line 9 changes `hp`, so it must be declared `let mut hp`. The compiler reports the error on line 9, but the fix belongs on line 6."
+        concepts: [match.if-let, err.E0384]
+
+      - type: decode-error
+        id: decode-refutable
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let slot: Option<u32> = Some(3);
+                let Some(n) = slot;
+                println!("{n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0005]
+        options:
+          - { id: a, text: "Change line 3 to `let Some(n) = slot else { return; };`" }
+          - { id: b, text: "Change line 2 to `let slot: u32 = Some(3);`", why: "`Some(3)` is an `Option<u32>`, not a `u32`, so that's E0308." }
+          - { id: c, text: "Change line 3 to `let n = Some(slot);`", why: "That wraps `slot` in another `Some`. `n` would be `Some(Some(3))`." }
+        answer: a
+        explanation: "A plain `let` must match every possible value, and `slot` could be `None` (E0005). `let ... else` says what to do in that case."
+        concepts: [match.let-else]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-let-else
+        prompt: "Arrange the lines so `show` prints the score, or `no score` when there isn't one"
+        lines:
+          - { id: l1, text: "fn show(score: Option<u32>) {" }
+          - { id: l2, text: "    let Some(s) = score else {" }
+          - { id: l3, text: "        println!(\"no score\");" }
+          - { id: l4, text: "        return;" }
+          - { id: l5, text: "    };" }
+          - { id: l6, text: "    println!(\"score {s}\");" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    let Some(s) = score;" }
+          - { id: d2, text: "    if Some(s) = score else {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                show(Some(8));
+                show(None);
+            }
+          mode: run
+          expectStdout: "score 8\nno score\n"
+        explanation: "The `else` block prints and returns, so the last line only runs when `s` exists."
+        concepts: [match.let-else]
+
+      - type: fill-tokens
+        id: fill-while-let
+        prompt: "Fill the blanks so the program prints `3 hits`"
+        code:
+          rust: |
+            let mut hp: u32 = 25;
+            let mut hits = 0;
+            ___1___ let Some(n) = hp.checked_sub(8) {
+                hp = ___2___;
+                hits += 1;
+            }
+            println!("{hits} hits");
+          verify: run
+          expectStdout: "3 hits\n"
+        blanks:
+          "1": { answer: ["while"] }
+          "2": { answer: ["n"] }
+        bank: ["while", "if", "loop", "n", "hp", "Some(n)"]
+        explanation: "`while let` repeats while `checked_sub` gives `Some`: `hp` goes 17, 9, 1. Each pass stores the new value from `n`."
+        concepts: [match.if-let]
+
+      - type: predict-output
+        id: predict-if-let-literal
+        code:
+          rust: |
+            let stock: Option<u32> = Some(0);
+            if let Some(0) = stock {
+                println!("sold out");
+            } else if let Some(n) = stock {
+                println!("{n} left");
+            } else {
+                println!("not stocked");
+            }
+          verify: run
+        options:
+          - { id: a, text: "sold out" }
+          - { id: b, text: "0 left", why: "`Some(0)` is tried first and matches, so the later branches are skipped." }
+          - { id: c, text: "sold out\n0 left", why: "As with `if` / `else if`, only the first branch that matches runs." }
+        answer: a
+        explanation: "`if let` can chain with `else if let` and `else`. The first pattern that matches wins."
+        concepts: [match.if-let, match.bind]
+
+      - type: compiles
+        id: compiles-if-let-struct
+        code:
+          rust: |
+            enum Cmd {
+                Quit,
+                Move { x: i32, y: i32 },
+            }
+
+            fn main() {
+                let cmd = Cmd::Move { x: 3, y: 0 };
+                if let Cmd::Move { x, .. } = cmd {
+                    println!("x is {x}");
+                }
+            }
+          verify: compile
+        answer: true
+        explanation: "Any pattern that works in a `match` arm works in `if let`, including braces and `..`. It prints `x is 3`."
+        concepts: [match.if-let, match.bind]
+
+      - type: predict-output
+        id: predict-take-stock
+        code:
+          rust: |
+            fn buy(n: &mut u32) -> Option<u32> {
+                if *n == 0 {
+                    return None;
+                }
+                *n -= 1;
+                Some(*n)
+            }
+            fn main() {
+                let mut pies = 3;
+                let mut sold = 0;
+                while let Some(_) = buy(&mut pies) {
+                    sold += 1;
+                }
+                println!("{sold} {pies}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3 0" }
+          - { id: b, text: "2 0", why: "The call that takes `pies` from 1 to 0 still returns `Some(0)`, so it counts." }
+          - { id: c, text: "4 0", why: "When `pies` is 0, `buy` returns `None`, which ends the loop without counting." }
+        answer: a
+        explanation: "`buy` returns `Some(2)`, `Some(1)`, `Some(0)`, then `None`. That's three sales, and `pies` ends at 0."
+        concepts: [match.if-let]
+
+      - type: mcq
+        id: mcq-match-or-if-let
+        prompt: "You need different code for each of the three variants of `Light`. Which fits best?"
+        options:
+          - { id: a, text: "A `match` with one arm per variant" }
+          - { id: b, text: "Three separate `if let` statements", why: "It works, but the compiler can't check that you covered every variant." }
+          - { id: c, text: "`let Light::Red = light else { return; };`", why: "That handles only `Red` and leaves for the other two." }
+        answer: a
+        explanation: "When every case needs its own code, `match` is the right tool, and it checks that no variant is forgotten."
+        concepts: [match.if-let, match.exhaustive]
+
+      - type: true-false
+        id: tf-else-value
+        prompt: "The `else` block of `let ... else` can end with a value instead of leaving, like `else { 0 }`."
+        answer: false
+        explanation: "The `else` block must leave with `return`, `break` or `continue`. To use a fallback value, use `match` or `unwrap_or`."
+        concepts: [match.let-else]
+
+      - type: spot-bug
+        id: spot-if-let-eq
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let target: Option<u32> = Some(9);
+                let mut score = 0;
+                if let Some(n) == target {
+                    score += n;
+                }
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `=`, found `==`"
+        answer: 4
+        explanation: "`if let` uses a single `=` between the pattern and the value. It's a pattern match, not an equality test."
+        concepts: [match.if-let]
+
+      - type: decode-error
+        id: decode-let-else-loop
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let bins = [Some(3), None, Some(5)];
+                let mut total = 0;
+                for slot in bins {
+                    let Some(n) = slot else {
+                        println!("empty slot");
+                    };
+                    total += n;
+                }
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Add `continue;` after line 6" }
+          - { id: b, text: "Add `0` after line 6", why: "The `else` block can't give a value. It must leave." }
+          - { id: c, text: "Replace lines 5 to 7 with `let Some(n) = slot;`", why: "A plain `let` can't handle the `None` case, which is E0005." }
+        answer: a
+        explanation: "The `else` block must leave. Inside a loop, `continue` skips to the next slot, and the program prints `empty slot` then `8`."
+        concepts: [match.let-else]
+
+      - type: predict-output
+        id: predict-review-weather
+        code:
+          rust: |
+            enum Weather {
+                Sunny,
+                Rain(u32),
+            }
+            fn rain(w: Weather) -> u32 {
+                let Weather::Rain(mm) = w else {
+                    return 0;
+                };
+                mm
+            }
+            fn main() {
+                let wet = rain(Weather::Rain(3));
+                let dry = rain(Weather::Sunny);
+                println!("{}", wet + dry);
+            }
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "0", why: "`rain(Weather::Rain(3))` binds `mm` to 3 and returns it." }
+          - { id: c, text: "6", why: "`Sunny` doesn't match, so its call returns 0." }
+        answer: a
+        explanation: "The `Rain(3)` call returns 3 and the `Sunny` call returns 0 from the `else` block, so the total is 3."
+        concepts: [match.let-else, match.bind]

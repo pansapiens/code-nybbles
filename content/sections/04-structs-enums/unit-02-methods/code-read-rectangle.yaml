@@ -1,0 +1,148 @@
+id: structs-enums.methods.code-read-rectangle
+title: Rectangle
+icon: ruler
+concepts: []
+reviewConcepts: [method.self, method.associated, style.new, method.auto-ref, derive.debug, struct.define]
+program:
+  rust: |
+    #[derive(Debug)]
+    struct Rectangle {
+        width: u32,
+        height: u32,
+    }
+    impl Rectangle {
+        fn area(&self) -> u32 {
+            self.width * self.height
+        }
+        fn can_hold(&self, other: &Rectangle) -> bool {
+            self.width > other.width
+                && self.height > other.height
+        }
+        fn square(size: u32) -> Self {
+            Self { width: size, height: size }
+        }
+    }
+
+    fn main() {
+        let rect = Rectangle { width: 30, height: 50 };
+        let sq = Rectangle::square(20);
+        println!("{sq:?}");
+        println!("{}", rect.area());
+        println!("{}", rect.can_hold(&sq));
+    }
+  verify: run
+  expectStdout: |
+    Rectangle { width: 20, height: 20 }
+    1500
+    true
+chunks:
+  - lines: 5
+    exercises:
+      - type: mcq
+        id: derive-debug
+        prompt: "What does `#[derive(Debug)]` on line 1 let you do with a `Rectangle`?"
+        options:
+          - { id: a, text: "Print it with `{:?}`" }
+          - { id: b, text: "Print it with `{}`", why: "A struct can't be printed with `{}` unless you write that formatting yourself. `derive(Debug)` gives you `{:?}`." }
+          - { id: c, text: "Call methods on it", why: "Methods come from `impl` blocks. `derive(Debug)` only adds Debug printing." }
+        answer: a
+        explanation: "Deriving `Debug` lets you print the struct and its fields with `{:?}` or `{:#?}`."
+        concepts: [derive.debug]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: area-receiver
+        prompt: "Why does `area` take `&self` rather than `self`?"
+        options:
+          - { id: a, text: "It only reads the fields, so the caller can keep using the rectangle afterwards" }
+          - { id: b, text: "`self` would let it change `width`", why: "Plain `self` takes ownership. It's about who owns the value, and `area` doesn't need to own it." }
+          - { id: c, text: "Methods with `self` can't return a value", why: "They can return anything. But `self` would move the rectangle into `area`." }
+        answer: a
+        explanation: "`&self` borrows the rectangle read-only. With plain `self`, calling `rect.area()` would move `rect` and it couldn't be used on line 24."
+        concepts: [method.self]
+      - type: true-false
+        id: area-full-form
+        prompt: "`rect.area()` could also be written `Rectangle::area(&rect)`."
+        answer: true
+        explanation: "The method call borrows `rect` for you. Written in full, you pass `&rect` yourself."
+        concepts: [method.auto-ref]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: can-hold-other
+        prompt: "In `can_hold`, what is `other`?"
+        options:
+          - { id: a, text: "A borrowed second rectangle, passed in the brackets" }
+          - { id: b, text: "The rectangle the method was called on", why: "That's `self`. `other` is the extra parameter after it." }
+          - { id: c, text: "An owned rectangle that `can_hold` moves", why: "Its type is `&Rectangle`, so it's only borrowed." }
+        answer: a
+        explanation: "Methods can take more parameters after `self`. `other: &Rectangle` borrows a second rectangle to compare with."
+        concepts: [method.self]
+      - type: true-false
+        id: can-hold-strict
+        prompt: "`can_hold` returns `true` for two rectangles of exactly the same size."
+        answer: false
+        explanation: "It uses `>`, so each side of `self` must be strictly bigger than the matching side of `other`."
+        concepts: [method.self, types.bool]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: square-kind
+        prompt: "`square` has no `self` parameter. How is it called?"
+        options:
+          - { id: a, code: "Rectangle::square(20)" }
+          - { id: b, code: "rect.square(20)", why: "Without `self` it's an associated function, not a method, so a dot call is E0599." }
+          - { id: c, code: "square(20)", why: "`square` belongs to `Rectangle`, so it needs the type name in front." }
+        answer: a
+        explanation: "Associated functions are called on the type with `::`."
+        concepts: [method.associated]
+      - type: mcq
+        id: square-self
+        prompt: "What does `Self` mean on lines 14 and 15?"
+        options:
+          - { id: a, text: "`Rectangle`, the type of the `impl` block" }
+          - { id: b, text: "The rectangle `square` was called on", why: "`square` isn't called on a rectangle. Capital `Self` is a type." }
+          - { id: c, text: "A square, a different type from `Rectangle`", why: "There's no separate square type. `square` builds a `Rectangle` with equal sides." }
+        answer: a
+        explanation: "`Self` is short for the `impl` block's type, so `square` returns a `Rectangle`."
+        concepts: [method.associated, style.new]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: sq-fields
+        prompt: "After line 21, what does `sq` hold?"
+        options:
+          - { id: a, text: "A `Rectangle` with width 20 and height 20" }
+          - { id: b, text: "The number 400", why: "`square` returns a `Rectangle`, not its area." }
+          - { id: c, text: "A `Rectangle` with width 20 and height 0", why: "`square` uses `size` for both fields." }
+        answer: a
+        explanation: "`Rectangle::square(20)` builds `Self { width: 20, height: 20 }`."
+        concepts: [method.associated]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: debug-line
+        prompt: "What does line 22 print?"
+        options:
+          - { id: a, text: "`Rectangle { width: 20, height: 20 }`" }
+          - { id: b, text: "`400`", why: "`{sq:?}` prints the struct itself, not its area." }
+          - { id: c, text: "`sq`", why: "The braces print the value of `sq`, in Debug format." }
+        answer: a
+        explanation: "Debug format prints the struct's name followed by each field and its value."
+        concepts: [derive.debug]
+      - type: mcq
+        id: last-lines
+        prompt: "What do lines 23 and 24 print?"
+        options:
+          - { id: a, text: "`1500` then `true`" }
+          - { id: b, text: "`80` then `true`", why: "`area` multiplies the sides; 30 + 50 would be 80." }
+          - { id: c, text: "`1500` then `false`", why: "30 > 20 and 50 > 20, so `rect` can hold `sq`." }
+        answer: a
+        explanation: "`rect.area()` is 30 times 50. Both sides of `rect` are bigger than 20, so `can_hold` returns `true`."
+        concepts: [method.self, method.auto-ref]
+      - type: true-false
+        id: swap-can-hold
+        prompt: "`sq.can_hold(&rect)` would also be `true`."
+        answer: false
+        explanation: "Now `self` is `sq`, and 20 isn't bigger than 30, so it returns `false`. The order of the two rectangles matters."
+        concepts: [method.self]
