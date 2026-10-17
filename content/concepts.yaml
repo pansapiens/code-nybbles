@@ -90,3 +90,55 @@
 - { id: own.param-choice, title: "Choosing T, &T or &mut T", prerequisites: [borrow.mut] }
 - { id: borrow.fixes, title: Fixing borrow-checker errors, prerequisites: [borrow.exclusive] }
 - { id: own.iter-ref, title: "Looping over a reference", prerequisites: [borrow.shared, ctrl.for] }
+# Section 4, Unit 4.1: Structs
+- { id: struct.define, title: Defining structs }
+- { id: struct.update, title: Struct update syntax, prerequisites: [struct.define] }
+- { id: struct.tuple, title: Tuple structs, prerequisites: [struct.define] }
+- { id: struct.unit, title: Unit structs, prerequisites: [struct.define] }
+- { id: derive.debug, title: "#[derive(Debug)]", prerequisites: [struct.define, fmt.debug] }
+- { id: macro.dbg, title: "dbg!", prerequisites: [derive.debug] }
+- { id: struct.ownership, title: Struct fields own their data, prerequisites: [struct.define, own.move] }
+# Section 4, Unit 4.2: Methods & Associated Functions
+- { id: method.self, title: "Methods and self", prerequisites: [struct.define, borrow.mut] }
+- { id: method.associated, title: Associated functions, prerequisites: [method.self] }
+- { id: style.new, title: The new convention, prerequisites: [method.associated] }
+- { id: method.auto-ref, title: Automatic referencing, prerequisites: [method.self] }
+# Section 4, Unit 4.3: Enums & Option
+- { id: enum.define, title: Defining enums }
+- { id: enum.data, title: Variants with data, prerequisites: [enum.define] }
+- { id: enum.impl, title: Methods on enums, prerequisites: [enum.define, method.self] }
+- { id: option.basics, title: "Option: Some and None", prerequisites: [enum.data] }
+- { id: option.type-safety, title: "Option<i32> isn't i32", prerequisites: [option.basics] }
+- { id: option.methods, title: Handy Option methods, prerequisites: [option.basics] }
+# Section 4, Unit 4.4: match & Control-flow Patterns
+- { id: match.enum, title: Matching on enums, prerequisites: [match.intro, enum.define] }
+- { id: match.exhaustive, title: Exhaustive matching, prerequisites: [match.enum] }
+- { id: err.E0004, title: "E0004: non-exhaustive patterns", prerequisites: [match.exhaustive] }
+- { id: match.bind, title: Binding values in patterns, prerequisites: [match.enum] }
+- { id: match.if-let, title: "if let and while let", prerequisites: [match.bind] }
+- { id: match.let-else, title: "let ... else", prerequisites: [match.if-let] }
+- { id: macro.matches, title: "matches!", prerequisites: [match.enum] }
+# Section 4, Unit 4.5: Patterns Deep-dive
+- { id: pattern.destructure, title: Destructuring, prerequisites: [match.bind] }
+- { id: pattern.guards, title: "Match guards, ranges and |", prerequisites: [match.bind] }
+- { id: pattern.at, title: "@ bindings", prerequisites: [match.bind] }
+- { id: pattern.refutability, title: Refutable and irrefutable patterns, prerequisites: [match.if-let] }
+- { id: pattern.params, title: Patterns in parameters and for loops, prerequisites: [pattern.destructure] }
+# Section 5, Unit 5.1: Vectors
+- { id: vec.basics, title: Creating and growing vectors }
+- { id: vec.access, title: "Indexing vs .get()", prerequisites: [vec.basics, option.basics] }
+- { id: vec.iter, title: Iterating over vectors, prerequisites: [vec.basics, own.iter-ref] }
+- { id: vec.borrow, title: Borrowing rules with vectors, prerequisites: [vec.basics, borrow.exclusive] }
+- { id: vec.enum, title: Storing different types with an enum, prerequisites: [vec.basics, enum.data] }
+# Section 5, Unit 5.2: Strings in Depth
+- { id: string.build, title: Building strings, prerequisites: [string.string-vs-literal] }
+- { id: string.utf8, title: Strings are UTF-8, prerequisites: [slice.utf8] }
+- { id: string.iter, title: Iterating over strings, prerequisites: [string.utf8] }
+- { id: string.methods, title: Useful string methods, prerequisites: [string.build] }
+- { id: string.convert, title: "Converting between String and &str", prerequisites: [slice.str] }
+# Section 5, Unit 5.3: HashMap & Friends
+- { id: map.basics, title: HashMap basics, prerequisites: [option.basics] }
+- { id: map.ownership, title: Maps own their keys and values, prerequisites: [map.basics, own.move] }
+- { id: map.entry, title: The entry API, prerequisites: [map.basics] }
+- { id: map.iter, title: Iterating over maps, prerequisites: [map.basics] }
+- { id: collections.choose, title: Choosing a collection, prerequisites: [vec.basics, map.basics] }
