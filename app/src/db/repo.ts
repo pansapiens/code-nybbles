@@ -15,7 +15,7 @@ export async function getProfile(db: CodeNybblesDB = defaultDb): Promise<Profile
   const profile: Profile = {
     id: 'me',
     createdAt: Date.now(),
-    deviceId: crypto.randomUUID(),
+    deviceId: uuidv7(), // not crypto.randomUUID: that only exists in secure contexts (HTTPS/localhost), so LAN http dev fails
     experience: 'new',
     dailyGoalXp: 20,
   }
