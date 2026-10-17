@@ -235,6 +235,12 @@ also works. CI doesn't need either.
     tile items with significant spacing were converted to options mode
   - [ ] (new) Clippy-clean check for snippets (03 §5) not automated
   - [ ] Units 1.1-1.2 haven't had an independent review
+  - [x] Section 3 reviewed by two agents: 25 fixes (moved-value claims, drop timing, E0106 vs E0515,
+    E0502 vs E0506, parsons distractors that formed valid programs, follow-ups made self-contained)
+  - [ ] Judgement calls (Section 3): spot-bug items that expect the root-cause line, not the line rustc reports
+    (`spot-add-tax`, `spot-str-param-type`, `spot-reset-not-mut`, `spot-joined`, `spot-missing-mut`); match-pairs
+    with tiles that only resolve by elimination (`pairs-signatures`, `pairs-body-to-type`, `pairs-param-types`);
+    `spot-mistake-swap` in 3.2 level 1 also fixable with `.clone()` on replay
 - [x] (new) rust-verify compile checks used `--emit=metadata`, which skips deny-by-default MIR lints
   (`unconditional_panic`, `arithmetic_overflow`); now `--emit=mir`
 - [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives

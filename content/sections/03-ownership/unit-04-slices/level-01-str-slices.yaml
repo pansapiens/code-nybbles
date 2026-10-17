@@ -442,7 +442,7 @@ lessons:
         options:
           - { id: a, code: "let tea = &t[..3];", why: "Correct: `t` owns the text now, so slice `t`." }
           - { id: b, code: "let tea = s[..3];", why: "`s` has still moved, and a slice needs `&`." }
-          - { id: c, code: "let tea = &mut s[..3];", why: "A mutable borrow of a moved value fails the same way." }
+          - { id: c, code: "let tea = &mut s[..3];", why: "`s` has still moved (E0382), and it isn't `mut` either (E0596)." }
         answer: a
         explanation: "After `let t = s;`, `s` is no longer usable (E0382). The text now belongs to `t`, so borrow from `t`."
         concepts: [slice.str, err.E0382, own.move]

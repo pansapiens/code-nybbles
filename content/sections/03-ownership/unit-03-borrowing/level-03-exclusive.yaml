@@ -326,7 +326,7 @@ lessons:
         options:
           - { id: a, text: "`println!` reads `name` while `r`, a `&mut` borrow, is still in use" }
           - { id: b, text: "`name` isn't declared `mut`", why: "It is, on line 2. The problem is the read on line 4." }
-          - { id: c, text: "`println!` can't print a `String`", why: "It can. It just can't read `name` while `r` might still change it." }
+          - { id: c, text: "`println!` can't print a `String`", why: "It can. It can't read `name` while `r` might still change it." }
         answer: a
         explanation: "`r` is used again on line 5, so its `&mut` borrow is alive on line 4, and reading `name` there is E0502."
         concepts: [err.E0502, borrow.exclusive]

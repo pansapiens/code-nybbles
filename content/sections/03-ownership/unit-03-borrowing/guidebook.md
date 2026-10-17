@@ -73,7 +73,7 @@ fn make() -> String {
 ```
 
 - A reference can't outlive the value it points at. Using one after its value is dropped is **E0597**.
-- Returning `&` to a local is **E0106** (missing lifetime specifier): there's nothing to borrow from. Return the owned value instead.
+- Returning `&` to a local from a function with no reference parameters is **E0106** (missing lifetime specifier): there's nothing to borrow from. Return the owned value instead.
 - Returning a reference you were given is fine: `fn echo(s: &String) -> &String { s }`.
 
 ## Permissions: Read, Write, Own

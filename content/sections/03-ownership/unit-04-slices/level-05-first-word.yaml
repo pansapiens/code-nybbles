@@ -337,7 +337,24 @@ lessons:
 
       - type: mcq
         id: mcq-why-error-good
-        prompt: "In the program above, why is it good that Rust rejects `s.clear()`?"
+        prompt: "Rust rejects `s.clear()` in this program. Why is that a good thing?"
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let mut s = String::from("hey you");
+                let word = first_word(&s);
+                s.clear();
+                println!("{word}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
         options:
           - { id: a, text: "`word` would point at text that `clear` removed" }
           - { id: b, text: "`clear` would also clear `word`'s own copy of the text", why: "`word` has no copy. It points into `s`'s text." }

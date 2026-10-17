@@ -511,5 +511,5 @@ lessons:
         id: tf-drop-ref
         prompt: "When a reference goes out of scope, the value it points at is freed."
         answer: false
-        explanation: "Only the owner frees a value. A reference ending just ends the borrow."
+        explanation: "Only the owner frees a value. When a reference ends, only the borrow ends."
         concepts: [borrow.dangling, own.scope-drop]

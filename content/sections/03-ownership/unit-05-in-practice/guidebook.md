@@ -69,6 +69,6 @@ println!("{}", names.len()); // names still usable
 - `for x in &arr` borrows: each `x` is a reference, and `arr` is usable afterwards.
 - `for x in arr` on an array of `String`s moves the array: each `x` owns one `String`, dropped at the end of its pass. Using `arr` afterwards is E0382.
 - `for x in arr` on an array of `Copy` values like `i32` copies, so `arr` stays usable.
-- You can't change `arr` inside `for x in &arr` (E0502): the loop borrows it until it ends.
+- You can't change `arr` inside `for x in &arr` (E0502, or E0506 for an assignment with `=`): the loop borrows it until it ends.
 
 Read more: Book §4 · Rust by Example: Ownership and moves, Borrowing · Rustlings `06_move_semantics`

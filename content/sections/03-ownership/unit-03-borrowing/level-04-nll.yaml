@@ -303,7 +303,7 @@ lessons:
           - { id: l4, text: '    s.push_str("c");' }
           - { id: l5, text: '    println!("{s}");' }
         distractors:
-          - { id: d1, text: "    let r = &mut s;" }
+          - { id: d1, text: "    let r = s;" }
         answer: [l1, l2, l3, l4, l5]
         verify:
           harness: |
@@ -316,7 +316,7 @@ lessons:
 
       - type: fill-tokens
         id: fill-r-or-s
-        prompt: "Fill the blanks so the program compiles and prints `hi`, then `hi!`"
+        prompt: "Fill the blanks so the program compiles, prints `hi` through `r`, then prints `hi!`"
         code:
           rust: |
             let mut s = String::from("hi");
@@ -351,7 +351,7 @@ lessons:
         options:
           - { id: a, text: "Move line 5 up, between lines 3 and 4" }
           - { id: b, text: "Change line 4 to `let b = &log;`", why: "`b` can't write through a `&` reference, and it would still overlap with `a` (E0502)." }
-          - { id: c, text: "Move line 7 to just after line 2", why: "That doesn't change the overlap between `a` and `b`." }
+          - { id: c, text: "Move line 7 up, between lines 2 and 3", why: "That doesn't change the overlap between `a` and `b`." }
         answer: a
         explanation: "With `a.push_str` before `let b`, `a` is finished when `b` starts. The two writers take turns."
         concepts: [borrow.nll, err.E0499]

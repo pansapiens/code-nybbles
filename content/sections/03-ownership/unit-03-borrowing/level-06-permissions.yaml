@@ -420,7 +420,7 @@ lessons:
 
       - type: true-false
         id: tf-diagram-readers-done
-        prompt: "If `r1` and `r2` are never used again, `s.push_str(\"!\")` is allowed here."
+        prompt: "`s` was declared with `let mut`. If `r1` and `r2` are never used again, `s.push_str(\"!\")` is allowed here."
         diagram:
           caption: "s: R,  through r1: R,  through r2: R"
           frames:
@@ -432,7 +432,7 @@ lessons:
           heap:
             - { id: h1, value: '"hi"' }
         answer: true
-        explanation: "Once the borrows are past their last use, `s` gets W and O back, so a `let mut s` can change."
+        explanation: "Once the borrows are past their last use, `s` gets W and O back, so `s` can change."
         concepts: [borrow.permissions, borrow.nll]
 
       - type: mcq

@@ -57,7 +57,7 @@ chunks:
         options:
           - { id: a, text: "`add_to` changes the caller's `total`, but only reads `amount`" }
           - { id: b, text: "The first parameter of a function must be a reference", why: "Parameters can be any type, in any order. Each one is chosen by what the function does with it." }
-          - { id: c, text: "`amount` can't be borrowed because it's an `i32`", why: "You can borrow an `i32`. It's just not needed: a copy is cheaper and the caller keeps its value." }
+          - { id: c, text: "`amount` can't be borrowed because it's an `i32`", why: "You can borrow an `i32`. It isn't needed: a copy is cheaper and the caller keeps its value." }
         answer: a
         explanation: "Changing a caller's variable needs `&mut`. A small `Copy` value that's only read is best taken by value."
         concepts: [own.param-choice]
