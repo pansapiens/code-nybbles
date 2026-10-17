@@ -210,13 +210,19 @@ also works. CI doesn't need either.
   - [x] Section 1 complete: Units 1.1-1.5 (1.5 ends with the Section 1 checkpoint, for placement later)
   - [x] Section 2 Units 2.1-2.3 (2.3 ends with the Section 2 checkpoint)
   - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
+  - [x] Section 3 complete: Units 3.1-3.5 (3.5 ends with the Section 3 checkpoint), diagrams on every level
   - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists
     so agents only touch their own unit directory (briefs in the session log of 2026-10-17)
 - [x] Guidebooks per unit; checkpoints
 - [x] (new) Code Read node type (plans/03 type 14, pulled forward from v1 because M3 asks for them):
   `code-read-*.yaml` = verified `program` + `chunks` (`lines` revealed, then questions). Compiles to a one-lesson
   level with `program` and `reveals`; player shows the program above each question; 15 XP; no hearts
-  - [x] Code Reads: 1.1 Ferris says hello, 1.3 Temperature converter, 2.1 Area calculator, 2.3 Collatz sequence
+  - [x] Code Reads: 1.1 Ferris says hello, 1.3 Temperature converter, 2.1 Area calculator, 2.3 Collatz sequence,
+    3.2 Who owns the String?, 3.5 Swap and sum
+- [x] (new) Memory diagrams (`diagram:` on concept/mcq/true-false): stack frames, heap boxes, pointer and reference
+  arrows, moved and freed states; schema-validated targets; SVG renderer (`MemoryDiagram.vue`) with a text description
+  - [ ] (new) Per-variable label (e.g. R/W/O permissions in 3.3 level 6 are in the caption for now)
+  - [ ] (new) A string literal's text lives in the program binary, which diagrams can't show (prose covers it)
   - [ ] Code Reads library in the Practice hub (M4)
 - [ ] Content QA pass (03 §5 checklist)
   - [x] Units 1.3-1.5 and 2.1-2.3 reviewed by two independent agents: 22 fixes (wrong claims, ambiguous
@@ -232,7 +238,8 @@ also works. CI doesn't need either.
 - [x] (new) rust-verify compile checks used `--emit=metadata`, which skips deny-by-default MIR lints
   (`unconditional_panic`, `arithmetic_overflow`); now `--emit=mir`
 - [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives
-- [ ] (new) Register error-code concepts the authors wanted: E0277, E0004, E0317, E0061, E0425, E0069, E0604...
+- [ ] (new) Register error-code concepts the authors wanted: E0277, E0004, E0317, E0061, E0425, E0069, E0604,
+  E0505, E0506, E0507, E0596, E0597...
   (items are tagged with the nearest topic concept for now)
 - [ ] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3); some are annotated mdBook-style already
 - [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports
@@ -241,6 +248,9 @@ also works. CI doesn't need either.
 - [ ] (new) Two items rely on rustc 1.98 not catching `a[a.len()]` at compile time (unit-04 level-04
   `spot-off-by-one`, checkpoint `spot-last-panic`); the build will flag them if that changes
 - [ ] (new) Level `icon:` is in the schema but unused by the app
+- [ ] (new) Linked follow-up questions: authors repeat code because a re-queued item can't rely on the one before it
+- [ ] (new) Build bundles are only written when the whole course has 0 errors, so authors can't preview
+  diagrams while other units are mid-edit (a `--partial` flag that skips failing units would help)
 
 ## M4: Practice + review
 
@@ -294,3 +304,6 @@ also works. CI doesn't need either.
   Section 2 except the 2.4 Build project). Code Read nodes added, with four Code Reads. Fixed: verifier missed MIR
   lints; parsons identical lines; crypto.randomUUID on plain-http LAN. 1237 exercises, 918 verified snippets,
   strict build clean. Next: QA pass on the new units, then Sections 3-5.
+- 2026-10-18: Session 3 (cont.). QA pass on Units 1.3-2.3 (22 fixes, tile assembly check). Memory diagrams.
+  Section 3 by five parallel agents (paused by the API session limit overnight, then resumed). 1966 exercises,
+  1446 verified snippets, strict build clean. Section 3 QA running. Next: Sections 4-5.
