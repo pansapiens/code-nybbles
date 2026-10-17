@@ -277,6 +277,8 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
 
   const sections: CompiledSection[] = []
   const levelIds = new Set<string>()
+  /** Concepts introduced by a level's `concepts:` so far, in course order (taught-before-tested). */
+  const taught = new Set<string>()
   const snippets: { s: Snippet; where: string }[] = []
 
   for (const sectionDir of course.sections) {
@@ -318,6 +320,9 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
 
         for (const c of [...level.concepts, ...level.reviewConcepts])
           if (!concepts.has(c)) issues.error(lwhere, `unknown concept "${c}"`)
+        for (const c of level.reviewConcepts)
+          if (!taught.has(c)) issues.warn(lwhere, `reviewConcepts: "${c}" isn't introduced by an earlier level`)
+        for (const c of level.concepts) taught.add(c)
         if (kind === 'level' && (level.lessons.length < 3 || level.lessons.length > 5))
           issues.warn(lwhere, `${level.lessons.length} lessons (expected 3-5)`)
         const lessonIds = new Set<string>()
@@ -334,6 +339,9 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
             if (exIds.has(ex.id)) issues.error(where, 'duplicate exercise id in lesson')
             exIds.add(ex.id)
             checkExercise(ex, where, concepts, issues)
+            for (const c of ('concepts' in ex ? ex.concepts : undefined) ?? [])
+              if (concepts.has(c) && !taught.has(c))
+                issues.warn(where, `tests "${c}" before any level introduces it (add it to a level's concepts:)`)
             for (const s of snippetsFor(ex, gid, course.edition)) snippets.push({ s, where })
           }
         }

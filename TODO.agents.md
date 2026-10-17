@@ -106,7 +106,8 @@ also works. CI doesn't need either.
     with the verify mode; decode-error must be compile-fail; fill-tokens markers <-> blanks; parsons orders
   - [x] Lesson length 8-15; level 3-5 lessons; unit has a checkpoint (warnings; `--strict` makes them errors)
   - [x] Code width (> 40 cols) and line-count warnings
-  - [ ] Concept taught-before-tested check along path order
+  - [x] Concept taught-before-tested check along path order (warning): an exercise's concepts and a level's
+    `reviewConcepts` must be in some earlier-or-current level's `concepts:`
   - [~] Licence allow-list for `sources:` (enforced by schema enum); [ ] generate `ATTRIBUTIONS.md` (01 §13.3)
   - [x] Emit `app/public/content/section-<id>.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
   - [ ] Build-time syntax highlighting (Shiki or Lezer) (03 §4.1)
@@ -149,7 +150,8 @@ also works. CI doesn't need either.
   - [ ] (new) Indentation step for parsons (03 §1, optional)
 - [x] Sound (Web Audio tones, no files) + haptics (`navigator.vibrate`) in `services/feedback.ts`; uses the
   existing settings toggles
-- [ ] Dev routes: `/dev/content/:levelId`, exercise gallery with answers (03 §5)
+- [x] Dev route `/dev/content/:levelId?`: every exercise of a level rendered, with its answer (03 §5)
+  - [x] (new) Fixed `theme-init.js` path doubling the base in dev (`/theme-init.js`; Vite adds the base)
 - [~] Content: Section 1, Units 1.1-1.2 vertical slice (02 §4)
   - [x] course.yaml, concepts.yaml (Units 1.1-1.2), section 1, unit 1.1 with guidebook
   - [x] Seed level `level-02-anatomy` lesson l1: 10 exercises, one of each MVP type, all verified
