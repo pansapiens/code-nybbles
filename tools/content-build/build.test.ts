@@ -97,3 +97,9 @@ test('a code read compiles to a one-lesson level with per-exercise reveals and a
   const bad = await buildContent({ contentDir: root })
   assert.match(bad.issues.errors.map((i) => i.message).join('\n'), /chunks reveal 2 lines but the program has 3/)
 })
+
+test('compile checks catch deny-by-default MIR lints (constant index out of bounds)', async () => {
+  const code = { rust: 'let a = [1, 2, 3];\nprintln!("{}", a[3]);\n', verify: 'compile-fail', expectErrorMessage: 'will panic at runtime' }
+  const ex = { type: 'compiles', id: 'c', code, answer: false, explanation: 'e', concepts: ['intro.main'] }
+  assert.equal(await errors([ex]), '')
+})

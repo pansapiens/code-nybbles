@@ -78,7 +78,8 @@ async function compileAndRun(c: Case, dir: string): Promise<Outcome> {
     ...(c.denyWarnings ? ['-D', 'warnings'] : []),
     ...(LINKER ? ['-C', `linker=${LINKER}`] : []),
     ...(c.mode === 'test' ? ['--test'] : ['--crate-type', 'bin']),
-    ...(checkOnly ? ['--emit=metadata'] : ['-o', 'main']),
+    // MIR, not metadata: deny-by-default lints like unconditional_panic and arithmetic_overflow run on MIR.
+    ...(checkOnly ? ['--emit=mir', '-o', 'main.mir'] : ['-o', 'main']),
     'main.rs',
   ]
   let stderr: string
@@ -155,7 +156,7 @@ export async function verifyCases(cases: Case[]): Promise<{ results: CaseResult[
     while (next < cases.length) {
       const i = next++
       const c = cases[i]!
-      const key = createHash('sha256').update(JSON.stringify([version, c.edition, c.mode, c.denyWarnings ?? false, c.source])).digest('hex').slice(0, 20)
+      const key = createHash('sha256').update(JSON.stringify([version, 'mir', c.edition, c.mode, c.denyWarnings ?? false, c.source])).digest('hex').slice(0, 20)
       const cacheFile = join(CACHE_DIR, `${key}.json`)
       let outcome: Outcome
       if (existsSync(cacheFile)) {
