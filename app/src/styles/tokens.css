@@ -1,0 +1,94 @@
+/*
+ * Design tokens (plans/01 §4.1). Components use these; no raw hex values elsewhere.
+ * Theme: `color-scheme` follows the system unless <html data-theme="light|dark"> overrides it,
+ * and every colour pair is resolved with light-dark().
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Neutrals */
+  --c-canvas: light-dark(#ffffff, #15121f);
+  --c-surface: light-dark(#f8f6fc, #211c30);
+  --c-tile: light-dark(#e7e3f0, #342c47);
+  --c-tile-ledge: light-dark(#cfc8de, #251f35);
+  --c-text: light-dark(#3f3a4d, #ffffff);
+  --c-text-2: light-dark(#8f89a0, #a9a3b8);
+  --c-border: light-dark(#e7e3f0, #342c47);
+
+  /* Primary (brand, the action colour) */
+  --c-primary: #7c4dff;
+  --c-primary-ledge: #5b32d6;
+  --c-primary-hi: #a585ff;
+  --c-on-primary: #ffffff;
+
+  /* Selected tile/option */
+  --c-selected-tint: light-dark(#efe9ff, #2d2350);
+  --c-selected-border: light-dark(#b9a2ff, #7c4dff);
+  --c-selected-ledge: #7c4dff;
+
+  /* Feedback */
+  --c-correct: #2db84c;
+  --c-correct-ledge: #1f8f3a;
+  --c-correct-tint: light-dark(#dff7e5, #173a24);
+  --c-correct-text: light-dark(#1a7a32, #6fdc8a);
+  --c-wrong: #f04858;
+  --c-wrong-ledge: #c42f40;
+  --c-wrong-tint: light-dark(#ffe3e6, #3d1a22);
+  --c-wrong-text: light-dark(#c42f40, #ff8a96);
+
+  /* Game colours */
+  --c-streak: #ff9600;
+  --c-streak-off: light-dark(#cfc8de, #4a4160);
+  --c-gems: #22c3e6;
+  --c-gold: #ffc233;
+  --c-gold-ledge: #e0a000;
+  --c-info: #3d8bfd;
+  --c-rust: #ce422b;
+  --c-frozen: #3d8bfd;
+
+  /* Section banner rotation (no green: green means "correct") */
+  --c-section-purple: #7c4dff;
+  --c-section-teal: #14a3a3;
+  --c-section-blue: #3d8bfd;
+  --c-section-rust: #ce422b;
+  --c-section-pink: #e0559b;
+  --c-section-orange: #f08a24;
+
+  /* Type */
+  --font-ui: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
+  --font-code: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+  --code-size: 15px;
+
+  /* Shape */
+  --radius-tile: 12px;
+  --radius-card: 16px;
+  --radius-banner: 20px;
+  --radius-pill: 999px;
+  --ledge: 4px;
+
+  /* Spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+
+  /* Layout */
+  --touch-min: 44px;
+  --button-h: 56px;
+  --hud-h: 56px;
+  --tabbar-h: 64px;
+  --path-max: 600px;
+
+  /* Motion */
+  --t-fast: 120ms;
+  --t-med: 250ms;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}

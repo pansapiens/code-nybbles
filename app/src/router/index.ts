@@ -1,22 +1,38 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import LearnView from '@/views/LearnView.vue'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    /** Hide HUD and navigation (lesson player, onboarding). */
+    fullscreen?: boolean
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: '/', name: 'learn', component: LearnView },
+    { path: '/practice', name: 'practice', component: () => import('@/views/PracticeView.vue') },
+    { path: '/shop', name: 'shop', component: () => import('@/views/ShopView.vue') },
+    { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
+    { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+    { path: '/streak', name: 'streak', component: () => import('@/views/StreakView.vue') },
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '/lesson/:lessonId',
+      name: 'lesson',
+      component: () => import('@/views/LessonView.vue'),
+      meta: { fullscreen: true },
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/welcome',
+      name: 'onboarding',
+      component: () => import('@/views/OnboardingView.vue'),
+      meta: { fullscreen: true },
     },
+    ...(import.meta.env.DEV
+      ? [{ path: '/dev/components', component: () => import('@/views/dev/ComponentGallery.vue') }]
+      : []),
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
 })
 
