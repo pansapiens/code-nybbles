@@ -1,0 +1,460 @@
+id: first-steps.formatting.width
+title: Width and precision
+icon: ruler
+concepts: [fmt.width-precision]
+reviewConcepts: [fmt.placeholders, fmt.inline-args, types.float, types.int, var.mut, fmt.debug]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-width
+        title: Width and alignment
+        markdown: |
+          **A number after `:` sets a minimum width.** Rust pads the value with spaces to fill it.
+
+          `<` puts the value on the left, `>` on the right and `^` in the centre. The `[ ]` here only show where the spaces go.
+        code:
+          rust: |
+            println!("[{:<6}]", "cat");
+            println!("[{:>6}]", "cat");
+            println!("[{:^6}]", "cat");
+          verify: run
+          expectStdout: "[cat   ]\n[   cat]\n[ cat  ]\n"
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-right-align
+        code:
+          rust: |
+            println!("[{:>5}]", "dog");
+          verify: run
+        options:
+          - { id: a, text: "[  dog]" }
+          - { id: b, text: "[dog  ]", why: "`>` points right: the value goes on the right and the spaces on the left." }
+          - { id: c, text: "[     dog]", why: "The width is the total, including the value. `dog` plus 2 spaces makes 5." }
+        answer: a
+        explanation: "`{:>5}` makes the value 5 characters wide, right-aligned. `dog` is 3, so 2 spaces go in front."
+        concepts: [fmt.width-precision]
+
+      - type: mcq
+        id: mcq-centre
+        prompt: "Which placeholder centres a value in 8 characters?"
+        options:
+          - { id: a, code: "{:^8}" }
+          - { id: b, code: "{:>8}", why: "`>` right-aligns." }
+          - { id: c, code: "{:8^}", why: "The alignment comes before the width: `{:^8}`." }
+          - { id: d, code: "{^8}", why: "Formatting options go after a `:` inside the braces." }
+        answer: a
+        explanation: "The pattern is `:` then the alignment then the width. `^` means centre."
+        concepts: [fmt.width-precision]
+
+      - type: true-false
+        id: tf-width-cuts
+        prompt: "If the text is longer than the width, Rust cuts it to fit."
+        code:
+          rust: |
+            println!("[{:>3}]", "Ferris");
+          verify: run
+          expectStdout: "[Ferris]\n"
+        answer: false
+        explanation: "The width is a minimum. Longer values print in full, so this prints `[Ferris]`."
+        concepts: [fmt.width-precision]
+
+      - type: concept
+        id: concept-precision
+        title: Decimal places
+        markdown: |
+          **`.` and a number sets the precision.** For a float, that's how many digits come after the decimal point. Rust rounds to fit.
+
+          It works with inline names too: `{price:.2}`.
+        code:
+          rust: |
+            let price = 4.5;
+            let pi = 3.14159;
+            println!("${price:.2}");
+            println!("{:.3}", pi);
+          verify: run
+          expectStdout: "$4.50\n3.142\n"
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-round
+        code:
+          rust: |
+            let distance = 2.76;
+            println!("{distance:.1} km");
+          verify: run
+        options:
+          - { id: a, text: "2.8 km" }
+          - { id: b, text: "2.7 km", why: "Precision rounds to the nearest digit. It doesn't chop off the rest." }
+          - { id: c, text: "2.76 km", why: "`.1` asks for one digit after the decimal point." }
+        answer: a
+        explanation: "`{distance:.1}` keeps one decimal place, and 2.76 rounds up to 2.8."
+        concepts: [fmt.width-precision]
+
+      - type: fill-tokens
+        id: fill-three-places
+        prompt: "Fill the blank so the program prints `3.142`"
+        code:
+          rust: |
+            let pi = 3.14159;
+            println!("{:___1___}", pi);
+          verify: run
+          expectStdout: "3.142\n"
+        blanks:
+          "1": { answer: [".3"] }
+        bank: [".3", "3", ".4", "^3"]
+        explanation: "`.3` keeps three digits after the point. A plain `3` is a width, and 3.14159 is already wider than that."
+        concepts: [fmt.width-precision]
+
+      - type: concept
+        id: concept-fill
+        title: Fill characters and zeros
+        markdown: |
+          **Put a character before the alignment to pad with it instead of spaces.** `{:*^9}` centres in 9 characters using `*`.
+
+          A `0` before the width pads a number with zeros. `{:08.2}` means width 8, zero-padded, 2 decimal places.
+        code:
+          rust: |
+            println!("{:*^9}", "cat");
+            println!("{:05}", 42);
+            println!("{:08.2}", 3.14159);
+          verify: run
+          expectStdout: "***cat***\n00042\n00003.14\n"
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-zero-pad
+        code:
+          rust: |
+            let room = 7;
+            println!("Room {room:03}");
+          verify: run
+        options:
+          - { id: a, text: "Room 007" }
+          - { id: b, text: "Room 7.000", why: "`03` is zero-padding to width 3. Decimal places use a `.`, as in `.3`." }
+          - { id: c, text: "Room   7", why: "The leading `0` asks for zeros instead of spaces." }
+        answer: a
+        explanation: "`{room:03}` pads `7` to 3 characters with zeros."
+        concepts: [fmt.width-precision, fmt.inline-args]
+
+      - type: match-pairs
+        id: pairs-specs
+        pairs:
+          - ["{:<6}", "left-align in 6"]
+          - ["{:>6}", "right-align in 6"]
+          - ["{:^6}", "centre in 6"]
+          - ["{:.2}", "2 decimal places"]
+          - ["{:06}", "pad with zeros to 6"]
+        concepts: [fmt.width-precision]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-default-align
+        title: Default alignment
+        markdown: |
+          **With a width but no `<`, `>` or `^`, numbers go on the right and text goes on the left.** That way columns of numbers line up by their last digit.
+        code:
+          rust: |
+            println!("[{:5}]", 42);
+            println!("[{:5}]", "ab");
+          verify: run
+          expectStdout: "[   42]\n[ab   ]\n"
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-default-number
+        code:
+          rust: |
+            let score = 950;
+            println!("[{score:6}]");
+          verify: run
+        options:
+          - { id: a, text: "[   950]" }
+          - { id: b, text: "[950   ]", why: "Text goes left by default, but numbers go right." }
+          - { id: c, text: "[000950]", why: "Zeros need a `0` before the width, as in `{score:06}`." }
+        answer: a
+        explanation: "A number with only a width is right-aligned, so 3 spaces go in front of `950`."
+        concepts: [fmt.width-precision, fmt.inline-args]
+
+      - type: compiles
+        id: compiles-trailing-f
+        code:
+          rust: |
+            let price = 3.5;
+            println!("{price:.2f}");
+          verify: compile-fail
+          expectErrorMessage: "unknown format trait `f`"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "Rust doesn't use an `f` at the end. Write `{price:.2}`" }
+            - { id: b, text: "`price` must be declared as `f64` first", why: "`3.5` is already a float. The `f` inside the braces is the problem." }
+            - { id: c, text: "Inline names can't have a precision", why: "They can: `{price:.2}` works." }
+          answer: a
+        explanation: "C and Python write `%.2f` or `{:.2f}`, but Rust already knows `price` is a float. The compiler reports `unknown format trait `f``."
+        concepts: [fmt.width-precision]
+
+      - type: fill-tokens
+        id: fill-inline-precision
+        prompt: "Fill the blank so the program prints `Total: $12.50`"
+        code:
+          rust: |
+            let total = 12.5;
+            println!("Total: ${total___1___}");
+          verify: run
+          expectStdout: "Total: $12.50\n"
+        blanks:
+          "1": { answer: [":.2"] }
+        bank: [":.2", ".2", ":2", ":.1"]
+        explanation: "After an inline name, the options start with `:`. `.2` gives two decimal places, while `:2` would only be a width."
+        concepts: [fmt.width-precision, fmt.inline-args]
+
+      - type: spot-bug
+        id: spot-width-not-precision
+        prompt: "Every price should show 2 decimal places. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let tea = 3.5;
+                let cake = 4.5;
+                println!("Tea:  {tea:.2}");
+                println!("Cake: {cake:2}");
+            }
+          verify: run
+          expectStdout: "Tea:  3.50\nCake: 4.5\n"
+        answer: 5
+        explanation: "`{cake:2}` is a width of 2, not 2 decimal places, so it prints `4.5`. It should be `{cake:.2}`."
+        concepts: [fmt.width-precision]
+
+      - type: true-false
+        id: tf-int-precision
+        prompt: "This prints `5.00`."
+        code:
+          rust: |
+            let lives = 5;
+            println!("{lives:.2}");
+          verify: run
+          expectStdout: "5\n"
+        answer: false
+        explanation: "Precision doesn't turn an integer into a float, so it prints `5`. Use a float such as `5.0` if you want decimals."
+        concepts: [fmt.width-precision, types.int]
+
+      - type: mcq
+        id: mcq-007
+        prompt: "Given `let agent = 7;`, which line prints `007`?"
+        options:
+          - { id: a, code: 'println!("{agent:03}");' }
+          - { id: b, code: 'println!("{agent:3}");', why: "Without the `0`, the padding is spaces: `  7`." }
+          - { id: c, code: 'println!("{agent:.3}");', why: "Precision doesn't add zeros in front, and an integer ignores it: this prints `7`." }
+          - { id: d, code: 'println!("{agent:30}");', why: "That's a width of 30, padded with spaces." }
+        answer: a
+        explanation: "`0` then the width pads a number with zeros on the left."
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-tiles-temperature
+        prompt: Build the output
+        code:
+          rust: |
+            let temperature = 21.456;
+            println!("{temperature:.1}C");
+          verify: run
+        tiles: ["21", ".5", ".4", ".46", "C", " C"]
+        answer: "21.5C"
+        explanation: "One decimal place: 21.456 rounds to 21.5. The `C` follows straight after the placeholder, with no space."
+        concepts: [fmt.width-precision]
+
+      - type: decode-error
+        id: decode-printf
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let score = 42;
+                println!("Score: %d", score);
+            }
+          verify: compile-fail
+          expectErrorMessage: "argument never used"
+        options:
+          - { id: a, text: "`%d` isn't a placeholder in Rust, so `score` has nowhere to go. Use `{}`" }
+          - { id: b, text: "`score` must be a float to use `%d`", why: "`%d` doesn't mean anything to `println!`. It's printed as ordinary text." }
+          - { id: c, text: "`println!` can't print numbers", why: "It can, with a `{}` placeholder." }
+        answer: a
+        explanation: "Rust doesn't use C's `printf` style. The compiler's note says so, and its help suggests `{}`."
+        concepts: [fmt.width-precision, fmt.placeholders, compiler.read-error]
+
+      - type: predict-output
+        id: predict-running-total
+        code:
+          rust: |
+            let mut total = 0.0;
+            total += 2.5;
+            total += 1.25;
+            println!("{total:.2}");
+          verify: run
+        options:
+          - { id: a, text: "3.75" }
+          - { id: b, text: "3.8", why: "`.2` keeps two decimal places, and 3.75 already has exactly two." }
+          - { id: c, text: "2.50", why: "Both `+=` lines run, so `total` is 2.5 + 1.25." }
+        answer: a
+        explanation: "`total` becomes 3.75, which already has two decimal places."
+        concepts: [fmt.width-precision, var.mut, types.float]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-receipt
+        prompt: "Arrange the lines so the program prints a heading, then `tea` on the first row and `cake` on the second"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    println!("{:<6}{:>6}", "item", "cost");' }
+          - { id: l3, text: '    println!("{:<6}{:>6.2}", "tea", 3.5);' }
+          - { id: l4, text: '    println!("{:<6}{:>6.2}", "cake", 4.25);' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{:<6}{:>6.2f}", "tea", 3.5);' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "item    cost\ntea     3.50\ncake    4.25\n"
+        explanation: "Each row pads the name on the left to 6 and the price on the right to 6, so the columns line up. Rust's precision has no trailing `f`."
+        concepts: [fmt.width-precision]
+
+      - type: fill-tokens
+        id: fill-stars
+        prompt: "Fill the blanks so the program prints `***cat***`"
+        code:
+          rust: |
+            println!("{:___1______2___9}", "cat");
+          verify: run
+          expectStdout: "***cat***\n"
+        blanks:
+          "1": { answer: ["*"] }
+          "2": { answer: ["^"] }
+        bank: ["*", "^", ">", "<", "0"]
+        explanation: "The fill character comes first, then the alignment, then the width. `^` centres `cat` with 3 stars each side."
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-odd-padding
+        code:
+          rust: |
+            println!("{:=^11}", " Menu ");
+          verify: run
+        options:
+          - { id: a, text: "== Menu ===" }
+          - { id: b, text: "=== Menu ==", why: "When the padding can't split evenly, the extra character goes on the right." }
+          - { id: c, text: "===== Menu =====", why: "The width is the total, 11 characters, and ` Menu ` already uses 6." }
+        answer: a
+        explanation: "` Menu ` is 6 characters, so there are 5 `=` to add: 2 on the left and 3 on the right."
+        concepts: [fmt.width-precision]
+
+      - type: predict-output
+        id: predict-negative-zero-pad
+        code:
+          rust: |
+            let change = -3.14159;
+            println!("{change:08.2}");
+          verify: run
+        options:
+          - { id: a, text: "-0003.14" }
+          - { id: b, text: "000-3.14", why: "Zero padding goes after the minus sign, so the number still reads correctly." }
+          - { id: c, text: "-3.14", why: "The width is 8, so zeros are added to fill it." }
+          - { id: d, text: "-00003.14", why: "The minus sign counts towards the width of 8." }
+        answer: a
+        explanation: "`-3.14` is 5 characters, so 3 zeros fill it to 8. They go between the sign and the digits."
+        concepts: [fmt.width-precision]
+
+      - type: true-false
+        id: tf-text-precision
+        prompt: "Precision on text cuts it short: this prints `Fer`."
+        code:
+          rust: |
+            let name = "Ferris";
+            println!("{name:.3}");
+          verify: run
+          expectStdout: "Fer\n"
+        answer: true
+        explanation: "For text, precision is the maximum number of characters to print. Width only ever adds padding, but precision can cut."
+        concepts: [fmt.width-precision]
+
+      - type: spot-bug
+        id: spot-misaligned
+        prompt: "The names should line up on the left. Tap the line that's wrong."
+        code:
+          rust: |
+            fn main() {
+                println!("[{:<8}]", "Ada");
+                println!("[{:<8}]", "Grace");
+                println!("[{:>8}]", "Linus");
+                println!("[{:<8}]", "Ferris");
+            }
+          verify: run
+          expectStdout: "[Ada     ]\n[Grace   ]\n[   Linus]\n[Ferris  ]\n"
+        answer: 4
+        explanation: "Line 4 uses `>`, which right-aligns `Linus`. It should be `<` like the others."
+        concepts: [fmt.width-precision]
+
+      - type: mcq
+        id: mcq-width-and-precision
+        prompt: "Which placeholder prints `3.5` as `  3.50` (6 characters, 2 decimal places)?"
+        options:
+          - { id: a, code: "{:6.2}" }
+          - { id: b, code: "{:2.6}", why: "Width comes first, then `.` and the precision. This asks for 6 decimal places." }
+          - { id: c, code: "{:.2}", why: "This gives `3.50` with no padding in front." }
+          - { id: d, code: "{:06.2}", why: "The `0` pads with zeros: `003.50`." }
+        answer: a
+        explanation: "Width 6, then `.2` for two decimal places. Numbers are right-aligned by default, so the spaces go in front."
+        concepts: [fmt.width-precision]
+
+      - type: compiles
+        id: compiles-inline-align
+        code:
+          rust: |
+            let player_name = "Ferris";
+            let score = 7;
+            println!("{player_name:<8}{score:>4}");
+          verify: run
+          expectStdout: "Ferris     7\n"
+        answer: true
+        explanation: "It compiles and prints `Ferris     7`. Width and alignment work after inline names in the same way as after `{:`."
+        concepts: [fmt.width-precision, fmt.inline-args]
+
+      - type: decode-error
+        id: decode-python-comma
+        prompt: "This was meant to print `1,000`. What is the compiler telling you?"
+        code:
+          rust: |
+            fn main() {
+                let steps = 1000;
+                println!("{:,}", steps);
+            }
+          verify: compile-fail
+          expectErrorMessage: "python's numeric grouping `,` is not supported"
+        options:
+          - { id: a, text: "Rust format strings have no `,` option for grouping digits" }
+          - { id: b, text: "`steps` is too big to print with `{}`", why: "Any integer prints with `{}`. The problem is the `,` after the colon." }
+          - { id: c, text: "The `,` only works on floats", why: "It doesn't work on any type. Rust's format options have no thousands separator." }
+        answer: a
+        explanation: "Python's `{:,}` has no Rust equivalent. The compiler names the `,` as the problem and points at it."
+        concepts: [fmt.width-precision, compiler.read-error]
+
+      - type: predict-output
+        id: predict-debug-tuple-width
+        code:
+          rust: |
+            let point = (2.0, 3.5);
+            println!("{:?}", point);
+            let (x, y) = point;
+            println!("({x:.1}, {y:.1})");
+          verify: run
+        options:
+          - { id: a, text: "(2.0, 3.5)\n(2.0, 3.5)" }
+          - { id: b, text: "(2, 3.5)\n(2.0, 3.5)", why: "Debug format always shows a float with a decimal point, so `2.0` stays `2.0`." }
+          - { id: c, text: "(2.0, 3.5)\n(2, 3.5)", why: "`.1` asks for exactly one decimal place, so `2.0` prints as `2.0`." }
+        answer: a
+        explanation: "Debug prints the tuple as written. `{:.1}` prints each float with one decimal place, which gives the same text here."
+        concepts: [fmt.width-precision, fmt.debug, types.tuple]

@@ -1,0 +1,560 @@
+id: functions-control-flow.conditionals.if
+title: Making decisions with if
+icon: branch
+concepts: [ctrl.if]
+reviewConcepts: [types.bool, err.E0308, fn.define, fn.params, fn.return, fn.early-return, ops.arith]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-if
+        title: Run code only sometimes
+        markdown: |
+          **`if` runs a block only when its condition is true.** The condition comes after `if`, and the code to run goes between `{` and `}`. No parentheses are needed around the condition.
+
+          When the condition is false, Rust skips the block and carries on after the `}`.
+        code:
+          rust: |
+            let temperature = 31;
+            if temperature > 30 {
+                println!("Hot day");
+            }
+            println!("Done");
+          verify: run
+          expectStdout: "Hot day\nDone\n"
+        concepts: [ctrl.if]
+
+      - type: predict-output
+        id: predict-not-hot
+        code:
+          rust: |
+            let temperature = 25;
+            if temperature > 30 {
+                println!("Hot day");
+            }
+            println!("Done");
+          verify: run
+        options:
+          - { id: a, text: "Done" }
+          - { id: b, text: "Hot day\nDone", why: "`25 > 30` is false, so the block is skipped." }
+          - { id: c, text: "Hot day", why: "The condition is false, and `Done` is outside the `if`, so it always prints." }
+        answer: a
+        explanation: "`25 > 30` is false, so Rust skips the block. The last `println!` is after the `}`, so it runs either way."
+        concepts: [ctrl.if]
+
+      - type: true-false
+        id: tf-parens-required
+        prompt: "In Rust, the condition of an `if` must be wrapped in parentheses, like `if (score > 10)`."
+        answer: false
+        explanation: "Rust writes `if score > 10 {`. Parentheses are allowed, but the compiler warns that they're unnecessary."
+        concepts: [ctrl.if]
+
+      - type: concept
+        id: concept-else
+        title: Otherwise, else
+        markdown: |
+          **`else` gives the other path.** Exactly one of the two blocks runs: the `if` block when the condition is true, the `else` block when it's false.
+        code:
+          rust: |
+            let lives = 0;
+            if lives > 0 {
+                println!("Keep playing");
+            } else {
+                println!("Game over");
+            }
+          verify: run
+          expectStdout: "Game over\n"
+        concepts: [ctrl.if]
+
+      - type: predict-output
+        id: predict-pass-mark
+        code:
+          rust: |
+            let score = 50;
+            if score >= 50 {
+                println!("Pass");
+            } else {
+                println!("Try again");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Pass" }
+          - { id: b, text: "Try again", why: "`>=` means greater than or equal to, so `50 >= 50` is true." }
+          - { id: c, text: "Pass\nTry again", why: "Only one of the two blocks runs, never both." }
+        answer: a
+        explanation: "`50 >= 50` is true, so the `if` block runs and the `else` block is skipped."
+        concepts: [ctrl.if, types.bool]
+
+      - type: fill-tokens
+        id: fill-if-else
+        prompt: "Fill the blanks so the program prints `Take an umbrella`"
+        code:
+          rust: |
+            let is_raining = true;
+            ___1___ is_raining {
+                println!("Take an umbrella");
+            } ___2___ {
+                println!("Enjoy the sun");
+            }
+          verify: run
+          expectStdout: "Take an umbrella\n"
+        blanks:
+          "1": { answer: ["if"] }
+          "2": { answer: ["else"] }
+        bank: ["if", "else", "when", "elif", "then"]
+        explanation: "Rust uses `if` and `else`. A `bool` variable such as `is_raining` can be the condition on its own."
+        concepts: [ctrl.if]
+
+      - type: mcq
+        id: mcq-if-syntax
+        prompt: "Which line correctly starts an `if` in Rust?"
+        options:
+          - { id: a, code: "if lives > 0 {" }
+          - { id: b, code: "if lives > 0:", why: "That's Python style. Rust puts the block in `{ }`." }
+          - { id: c, code: "if lives > 0 then {", why: "Rust has no `then` keyword. The `{` follows the condition directly." }
+          - { id: d, code: "if lives > 0", why: "The block's opening `{` is required, even for a single line." }
+        answer: a
+        explanation: "The pattern is `if`, the condition, then `{`. The braces are always required."
+        concepts: [ctrl.if]
+
+      - type: concept
+        id: concept-bool-only
+        title: Conditions must be bool
+        markdown: |
+          **The condition must be a `bool`.** Some languages treat `0` as false and other numbers as true. Rust doesn't: `if lives {` with a number is error **E0308**, mismatched types.
+
+          Write the comparison you mean instead.
+        code:
+          rust: |
+            let lives = 3;
+            if lives != 0 {
+                println!("Still alive");
+            }
+          verify: run
+          expectStdout: "Still alive\n"
+        concepts: [ctrl.if, err.E0308]
+
+      - type: compiles
+        id: compiles-int-condition
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                if lives {
+                    println!("Still alive");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types (expected `bool`, found integer)" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The problem is the type of the condition." }
+            - { id: c, text: "E0425: cannot find value `lives`", why: "`lives` exists. It's a number, and `if` needs a `bool`." }
+          answer: a
+        explanation: "`if` needs a `bool`, and `lives` is an integer. Rust never treats numbers as true or false, so write `lives > 0` or `lives != 0`."
+        concepts: [ctrl.if, err.E0308]
+
+      - type: predict-output
+        id: predict-not-flag
+        code:
+          rust: |
+            let has_key = false;
+            if !has_key {
+                println!("The door is locked");
+            } else {
+                println!("Come in");
+            }
+          verify: run
+        options:
+          - { id: a, text: "The door is locked" }
+          - { id: b, text: "Come in", why: "`!` flips the value: `!false` is `true`, so the `if` block runs." }
+        answer: a
+        explanation: "`has_key` is `false`, so `!has_key` is `true` and the first block runs."
+        concepts: [ctrl.if, types.bool]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-else-if
+        title: More than two choices
+        markdown: |
+          **`else if` adds another condition.** Rust checks the conditions from top to bottom and runs the **first** block whose condition is true. The rest are skipped, even if they would be true too. A final `else` catches everything left over.
+        code:
+          rust: |
+            let mark = 72;
+            if mark >= 80 {
+                println!("A");
+            } else if mark >= 70 {
+                println!("B");
+            } else {
+                println!("C");
+            }
+          verify: run
+          expectStdout: "B\n"
+        concepts: [ctrl.if]
+
+      - type: predict-output
+        id: predict-first-wins
+        code:
+          rust: |
+            let speed = 95;
+            if speed > 60 {
+                println!("Fast");
+            } else if speed > 90 {
+                println!("Very fast");
+            } else {
+                println!("Slow");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Fast" }
+          - { id: b, text: "Very fast", why: "Rust doesn't look for the best match. `speed > 60` is checked first and is true." }
+          - { id: c, text: "Fast\nVery fast", why: "Only one block in an `if` / `else if` chain runs." }
+        answer: a
+        explanation: "The first true condition wins. `95 > 60` is true, so the later `else if` is never checked. Put the stricter test first if you want `Very fast`."
+        concepts: [ctrl.if]
+
+      - type: true-false
+        id: tf-all-true-run
+        prompt: "In an `if` / `else if` chain, every block whose condition is true runs."
+        answer: false
+        explanation: "Only the first block with a true condition runs. Rust skips the rest of the chain."
+        concepts: [ctrl.if]
+
+      - type: compiles
+        id: compiles-assign-condition
+        code:
+          rust: |
+            fn main() {
+                let score = 100;
+                if score = 100 {
+                    println!("Perfect!");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`=` assigns a value. Comparing needs `==`." }
+            - { id: b, text: "`score` needs `mut` to be used in an `if`", why: "Reading a variable in a condition doesn't need `mut`. The single `=` is the problem." }
+            - { id: c, text: "Numbers can't be compared in an `if`", why: "They can, with `==`, `<`, `>` and the other comparison operators." }
+          answer: a
+        explanation: "`score = 100` is an assignment, which isn't a `bool`, so Rust reports E0308. Write `score == 100`."
+        concepts: [ctrl.if, err.E0308]
+
+      - type: predict-output
+        id: predict-and
+        code:
+          rust: |
+            let age = 15;
+            let has_ticket = true;
+            if age >= 18 && has_ticket {
+                println!("Enter");
+            } else {
+                println!("Sorry");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Sorry" }
+          - { id: b, text: "Enter", why: "`&&` needs both sides true. `15 >= 18` is false." }
+        answer: a
+        explanation: "`age >= 18` is false, so `age >= 18 && has_ticket` is false and the `else` block runs."
+        concepts: [ctrl.if, types.bool]
+
+      - type: mcq
+        id: mcq-teen-range
+        prompt: "Which condition is true for every age from 13 to 19, and no others?"
+        options:
+          - { id: a, code: "age >= 13 && age <= 19" }
+          - { id: b, code: "13 <= age <= 19", why: "Rust doesn't allow chained comparisons. The compiler says `comparison operators cannot be chained`." }
+          - { id: c, code: "age >= 13 || age <= 19", why: "With `||` only one side needs to be true, so every age passes." }
+          - { id: d, code: "age > 13 && age < 19", why: "`>` and `<` leave out 13 and 19 themselves." }
+        answer: a
+        explanation: "Combine two comparisons with `&&`. Use `>=` and `<=` so both ends are included."
+        concepts: [ctrl.if, types.bool]
+
+      - type: match-pairs
+        id: pairs-if-parts
+        prompt: Match each piece to what it does
+        pairs:
+          - ["if", "runs a block when its condition is true"]
+          - ["else if", "checks another condition if earlier ones were false"]
+          - ["else", "runs when no condition was true"]
+          - ["==", "compares two values"]
+          - ["=", "assigns a value"]
+        concepts: [ctrl.if]
+
+      - type: predict-output
+        id: predict-sign-fn
+        code:
+          rust: |
+            fn sign(n: i32) {
+                if n < 0 {
+                    println!("negative");
+                } else if n == 0 {
+                    println!("zero");
+                } else {
+                    println!("positive");
+                }
+            }
+
+            fn main() {
+                sign(0);
+                sign(-4);
+            }
+          verify: run
+        options:
+          - { id: a, text: "zero\nnegative" }
+          - { id: b, text: "negative\nzero", why: "The calls run in order: `sign(0)` first, then `sign(-4)`." }
+          - { id: c, text: "zero\npositive", why: "`-4 < 0` is true, so the first block runs for `-4`." }
+        answer: a
+        explanation: "Each call runs the chain with its own `n`. `0` reaches the `n == 0` test; `-4` matches `n < 0` straight away."
+        concepts: [ctrl.if, fn.params]
+
+      - type: decode-error
+        id: decode-int-fix
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let unread = 4;
+                if unread {
+                    println!("You have mail");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "if unread > 0 {" }
+          - { id: b, code: "if unread == true {", why: "That compares an integer with a `bool`, which is another type error." }
+          - { id: c, code: "if (unread) {", why: "Parentheses don't change the type. `unread` is still an integer." }
+        answer: a
+        explanation: "The compiler expected a `bool` and found an integer. `unread > 0` turns the number into the yes-or-no question you mean."
+        concepts: [ctrl.if, err.E0308]
+
+      - type: spot-bug
+        id: spot-elif
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let fuel = 15;
+                if fuel > 50 {
+                    println!("Plenty");
+                } elif fuel > 10 {
+                    println!("Enough");
+                } else {
+                    println!("Refuel");
+                }
+            }
+          verify: compile-fail
+          expectErrorMessage: "found `fuel`"
+        answer: 5
+        explanation: "Rust has no `elif` keyword. Write `} else if fuel > 10 {`."
+        concepts: [ctrl.if]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-weather
+        prompt: Arrange the lines so the function prints `hot`, `cold` or `mild`
+        lines:
+          - { id: l1, text: "fn check(temp: i32) {" }
+          - { id: l2, text: "    if temp > 30 {" }
+          - { id: l3, text: '        println!("hot");' }
+          - { id: l4, text: "    } else if temp < 10 {" }
+          - { id: l5, text: '        println!("cold");' }
+          - { id: l6, text: "    } else {" }
+          - { id: l7, text: '        println!("mild");' }
+          - { id: l8, text: "    }" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "    } elif temp < 10 {" }
+          - { id: d2, text: "    if temp > 30:" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() { check(35); check(5); check(20); }
+          mode: run
+          expectStdout: "hot\ncold\nmild\n"
+        explanation: "Each `else if` and `else` follows the `}` of the block before it. Rust uses `else if`, not `elif`, and braces rather than `:`."
+        concepts: [ctrl.if, fn.params]
+
+      - type: predict-output
+        id: predict-nested
+        code:
+          rust: |
+            let lives = 2;
+            let has_shield = false;
+            if lives > 0 {
+                if has_shield {
+                    println!("Protected");
+                } else {
+                    println!("Careful");
+                }
+            } else {
+                println!("Game over");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Careful" }
+          - { id: b, text: "Protected", why: "`has_shield` is `false`, so the inner `else` runs." }
+          - { id: c, text: "Game over", why: "`lives > 0` is true, so the outer `else` is skipped." }
+        answer: a
+        explanation: "The outer condition is true, so Rust runs the inner `if`. Its condition is false, so the inner `else` prints `Careful`."
+        concepts: [ctrl.if]
+
+      - type: fill-tokens
+        id: fill-and-or
+        prompt: "Fill the blanks so `Welcome` prints only for adults who have ID"
+        code:
+          rust: |
+            let age = 20;
+            let has_id = true;
+            if age ___1___ 18 ___2___ has_id {
+                println!("Welcome");
+            }
+          verify: run
+          expectStdout: "Welcome\n"
+        blanks:
+          "1": { answer: [">="] }
+          "2": { answer: ["&&"] }
+        bank: [">=", "=>", "&&", "||", "and"]
+        explanation: "`>=` is greater than or equal to, and `&&` needs both sides true. `||` would let in anyone who passes either test, and `=>` and `and` aren't operators in Rust."
+        concepts: [ctrl.if, types.bool]
+
+      - type: predict-output
+        id: predict-early-return
+        code:
+          rust: |
+            fn enter(age: u32) {
+                if age < 18 {
+                    println!("Too young");
+                    return;
+                }
+                println!("Welcome");
+            }
+
+            fn main() {
+                enter(12);
+                enter(20);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Too young\nWelcome" }
+          - { id: b, text: "Too young\nWelcome\nWelcome", why: "`return` leaves the function straight away, so `enter(12)` never reaches the last `println!`." }
+          - { id: c, text: "Welcome", why: "`12 < 18` is true, so the first call prints `Too young`." }
+        answer: a
+        explanation: "For 12 the `if` block prints and `return` ends the function. For 20 the block is skipped and `Welcome` prints. No `else` is needed."
+        concepts: [ctrl.if, fn.early-return]
+
+      - type: compiles
+        id: compiles-parens
+        code:
+          rust: |
+            fn main() {
+                let score = 12;
+                if (score > 10) {
+                    println!("Bonus!");
+                }
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles and prints `Bonus!`. The compiler warns `unnecessary parentheses around if condition`, because Rust style leaves them out."
+        concepts: [ctrl.if]
+
+      - type: spot-bug
+        id: spot-no-braces
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                if lives > 0 println!("alive");
+                println!("Done");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `{`"
+        answer: 3
+        explanation: "The body of an `if` must be in `{ }`, even when it's one statement. Write `if lives > 0 { println!(\"alive\"); }`."
+        concepts: [ctrl.if]
+
+      - type: predict-output
+        id: predict-bool-fn
+        code:
+          rust: |
+            fn is_even(n: i32) -> bool {
+                n % 2 == 0
+            }
+
+            fn main() {
+                let steps = 7;
+                if is_even(steps) {
+                    println!("even");
+                } else {
+                    println!("odd");
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "odd" }
+          - { id: b, text: "even", why: "`7 % 2` is `1`, so `is_even(7)` returns `false`." }
+        answer: a
+        explanation: "A function that returns `bool` can be the condition. `is_even(7)` returns `false`, so the `else` block runs."
+        concepts: [ctrl.if, fn.return, ops.arith]
+
+      - type: decode-error
+        id: decode-chained
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mark = 64;
+                if 0 < mark < 100 {
+                    println!("Valid mark");
+                }
+            }
+          verify: compile-fail
+          expectErrorMessage: "comparison operators cannot be chained"
+        options:
+          - { id: a, text: "Write two comparisons joined with `&&`: `0 < mark && mark < 100`" }
+          - { id: b, text: "`mark` must be declared with `mut` before comparing it", why: "Comparing only reads `mark`. The problem is the shape of the condition." }
+          - { id: c, text: "Rust can't compare numbers with `<`", why: "It can. It can't chain two `<` together in one expression." }
+        answer: a
+        explanation: "Each comparison gives a `bool`, so `0 < mark < 100` would compare a `bool` with `100`. Rust rejects it and suggests splitting it with `&&`."
+        concepts: [ctrl.if, types.bool]
+
+      - type: fill-tokens
+        id: fill-else-if
+        prompt: "Fill the blanks so the program prints `Medium`"
+        code:
+          rust: |
+            let height = 165;
+            if height < 150 {
+                println!("Small");
+            } ___1___ height < 180 {
+                println!("Medium");
+            } ___2___ {
+                println!("Large");
+            }
+          verify: run
+          expectStdout: "Medium\n"
+        blanks:
+          "1": { answer: ["else if"] }
+          "2": { answer: ["else"] }
+        bank: ["else if", "else", "elif", "elseif", "if"]
+        explanation: "`else if` checks a second condition, and the final `else` has no condition. `165 < 180` is true, so `Medium` prints."
+        concepts: [ctrl.if]
+
+      - type: true-false
+        id: tf-skip-else
+        prompt: "Every `if` must have an `else`."
+        answer: false
+        explanation: "The `else` is optional. Without one, Rust skips the block when the condition is false and carries on."
+        concepts: [ctrl.if]

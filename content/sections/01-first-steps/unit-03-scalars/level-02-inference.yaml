@@ -1,0 +1,422 @@
+id: first-steps.scalars.inference
+title: Rust works out the type
+icon: sparkles
+concepts: [types.inference]
+reviewConcepts: [types.int, var.let, var.shadowing, var.const, fmt.inline-args]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-inference
+        title: Type inference
+        markdown: |
+          **Every value has a type, but you rarely have to write it.** Rust works out (infers) the type from the value.
+
+          When nothing else decides, a whole number is an `i32` and a number with a decimal point is an `f64`. You'll meet `f64` properly in the next level.
+        code:
+          rust: |
+            let score = 10;     // i32
+            let ratio = 2.5;    // f64
+            println!("{score} {ratio}");
+          verify: run
+          expectStdout: "10 2.5\n"
+        concepts: [types.inference]
+
+      - type: mcq
+        id: mcq-default-int
+        prompt: "What type is `score`?"
+        code:
+          rust: |
+            let score = 42;
+            println!("{score}");
+          verify: run
+          expectStdout: "42\n"
+        options:
+          - { id: a, text: "`i32`" }
+          - { id: b, text: "`u8`", why: "42 would fit in a `u8`, but Rust doesn't pick the smallest type. The default is `i32`." }
+          - { id: c, text: "`i64`", why: "`i64` is never the default. Whole numbers default to `i32`." }
+          - { id: d, text: "`usize`", why: "`usize` is used for counts and lengths, not as the default." }
+        answer: a
+        explanation: "With nothing else to go on, Rust makes a whole number an `i32`."
+        concepts: [types.inference]
+
+      - type: concept
+        id: concept-annotations
+        title: Choosing a type yourself
+        markdown: |
+          **You can choose the type in two ways.** Write it after the name with `: type`, or stick it on the end of the number as a **suffix**.
+
+          The suffix can have an underscore before it for readability: `5_u8` is the same as `5u8`.
+        code:
+          rust: |
+            let lives: u8 = 3;
+            let gems = 3u8;
+            let coins = 3_u8;
+            println!("{lives} {gems} {coins}");
+          verify: run
+          expectStdout: "3 3 3\n"
+        concepts: [types.inference]
+
+      - type: true-false
+        id: tf-suffix-same
+        prompt: "`let a = 5u8;` and `let a: u8 = 5;` give `a` the same type."
+        answer: true
+        explanation: "Both make `a` a `u8`. One puts the type on the variable, the other on the number."
+        concepts: [types.inference]
+
+      - type: mcq
+        id: mcq-default-float
+        prompt: "What type is `height` in `let height = 1.75;`?"
+        options:
+          - { id: a, text: "`f64`" }
+          - { id: b, text: "`f32`", why: "`f32` is available, but the default for decimals is `f64`." }
+          - { id: c, text: "`i32`", why: "`1.75` has a decimal point, so it isn't an integer." }
+        answer: a
+        explanation: "A number with a decimal point is a float, and floats default to `f64`."
+        concepts: [types.inference]
+
+      - type: predict-output
+        id: predict-suffix-print
+        code:
+          rust: |
+            let lives = 3u8;
+            println!("{lives}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "3u8", why: "The suffix only sets the type. It isn't part of the value." }
+          - { id: c, text: "u8", why: "`{lives}` prints the value of `lives`, not its type." }
+        answer: a
+        explanation: "`3u8` is the number 3 with type `u8`. Printing it shows only the number."
+        concepts: [types.inference]
+
+      - type: fill-tokens
+        id: fill-annotation
+        prompt: "Fill the blank so `level` is an unsigned 8-bit integer"
+        code:
+          rust: |
+            let level: ___1___ = 7;
+            println!("{level}");
+          verify: run
+          expectStdout: "7\n"
+        blanks:
+          "1": { answer: ["u8"] }
+        bank: ["u8", "i8", "i32", "8"]
+        explanation: "`u8` is the unsigned 8-bit integer type. `i8` is signed, and `8` on its own isn't a type."
+        concepts: [types.inference, types.int]
+
+      - type: compiles
+        id: compiles-mixed-ints
+        code:
+          rust: |
+            let lives: u8 = 3;
+            let bonus: i32 = 2;
+            let total = lives + bonus;
+            println!("{total}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error code appears first?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The problem is adding two different types." }
+            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
+          answer: a
+        explanation: "`u8` and `i32` are different types, and Rust won't add them together. Both values need the same integer type."
+        concepts: [types.inference, types.int]
+
+      - type: match-pairs
+        id: pairs-literal-types
+        pairs:
+          - ["5", "i32"]
+          - ["5u8", "u8"]
+          - ["5.0", "f64"]
+          - ["5_i64", "i64"]
+        explanation: "Without a suffix or annotation, whole numbers are `i32` and decimals are `f64`."
+        concepts: [types.inference]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-later-use
+        title: Inference looks ahead
+        markdown: |
+          **Rust also looks at how you use a variable.** If a later line needs a `u8`, the number becomes a `u8`, even without a suffix.
+        code:
+          rust: |
+            let count = 200;
+            let small: u8 = count;
+            println!("{small}");
+          verify: run
+          expectStdout: "200\n"
+        concepts: [types.inference]
+
+      - type: mcq
+        id: mcq-inferred-from-use
+        prompt: "What type does Rust give `steps`?"
+        code:
+          rust: |
+            let steps = 10;
+            let total: u64 = steps;
+            println!("{total}");
+          verify: run
+          expectStdout: "10\n"
+        options:
+          - { id: a, text: "`u64`" }
+          - { id: b, text: "`i32`", why: "`i32` is only the fallback. Line 2 needs a `u64`, so that wins." }
+          - { id: c, text: "Both: `i32` on line 1 and `u64` on line 2", why: "A variable has one type for its whole life. Rust picks `u64` from the start." }
+        answer: a
+        explanation: "`total` is a `u64` and gets `steps` directly, so Rust makes `steps` a `u64` too."
+        concepts: [types.inference]
+
+      - type: compiles
+        id: compiles-big-default
+        code:
+          rust: |
+            let population = 3_000_000_000;
+            println!("{population}");
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `i32`"
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "It defaults to `i32`, which stops at about 2.1 billion" }
+            - { id: b, text: "Underscores aren't allowed in numbers", why: "Underscores are fine. `1_000` is a valid number." }
+            - { id: c, text: "Rust has no type big enough for 3 billion", why: "`u32`, `i64` and larger types can hold it." }
+          answer: a
+        explanation: "Nothing says which type to use, so `population` defaults to `i32`, and 3 billion is too big for it."
+        concepts: [types.inference, types.int]
+
+      - type: fill-tokens
+        id: fill-big-type
+        prompt: "Fill the blank so the program compiles"
+        code:
+          rust: |
+            let population: ___1___ = 3_000_000_000;
+            println!("{population}");
+          verify: run
+          expectStdout: "3000000000\n"
+        blanks:
+          "1": { answer: ["i64", "u32", "u64", "i128", "u128"] }
+        bank: ["i64", "i32", "i16", "u8"]
+        explanation: "An `i64` goes up to about 9.2 × 10¹⁸, so 3 billion fits easily. `i32` stops at about 2.1 billion."
+        concepts: [types.inference, types.int]
+
+      - type: decode-error
+        id: decode-u8-to-i32
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let lives: u8 = 3;
+                let level: i32 = lives;
+                println!("{level}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`lives` is a `u8`, but `level` needs an `i32`" }
+          - { id: b, text: "3 is too big for a `u8`", why: "3 fits easily. The problem is the type, not the size." }
+          - { id: c, text: "`level` must be marked `mut`", why: "Nothing is changed after it's created, so `mut` isn't needed." }
+        answer: a
+        explanation: "Rust never converts between integer types on its own. Even though 3 would fit in an `i32`, a `u8` value can't go into an `i32` variable."
+        concepts: [types.inference, types.int, compiler.read-error]
+
+      - type: true-false
+        id: tf-auto-convert
+        prompt: "Rust automatically turns a `u8` into an `i32` when a line needs an `i32`."
+        answer: false
+        explanation: "Rust doesn't convert number types for you. You'll learn how to convert on purpose later in this unit."
+        concepts: [types.inference]
+
+      - type: predict-output
+        id: predict-hex-suffix
+        code:
+          rust: |
+            let reading = 0xff_u8;
+            println!("{reading}");
+          verify: run
+        options:
+          - { id: a, text: "255" }
+          - { id: b, text: "0xff", why: "Integers print in decimal, however you wrote them." }
+          - { id: c, text: "255u8", why: "The suffix sets the type. It isn't printed." }
+        answer: a
+        explanation: "`0xff` is 255, and `_u8` makes it a `u8`. Suffixes work with any way of writing a number."
+        concepts: [types.inference, types.int]
+
+      - type: spot-bug
+        id: spot-mismatch
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let speed: u16 = 120;
+                let limit: u16 = 100;
+                let over: i32 = speed;
+                println!("{over} {limit}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 4
+        explanation: "`speed` is a `u16`, but `over` is declared as an `i32`. The types must match exactly."
+        concepts: [types.inference, types.int]
+
+      - type: mcq
+        id: mcq-pick-suffix
+        prompt: "Which line makes `gold` an `i64` without writing `: i64`?"
+        options:
+          - { id: a, code: "let gold = 500i64;" }
+          - { id: b, code: "let gold = i64 500;", why: "The type goes straight after the digits as a suffix, not before them." }
+          - { id: c, code: "let gold = 500;", why: "With no hint, Rust picks the default, `i32`." }
+          - { id: d, code: "let i64 gold = 500;", why: "The type never goes before the name. Use `let gold: i64 = 500;` or a suffix." }
+        answer: a
+        explanation: "A suffix like `i64` on the number sets its type, and `gold` takes that type."
+        concepts: [types.inference]
+
+  - id: l3
+    exercises:
+      - type: compiles
+        id: compiles-inferred-too-big
+        code:
+          rust: |
+            let count = 300;
+            let small: u8 = count;
+            println!("{small}");
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `u8`"
+        answer: false
+        explanation: "Line 2 makes Rust infer that `count` is a `u8`. Then `300` on line 1 is too big for a `u8`."
+        concepts: [types.inference, types.int]
+
+      - type: spot-bug
+        id: spot-inferred-line
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let count = 300;
+                let small: u8 = count;
+                println!("{small}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `u8`"
+        answer: 2
+        explanation: "Line 3 makes `count` a `u8`, but the error points at line 2, where `300` doesn't fit. The cause and the reported line can differ."
+        concepts: [types.inference, types.int]
+
+      - type: predict-output
+        id: predict-inferred-i64
+        code:
+          rust: |
+            let small = 2;
+            let big: i64 = 3_000_000_000;
+            println!("{}", small + big);
+          verify: run
+        options:
+          - { id: a, text: "3000000002" }
+          - { id: b, text: "3_000_000_002", why: "Underscores are only for writing literals. Numbers print without them." }
+          - { id: c, text: "It doesn't compile: `small` is an `i32`", why: "`small` is added to an `i64`, so Rust infers `small` is an `i64` as well." }
+        answer: a
+        explanation: "Because `small` is added to an `i64`, Rust makes `small` an `i64` too, so the types match."
+        concepts: [types.inference]
+
+      - type: mcq
+        id: mcq-infer-from-sum
+        prompt: "What type is `speed`?"
+        code:
+          rust: |
+            let speed = 50;
+            let boost: u8 = 10;
+            println!("{}", speed + boost);
+          verify: run
+          expectStdout: "60\n"
+        options:
+          - { id: a, text: "`u8`" }
+          - { id: b, text: "`i32`", why: "`speed` is added to a `u8`, which decides its type before the default applies." }
+          - { id: c, text: "`u16`", why: "Nothing mentions `u16`. Rust takes the type from `boost`." }
+        answer: a
+        explanation: "Both sides of `+` must be the same type, so `speed` becomes a `u8` like `boost`."
+        concepts: [types.inference]
+
+      - type: true-false
+        id: tf-const-inference
+        prompt: "Like `let`, a `const` can leave out its type and let Rust infer it."
+        answer: false
+        explanation: "A `const` must always have its type written, for example `const MAX_LIVES: u32 = 3;`."
+        concepts: [var.const, types.inference]
+
+      - type: compiles
+        id: compiles-shadow-new-type
+        code:
+          rust: |
+            let level = 5u8;
+            let level = 300;
+            println!("{level}");
+          verify: compile
+        answer: true
+        explanation: "The second `let` makes a new variable, so it gets its own type. `300` is an `i32` and fits."
+        concepts: [var.shadowing, types.inference]
+
+      - type: predict-output
+        id: predict-tiles-mixed
+        prompt: Build the output
+        code:
+          rust: |
+            let a = 1_0;
+            let b = 0x1_0;
+            println!("{a} {b} {}", a + b);
+          verify: run
+        tiles: ["10", "16", "26", "20", "0x10", "1_0"]
+        answer: "10 16 26"
+        explanation: "`1_0` is 10 and `0x1_0` is hexadecimal 10, which is 16. Underscores work in any base."
+        concepts: [types.int, types.inference]
+
+      - type: mcq
+        id: mcq-invalid-literal
+        prompt: "Which of these is **not** a valid number in Rust?"
+        options:
+          - { id: a, code: "0b102" }
+          - { id: b, code: "1_000", why: "Underscores are allowed anywhere between digits." }
+          - { id: c, code: "0xff", why: "Hexadecimal digits go up to `f`, so this is 255." }
+          - { id: d, code: "7u8", why: "A suffix sets the type: 7 as a `u8`." }
+        answer: a
+        explanation: "Binary only has the digits 0 and 1, so `0b102` is an error."
+        concepts: [types.int, types.inference]
+
+      - type: fill-tokens
+        id: fill-suffix
+        prompt: "Fill the blank so `distance` is a `u32` and the program prints `4000000000`"
+        code:
+          rust: |
+            let distance = 4_000_000_000___1___;
+            println!("{distance}");
+          verify: run
+          expectStdout: "4000000000\n"
+        blanks:
+          "1": { answer: ["u32", "_u32"] }
+        bank: ["u32", "i32", "u8", ": u32"]
+        explanation: "The suffix `u32` makes the number a `u32`, which goes up to about 4.29 billion. As an `i32` it wouldn't fit."
+        concepts: [types.inference, types.int]
+
+      - type: parsons
+        id: parsons-distance
+        prompt: "Arrange the lines so the program prints `4000000005`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let distance: u32 = 4_000_000_000;" }
+          - { id: l3, text: "    let extra = 5;" }
+          - { id: l4, text: "    let total = distance + extra;" }
+          - { id: l5, text: '    println!("{total}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let distance = 4_000_000_000;" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l3, l2, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "4000000005\n"
+        explanation: "`distance` needs `: u32`, because without it both numbers would default to `i32`, and 4 billion doesn't fit. `extra` then becomes a `u32` too."
+        concepts: [types.inference, types.int]

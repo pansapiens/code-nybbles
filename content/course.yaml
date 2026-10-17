@@ -4,3 +4,4 @@ mascot: ferris
 edition: '2024'
 sections:
   - 01-first-steps
+  - 02-functions-control-flow

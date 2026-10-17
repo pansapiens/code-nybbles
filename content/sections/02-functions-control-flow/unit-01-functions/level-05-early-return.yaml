@@ -1,0 +1,523 @@
+id: functions-control-flow.functions.early-return
+title: The return keyword
+icon: tag
+concepts: [fn.early-return]
+reviewConcepts: [fn.define, fn.params, fn.return, expr.vs-stmt, expr.block, err.E0308, types.unit, types.tuple, types.float, fmt.debug]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-return-keyword
+        title: return
+        markdown: |
+          **`return value;` ends the function straight away** and hands `value` back to the caller. Any lines after it don't run.
+        code:
+          rust: |
+            fn main() {
+                println!("{}", get_speed());
+            }
+
+            fn get_speed() -> i32 {
+                println!("checking");
+                return 50;
+            }
+          verify: run
+          expectStdout: "checking\n50\n"
+        concepts: [fn.early-return]
+
+      - type: predict-output
+        id: predict-after-return
+        code:
+          rust: |
+            fn main() {
+                println!("{}", get_speed());
+            }
+
+            fn get_speed() -> i32 {
+                println!("checking");
+                return 50;
+                println!("done");
+            }
+          verify: run
+        options:
+          - { id: a, text: "checking\n50" }
+          - { id: b, text: "checking\ndone\n50", why: "`return` leaves the function at once, so `println!(\"done\")` never runs." }
+          - { id: c, text: "50", why: "`println!(\"checking\")` comes before the `return`, so it runs." }
+        answer: a
+        explanation: "The function prints `checking`, then `return 50;` exits. The compiler warns that the last line is unreachable."
+        concepts: [fn.early-return]
+
+      - type: concept
+        id: concept-return-vs-tail
+        title: return or tail?
+        markdown: |
+          **At the end of a function, `return x;` and a tail `x` do the same thing.** Rust style uses the tail.
+
+          `return` is for leaving **before** the end. That becomes useful with conditions, which you'll meet in the next unit.
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                return n * 2;
+            }
+
+            fn triple(n: i32) -> i32 {
+                n * 3
+            }
+
+            fn main() {
+                let a = double(2);
+                let b = triple(2);
+                println!("{a} {b}");
+            }
+          verify: run
+          expectStdout: "4 6\n"
+        concepts: [fn.early-return, fn.return]
+
+      - type: true-false
+        id: tf-return-same-as-tail
+        prompt: "As the last line of a function, `return n * 2;` and `n * 2` give the same result."
+        answer: true
+        explanation: "Both hand back `n * 2`. The tail form is shorter and is the usual style."
+        concepts: [fn.early-return, fn.return]
+
+      - type: mcq
+        id: mcq-what-return-does
+        prompt: "What does `return` do?"
+        options:
+          - { id: a, text: "Ends the current function and hands a value back to the caller" }
+          - { id: b, text: "Prints the value", why: "`return` doesn't print anything. The caller decides what to do with the value." }
+          - { id: c, text: "Ends the whole program", why: "Only the current function ends. The caller carries on from where it made the call." }
+          - { id: d, text: "Stores the value in a variable called `return`", why: "`return` is a keyword, not a variable name." }
+        answer: a
+        explanation: "`return` exits the function it's in. The value becomes the result of the call."
+        concepts: [fn.early-return]
+
+      - type: fill-tokens
+        id: fill-return-keyword
+        prompt: "Fill the blank so the program prints `4`"
+        code:
+          rust: |
+            fn max_players() -> i32 {
+                ___1___ 4;
+            }
+
+            fn main() {
+                println!("{}", max_players());
+            }
+          verify: run
+          expectStdout: "4\n"
+        blanks:
+          "1": { answer: ["return"] }
+        bank: ["return", "break", "exit", "let"]
+        explanation: "`return 4;` hands 4 back. `break` is for leaving loops, and Rust has no `exit` keyword."
+        concepts: [fn.early-return]
+
+      - type: predict-output
+        id: predict-main-continues
+        code:
+          rust: |
+            fn main() {
+                let a = first();
+                println!("main got {a}");
+            }
+
+            fn first() -> i32 {
+                return 1;
+            }
+          verify: run
+        options:
+          - { id: a, text: "main got 1" }
+          - { id: b, text: "main got {a}", why: "`{a}` is replaced by the value of `a`, which is 1." }
+          - { id: c, text: "1\nmain got 1", why: "`return` doesn't print. Only the `println!` in `main` prints." }
+        answer: a
+        explanation: "`return` only ends `first`. It hands 1 back to `main`, which stores it in `a` and prints it."
+        concepts: [fn.early-return]
+
+      - type: compiles
+        id: compiles-return-no-semicolon
+        code:
+          rust: |
+            fn five() -> i32 {
+                return 5
+            }
+
+            fn main() {
+                println!("{}", five());
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles. `return 5` works with or without the `;`, because it leaves the function either way. With `return`, people usually write the `;`."
+        concepts: [fn.early-return]
+
+      - type: spot-bug
+        id: spot-saved-never-prints
+        prompt: "This should print `Saved` and then `3`, but prints only `3`. Tap the line that stops `Saved` printing."
+        code:
+          rust: |
+            fn main() {
+                let n = save_count();
+                println!("{n}");
+            }
+
+            fn save_count() -> i32 {
+                return 3;
+                println!("Saved");
+            }
+          verify: run
+          expectStdout: "3\n"
+        answer: 7
+        explanation: "`return 3;` on line 7 leaves the function before line 8 runs. Put the `println!` first, then the `return`."
+        concepts: [fn.early-return]
+
+      - type: match-pairs
+        id: pairs-endings
+        prompt: Match each last line of a body to what it does
+        pairs:
+          - ["return 5;", "leave now, giving back 5"]
+          - ["5", "tail: give back 5 at the end"]
+          - ["5;", "throw 5 away, give back ()"]
+          - ["return;", "leave now, giving back ()"]
+        concepts: [fn.early-return, expr.vs-stmt]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-preview-if
+        title: "Preview: why return exists"
+        markdown: |
+          **`return` lets you leave early when something is true.** Here's a peek at `if`, which you'll learn in the next unit: children pay 5, so the function returns before reaching the last line.
+        code:
+          rust: |
+            fn ticket_price(age: i32) -> i32 {
+                if age < 12 {
+                    return 5;
+                }
+                10
+            }
+
+            fn main() {
+                println!("{}", ticket_price(8));
+            }
+          verify: run
+          expectStdout: "5\n"
+        concepts: [fn.early-return]
+
+      - type: predict-output
+        id: predict-two-returns
+        code:
+          rust: |
+            fn pick() -> i32 {
+                return 1;
+                return 2;
+            }
+
+            fn main() {
+                println!("{}", pick());
+            }
+          verify: run
+        options:
+          - { id: a, text: "1" }
+          - { id: b, text: "2", why: "The first `return` ends the function, so the second one never runs." }
+          - { id: c, text: "1\n2", why: "A function returns one value per call, then it's finished." }
+        answer: a
+        explanation: "`return 1;` leaves `pick` at once. The compiler warns that `return 2;` is unreachable."
+        concepts: [fn.early-return]
+
+      - type: compiles
+        id: compiles-return-wrong-type
+        code:
+          rust: |
+            fn lives() -> i32 {
+                return "three";
+            }
+
+            fn main() {
+                println!("{}", lives());
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0061: wrong number of arguments", why: "`lives` takes no arguments and gets none." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`\"three\"` is a text value, not a name to look up." }
+          answer: a
+        explanation: "A `return` value must match the return type, like a tail expression does. `\"three\"` is a `&str`, not an `i32`."
+        concepts: [fn.early-return, err.E0308]
+
+      - type: decode-error
+        id: decode-return-no-arrow
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn reset() {
+                return 5;
+            }
+
+            fn main() {
+                println!("{}", reset());
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "fn reset() -> i32 {" }
+          - { id: b, code: "    return 5" , why: "The `;` isn't the problem. Without `->`, `reset` can only return `()`." }
+          - { id: c, code: "    5;", why: "That throws the 5 away, and `main` still can't print `()` with `{}`." }
+        answer: a
+        explanation: "`return` can only hand back the type in the signature, and no `->` means `()`. The compiler's help suggests adding `-> i32`."
+        concepts: [fn.early-return, err.E0308, fn.return]
+
+      - type: mcq
+        id: mcq-idiomatic-tail
+        prompt: "You want `double` to return `n * 2` from its last line. What's the usual Rust style?"
+        options:
+          - { id: a, text: "Write `n * 2` as the tail, and save `return` for leaving early" }
+          - { id: b, text: "Always write `return n * 2;`", why: "It works, but Rust code normally uses the tail expression at the end." }
+          - { id: c, text: "Write `n * 2;` with a semicolon", why: "That makes it a statement, so the function returns `()` (E0308)." }
+        answer: a
+        explanation: "Both `return n * 2;` and `n * 2` work at the end. The tail is shorter and is what most Rust code does."
+        concepts: [fn.early-return, fn.return]
+
+      - type: predict-output
+        id: predict-return-in-main
+        code:
+          rust: |
+            fn main() {
+                println!("a");
+                return;
+                println!("b");
+            }
+          verify: run
+        options:
+          - { id: a, text: "a" }
+          - { id: b, text: "a\nb", why: "`return;` ends `main`, so the program stops before printing `b`." }
+          - { id: c, text: "b", why: "Lines run top to bottom, so `a` prints before the `return`." }
+        answer: a
+        explanation: "`return;` with no value works in a function that returns `()`, including `main`. Ending `main` ends the program."
+        concepts: [fn.early-return, types.unit]
+
+      - type: true-false
+        id: tf-return-no-value
+        prompt: "`return;` with no value is allowed in a function that has no `->`."
+        answer: true
+        explanation: "Such a function returns `()`, and `return;` means `return ();`."
+        concepts: [fn.early-return, types.unit]
+
+      - type: spot-bug
+        id: spot-area-early
+        prompt: "This should print `12`, but prints `7`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                println!("{}", area(3, 4));
+            }
+
+            fn area(w: i32, h: i32) -> i32 {
+                return w + h;
+                w * h
+            }
+          verify: run
+          expectStdout: "7\n"
+        answer: 6
+        explanation: "The `return` on line 6 leaves with `w + h` before the correct tail `w * h` is reached. Delete line 6."
+        concepts: [fn.early-return]
+
+      - type: fill-tokens
+        id: fill-return-tuple
+        prompt: "Fill the blanks so the program prints `(1, 9)`"
+        code:
+          rust: |
+            fn min_max() -> (i32, i32) {
+                ___1___ (1, 9)___2___
+            }
+
+            fn main() {
+                println!("{:?}", min_max());
+            }
+          verify: run
+          expectStdout: "(1, 9)\n"
+        blanks:
+          "1": { answer: ["return"] }
+          "2": { answer: [";"] }
+        bank: ["return", "break", ";", ",", "let"]
+        explanation: "`return (1, 9);` hands back a tuple, which matches `-> (i32, i32)`. `{:?}` prints it with its brackets."
+        concepts: [fn.early-return, types.tuple, fmt.debug]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-status
+        prompt: "Arrange the lines so the program prints `status 200`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let code = status();" }
+          - { id: l3, text: '    println!("status {code}");' }
+          - { id: l4, text: "}" }
+          - { id: l5, text: "fn status() -> i32 {" }
+          - { id: l6, text: "    return 200;" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "fn status() {" }
+          - { id: d2, text: "    200;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l5, l6, l7, l1, l2, l3, l4]
+          - [l1, l2, l3, l7, l5, l6, l4]
+          - [l5, l6, l4, l1, l2, l3, l7]
+        verify:
+          mode: run
+          expectStdout: "status 200\n"
+        explanation: "`status` needs `-> i32` to return a number, and `return 200;` gives it back. `200;` would throw the value away."
+        concepts: [fn.early-return, fn.return]
+
+      - type: predict-output
+        id: predict-return-from-block
+        code:
+          rust: |
+            fn level() -> i32 {
+                let x: i32 = {
+                    return 7;
+                };
+                x + 1
+            }
+
+            fn main() {
+                println!("{}", level());
+            }
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "8", why: "`return` leaves the whole function, not only the block, so `x + 1` never runs." }
+        answer: a
+        explanation: "`return` always exits the function it's in, even from inside a nested block. The compiler warns that `x + 1` is unreachable."
+        concepts: [fn.early-return, expr.block]
+
+      - type: decode-error
+        id: decode-e0069
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn score() -> i32 {
+                return;
+            }
+
+            fn main() {
+                println!("{}", score());
+            }
+          verify: compile-fail
+          expectErrors: [E0069]
+        options:
+          - { id: a, text: "`return;` gives back no value, but `score` promises an `i32`" }
+          - { id: b, text: "`return` isn't allowed in a function with `->`", why: "It is, as long as it has a value of the right type: `return 42;`." }
+          - { id: c, text: "`score` needs a parameter", why: "The call and definition both have no arguments. The problem is the missing return value." }
+        answer: a
+        explanation: "E0069 means a bare `return;` in a function whose return type isn't `()`. The help suggests giving it a value."
+        concepts: [fn.early-return, compiler.read-error]
+
+      - type: true-false
+        id: tf-unreachable
+        prompt: "Code after a `return` in the same block never runs, and the compiler warns that it's unreachable."
+        answer: true
+        explanation: "It's a warning, not an error, so the program still compiles. Deleting the dead code makes the warning go away."
+        concepts: [fn.early-return]
+
+      - type: fill-tokens
+        id: fill-return-and-tail
+        prompt: "Fill the blanks so the program prints `15`"
+        code:
+          rust: |
+            fn base() -> i32 {
+                ___1___ 10;
+            }
+
+            fn bonus() -> i32 {
+                ___2___
+            }
+
+            fn main() {
+                println!("{}", base() + bonus());
+            }
+          verify: run
+          expectStdout: "15\n"
+        blanks:
+          "1": { answer: ["return"] }
+          "2": { answer: ["5"] }
+        bank: ["return", "5", "5;", "break", "let"]
+        explanation: "`return 10;` is a valid ending, and so is the tail `5`. A plain `5;` would be a statement, making `bonus` return `()`."
+        concepts: [fn.early-return, expr.vs-stmt]
+
+      - type: spot-bug
+        id: spot-return-float
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let t = temperature();
+                println!("{t}");
+            }
+
+            fn temperature() -> f64 {
+                return 21;
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 7
+        explanation: "`21` is an integer, but `temperature` returns an `f64`. Rust doesn't convert it; write `21.0`."
+        concepts: [fn.early-return, err.E0308, types.float]
+
+      - type: predict-output
+        id: predict-return-nested-add
+        code:
+          rust: |
+            fn add(a: i32, b: i32) -> i32 {
+                return a + b;
+            }
+
+            fn main() {
+                let x = add(add(1, 2), 3);
+                println!("{x}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "3", why: "The outer call adds 3 to the inner result: `add(3, 3)`." }
+          - { id: c, text: "5", why: "The inner call is `add(1, 2)`, which is 3, so the outer call is `add(3, 3)`." }
+        answer: a
+        explanation: "`add(1, 2)` returns 3, then `add(3, 3)` returns 6. `return` at the end works like a tail."
+        concepts: [fn.early-return]
+
+      - type: mcq
+        id: mcq-why-return
+        prompt: "If a tail expression already returns a value, why does Rust have `return`?"
+        options:
+          - { id: a, text: "To leave a function before its last line, usually when a condition is met" }
+          - { id: b, text: "Because tail expressions only work for `i32`", why: "A tail expression can be any type, such as `f64`, `bool` or a tuple." }
+          - { id: c, text: "To make the function run faster", why: "Both forms do the same thing. `return` is about where you leave, not speed." }
+        answer: a
+        explanation: "`return` can appear anywhere in the body. Together with `if` (next unit), it lets a function finish early."
+        concepts: [fn.early-return]
+
+      - type: compiles
+        id: compiles-return-in-main-block
+        code:
+          rust: |
+            fn main() {
+                let y = {
+                    return 5;
+                };
+                println!("{y}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0069: `return;` in a function whose return type is not `()`", why: "This `return` has a value. E0069 is for a bare `return;`." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "Every name is defined. The type of the returned value is the problem." }
+          answer: a
+        explanation: "`return 5;` returns from `main`, not from the block. `main` returns `()`, so returning a number is a type mismatch."
+        concepts: [fn.early-return, expr.block, err.E0308]

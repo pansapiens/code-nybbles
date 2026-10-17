@@ -1,0 +1,459 @@
+id: first-steps.compound.arrays
+title: Arrays
+icon: grid
+concepts: [types.array]
+reviewConcepts: [types.tuple, types.unit, var.mut, var.shadowing, fmt.placeholders, fmt.inline-args, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-array
+        title: A row of values
+        markdown: |
+          **An array holds several values of the same type**, written in square brackets.
+
+          Read one element with its index in square brackets. As with tuples, the first index is 0.
+        code:
+          rust: |
+            let scores = [90, 72, 85];
+            println!("{}", scores[0]);
+            println!("{}", scores[2]);
+          verify: run
+          expectStdout: "90\n85\n"
+        concepts: [types.array]
+
+      - type: predict-output
+        id: predict-days
+        code:
+          rust: |
+            let days = ["Mon", "Tue", "Wed"];
+            println!("{}", days[1]);
+          verify: run
+        options:
+          - { id: a, text: "Tue" }
+          - { id: b, text: "Mon", why: "Index 0 is `Mon`. Index 1 is the second element." }
+          - { id: c, text: "days[1]", why: "`days[1]` is filled in with the element's value." }
+        answer: a
+        explanation: "Indexes start at 0, so `days[1]` is the second element, `\"Tue\"`."
+        concepts: [types.array]
+
+      - type: true-false
+        id: tf-one-type
+        prompt: "Every element of an array must have the same type."
+        answer: true
+        explanation: "An array holds one type. Use a tuple if you need to mix types."
+        concepts: [types.array]
+
+      - type: concept
+        id: concept-array-type
+        title: Array types and repeats
+        markdown: |
+          **The type `[i32; 5]` means five `i32`s.** The length is part of the type.
+
+          `[0; 3]` is a shortcut for an array of three zeros: the value, a semicolon, then how many.
+        code:
+          rust: |
+            let primes: [i32; 5] = [2, 3, 5, 7, 11];
+            let zeros = [0; 3];
+            println!("{} {}", primes[4], zeros[2]);
+          verify: run
+          expectStdout: "11 0\n"
+        concepts: [types.array]
+
+      - type: mcq
+        id: mcq-repeat
+        prompt: "Which array is the same as `[7; 3]`?"
+        options:
+          - { id: a, code: "[7, 7, 7]" }
+          - { id: b, code: "[3, 3, 3, 3, 3, 3, 3]", why: "The value comes first and the count second: 7, three times." }
+          - { id: c, code: "[7, 3]", why: "The `;` means repeat. A comma would make a two-element array." }
+          - { id: d, code: "[0, 0, 0]", why: "That's `[0; 3]`. Here the value is 7." }
+        answer: a
+        explanation: "`[value; count]` repeats `value` `count` times."
+        concepts: [types.array]
+
+      - type: compiles
+        id: compiles-mixed-array
+        code:
+          rust: |
+            let answers = [1, true];
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types, expected integer, found `bool`" }
+            - { id: b, text: "E0609: no field on type", why: "No element is read here. The problem is mixing types." }
+            - { id: c, text: "E0277: cannot be formatted", why: "Nothing is printed. The array itself can't mix types." }
+          answer: a
+        explanation: "The first element makes it an array of integers, so `true` doesn't fit. A tuple `(1, true)` would work."
+        concepts: [types.array]
+
+      - type: fill-tokens
+        id: fill-array-length
+        prompt: "Fill the blank so the type matches the array"
+        code:
+          rust: |
+            let temps: [i32; ___1___] = [18, 21, 25, 19];
+            println!("{}", temps[3]);
+          verify: run
+          expectStdout: "19\n"
+        blanks:
+          "1": { answer: ["4"] }
+        bank: ["4", "3", "5", "i32"]
+        explanation: "The number after the `;` is the length. There are 4 elements, even though the last index is 3."
+        concepts: [types.array]
+
+      - type: predict-output
+        id: predict-len
+        code:
+          rust: |
+            let laps = [62, 58, 60, 59];
+            println!("{}", laps.len());
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "3 is the last index. `.len()` counts the elements." }
+          - { id: c, text: "59", why: "`.len()` gives the number of elements, not the last one." }
+        answer: a
+        explanation: "`.len()` gives the number of elements in the array."
+        concepts: [types.array]
+
+      - type: match-pairs
+        id: pairs-array-parts
+        pairs:
+          - ["[i32; 3]", "type: three i32 values"]
+          - ["[0; 3]", "value: three zeros"]
+          - ["a[0]", "first element"]
+          - ["a.len()", "number of elements"]
+        concepts: [types.array]
+
+      - type: compiles
+        id: compiles-short-array
+        code:
+          rust: |
+            let marks: [i32; 3] = [70, 85];
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The type says 3 elements, but the array has 2" }
+            - { id: b, text: "The missing element is filled with 0", why: "Rust doesn't fill in missing elements. The length must match exactly." }
+            - { id: c, text: "Arrays can't have a type written out", why: "They can: `[i32; 3]`. Here the length doesn't match." }
+          answer: a
+        explanation: "The length is part of the type, so `[i32; 3]` needs exactly three values. This is E0308, mismatched types."
+        concepts: [types.array]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-mut-array
+        title: Changing elements
+        markdown: |
+          **A `mut` array lets you change its elements**, but not how many there are. An array's size is fixed when it's created.
+
+          `{:?}` from unit 1.2 prints the whole array. There's more on it in level 5.
+        code:
+          rust: |
+            let mut board = [0; 4];
+            board[2] = 9;
+            println!("{board:?}");
+          verify: run
+          expectStdout: "[0, 0, 9, 0]\n"
+        concepts: [types.array, var.mut]
+
+      - type: predict-output
+        id: predict-change-element
+        code:
+          rust: |
+            let mut stock = [5, 5, 5];
+            stock[0] -= 2;
+            stock[1] = stock[0];
+            println!("{stock:?}");
+          verify: run
+        options:
+          - { id: a, text: "[3, 3, 5]" }
+          - { id: b, text: "[3, 5, 5]", why: "Line 3 copies the new `stock[0]`, which is 3, into `stock[1]`." }
+          - { id: c, text: "[5, 5, 5]", why: "`stock` is `mut`, so the assignments change it." }
+        answer: a
+        explanation: "`stock[0]` becomes 3, then `stock[1]` is set to that 3. `stock[2]` is unchanged."
+        concepts: [types.array, var.mut]
+
+      - type: spot-bug
+        id: spot-array-not-mut
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let seats = [0; 5];
+                let row = 2;
+                seats[row] = 1;
+                println!("{}", seats[row]);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 4
+        explanation: "`seats` isn't `mut`, so its elements can't change. Line 2 would need `let mut seats`."
+        concepts: [types.array, var.mut]
+
+      - type: compiles
+        id: compiles-push
+        code:
+          rust: |
+            let mut queue = [1, 2, 3];
+            queue.push(4);
+          verify: compile-fail
+          expectErrors: [E0599]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "Arrays have a fixed size, so there's no `push` to add elements" }
+            - { id: b, text: "`queue` needs to be `mut`", why: "It already is. `mut` lets you change elements, not add more." }
+            - { id: c, text: "`push` only works on arrays of text", why: "No array has `push`, whatever its type." }
+          answer: a
+        explanation: "Error E0599 says there's no method `push` for arrays. An array's length is fixed by its type."
+        concepts: [types.array]
+
+      - type: predict-output
+        id: predict-add-prices
+        code:
+          rust: |
+            let prices = [5, 12, 8];
+            let total = prices[0] + prices[2];
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "13" }
+          - { id: b, text: "17", why: "That's `prices[0] + prices[1]`. Index 2 is the third element, 8." }
+          - { id: c, text: "20", why: "`prices[2]` is the third element, 8, not the second." }
+        answer: a
+        explanation: "Elements are ordinary values. `5 + 8` is 13."
+        concepts: [types.array]
+
+      - type: decode-error
+        id: decode-array-dot
+        prompt: Which fix for line 3 is right?
+        code:
+          rust: |
+            fn main() {
+                let heights = [150, 162, 171];
+                println!("{}", heights.0);
+            }
+          verify: compile-fail
+          expectErrors: [E0609]
+        options:
+          - { id: a, code: 'println!("{}", heights[0]);' }
+          - { id: b, code: 'println!("{}", heights.1);', why: "Any dot-number fails the same way. Arrays don't have numbered fields." }
+          - { id: c, code: 'println!("{}", heights(0));', why: "Parentheses after a name call it like a function. Arrays use square brackets." }
+        answer: a
+        explanation: "The dot with a number is for tuples. Arrays are indexed with square brackets."
+        concepts: [types.array, types.tuple, compiler.read-error]
+
+      - type: mcq
+        id: mcq-index-type
+        prompt: "This doesn't compile. Which type should `slot` have?"
+        code:
+          rust: |
+            let items = [4, 8, 15];
+            let slot: i32 = 1;
+            println!("{}", items[slot]);
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "`usize`" }
+          - { id: b, text: "`u8`", why: "Indexes must be `usize` exactly. Other integer types aren't accepted." }
+          - { id: c, text: "`i64`", why: "A bigger signed type doesn't help. Indexes are `usize`." }
+          - { id: d, text: "`f64`", why: "An index can't be a fraction. It must be a `usize`." }
+        answer: a
+        explanation: "Array indexes have the type `usize`. Without the `: i32`, Rust would make `slot` a `usize` for you."
+        concepts: [types.array]
+
+      - type: true-false
+        id: tf-repeat-len
+        prompt: "After `let row = [0; 3];`, `row.len()` is 0."
+        answer: false
+        explanation: "`[0; 3]` is three zeros, so the length is 3."
+        concepts: [types.array]
+
+      - type: fill-tokens
+        id: fill-set-level
+        prompt: "Fill the blanks so the program prints `[0, 0, 5]`"
+        code:
+          rust: |
+            let ___1___ levels = [0; 3];
+            levels[___2___] = 5;
+            println!("{levels:?}");
+          verify: run
+          expectStdout: "[0, 0, 5]\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["2"] }
+        bank: ["mut", "const", "2", "3"]
+        explanation: "`mut` allows the change, and the last of three elements is at index 2."
+        concepts: [types.array, var.mut]
+
+      - type: predict-output
+        id: predict-shadow-len
+        code:
+          rust: |
+            let sizes = [10, 20, 30];
+            let sizes = sizes.len();
+            println!("{sizes}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "30", why: "`.len()` gives the number of elements, not the last element." }
+          - { id: c, text: "[10, 20, 30]", why: "The second `let` shadows `sizes` with the length." }
+        answer: a
+        explanation: "Shadowing replaces the array name with a new variable holding its length, 3."
+        concepts: [types.array, var.shadowing]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-first-last
+        prompt: "Arrange the lines so the program prints `160`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let marks = [70, 85, 90];" }
+          - { id: l3, text: "    let first = marks[0];" }
+          - { id: l4, text: "    let last = marks[2];" }
+          - { id: l5, text: '    println!("{}", first + last);' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let first = marks.0;" }
+          - { id: d2, text: "    let marks = (70, 85, 90];" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "160\n"
+        explanation: "Create the array, read index 0 and index 2 with square brackets, then add them: 70 + 90."
+        concepts: [types.array]
+
+      - type: predict-output
+        id: predict-array-of-tuples
+        code:
+          rust: |
+            let team = [("Ada", 9), ("Linus", 7)];
+            println!("{}", team[1].0);
+          verify: run
+        options:
+          - { id: a, text: "Linus" }
+          - { id: b, text: "Ada", why: "`team[1]` is the second tuple, `(\"Linus\", 7)`." }
+          - { id: c, text: "9", why: "`team[1]` picks the second tuple, then `.0` picks its name." }
+        answer: a
+        explanation: "`team[1]` is `(\"Linus\", 7)`, and `.0` of that tuple is `\"Linus\"`."
+        concepts: [types.array, types.tuple]
+
+      - type: compiles
+        id: compiles-tuple-array
+        code:
+          rust: |
+            let flags = [(1, true), (2, false)];
+            println!("{}", flags[1].1);
+          verify: run
+          expectStdout: "false\n"
+        answer: true
+        explanation: "It compiles and prints `false`. Each element has the same type, `(i32, bool)`, so they can share an array."
+        concepts: [types.array, types.tuple]
+
+      - type: mcq
+        id: mcq-float-array-type
+        prompt: "What is the type of `[1.5, 2.0, 3.25]`?"
+        options:
+          - { id: a, text: "`[f64; 3]`" }
+          - { id: b, text: "`[f64, 3]`", why: "The type and the length are separated by `;`, as in `[0; 3]`." }
+          - { id: c, text: "`(f64, f64, f64)`", why: "That's a tuple type. Square brackets make an array." }
+          - { id: d, text: "`[f32; 3]`", why: "Float literals are `f64` unless you say otherwise." }
+        answer: a
+        explanation: "Three `f64` values make a `[f64; 3]`."
+        concepts: [types.array]
+
+      - type: predict-output
+        id: predict-sum-into-first
+        code:
+          rust: |
+            let mut counts = [1; 3];
+            counts[0] += counts[1] + counts[2];
+            println!("{counts:?}");
+          verify: run
+        options:
+          - { id: a, text: "[3, 1, 1]" }
+          - { id: b, text: "[1, 1, 1]", why: "`counts` is `mut`, so `counts[0]` changes to 3." }
+          - { id: c, text: "[3, 3, 3]", why: "Only `counts[0]` is assigned. The other elements stay 1." }
+        answer: a
+        explanation: "`counts` starts as `[1, 1, 1]`. The first element becomes `1 + 1 + 1`."
+        concepts: [types.array, var.mut]
+
+      - type: spot-bug
+        id: spot-wrong-index
+        prompt: "This program should print `Second: Moe`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let towns = ["Ayr", "Moe", "Bowen"];
+                println!("First: {}", towns[0]);
+                println!("Second: {}", towns[2]);
+            }
+          verify: run
+          expectStdout: "First: Ayr\nSecond: Bowen\n"
+        answer: 4
+        explanation: "The second element is at index 1. `towns[2]` is the third, `\"Orbost\"`."
+        concepts: [types.array]
+
+      - type: decode-error
+        id: decode-float-int
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let readings = [21.5, 19, 23.0];
+                println!("{}", readings[1]);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`19` is an integer, but the other elements are floats" }
+          - { id: b, text: "`readings[1]` is out of range", why: "Index 1 is fine for three elements. The problem is on line 2." }
+          - { id: c, text: "Arrays can't hold floats", why: "They can, as long as every element is a float. Write `19.0`." }
+        answer: a
+        explanation: "All elements must have one type. Rust won't turn `19` into a float for you, so write `19.0`."
+        concepts: [types.array, compiler.read-error]
+
+      - type: true-false
+        id: tf-array-grows
+        prompt: "A `mut` array can grow when you add more elements."
+        answer: false
+        explanation: "`mut` lets you change elements, but an array's length is fixed by its type."
+        concepts: [types.array]
+
+      - type: fill-tokens
+        id: fill-week
+        prompt: "Fill the blanks so the program prints `7`"
+        code:
+          rust: |
+            let week: [___1___; 7] = [0; ___2___];
+            println!("{}", week.len());
+          verify: run
+          expectStdout: "7\n"
+        blanks:
+          "1": { answer: ["i32"] }
+          "2": { answer: ["7"] }
+        bank: ["i32", "7", "0", "[i32]", "6"]
+        explanation: "The type is seven `i32`s, and `[0; 7]` makes seven zeros to match."
+        concepts: [types.array]
+
+      - type: match-pairs
+        id: pairs-tuple-vs-array
+        pairs:
+          - ["(1, true)", "tuple: types can mix"]
+          - ["[1, 2]", "array: one type"]
+          - ["t.0", "read a tuple element"]
+          - ["a[0]", "read an array element"]
+        concepts: [types.array, types.tuple]

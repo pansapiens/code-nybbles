@@ -1,0 +1,464 @@
+id: first-steps.compound.tuples
+title: Tuples
+icon: package
+concepts: [types.tuple]
+reviewConcepts: [var.let, var.mut, var.shadowing, fmt.placeholders, fmt.inline-args, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-tuple
+        title: Group values in a tuple
+        markdown: |
+          **A tuple groups a few values into one.** Write the values in parentheses, separated by commas.
+
+          Read one element with a dot and its position: `.0` is the first, `.1` the second. Counting starts at 0.
+        code:
+          rust: |
+            let point = (3, 7);
+            println!("x is {}", point.0);
+            println!("y is {}", point.1);
+          verify: run
+          expectStdout: "x is 3\ny is 7\n"
+        concepts: [types.tuple]
+
+      - type: predict-output
+        id: predict-dot-one
+        code:
+          rust: |
+            let size = (40, 25);
+            println!("{}", size.1);
+          verify: run
+        options:
+          - { id: a, text: "25" }
+          - { id: b, text: "40", why: "Positions start at 0, so `.1` is the second element." }
+          - { id: c, text: "(40, 25)", why: "`size.1` picks out one element, not the whole tuple." }
+        answer: a
+        explanation: "`.0` is the first element and `.1` is the second, so this prints 25."
+        concepts: [types.tuple]
+
+      - type: true-false
+        id: tf-first-is-one
+        prompt: "The first element of a tuple `t` is `t.1`."
+        answer: false
+        explanation: "Tuple positions start at 0, so the first element is `t.0`."
+        concepts: [types.tuple]
+
+      - type: mcq
+        id: mcq-make-tuple
+        prompt: Which line makes a tuple holding a name and an age?
+        options:
+          - { id: a, code: 'let person = ("Ada", 36);' }
+          - { id: b, code: 'let person = "Ada", 36;', why: "Without parentheses this isn't a tuple, and it doesn't compile." }
+          - { id: c, code: 'let person = {"Ada", 36};', why: "Tuples use parentheses `( )`, not braces." }
+          - { id: d, code: 'let person = ["Ada", 36];', why: "Square brackets make an array, which can only hold one type. You'll meet arrays in level 3." }
+        answer: a
+        explanation: "A tuple is a list of values inside parentheses, separated by commas."
+        concepts: [types.tuple]
+
+      - type: concept
+        id: concept-tuple-types
+        title: Mixed types
+        markdown: |
+          **The elements can have different types.** The tuple's type lists each element's type in order.
+
+          Here `reading` has the type `(i32, f64, bool)`. You can write the type, or let Rust work it out.
+        code:
+          rust: |
+            let reading: (i32, f64, bool) =
+                (21, 0.5, true);
+            println!("{}", reading.1);
+          verify: run
+          expectStdout: "0.5\n"
+        concepts: [types.tuple]
+
+      - type: fill-tokens
+        id: fill-weather
+        prompt: "Fill the blanks so the program prints `Perth is 31 degrees`"
+        code:
+          rust: |
+            let weather = ("Perth", 31);
+            let city = weather.___1___;
+            let temp = weather.___2___;
+            println!("{city} is {temp} degrees");
+          verify: run
+          expectStdout: "Perth is 31 degrees\n"
+        blanks:
+          "1": { answer: ["0"] }
+          "2": { answer: ["1"] }
+        bank: ["0", "1", "2", "[0]"]
+        explanation: "`\"Perth\"` is at position 0 and `31` is at position 1. Tuples use a dot, not square brackets."
+        concepts: [types.tuple]
+
+      - type: compiles
+        id: compiles-no-third
+        code:
+          rust: |
+            let pair = (1, 2);
+            println!("{}", pair.2);
+          verify: compile-fail
+          expectErrors: [E0609]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0609: no field `2` on type `({integer}, {integer})`" }
+            - { id: b, text: "E0425: cannot find value `pair` in this scope", why: "`pair` exists. It's the position `2` that doesn't." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The tuple only has positions 0 and 1." }
+          answer: a
+        explanation: "A tuple with two elements has positions 0 and 1 only. The compiler checks this before the program runs."
+        concepts: [types.tuple, compiler.read-error]
+
+      - type: predict-output
+        id: predict-order
+        code:
+          rust: |
+            let order = ("tea", 2, 4.5);
+            println!("{} x{}", order.0, order.1);
+            println!("costs {}", order.2);
+          verify: run
+        options:
+          - { id: a, text: "tea x2\ncosts 4.5" }
+          - { id: b, text: "2 x4.5\ncosts tea", why: "That would be `.1`, `.2`, `.0`. Here they're used in the order `.0`, `.1`, `.2`." }
+          - { id: c, text: "tea x2\ncosts 4", why: "The tuple holds `4.5` as it is. Mixing types in a tuple doesn't change any value." }
+        answer: a
+        explanation: "Each element keeps its own type and value: `\"tea\"`, `2` and `4.5`."
+        concepts: [types.tuple, fmt.placeholders]
+
+      - type: match-pairs
+        id: pairs-tuple-parts
+        pairs:
+          - ["t.0", "first element"]
+          - ["t.2", "third element"]
+          - ["(5, true)", "a tuple value"]
+          - ["(i32, bool)", "a tuple type"]
+        concepts: [types.tuple]
+
+      - type: true-false
+        id: tf-mixed-types
+        prompt: "One tuple can hold an integer, a float and a `bool` together."
+        answer: true
+        explanation: "Tuples can mix types. For example `(21, 0.5, true)` has the type `(i32, f64, bool)`."
+        concepts: [types.tuple]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-destructure
+        title: Unpack with let
+        markdown: |
+          **`let (a, b) = t;` unpacks a tuple** into separate variables. This is called *destructuring*.
+
+          The pattern on the left needs one name for each element, in the same order.
+        code:
+          rust: |
+            let forecast = ("Hobart", 14);
+            let (city, temp) = forecast;
+            println!("{city}: {temp}");
+          verify: run
+          expectStdout: "Hobart: 14\n"
+        concepts: [types.tuple]
+
+      - type: predict-output
+        id: predict-destructure
+        code:
+          rust: |
+            let (width, height) = (4, 9);
+            println!("{height}x{width}");
+          verify: run
+        options:
+          - { id: a, text: "9x4" }
+          - { id: b, text: "4x9", why: "`width` gets 4 and `height` gets 9. The text prints `height` first." }
+          - { id: c, text: "heightxwidth", why: "Names inside braces are replaced by their values." }
+        answer: a
+        explanation: "Destructuring matches by position: `width` is 4 and `height` is 9."
+        concepts: [types.tuple, fmt.inline-args]
+
+      - type: fill-tokens
+        id: fill-unpack
+        prompt: "Fill the blank so the program prints `Ada is 36`"
+        code:
+          rust: |
+            let person = ("Ada", 36);
+            let ___1___ = person;
+            println!("{name} is {age}");
+          verify: run
+          expectStdout: "Ada is 36\n"
+        blanks:
+          "1": { answer: ["(name, age)"] }
+        bank: ["(name, age)", "(age, name)", "[name, age]", "name, age"]
+        explanation: "The pattern uses parentheses like the tuple, with names in the same order as the elements."
+        concepts: [types.tuple]
+
+      - type: compiles
+        id: compiles-wrong-count
+        code:
+          rust: |
+            let time = (2, 30, 15);
+            let (hours, minutes) = time;
+            println!("{hours}:{minutes}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0609: no field on type", why: "No field is read with a dot here. The problem is the pattern's size." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The tuple has 3 elements but the pattern has 2." }
+          answer: a
+        explanation: "The pattern `(hours, minutes)` has 2 names but `time` has 3 elements, so the types don't match."
+        concepts: [types.tuple]
+
+      - type: decode-error
+        id: decode-pattern-size
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let rgb = (255, 128, 0);
+                let (red, green) = rgb;
+                println!("{red} {green}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`rgb` has 3 elements, but the pattern on line 3 only has 2 names" }
+          - { id: b, text: "Numbers above 100 can't go in a tuple", why: "Any `i32` can go in a tuple. The error is about the number of elements." }
+          - { id: c, text: "You must use `rgb.0` instead of destructuring", why: "Destructuring works when the pattern has one name per element." }
+        answer: a
+        explanation: "The pattern needs one name for each element. `let (red, green, blue) = rgb;` would compile."
+        concepts: [types.tuple, compiler.read-error]
+
+      - type: concept
+        id: concept-mut-tuple
+        title: Changing an element
+        markdown: |
+          **A `mut` tuple lets you change its elements.** Assign to one position with `t.0 = ...` or `t.1 += ...`.
+
+          The tuple keeps the same number of elements and the same types.
+        code:
+          rust: |
+            let mut score = (0, 0);
+            score.0 += 1;
+            score.1 = 4;
+            println!("{} {}", score.0, score.1);
+          verify: run
+          expectStdout: "1 4\n"
+        concepts: [types.tuple, var.mut]
+
+      - type: spot-bug
+        id: spot-not-mut
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let position = (0, 0);
+                println!("{}", position.0);
+                position.1 = 5;
+                println!("{}", position.1);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 4
+        explanation: "`position` isn't `mut`, so its elements can't be changed. Line 2 would need `let mut position`."
+        concepts: [types.tuple, var.mut]
+
+      - type: predict-output
+        id: predict-lives-pair
+        code:
+          rust: |
+            let mut lives = (3, 3);
+            lives.1 -= 1;
+            println!("{} {}", lives.0, lives.1);
+          verify: run
+        options:
+          - { id: a, text: "3 2" }
+          - { id: b, text: "2 3", why: "`.1` is the second element, so only the second number changes." }
+          - { id: c, text: "2 2", why: "`lives.1 -= 1` changes one element, not the whole tuple." }
+        answer: a
+        explanation: "Only the element at position 1 goes down by one."
+        concepts: [types.tuple, var.mut]
+
+      - type: predict-output
+        id: predict-swap-shadow
+        code:
+          rust: |
+            let pair = (1, 2);
+            let pair = (pair.1, pair.0);
+            println!("{} {}", pair.0, pair.1);
+          verify: run
+        options:
+          - { id: a, text: "2 1" }
+          - { id: b, text: "1 2", why: "The second `let` makes a new `pair` from the old one with the elements swapped." }
+          - { id: c, text: "2 2", why: "The new tuple is built from the old `pair`, which still holds `(1, 2)` while line 2 runs." }
+        answer: a
+        explanation: "Shadowing creates a new `pair` that holds `(2, 1)`."
+        concepts: [types.tuple, var.shadowing]
+
+      - type: true-false
+        id: tf-still-usable
+        prompt: "After this code runs, you can still use `point.0`."
+        code:
+          rust: |
+            let point = (5, 8);
+            let (x, y) = point;
+            println!("{x} {y} {}", point.0);
+          verify: run
+          expectStdout: "5 8 5\n"
+        answer: true
+        explanation: "The elements here are numbers, so destructuring copies them into `x` and `y`. `point` is unchanged."
+        concepts: [types.tuple]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-lives
+        prompt: "Arrange the lines so the program prints `Ferris has 3 lives`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let player = ("Ferris", 3);' }
+          - { id: l3, text: "    let (name, lives) = player;" }
+          - { id: l4, text: '    println!("{name} has {lives} lives");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    let player = ["Ferris", 3];' }
+          - { id: d2, text: "    let (lives, name) = player;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Ferris has 3 lives\n"
+        explanation: "Create the tuple first, then unpack it with names in the same order as its elements."
+        concepts: [types.tuple, fmt.inline-args]
+
+      - type: predict-output
+        id: predict-nested
+        code:
+          rust: |
+            let trip = ("Sydney", (151, 34));
+            println!("{}", trip.1.0);
+          verify: run
+        options:
+          - { id: a, text: "151" }
+          - { id: b, text: "Sydney", why: "`trip.1` is the inner tuple `(151, 34)`, not the name." }
+          - { id: c, text: "34", why: "`.1` picks the inner tuple, then `.0` picks its first element." }
+        answer: a
+        explanation: "A tuple can hold another tuple. `trip.1` is `(151, 34)`, and `.0` of that is 151."
+        concepts: [types.tuple]
+
+      - type: compiles
+        id: compiles-wrong-types
+        code:
+          rust: |
+            let flag: (i32, bool) = (true, 1);
+            println!("{}", flag.0);
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0609: no field `0` on type", why: "The tuple has a position 0. The problem is the order of the values." }
+            - { id: c, text: "E0277: cannot be formatted", why: "Printing an `i32` with `{}` is fine. The values are in the wrong order for the type." }
+          answer: a
+        explanation: "The type says `i32` first and `bool` second, but the values are the other way round."
+        concepts: [types.tuple]
+
+      - type: decode-error
+        id: decode-square-index
+        prompt: Which fix for line 3 is right?
+        code:
+          rust: |
+            fn main() {
+                let score = (12, 30);
+                println!("{}", score[0]);
+            }
+          verify: compile-fail
+          expectErrors: [E0608]
+        options:
+          - { id: a, code: 'println!("{}", score.0);' }
+          - { id: b, code: 'println!("{}", score(0));', why: "Parentheses after a name call it like a function. A tuple isn't a function." }
+          - { id: c, code: 'println!("{}", score[1]);', why: "Any square-bracket index fails the same way. Tuples use a dot." }
+        answer: a
+        explanation: "Tuples are read with a dot and a number, like `score.0`. Square brackets are for arrays."
+        concepts: [types.tuple, compiler.read-error]
+
+      - type: mcq
+        id: mcq-tuple-type
+        prompt: "What is the type of `(2.5, 'x', 10)`?"
+        options:
+          - { id: a, text: "`(f64, char, i32)`" }
+          - { id: b, text: "`(f32, char, i32)`", why: "A float literal without a type is `f64` by default." }
+          - { id: c, text: "`[f64, char, i32]`", why: "A tuple's type uses parentheses, like its value." }
+          - { id: d, text: "`(f64, f64, f64)`", why: "Each element keeps its own type. They don't have to match." }
+        answer: a
+        explanation: "The type lists each element's type in order: a float is `f64`, `'x'` is a `char`, and an integer is `i32` by default."
+        concepts: [types.tuple]
+
+      - type: predict-output
+        id: predict-add-elements
+        code:
+          rust: |
+            let mut score = (10, 20);
+            score.0 += score.1;
+            let (home, away) = score;
+            println!("{home} {away}");
+          verify: run
+        options:
+          - { id: a, text: "30 20" }
+          - { id: b, text: "10 20", why: "`score.0 += score.1` changes the first element to 30 before the unpacking." }
+          - { id: c, text: "30 30", why: "Only `score.0` is changed. `score.1` is still 20." }
+        answer: a
+        explanation: "`score` becomes `(30, 20)`, then `home` and `away` get those two values."
+        concepts: [types.tuple, var.mut]
+
+      - type: spot-bug
+        id: spot-wrong-field
+        prompt: "This program should print `Height: 1080`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let screen = (1920, 1080);
+                let width = screen.0;
+                println!("Width: {width}");
+                println!("Height: {}", screen.0);
+            }
+          verify: run
+          expectStdout: "Width: 1920\nHeight: 1920\n"
+        answer: 5
+        explanation: "The height is the second element, `screen.1`. Line 5 prints `screen.0` again."
+        concepts: [types.tuple]
+
+      - type: fill-tokens
+        id: fill-change-temp
+        prompt: "Fill the blanks so the program prints `18 to 27`"
+        code:
+          rust: |
+            let ___1___ temps = (18, 25);
+            temps.___2___ = 27;
+            println!("{} to {}", temps.0, temps.1);
+          verify: run
+          expectStdout: "18 to 27\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["1"] }
+        bank: ["mut", "const", "0", "1", "2"]
+        explanation: "The tuple needs `mut` before you can change an element, and 25 is at position 1."
+        concepts: [types.tuple, var.mut]
+
+      - type: true-false
+        id: tf-one-element
+        prompt: "`(5,)` is a tuple with one element, but `(5)` is the number 5 in parentheses."
+        answer: true
+        explanation: "A one-element tuple needs a trailing comma. Without it, the parentheses group a value as in maths."
+        concepts: [types.tuple]
+
+      - type: match-pairs
+        id: pairs-tuple-review
+        pairs:
+          - ["let (a, b) = t;", "unpack into two variables"]
+          - ["t.1", "read the second element"]
+          - ["t.0 = 9;", "change the first element"]
+          - ["let mut t", "allow elements to change"]
+        concepts: [types.tuple, var.mut]

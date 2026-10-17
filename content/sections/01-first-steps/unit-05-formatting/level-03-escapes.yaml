@@ -1,0 +1,438 @@
+id: first-steps.formatting.escapes
+title: Escapes and raw strings
+icon: quote
+concepts: [string.literals]
+reviewConcepts: [macro.print-family, fmt.width-precision, fmt.inline-args, fmt.placeholders, fmt.debug, types.char]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-newline-tab
+        title: Escapes start with a backslash
+        markdown: |
+          **Inside a string, `\` starts an escape**: a short code for a character that's hard to type.
+
+          `\n` is a new line and `\t` is a tab.
+        code:
+          rust: |
+            println!("Line 1\nLine 2");
+            println!("Name:\tFerris");
+          verify: run
+          expectStdout: "Line 1\nLine 2\nName:\tFerris\n"
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-newlines
+        code:
+          rust: |
+            println!("Ready\nSet\nGo");
+          verify: run
+        options:
+          - { id: a, text: "Ready\nSet\nGo" }
+          - { id: b, text: 'Ready\nSet\nGo', why: "`\\n` is an escape. It prints a line break, not a backslash and an `n`." }
+          - { id: c, text: "Ready Set Go", why: "`\\n` starts a new line rather than adding a space." }
+        answer: a
+        explanation: "Each `\\n` is a line break, so one `println!` prints three lines."
+        concepts: [string.literals]
+
+      - type: mcq
+        id: mcq-tab
+        prompt: "What does `\\t` put in a string?"
+        options:
+          - { id: a, text: "A tab character" }
+          - { id: b, text: "The letter `t`", why: "The backslash changes the meaning. A plain `t` needs no backslash." }
+          - { id: c, text: "A new line", why: "That's `\\n`." }
+        answer: a
+        explanation: "`\\t` is a tab. Terminals usually show it as a jump to the next column stop."
+        concepts: [string.literals]
+
+      - type: concept
+        id: concept-quote-backslash
+        title: Quotes and backslashes
+        markdown: |
+          **A `"` would end the string, so write `\"` for a quote inside it.** A single `\` would start an escape, so write `\\` for one backslash.
+        code:
+          rust: |
+            println!("She said \"hi\"");
+            println!("C:\\games");
+          verify: run
+          expectStdout: "She said \"hi\"\nC:\\games\n"
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-backslashes
+        code:
+          rust: |
+            println!("Path: C:\\Users\\ada");
+          verify: run
+        options:
+          - { id: a, text: 'Path: C:\Users\ada' }
+          - { id: b, text: 'Path: C:\\Users\\ada', why: "Each `\\\\` is an escape for one backslash." }
+          - { id: c, text: "Path: C:Usersada", why: "`\\\\` prints a backslash. It isn't removed." }
+        answer: a
+        explanation: "`\\\\` is the escape for a single `\\`, so each pair prints as one."
+        concepts: [string.literals]
+
+      - type: compiles
+        id: compiles-bare-quotes
+        code:
+          rust: |
+            println!("She said "hi"");
+          verify: compile-fail
+          expectErrorMessage: "expected `,`"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The `\"` before `hi` ends the string. Write `\\\"hi\\\"` instead" }
+            - { id: b, text: "`println!` can't print quote marks", why: "It can, with the `\\\"` escape." }
+            - { id: c, text: "Quotes inside a string must be single quotes", why: "`'hi'` would print, but the task is to print double quotes, which needs `\\\"`." }
+          answer: a
+        explanation: "Rust reads `\"She said \"` as the whole string, then finds `hi` where it expected a comma."
+        concepts: [string.literals]
+
+      - type: concept
+        id: concept-braces
+        title: Braces in format strings
+        markdown: |
+          **In `println!` and `format!`, braces mark placeholders.** To print a brace, double it: `{{` prints `{` and `}}` prints `}`.
+        code:
+          rust: |
+            let score = 10;
+            println!("{{}} is a placeholder");
+            println!("{{{score}}}");
+          verify: run
+          expectStdout: "{} is a placeholder\n{10}\n"
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-double-braces
+        code:
+          rust: |
+            let name = "Ada";
+            println!("Use {{name}} here");
+          verify: run
+        options:
+          - { id: a, text: "Use {name} here" }
+          - { id: b, text: "Use Ada here", why: "`{{` and `}}` are literal braces, so `name` inside them is plain text." }
+          - { id: c, text: "Use {{name}} here", why: "Each doubled brace prints as a single brace." }
+        answer: a
+        explanation: "`{{name}}` prints as `{name}`. The compiler warns that `name` is unused, because no placeholder uses it."
+        concepts: [string.literals]
+
+      - type: true-false
+        id: tf-backslash-brace
+        prompt: "To print a `{` with `println!`, you write `\\{`."
+        answer: false
+        explanation: "`\\{` is an unknown escape and won't compile. In a format string, write `{{`."
+        concepts: [string.literals]
+
+      - type: fill-tokens
+        id: fill-quotes
+        prompt: "Fill the blanks so the program prints `Say \"cheese\"`"
+        code:
+          rust: |
+            println!("Say ___1___cheese___2___");
+          verify: run
+          expectStdout: "Say \"cheese\"\n"
+        blanks:
+          "1": { answer: ['\"'] }
+          "2": { answer: ['\"'] }
+        bank: ['\"', '"', "\\'", "''"]
+        explanation: "Each quote inside the string needs a backslash in front. A bare `\"` would end the string early."
+        concepts: [string.literals]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-raw
+        title: Raw strings
+        markdown: |
+          **A raw string `r"..."` has no escapes.** Every backslash is printed as written, which suits file paths.
+
+          If the text contains `"`, add `#` around it: `r#"..."#`. The string then ends at `"#`.
+        code:
+          rust: |
+            println!(r"C:\Users\ferris");
+            println!(r#"She said "hi""#);
+          verify: run
+          expectStdout: "C:\\Users\\ferris\nShe said \"hi\"\n"
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-raw-tab
+        code:
+          rust: |
+            println!(r"Tab: \t done");
+          verify: run
+        options:
+          - { id: a, text: 'Tab: \t done' }
+          - { id: b, text: "Tab: \t done", why: "In a raw string `\\t` isn't an escape, so it prints as a backslash and a `t`." }
+          - { id: c, text: "Tab: t done", why: "Raw strings keep every backslash." }
+        answer: a
+        explanation: "The `r` in front makes the string raw, so `\\t` stays as two characters."
+        concepts: [string.literals]
+
+      - type: decode-error
+        id: decode-unknown-escape
+        prompt: "Which fix for line 2 prints `C:\\data\\new`?"
+        code:
+          rust: |
+            fn main() {
+                println!("C:\data\new");
+            }
+          verify: compile-fail
+          expectErrorMessage: "unknown character escape: `d`"
+        options:
+          - { id: a, code: 'println!(r"C:\data\new");' }
+          - { id: b, code: 'println!("C:\data\\new");', why: "`\\d` is still an unknown escape, so this fails the same way." }
+          - { id: c, code: "println!('C:\\data\\new');", why: "Single quotes are for one `char`, not text." }
+        answer: a
+        explanation: "`\\d` isn't an escape Rust knows. A raw string turns escapes off, so both backslashes print as written."
+        concepts: [string.literals, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-hidden-newline
+        prompt: "This should print three file paths, one per line. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                println!("C:\\docs\\plan.txt");
+                println!("C:\\docs\new.txt");
+                println!("C:\\docs\\todo.txt");
+            }
+          verify: run
+          expectStdout: "C:\\docs\\plan.txt\nC:\\docs\new.txt\nC:\\docs\\todo.txt\n"
+        answer: 3
+        explanation: "On line 3, `\\n` in `\\new` is a line break, so it prints `C:\\docs` and then `ew.txt`. It needs `\\\\new`, or a raw string."
+        concepts: [string.literals]
+
+      - type: compiles
+        id: compiles-raw-quotes
+        code:
+          rust: |
+            println!(r"She said "hi"");
+          verify: compile-fail
+          expectErrorMessage: "expected `,`"
+        answer: false
+        followUp:
+          prompt: How do you fix it?
+          options:
+            - { id: a, code: 'println!(r#"She said "hi""#);' }
+            - { id: b, code: 'println!(r"She said \"hi\"");', why: "Raw strings have no escapes, so the string still ends at the `\"` straight after the backslash." }
+            - { id: c, code: 'println!(#"She said "hi""#);', why: "The `r` is needed. The `#` marks only work on raw strings." }
+          answer: a
+        explanation: "A plain raw string ends at the next `\"`. With `r#\"...\"#` it ends at `\"#`, so quotes inside are fine."
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-tiles-braces
+        prompt: Build the output
+        code:
+          rust: |
+            println!("{{{}}}", 7);
+          verify: run
+        tiles: ["{", "}", "7", "{{", "}}", "{}"]
+        answer: "{7}"
+        explanation: "Read it left to right: `{{` is a literal `{`, `{}` is filled with 7, and `}}` is a literal `}`."
+        concepts: [string.literals, fmt.placeholders]
+
+      - type: mcq
+        id: mcq-literal-placeholder
+        prompt: "Given `let name = \"Ada\";`, which line prints `{name}`?"
+        options:
+          - { id: a, code: 'println!("{{name}}");' }
+          - { id: b, code: 'println!("{name}");', why: "That's an inline argument, so it prints `Ada`." }
+          - { id: c, code: 'println!(r"{name}");', why: "A raw string only turns off backslash escapes. `println!` still fills `{name}`, so this prints `Ada`." }
+          - { id: d, code: 'println!("\{name\}");', why: "`\\{` is an unknown escape, so this doesn't compile." }
+        answer: a
+        explanation: "Braces belong to `println!`, not to the string. Doubling them is the only way to print them, even in a raw string."
+        concepts: [string.literals, fmt.inline-args]
+
+      - type: match-pairs
+        id: pairs-escapes
+        pairs:
+          - ['\n', "new line"]
+          - ['\t', "tab"]
+          - ['\"', "double quote"]
+          - ['\\', "backslash"]
+          - ["{{", "`{` in a format string"]
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-debug-escape
+        code:
+          rust: |
+            let cell = "a\tb";
+            println!("{cell:?}");
+          verify: run
+        options:
+          - { id: a, text: '"a\tb"' }
+          - { id: b, text: "\"a\tb\"", why: "Debug format shows escapes as you'd write them in code, not as the real tab." }
+          - { id: c, text: 'a\tb', why: "Debug format keeps the quotes around text." }
+        answer: a
+        explanation: "`{:?}` shows text as Rust code would write it: in quotes, with `\\t` for the tab. That makes invisible characters easy to spot."
+        concepts: [string.literals, fmt.debug]
+
+      - type: predict-output
+        id: predict-char-quote
+        code:
+          rust: |
+            let mark = '\'';
+            println!("{mark}s");
+          verify: run
+        options:
+          - { id: a, text: "'s" }
+          - { id: b, text: "\\'s", why: "`\\'` is an escape, so only the quote is stored." }
+          - { id: c, text: "s", why: "`mark` holds one character, a single quote." }
+        answer: a
+        explanation: "Escapes work in `char` literals too. `'\\''` is a single quote, because a bare `'` would end the literal."
+        concepts: [string.literals, types.char]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-three-lines
+        prompt: "Arrange the lines so the program prints `Path: C:\\games`, then `Say \"hi\"`, then `{done}`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    println!(r"Path: C:\games");' }
+          - { id: l3, text: '    println!("Say \"hi\"");' }
+          - { id: l4, text: '    println!("{{done}}");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("Path: C:\games");' }
+          - { id: d2, text: '    println!("{done}");' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Path: C:\\games\nSay \"hi\"\n{done}\n"
+        explanation: "The raw string keeps the backslash, `\\\"` prints a quote, and `{{done}}` prints braces. In a normal string `\\g` is an unknown escape."
+        concepts: [string.literals]
+
+      - type: fill-tokens
+        id: fill-raw-hash
+        prompt: "Fill the blanks so the program prints `She said \"hi\"`"
+        code:
+          rust: |
+            println!(___1___"She said "hi""___2___);
+          verify: run
+          expectStdout: "She said \"hi\"\n"
+        blanks:
+          "1": { answer: ["r#"] }
+          "2": { answer: ["#"] }
+        bank: ["r#", "#", "r", '\', "##"]
+        explanation: "`r#\"` starts the raw string and `\"#` ends it, so the quotes around `hi` are part of the text."
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-escaped-backslash-n
+        code:
+          rust: |
+            println!("a\\nb");
+          verify: run
+        options:
+          - { id: a, text: 'a\nb' }
+          - { id: b, text: "a\nb", why: "`\\\\` comes first and makes a backslash. The `n` after it is a plain letter." }
+          - { id: c, text: 'a\\nb', why: "`\\\\` prints as one backslash." }
+        answer: a
+        explanation: "Rust reads escapes left to right: `\\\\` is one backslash, then `n` and `b` are ordinary letters."
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-raw-format
+        code:
+          rust: |
+            println!(r"{}\n", 5);
+          verify: run
+        options:
+          - { id: a, text: '5\n' }
+          - { id: b, text: "5", why: "In a raw string `\\n` is a backslash and an `n`, not a line break." }
+          - { id: c, text: '{}\n', why: "A raw string is still a format string, so `{}` is filled with 5." }
+        answer: a
+        explanation: "The raw string turns off backslash escapes, but `println!` still fills `{}`. So it prints `5`, a backslash and an `n`."
+        concepts: [string.literals, fmt.placeholders]
+
+      - type: compiles
+        id: compiles-tab-char
+        code:
+          rust: |
+            let tab = '\t';
+            println!("[{tab}]");
+          verify: run
+          expectStdout: "[\t]\n"
+        answer: true
+        explanation: "It compiles. `'\\t'` is a single `char` holding a tab, and it prints between the brackets."
+        concepts: [string.literals, types.char]
+
+      - type: spot-bug
+        id: spot-unmatched-brace
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let hp = 9;
+                println!("{{");
+                println!("  \"hp\": {hp}");
+                println!("}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "unmatched `}` found"
+        answer: 5
+        explanation: "A lone `}` in a format string is an error. Line 3 doubles its brace, and line 5 must too: `println!(\"}}\");`."
+        concepts: [string.literals]
+
+      - type: decode-error
+        id: decode-raw-json
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                println!(r#"{"name": "Ferris"}"#);
+            }
+          verify: compile-fail
+          expectErrorMessage: "invalid format string"
+        options:
+          - { id: a, text: "`println!` reads `{` as the start of a placeholder, even in a raw string. Write `{{` and `}}`" }
+          - { id: b, text: "Raw strings can't contain `\"`", why: "With `r#\"...\"#` they can. The problem is the brace." }
+          - { id: c, text: "`println!` can't take a raw string", why: "It can. Raw strings only change how backslashes and quotes work." }
+        answer: a
+        explanation: "Raw strings turn off backslash escapes, but braces belong to the format string. The compiler's note suggests `{{`."
+        concepts: [string.literals, compiler.read-error]
+
+      - type: mcq
+        id: mcq-same-text
+        prompt: "Which literal holds the same text as `\"C:\\\\new\"`?"
+        options:
+          - { id: a, code: 'r"C:\new"' }
+          - { id: b, code: '"C:\new"', why: "Here `\\n` is a line break, so the text is `C:`, a new line, then `ew`." }
+          - { id: c, code: 'r"C:\\new"', why: "A raw string keeps both backslashes, so this has two." }
+        answer: a
+        explanation: "`\"C:\\\\new\"` holds one backslash. A raw string with one backslash holds the same text."
+        concepts: [string.literals]
+
+      - type: true-false
+        id: tf-raw-newline
+        prompt: "In a raw string, `\\n` is a line break."
+        code:
+          rust: |
+            println!(r"one\ntwo");
+          verify: run
+          expectStdout: "one\\ntwo\n"
+        answer: false
+        explanation: "Raw strings have no escapes, so this prints `one\\ntwo` on one line."
+        concepts: [string.literals]
+
+      - type: predict-output
+        id: predict-centre-quoted
+        code:
+          rust: |
+            println!("[{:^7}]", "\"a\"");
+          verify: run
+        options:
+          - { id: a, text: '[  "a"  ]' }
+          - { id: b, text: '[   a   ]', why: "The quotes are part of the text, because they're escaped with `\\`." }
+          - { id: c, text: '[ \"a\" ]', why: "The backslashes aren't printed. `\\\"` is one quote character." }
+        answer: a
+        explanation: "The text is 3 characters, `\"a\"`, so 4 spaces centre it in 7: 2 each side."
+        concepts: [string.literals, fmt.width-precision]

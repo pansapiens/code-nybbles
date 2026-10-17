@@ -1,0 +1,419 @@
+id: first-steps.scalars.bool-char
+title: True, false and characters
+icon: tag
+concepts: [types.bool, types.char]
+reviewConcepts: [types.int, types.float, ops.arith, types.inference, fmt.inline-args]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-bool
+        title: bool
+        markdown: |
+          **A `bool` is either `true` or `false`.** Comparisons give you a `bool`:
+
+          `==` equal, `!=` not equal, `<` less than, `>` greater than, `<=` and `>=`.
+
+          Notice `==` has two equals signs. A single `=` gives a variable its value.
+        code:
+          rust: |
+            let age = 20;
+            let is_adult = age >= 18;
+            println!("{is_adult}");
+          verify: run
+          expectStdout: "true\n"
+        concepts: [types.bool]
+
+      - type: predict-output
+        id: predict-greater
+        code:
+          rust: |
+            println!("{}", 5 > 3);
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "5 > 3", why: "The comparison is worked out before printing. Only the result is shown." }
+          - { id: c, text: "1", why: "Rust prints a `bool` as the word `true` or `false`, not a number." }
+        answer: a
+        explanation: "5 is greater than 3, so `5 > 3` is `true`."
+        concepts: [types.bool]
+
+      - type: predict-output
+        id: predict-equal-false
+        code:
+          rust: |
+            let score = 10;
+            println!("{}", score == 11);
+          verify: run
+        options:
+          - { id: a, text: "false" }
+          - { id: b, text: "11", why: "`==` compares. It doesn't change `score` or print a number." }
+          - { id: c, text: "true", why: "`score` is 10, which isn't equal to 11." }
+        answer: a
+        explanation: "`score == 11` asks \"is score equal to 11?\". It's 10, so the answer is `false`."
+        concepts: [types.bool]
+
+      - type: mcq
+        id: mcq-not-equal
+        prompt: "Which operator means \"not equal to\"?"
+        options:
+          - { id: a, code: "!=" }
+          - { id: b, code: "<>", why: "Some languages use `<>`, but Rust doesn't." }
+          - { id: c, code: "=!", why: "The `!` comes first: `!=`." }
+          - { id: d, code: "!==", why: "Rust has no `!==`. Plain `!=` is enough." }
+        answer: a
+        explanation: "`a != b` is `true` when `a` and `b` are different."
+        concepts: [types.bool]
+
+      - type: concept
+        id: concept-logic
+        title: Combining bools
+        markdown: |
+          **Three operators combine `bool` values:**
+
+          - `&&` (and): `true` only if both sides are `true`
+          - `||` (or): `true` if at least one side is `true`
+          - `!` (not): flips `true` to `false` and back
+        code:
+          rust: |
+            let raining = true;
+            let warm = false;
+            println!("{}", raining && warm);
+            println!("{}", raining || warm);
+            println!("{}", !warm);
+          verify: run
+          expectStdout: "false\ntrue\ntrue\n"
+        concepts: [types.bool]
+
+      - type: predict-output
+        id: predict-umbrella
+        code:
+          rust: |
+            let raining = true;
+            let has_umbrella = false;
+            let wet = raining && !has_umbrella;
+            println!("{wet}");
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "false", why: "`!has_umbrella` flips `false` to `true`, so both sides of `&&` are `true`." }
+        answer: a
+        explanation: "`!has_umbrella` is `true`, and `raining` is `true`, so `&&` gives `true`."
+        concepts: [types.bool]
+
+      - type: true-false
+        id: tf-or
+        prompt: "`true || false` is `false`."
+        answer: false
+        explanation: "`||` is `true` when at least one side is `true`."
+        concepts: [types.bool]
+
+      - type: match-pairs
+        id: pairs-bool-ops
+        pairs:
+          - ["&&", "and"]
+          - ["||", "or"]
+          - ["!", "not"]
+          - ["==", "equal to"]
+          - ["!=", "not equal to"]
+        concepts: [types.bool]
+
+      - type: fill-tokens
+        id: fill-can-vote
+        prompt: "Fill the blank so the program prints `true`"
+        code:
+          rust: |
+            let age = 18;
+            let can_vote = age ___1___ 18;
+            println!("{can_vote}");
+          verify: run
+          expectStdout: "true\n"
+        blanks:
+          "1": { answer: [">=", "=="] }
+        bank: [">=", ">", "=>", "!="]
+        explanation: "`age >= 18` is `true` when `age` is 18 or more. `>` would be `false` for exactly 18, and `=>` isn't a comparison."
+        concepts: [types.bool]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-char
+        title: char
+        markdown: |
+          **A `char` is one character, in single quotes.** It can be any Unicode character: letters, digits, accented letters, even emoji.
+
+          Every `char` takes 4 bytes, enough for any character. Double quotes make text instead, which you'll meet later.
+        code:
+          rust: |
+            let grade = 'A';
+            let accent = 'é';
+            let crab = '🦀';
+            println!("{grade} {accent} {crab}");
+          verify: run
+          expectStdout: "A é 🦀\n"
+        concepts: [types.char]
+
+      - type: mcq
+        id: mcq-which-char
+        prompt: "Which of these is a `char`?"
+        options:
+          - { id: a, code: "'z'" }
+          - { id: b, code: '"z"', why: "Double quotes make text (a string), even with one letter." }
+          - { id: c, code: "'zz'", why: "A `char` holds exactly one character." }
+          - { id: d, code: "z", why: "Without quotes, `z` is the name of a variable." }
+        answer: a
+        explanation: "A `char` is a single character in single quotes."
+        concepts: [types.char]
+
+      - type: compiles
+        id: compiles-two-chars
+        code:
+          rust: |
+            let initials = 'AB';
+            println!("{initials}");
+          verify: compile-fail
+          expectErrorMessage: "character literal may only contain one codepoint"
+        answer: false
+        explanation: "A `char` holds one character, so `'AB'` is an error. Use two `char`s, or text in double quotes."
+        concepts: [types.char]
+
+      - type: true-false
+        id: tf-char-one-byte
+        prompt: "A `char` takes 1 byte of memory."
+        answer: false
+        explanation: "Every `char` takes 4 bytes, so it can hold any Unicode character, including `'🦀'`."
+        concepts: [types.char]
+
+      - type: predict-output
+        id: predict-char-debug
+        code:
+          rust: |
+            let letter = 'a';
+            println!("{letter:?}");
+          verify: run
+        options:
+          - { id: a, text: "'a'" }
+          - { id: b, text: "a", why: "That's what `{}` prints. The Debug format `{:?}` adds the quotes." }
+          - { id: c, text: "\"a\"", why: "Debug shows a `char` with single quotes, like you write it in code." }
+        answer: a
+        explanation: "`{:?}` shows a `char` the way you'd write it in code, with single quotes."
+        concepts: [types.char]
+
+      - type: compiles
+        id: compiles-double-quoted-char
+        code:
+          rust: |
+            let letter: char = "b";
+            println!("{letter}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic here." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`letter` is only given one value." }
+          answer: a
+        explanation: "`\"b\"` in double quotes is text, not a `char`. Write `'b'` instead."
+        concepts: [types.char]
+
+      - type: decode-error
+        id: decode-char-literal
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let smile = ':)';
+                println!("{smile}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "character literal may only contain one codepoint"
+        options:
+          - { id: a, code: "let smile = '🙂';" }
+          - { id: b, code: "let smile: char = ':)';", why: "Adding the type doesn't change the problem: two characters in one `char`." }
+          - { id: c, code: "let smile = ':' ')';", why: "Two `char` literals side by side aren't valid Rust." }
+        answer: a
+        explanation: "A `char` holds exactly one character. `'🙂'` is one character, so it fits."
+        concepts: [types.char, compiler.read-error]
+
+      - type: mcq
+        id: mcq-char-bytes
+        prompt: "How many bytes does `'A'` take as a `char`?"
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "1", why: "Some languages store `'A'` in 1 byte, but a Rust `char` always uses 4." }
+          - { id: c, text: "It depends on the character", why: "Every `char` is the same size, from `'A'` to `'🦀'`." }
+        answer: a
+        explanation: "Every `char` is 4 bytes, whatever character it holds."
+        concepts: [types.char]
+
+      - type: predict-output
+        id: predict-char-compare
+        code:
+          rust: |
+            println!("{}", 'a' < 'b');
+            println!("{}", 'Z' == 'z');
+          verify: run
+        options:
+          - { id: a, text: "true\nfalse" }
+          - { id: b, text: "true\ntrue", why: "Upper and lower case are different characters." }
+          - { id: c, text: "false\nfalse", why: "Characters compare in alphabetical (Unicode) order, so `'a'` comes before `'b'`." }
+        answer: a
+        explanation: "Comparisons work on `char`s too. `'a'` comes before `'b'`, and `'Z'` and `'z'` are different."
+        concepts: [types.char, types.bool]
+
+      - type: spot-bug
+        id: spot-char-quotes
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let first: char = 'P';
+                let last: char = "S";
+                println!("{first}{last}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 3
+        explanation: "`\"S\"` uses double quotes, so it's text, not a `char`. Line 3 needs `'S'`."
+        concepts: [types.char]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-lives-won
+        code:
+          rust: |
+            let lives = 3;
+            let alive = lives > 0;
+            let won = false;
+            println!("{}", alive && !won);
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "false", why: "`!won` flips `false` to `true`, and `alive` is `true`." }
+          - { id: c, text: "3", why: "`lives > 0` is a comparison, so `alive` holds `true`, not 3." }
+        answer: a
+        explanation: "`alive` is `true` and `!won` is `true`, so `&&` gives `true`."
+        concepts: [types.bool]
+
+      - type: predict-output
+        id: predict-and-before-or
+        code:
+          rust: |
+            println!("{}", true || false && false);
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "false", why: "`&&` is worked out before `||`, like `*` before `+`. So it's `true || false`." }
+        answer: a
+        explanation: "`&&` binds tighter than `||`: `false && false` is `false`, then `true || false` is `true`."
+        concepts: [types.bool]
+
+      - type: compiles
+        id: compiles-int-eq-float
+        code:
+          rust: |
+            let whole = 3;
+            println!("{}", whole == 3.0);
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        explanation: "Comparisons follow the same rule as arithmetic: both sides need the same type. `whole` is an integer and `3.0` is a float."
+        concepts: [types.bool, types.float]
+
+      - type: fill-tokens
+        id: fill-vowel
+        prompt: "Fill the blanks so the program prints `true`"
+        code:
+          rust: |
+            let key = ___1___;
+            let vowel = key == 'a' ___2___ key == 'e';
+            println!("{vowel}");
+          verify: run
+          expectStdout: "true\n"
+        blanks:
+          "1": { answer: ["'e'"] }
+          "2": { answer: ["||"] }
+        bank: ["'e'", "\"e\"", "||", "&&", "!"]
+        explanation: "`key` must be the `char` `'e'`. Then `||` is `true` because one side, `key == 'e'`, is `true`."
+        concepts: [types.char, types.bool]
+
+      - type: parsons
+        id: parsons-hot
+        prompt: "Arrange the lines so the program prints `true`, then `false`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let temperature = 30;" }
+          - { id: l3, text: "    let hot = temperature > 25;" }
+          - { id: l4, text: '    println!("{hot}");' }
+          - { id: l5, text: '    println!("{}", !hot);' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let hot = temperature => 25;" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "true\nfalse\n"
+        explanation: "30 is greater than 25, so `hot` is `true`, and `!hot` is `false`. `=>` isn't a comparison operator."
+        concepts: [types.bool]
+
+      - type: true-false
+        id: tf-bool-prints-1
+        prompt: "`println!(\"{}\", true);` prints `1`."
+        answer: false
+        explanation: "A `bool` prints as the word `true` or `false`."
+        concepts: [types.bool]
+
+      - type: decode-error
+        id: decode-bool-one
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let ready: bool = 1;
+                println!("{ready}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`1` is an integer, and a `bool` can only be `true` or `false`" }
+          - { id: b, text: "`ready` needs `mut`", why: "It's only given one value, so `mut` isn't the issue." }
+          - { id: c, text: "`1` is too big for a `bool`", why: "It's not about size. Rust doesn't treat numbers as `bool`s at all." }
+        answer: a
+        explanation: "Some languages treat `1` as true, but Rust doesn't. Write `true`."
+        concepts: [types.bool, compiler.read-error]
+
+      - type: match-pairs
+        id: pairs-scalar-types
+        prompt: Match each value to its type
+        pairs:
+          - ["'A'", "char"]
+          - ["true", "bool"]
+          - ["7", "i32"]
+          - ["7.0", "f64"]
+        explanation: "These are Rust's four kinds of scalar type: characters, booleans, integers and floats."
+        concepts: [types.char, types.bool, types.inference]
+
+      - type: predict-output
+        id: predict-odd
+        code:
+          rust: |
+            let steps = 7;
+            println!("{}", steps % 2 == 1);
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "1", why: "`steps % 2` is 1, but then `== 1` compares it, giving a `bool`." }
+          - { id: c, text: "false", why: "7 % 2 is 1, and 1 == 1 is `true`." }
+        answer: a
+        explanation: "`%` happens before `==`. 7 % 2 is 1, so the check `1 == 1` is `true`. This is how you test whether a number is odd."
+        concepts: [types.bool, ops.arith]
+
+      - type: true-false
+        id: tf-crab-char
+        prompt: "`let crab = '🦀';` is a valid `char`."
+        answer: true
+        explanation: "The crab emoji is a single Unicode character, so it fits in one `char`."
+        concepts: [types.char]

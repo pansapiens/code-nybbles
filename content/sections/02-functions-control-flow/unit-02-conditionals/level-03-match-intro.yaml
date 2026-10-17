@@ -1,0 +1,593 @@
+id: functions-control-flow.conditionals.match-intro
+title: A first look at match
+icon: switch
+concepts: [match.intro]
+reviewConcepts: [ctrl.if, ctrl.if-expr, err.E0308, fn.return, fn.params, fn.early-return, types.int, types.bool, types.char, expr.block]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-match
+        title: Compare against patterns
+        markdown: |
+          **`match` compares a value against a list of patterns.** Each arm is `pattern => code,`. Rust checks the arms from top to bottom and runs the first one that matches.
+
+          The pattern `_` matches any value, so it goes last to catch everything else. You'll see much more of `match` in Section 4.
+        code:
+          rust: |
+            let dice = 3;
+            match dice {
+                1 => println!("one"),
+                6 => println!("six"),
+                _ => println!("something else"),
+            }
+          verify: run
+          expectStdout: "something else\n"
+        concepts: [match.intro]
+
+      - type: predict-output
+        id: predict-dice-six
+        code:
+          rust: |
+            let dice = 6;
+            match dice {
+                1 => println!("one"),
+                6 => println!("six"),
+                _ => println!("something else"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "six" }
+          - { id: b, text: "six\nsomething else", why: "Only one arm runs. Once `6` matches, the rest are skipped." }
+          - { id: c, text: "something else", why: "`_` only runs when no earlier arm matched, and `6` did." }
+        answer: a
+        explanation: "The second arm's pattern `6` matches, so it runs and the `match` is finished."
+        concepts: [match.intro]
+
+      - type: fill-tokens
+        id: fill-arrow-wildcard
+        prompt: "Fill the blanks so the program prints `other day`"
+        code:
+          rust: |
+            let day = 4;
+            match day {
+                1 ___1___ println!("Monday"),
+                ___2___ => println!("other day"),
+            }
+          verify: run
+          expectStdout: "other day\n"
+        blanks:
+          "1": { answer: ["=>"] }
+          "2": { answer: ["_"] }
+        bank: ["=>", "->", ":", "_", "else", "?"]
+        explanation: "Each arm uses `=>` between the pattern and the code. `_` matches anything that earlier arms didn't."
+        concepts: [match.intro]
+
+      - type: true-false
+        id: tf-first-arm
+        prompt: "If more than one arm of a `match` could match the value, only the first of them runs."
+        answer: true
+        explanation: "Rust checks arms from top to bottom and stops at the first match, like an `if` / `else if` chain."
+        concepts: [match.intro]
+
+      - type: concept
+        id: concept-or-range
+        title: Several values per arm
+        markdown: |
+          **`|` means "or", and `a..=b` is a range.** `12 | 1 | 2` matches any of those three values. `3..=5` matches 3, 4 and 5: the `=` means the end value is included.
+        code:
+          rust: |
+            let month = 4;
+            match month {
+                12 | 1 | 2 => println!("summer"),
+                3..=5 => println!("autumn"),
+                _ => println!("winter or spring"),
+            }
+          verify: run
+          expectStdout: "autumn\n"
+        concepts: [match.intro]
+
+      - type: predict-output
+        id: predict-month-january
+        code:
+          rust: |
+            let month = 1;
+            match month {
+                12 | 1 | 2 => println!("summer"),
+                3..=5 => println!("autumn"),
+                _ => println!("winter or spring"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "summer" }
+          - { id: b, text: "autumn", why: "`3..=5` covers 3, 4 and 5. `1` matches the first arm." }
+          - { id: c, text: "winter or spring", why: "`12 | 1 | 2` matches any of the three values, including `1`." }
+        answer: a
+        explanation: "`1` is one of the values in `12 | 1 | 2`, so the first arm runs."
+        concepts: [match.intro]
+
+      - type: mcq
+        id: mcq-range-values
+        prompt: "Which values does the pattern `3..=5` match?"
+        options:
+          - { id: a, text: "3, 4 and 5" }
+          - { id: b, text: "3 and 4", why: "The `=` in `..=` includes the end value, so 5 matches too." }
+          - { id: c, text: "Only 3 and 5", why: "A range covers every value between its ends, not only the ends." }
+          - { id: d, text: "4 only", why: "Both ends are included in `..=`." }
+        answer: a
+        explanation: "`..=` is an inclusive range: it covers both ends and everything between."
+        concepts: [match.intro]
+
+      - type: match-pairs
+        id: pairs-match-parts
+        prompt: Match each piece of a `match` to its meaning
+        pairs:
+          - ["=>", "separates a pattern from its code"]
+          - ["_", "matches any value"]
+          - ["|", "either pattern"]
+          - ["1..=5", "1 to 5, including 5"]
+          - [",", "ends an arm"]
+        concepts: [match.intro]
+
+      - type: predict-output
+        id: predict-wildcard-dice
+        code:
+          rust: |
+            let dice = 2;
+            match dice {
+                1 | 2 | 3 => println!("low"),
+                4..=6 => println!("high"),
+                _ => println!("not a dice roll"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "low" }
+          - { id: b, text: "high", why: "`2` is in `1 | 2 | 3`, so the first arm runs." }
+          - { id: c, text: "not a dice roll", why: "`_` only runs when no other arm matches." }
+        answer: a
+        explanation: "`2` matches the first arm's `1 | 2 | 3` pattern."
+        concepts: [match.intro]
+
+      - type: mcq
+        id: mcq-wildcard-else
+        prompt: "In a `match`, the `_ =>` arm does the same job as which part of an `if` chain?"
+        options:
+          - { id: a, code: "else" }
+          - { id: b, code: "else if", why: "`else if` needs its own condition. `_` matches anything that's left." }
+          - { id: c, code: "if", why: "`if` starts the chain. `_` comes last and catches the rest." }
+        answer: a
+        explanation: "`_` runs when nothing earlier matched, like a final `else`."
+        concepts: [match.intro, ctrl.if]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-exhaustive
+        title: Every value must be covered
+        markdown: |
+          **A `match` must be exhaustive.** The compiler checks that every possible value has an arm. If any are missing, you get error **E0004**: non-exhaustive patterns.
+
+          For integers, which have billions of possible values, that usually means ending with `_`.
+        code:
+          rust: |
+            let floor = 7;
+            match floor {
+                0 => println!("ground"),
+                1..=5 => println!("low"),
+                _ => println!("high"),
+            }
+          verify: run
+          expectStdout: "high\n"
+        concepts: [match.intro]
+
+      - type: compiles
+        id: compiles-not-exhaustive
+        code:
+          rust: |
+            fn main() {
+                let dice = 3;
+                match dice {
+                    1 => println!("one"),
+                    2 => println!("two"),
+                    3 => println!("three"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0004: non-exhaustive patterns" }
+            - { id: b, text: "E0308: mismatched types", why: "All the patterns are integers, the same type as `dice`." }
+            - { id: c, text: "E0317: `if` may be missing an `else` clause", why: "That's for `if`. A `match` that misses values gives its own error." }
+          answer: a
+        explanation: "`dice` is an `i32`, which could be any value from about -2 billion to 2 billion. The compiler checks the type, not the value 3, so it wants an arm for the rest."
+        concepts: [match.intro]
+
+      - type: decode-error
+        id: decode-e0004-fix
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let player_count = 2;
+                match player_count {
+                    1 => println!("solo"),
+                    2..=4 => println!("team"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, code: "_ => println!(\"too many\")," }
+          - { id: b, code: "else => println!(\"too many\"),", why: "`else` isn't a pattern. Inside a `match`, use `_`." }
+          - { id: c, code: "default: println!(\"too many\"),", why: "That's `switch` syntax from other languages. Rust uses `_ =>`." }
+        answer: a
+        explanation: "The compiler lists the values that aren't covered, such as numbers below 1 and above 4. A final `_` arm covers all of them."
+        concepts: [match.intro]
+
+      - type: concept
+        id: concept-match-value
+        title: match gives a value
+        markdown: |
+          **Like `if`, `match` is an expression.** Each arm's code is a value, and the whole `match` takes the value of the arm that runs. All arms must have the same type, or it's error **E0308**.
+        code:
+          rust: |
+            let dice = 5;
+            let name = match dice {
+                1 => "one",
+                2..=5 => "a few",
+                _ => "lots",
+            };
+            println!("{name}");
+          verify: run
+          expectStdout: "a few\n"
+        concepts: [match.intro, ctrl.if-expr]
+
+      - type: predict-output
+        id: predict-wind
+        code:
+          rust: |
+            let wind = 40;
+            let warning = match wind {
+                0..=19 => "calm",
+                20..=39 => "breezy",
+                40..=62 => "strong",
+                _ => "storm",
+            };
+            println!("{warning}");
+          verify: run
+        options:
+          - { id: a, text: "strong" }
+          - { id: b, text: "breezy", why: "`20..=39` ends at 39, so 40 falls into the next arm." }
+          - { id: c, text: "storm", why: "`40..=62` includes 40." }
+        answer: a
+        explanation: "40 is in `40..=62`, so the `match` gives `\"strong\"` and `warning` holds it."
+        concepts: [match.intro]
+
+      - type: compiles
+        id: compiles-arm-types
+        code:
+          rust: |
+            fn main() {
+                let code = 2;
+                let label = match code {
+                    1 => "ok",
+                    2 => 404,
+                    _ => "unknown",
+                };
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: `match` arms have incompatible types" }
+            - { id: b, text: "E0004: non-exhaustive patterns", why: "The `_` arm covers every remaining value." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`label` gets one value. The arms give different types." }
+          answer: a
+        explanation: "Two arms give text and one gives an integer. Like the blocks of an `if`, every arm must have the same type."
+        concepts: [match.intro, err.E0308]
+
+      - type: predict-output
+        id: predict-wildcard-first
+        code:
+          rust: |
+            let level = 1;
+            match level {
+                _ => println!("any level"),
+                1 => println!("level one"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "any level" }
+          - { id: b, text: "level one", why: "Rust doesn't look for the most specific arm. `_` comes first and matches everything." }
+          - { id: c, text: "any level\nlevel one", why: "Only one arm runs." }
+        answer: a
+        explanation: "The arms are checked in order and `_` matches 1. The compiler warns that the second arm is unreachable, so put `_` last."
+        concepts: [match.intro]
+
+      - type: true-false
+        id: tf-u8-exhaustive
+        prompt: "This compiles, even without a `_` arm."
+        code:
+          rust: |
+            let volume: u8 = 30;
+            match volume {
+                0..=127 => println!("quiet"),
+                128..=255 => println!("loud"),
+            }
+          verify: run
+          expectStdout: "quiet\n"
+        answer: true
+        explanation: "A `u8` can only hold 0 to 255, and the two ranges cover all of them. The compiler checks this, so no `_` is needed."
+        concepts: [match.intro, types.int]
+
+      - type: spot-bug
+        id: spot-missing-comma
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let lane = 3;
+                match lane {
+                    1 => println!("inside")
+                    2..=7 => println!("middle"),
+                    _ => println!("outside"),
+                }
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `,` following `match` arm"
+        answer: 4
+        explanation: "Arms are separated by commas. Line 4 needs a `,` after `println!(\"inside\")`."
+        concepts: [match.intro]
+
+      - type: predict-output
+        id: predict-days-in
+        code:
+          rust: |
+            fn days_in(month: u32) -> u32 {
+                match month {
+                    2 => 28,
+                    4 | 6 | 9 | 11 => 30,
+                    _ => 31,
+                }
+            }
+
+            fn main() {
+                println!("{}", days_in(2));
+                println!("{}", days_in(9));
+                println!("{}", days_in(10));
+            }
+          verify: run
+        options:
+          - { id: a, text: "28\n30\n31" }
+          - { id: b, text: "28\n31\n30", why: "`9` is in `4 | 6 | 9 | 11`, so it gives 30. `10` isn't, so it falls to `_`." }
+          - { id: c, text: "28\n30\n30", why: "`10` isn't one of `4 | 6 | 9 | 11`, so it reaches `_ => 31`." }
+        answer: a
+        explanation: "The `match` is the last expression in the function, so its value is returned."
+        concepts: [match.intro, fn.return]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-points
+        prompt: Arrange the lines to give points for a finishing place
+        lines:
+          - { id: l1, text: "fn points(place: u32) -> u32 {" }
+          - { id: l2, text: "    match place {" }
+          - { id: l3, text: "        1 => 10," }
+          - { id: l4, text: "        2 => 6," }
+          - { id: l5, text: "        3 => 4," }
+          - { id: l6, text: "        _ => 0," }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "        else => 0," }
+          - { id: d2, text: "        1 -> 10," }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7, l8]
+          - [l1, l2, l4, l3, l5, l6, l7, l8]
+          - [l1, l2, l4, l5, l3, l6, l7, l8]
+          - [l1, l2, l5, l3, l4, l6, l7, l8]
+          - [l1, l2, l5, l4, l3, l6, l7, l8]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{} {}", points(1), points(3));
+                println!("{}", points(9));
+            }
+          mode: run
+          expectStdout: "10 4\n0\n"
+        explanation: "The numbered arms can go in any order, but `_` must come last or it would catch every place. Arms use `=>`, and `else` isn't a pattern."
+        concepts: [match.intro, fn.return]
+
+      - type: fill-tokens
+        id: fill-inclusive-range
+        prompt: "Fill the blanks so the program prints `two digits` for 99"
+        code:
+          rust: |
+            let count = 99;
+            let size = match count {
+                0..=9 => "one digit",
+                10___1___99 => "two digits",
+                ___2___ => "more",
+            };
+            println!("{size}");
+          verify: run
+          expectStdout: "two digits\n"
+        blanks:
+          "1": { answer: ["..="] }
+          "2": { answer: ["_"] }
+        bank: ["..=", "..", "...", "_", "else"]
+        explanation: "`10..=99` includes 99. `10..99` would stop before 99, and `...` is old syntax that's now an error."
+        concepts: [match.intro]
+
+      - type: decode-error
+        id: decode-gap
+        prompt: Which value is the compiler saying isn't covered?
+        code:
+          rust: |
+            fn main() {
+                let battery: u8 = 100;
+                match battery {
+                    0..=99 => println!("charging"),
+                    101..=255 => println!("error"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, text: "100" }
+          - { id: b, text: "255", why: "`101..=255` includes 255, because `..=` includes the end." }
+          - { id: c, text: "0", why: "`0..=99` starts at 0." }
+          - { id: d, text: "Every value above 255", why: "A `u8` can't go above 255, so there's nothing there to cover." }
+        answer: a
+        explanation: "The two ranges skip exactly one `u8` value, 100. The compiler reports `pattern 100_u8 not covered`."
+        concepts: [match.intro, types.int]
+
+      - type: predict-output
+        id: predict-match-bool
+        code:
+          rust: |
+            let is_raining = false;
+            let advice = match is_raining {
+                true => "umbrella",
+                false => "sunglasses",
+            };
+            println!("{advice}");
+          verify: run
+        options:
+          - { id: a, text: "sunglasses" }
+          - { id: b, text: "umbrella", why: "`is_raining` is `false`, so the `false` arm runs." }
+        answer: a
+        explanation: "A `bool` has two values, so arms for `true` and `false` cover everything and no `_` is needed."
+        concepts: [match.intro, types.bool]
+
+      - type: mcq
+        id: mcq-match-vs-if
+        prompt: "What does the compiler check for a `match` that it doesn't check for an `if` / `else if` chain without a final `else`?"
+        options:
+          - { id: a, text: "That every possible value is handled" }
+          - { id: b, text: "That the conditions are `bool`", why: "That's checked for `if` too: a condition that isn't a `bool` is E0308." }
+          - { id: c, text: "That the arms run in order", why: "Both run their branches top to bottom. Order isn't the difference." }
+        answer: a
+        explanation: "An `if` without `else` can skip all its blocks. A `match` must have an arm for every value, or it's E0004."
+        concepts: [match.intro, ctrl.if]
+
+      - type: spot-bug
+        id: spot-arm-type
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let rating = 4;
+                let stars = match rating {
+                    1 => "*",
+                    2..=4 => "***",
+                    5 => '*',
+                    _ => "?",
+                };
+                println!("{stars}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 6
+        explanation: "`'*'` in single quotes is a `char`, but the other arms give a `&str` in double quotes. Every arm must have the same type."
+        concepts: [match.intro, err.E0308, types.char]
+
+      - type: predict-output
+        id: predict-block-arm
+        code:
+          rust: |
+            let hour = 14;
+            let greeting = match hour {
+                0..=11 => "Morning",
+                12..=17 => {
+                    let lunch = hour < 13;
+                    if lunch {
+                        "Lunch"
+                    } else {
+                        "Afternoon"
+                    }
+                }
+                _ => "Evening",
+            };
+            println!("{greeting}");
+          verify: run
+        options:
+          - { id: a, text: "Afternoon" }
+          - { id: b, text: "Lunch", why: "`14 < 13` is false, so the inner `if` gives its `else` value." }
+          - { id: c, text: "Evening", why: "`12..=17` includes 14." }
+        answer: a
+        explanation: "An arm can be a block. Its value is the block's last expression, here an `if` expression. A block arm doesn't need a comma after it."
+        concepts: [match.intro, ctrl.if-expr, expr.block]
+
+      - type: predict-output
+        id: predict-early-match
+        code:
+          rust: |
+            fn bonus(lives: u32) -> u32 {
+                if lives == 0 {
+                    return 0;
+                }
+                match lives {
+                    1 => 10,
+                    _ => 20,
+                }
+            }
+
+            fn main() {
+                let total = bonus(0) + bonus(1);
+                println!("{}", total + bonus(5));
+            }
+          verify: run
+        options:
+          - { id: a, text: "30" }
+          - { id: b, text: "40", why: "`bonus(1)` matches `1 => 10`, not `_`." }
+          - { id: c, text: "50", why: "`bonus(0)` returns early with 0, before the `match`." }
+        answer: a
+        explanation: "The calls give 0 (early `return`), 10 and 20, which add up to 30."
+        concepts: [match.intro, fn.early-return]
+
+      - type: true-false
+        id: tf-or-range
+        prompt: "One arm can mix `|` and ranges, like `1 | 5..=9 => ...`."
+        code:
+          rust: |
+            let n = 7;
+            match n {
+                1 | 5..=9 => println!("yes"),
+                _ => println!("no"),
+            }
+          verify: run
+          expectStdout: "yes\n"
+        answer: true
+        explanation: "`|` joins any patterns, including ranges. This arm matches 1 and 5 to 9."
+        concepts: [match.intro]
+
+      - type: fill-tokens
+        id: fill-match-medal
+        prompt: "Fill the blanks so the program prints `silver`"
+        code:
+          rust: |
+            let place = 2;
+            let medal = ___1___ place {
+                1 => "gold",
+                2 => "silver",
+                3 => "bronze",
+                _ ___2___ "none",
+            };
+            println!("{medal}");
+          verify: run
+          expectStdout: "silver\n"
+        blanks:
+          "1": { answer: ["match"] }
+          "2": { answer: ["=>"] }
+        bank: ["match", "switch", "if", "=>", "->", ":"]
+        explanation: "`match` starts the expression and every arm uses `=>`. `switch` is from other languages, and `->` is for function return types."
+        concepts: [match.intro]

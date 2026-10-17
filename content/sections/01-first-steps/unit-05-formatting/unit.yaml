@@ -1,0 +1,18 @@
+id: first-steps.formatting
+title: Formatting & Output
+description: Line up columns, round numbers, print to the right place and write any text you need.
+colour: pink
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/std/fmt/index.html
+sources:
+  - name: Rust standard library documentation, std::fmt
+    url: https://doc.rust-lang.org/std/fmt/index.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-width
+  - level: level-02-print-family
+  - level: level-03-escapes
+  - chest
+  - level: level-04-str
+  - checkpoint: checkpoint-first-steps

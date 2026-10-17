@@ -1,0 +1,426 @@
+id: first-steps.compound.debug
+title: Debug printing
+icon: search
+concepts: [fmt.debug]
+reviewConcepts: [types.tuple, types.unit, types.array, types.array-bounds, panic.index, var.mut, fmt.placeholders, fmt.inline-args, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-debug-compound
+        title: "{:?} for tuples and arrays"
+        markdown: |
+          **`{}` is for output meant for people**, and Rust doesn't decide for you how a tuple or array should look to them. So `{}` can't print one.
+
+          **`{:?}` is the Debug format**, meant for programmers. It prints tuples and arrays with their brackets and commas. You can put a name in front: `{point:?}`.
+        code:
+          rust: |
+            let point = (3, 4);
+            let rgb = [255, 128, 0];
+            println!("{:?}", point);
+            println!("{rgb:?}");
+          verify: run
+          expectStdout: "(3, 4)\n[255, 128, 0]\n"
+        concepts: [fmt.debug]
+
+      - type: predict-output
+        id: predict-debug-array
+        code:
+          rust: |
+            let ages = [7, 12, 30];
+            println!("{ages:?}");
+          verify: run
+        options:
+          - { id: a, text: "[7, 12, 30]" }
+          - { id: b, text: "(7, 12, 30)", why: "Debug format shows an array with square brackets, as you'd write it." }
+          - { id: c, text: "7, 12, 30", why: "Debug format includes the brackets." }
+        answer: a
+        explanation: "`{:?}` prints an array the way you'd write it in code."
+        concepts: [fmt.debug]
+
+      - type: compiles
+        id: compiles-display-tuple
+        code:
+          rust: |
+            let point = (3, 4);
+            println!("{}", point);
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0277: `({integer}, {integer})` doesn't implement `std::fmt::Display`" }
+            - { id: b, text: "E0308: mismatched types", why: "No types are mismatched. The problem is that `{}` can't format a tuple." }
+            - { id: c, text: "E0609: no field on type", why: "No field is read here. The whole tuple is passed to `{}`." }
+          answer: a
+        explanation: "`{}` needs the type to support *Display*, and tuples don't. The compiler suggests `{:?}` instead."
+        concepts: [fmt.debug]
+
+      - type: predict-output
+        id: predict-debug-text
+        code:
+          rust: |
+            let player = ("Ferris", 3);
+            println!("{player:?}");
+          verify: run
+        options:
+          - { id: a, text: '("Ferris", 3)' }
+          - { id: b, text: "(Ferris, 3)", why: "Debug format shows text with its quotes." }
+          - { id: c, text: '["Ferris", 3]', why: "It's a tuple, so it prints with parentheses." }
+        answer: a
+        explanation: "Debug format shows the tuple's parentheses, and text keeps its quotes."
+        concepts: [fmt.debug]
+
+      - type: concept
+        id: concept-pretty
+        title: "Pretty Debug {:#?}"
+        markdown: |
+          **`{:#?}` is pretty Debug.** It puts each element on its own line, indented, with a comma after every element.
+
+          It's handy when a value is too long to read on one line.
+        code:
+          rust: |
+            let size = (2, 5);
+            println!("{size:#?}");
+          verify: run
+          expectStdout: "(\n    2,\n    5,\n)\n"
+        concepts: [fmt.debug]
+
+      - type: predict-output
+        id: predict-pretty-array
+        code:
+          rust: |
+            let bins = [4, 9];
+            println!("{:#?}", bins);
+          verify: run
+        options:
+          - { id: a, text: "[\n    4,\n    9,\n]" }
+          - { id: b, text: "[4, 9]", why: "That's `{:?}`. The `#` spreads it over several lines." }
+          - { id: c, text: "[\n    4,\n    9\n]", why: "Pretty Debug puts a comma after every element, including the last." }
+        answer: a
+        explanation: "`{:#?}` puts each element on its own indented line, each followed by a comma."
+        concepts: [fmt.debug]
+
+      - type: true-false
+        id: tf-pretty-lines
+        prompt: "`{:#?}` prints each element of an array on its own line."
+        answer: true
+        explanation: "That's what the `#` adds. `{:?}` prints everything on one line."
+        concepts: [fmt.debug]
+
+      - type: mcq
+        id: mcq-print-array
+        prompt: "Given `let nums = [1, 2, 3];`, which line prints `[1, 2, 3]`?"
+        options:
+          - { id: a, code: 'println!("{:?}", nums);' }
+          - { id: b, code: 'println!("{}", nums);', why: "`{}` can't print an array, so this doesn't compile." }
+          - { id: c, code: 'println!("{nums}");', why: "That's still `{}`, with the name inside. It doesn't compile." }
+          - { id: d, code: 'println!("{:#?}", nums);', why: "That compiles, but prints each number on its own line." }
+        answer: a
+        explanation: "`{:?}` prints the array on one line, with brackets and commas."
+        concepts: [fmt.debug]
+
+      - type: match-pairs
+        id: pairs-formats
+        pairs:
+          - ["{}", "Display, for people"]
+          - ["{:?}", "Debug on one line"]
+          - ["{:#?}", "Debug over many lines"]
+          - ["{rgb:?}", "Debug of `rgb`"]
+        concepts: [fmt.debug, fmt.inline-args]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-display-array
+        prompt: Which fix for line 3 is right?
+        code:
+          rust: |
+            fn main() {
+                let temps = [18, 21, 25];
+                println!("Temps: {}", temps);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: 'println!("Temps: {:?}", temps);' }
+          - { id: b, code: 'println!("Temps: {}", temps.len());', why: "That compiles, but prints how many temperatures there are, not the temperatures." }
+          - { id: c, code: 'println!("Temps: {temps}");', why: "That's still `{}`, so it fails the same way." }
+        answer: a
+        explanation: "Arrays don't support `{}`. The note in the error suggests `{:?}`, which prints `[18, 21, 25]`."
+        concepts: [fmt.debug, compiler.read-error]
+
+      - type: predict-output
+        id: predict-nested-debug
+        code:
+          rust: |
+            let mixed = ((1, 2), [3, 4]);
+            println!("{mixed:?}");
+          verify: run
+        options:
+          - { id: a, text: "((1, 2), [3, 4])" }
+          - { id: b, text: "(1, 2, 3, 4)", why: "Debug format keeps the inner tuple and array as they are." }
+          - { id: c, text: "((1, 2), (3, 4))", why: "The second element is an array, so it prints with square brackets." }
+        answer: a
+        explanation: "Debug format shows each inner value with its own brackets."
+        concepts: [fmt.debug, types.tuple, types.array]
+
+      - type: predict-output
+        id: predict-debug-unit
+        code:
+          rust: |
+            let result = ((), 5);
+            println!("{:?}", result);
+          verify: run
+        options:
+          - { id: a, text: "((), 5)" }
+          - { id: b, text: "(5)", why: "`()` is a value too, so it's printed as an element." }
+          - { id: c, text: "( , 5)", why: "Debug format writes the unit value as `()`." }
+        answer: a
+        explanation: "The first element is the unit value, which Debug format prints as `()`."
+        concepts: [fmt.debug, types.unit]
+
+      - type: compiles
+        id: compiles-display-element
+        code:
+          rust: |
+            let point = (3, 4);
+            println!("{}", point.0);
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "It compiles and prints 3. `point.0` is a number, and `{}` can print numbers. Only the whole tuple needs `{:?}`."
+        concepts: [fmt.debug, types.tuple]
+
+      - type: spot-bug
+        id: spot-display-tuple
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let colour = (255, 0, 64);
+                let scores = [9, 7];
+                println!("{:?}", scores);
+                println!("{}", colour);
+                println!("{}", scores[0]);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: 5
+        explanation: "Line 5 prints a whole tuple with `{}`. Lines 4 and 6 are fine: `{:?}` for the array, `{}` for one number."
+        concepts: [fmt.debug]
+
+      - type: predict-output
+        id: predict-debug-mixed-types
+        code:
+          rust: |
+            let sample = ('a', 1.0, true);
+            println!("{sample:?}");
+          verify: run
+        options:
+          - { id: a, text: "('a', 1.0, true)" }
+          - { id: b, text: "(a, 1, true)", why: "Debug format keeps the quotes on a `char` and the `.0` on a float." }
+          - { id: c, text: "('a', 1, true)", why: "A float is always printed with a decimal point in Debug format." }
+        answer: a
+        explanation: "Debug format shows each value the way you'd write it in code."
+        concepts: [fmt.debug]
+
+      - type: true-false
+        id: tf-number-same
+        prompt: "For a single integer like `42`, `{:?}` and `{}` print the same thing."
+        answer: true
+        explanation: "Both print `42`. The two formats differ for text, tuples, arrays and other values."
+        concepts: [fmt.debug]
+
+      - type: fill-tokens
+        id: fill-debug-scores
+        prompt: "Fill the blank so the program prints `[9, 7]`"
+        code:
+          rust: |
+            let scores = [9, 7];
+            println!("{scores___1___}");
+          verify: run
+          expectStdout: "[9, 7]\n"
+        blanks:
+          "1": { answer: [":?"] }
+        bank: [":?", ":#?", "?", "[]"]
+        explanation: "`{scores:?}` is Debug format on one line. `:#?` would spread it over several lines."
+        concepts: [fmt.debug, fmt.inline-args]
+
+      - type: mcq
+        id: mcq-pretty-line-count
+        prompt: 'How many lines does `println!("{:#?}", [1, 2, 3]);` print?'
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "3", why: "The opening `[` and closing `]` get lines of their own too." }
+          - { id: c, text: "1", why: "That's `{:?}`. The `#` puts each element on its own line." }
+        answer: a
+        explanation: "One line for `[`, one for each of the three elements, and one for `]`."
+        concepts: [fmt.debug]
+
+      - type: predict-output
+        id: predict-debug-names
+        code:
+          rust: |
+            let crew = ["Ada", "Linus"];
+            println!("{:?}", crew);
+            println!("{}", crew[0]);
+          verify: run
+        options:
+          - { id: a, text: "[\"Ada\", \"Linus\"]\nAda" }
+          - { id: b, text: "[Ada, Linus]\nAda", why: "Debug format keeps the quotes around text." }
+          - { id: c, text: "[\"Ada\", \"Linus\"]\n\"Ada\"", why: "The second line uses `{}`, which prints text without quotes." }
+        answer: a
+        explanation: "`{:?}` shows the array with quoted text. `{}` prints one element as plain text."
+        concepts: [fmt.debug]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-point
+        prompt: "Arrange the lines so the program prints `(3, 4)` and then `3`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let point = (3, 4);" }
+          - { id: l3, text: '    println!("{point:?}");' }
+          - { id: l4, text: '    println!("{}", point.0);' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{point}");' }
+          - { id: d2, text: '    println!("{}", point[0]);' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "(3, 4)\n3\n"
+        explanation: "The whole tuple needs `{:?}`, and one element, a number, can use `{}`. Tuples use `.0`, not `[0]`."
+        concepts: [fmt.debug, types.tuple]
+
+      - type: predict-output
+        id: predict-pretty-nested
+        code:
+          rust: |
+            let entry = ("x", [1, 2]);
+            println!("{entry:#?}");
+          verify: run
+        options:
+          - { id: a, text: "(\n    \"x\",\n    [\n        1,\n        2,\n    ],\n)" }
+          - { id: b, text: "(\n    \"x\",\n    [1, 2],\n)", why: "Pretty Debug spreads out inner values too, with deeper indents." }
+          - { id: c, text: "(\n    x,\n    [\n        1,\n        2,\n    ],\n)", why: "Debug format keeps the quotes around text." }
+        answer: a
+        explanation: "`{:#?}` spreads out every level. The inner array is indented one step further."
+        concepts: [fmt.debug, types.tuple, types.array]
+
+      - type: decode-error
+        id: decode-unit-display
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let status = println!("Saved");
+                println!("Status: {}", status);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "`status` is `()`, which `{}` can't print. `{:?}` can" }
+          - { id: b, text: "`status` holds the text `Saved`, which needs quotes", why: "`println!` gives back `()`, not the text it printed." }
+          - { id: c, text: "You can't print two things in one program", why: "You can print as many times as you like. The problem is the type of `status`." }
+        answer: a
+        explanation: "The error says `()` doesn't implement `std::fmt::Display`, which is what `{}` needs."
+        concepts: [fmt.debug, types.unit, compiler.read-error]
+
+      - type: fill-tokens
+        id: fill-repeat-debug
+        prompt: "Fill the blanks so the program prints `[0, 0, 0]`"
+        code:
+          rust: |
+            let empty = [___1___; ___2___];
+            println!("{empty:?}");
+          verify: run
+          expectStdout: "[0, 0, 0]\n"
+        blanks:
+          "1": { answer: ["0"] }
+          "2": { answer: ["3"] }
+        bank: ["0", "3", "1", "[0]"]
+        explanation: "`[0; 3]` is three zeros, and `{empty:?}` prints them in Debug format."
+        concepts: [fmt.debug, types.array]
+
+      - type: predict-output
+        id: predict-change-nested
+        code:
+          rust: |
+            let mut kit = (1, [2, 3]);
+            kit.1[0] = 9;
+            println!("{kit:?}");
+          verify: run
+        options:
+          - { id: a, text: "(1, [9, 3])" }
+          - { id: b, text: "(9, [2, 3])", why: "`kit.1` is the array, and `[0]` is its first element." }
+          - { id: c, text: "(1, [2, 9])", why: "`[0]` is the first element of the array, not the last." }
+        answer: a
+        explanation: "`kit.1` picks the array, and `[0]` picks its first element, which becomes 9."
+        concepts: [fmt.debug, types.tuple, types.array, var.mut]
+
+      - type: mcq
+        id: mcq-which-fails
+        prompt: "Which line does **not** compile?"
+        options:
+          - { id: a, code: 'println!("{}", (1, 2));' }
+          - { id: b, code: 'println!("{}", [1, 2].len());', why: "`.len()` gives a number, and `{}` can print numbers." }
+          - { id: c, code: 'println!("{:?}", (1, 2));', why: "`{:?}` can print tuples." }
+          - { id: d, code: 'println!("{:?}", ());', why: "`{:?}` can print the unit value. It shows `()`." }
+        answer: a
+        explanation: "A whole tuple can't be printed with `{}`. Use `{:?}` or print one element at a time."
+        concepts: [fmt.debug]
+
+      - type: true-false
+        id: tf-pretty-any
+        prompt: "Any value you can print with `{:?}` can also be printed with `{:#?}`."
+        answer: true
+        explanation: "Both are the Debug format. `#` only changes the layout."
+        concepts: [fmt.debug]
+
+      - type: spot-bug
+        id: spot-tuple-position
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let rgb = (255, 128, 0);
+                println!("{rgb:?}");
+                println!("{:#?}", rgb);
+                println!("{}", rgb.3);
+            }
+          verify: compile-fail
+          expectErrors: [E0609]
+        answer: 5
+        explanation: "`rgb` has positions 0 to 2, so `rgb.3` doesn't exist. Both Debug lines are fine."
+        concepts: [types.tuple, types.array-bounds, fmt.debug]
+
+      - type: match-pairs
+        id: pairs-debug-output
+        prompt: "Match each value to what `{:?}` prints"
+        pairs:
+          - ["[0; 2]", "[0, 0]"]
+          - ["(2 * 3,)", "(6,)"]
+          - ["[1 + 1; 3]", "[2, 2, 2]"]
+          - ["[(); 2]", "[(), ()]"]
+        concepts: [fmt.debug, types.array, types.tuple]
+
+      - type: predict-output
+        id: predict-runtime-then-debug
+        code:
+          rust: |
+            let mut slots = [0; 3];
+            let i = std::env::args().count();
+            slots[i] = 5;
+            println!("{slots:?}");
+          verify: run
+        options:
+          - { id: a, text: "[0, 5, 0]" }
+          - { id: b, text: "[5, 0, 0]", why: "`count()` is 1 when run plainly, so the second element changes." }
+          - { id: c, text: "[0, 0, 5]", why: "`i` is 1, which is the second position." }
+        answer: a
+        explanation: "`i` is 1, so `slots[1]` becomes 5. That's in bounds, so there's no panic."
+        concepts: [fmt.debug, types.array, panic.index]

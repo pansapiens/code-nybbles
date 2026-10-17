@@ -1,0 +1,476 @@
+id: functions-control-flow.functions.expressions
+title: Statements and expressions
+icon: sparkles
+concepts: [expr.vs-stmt, err.E0308]
+reviewConcepts: [fn.define, fn.params, fn.return, var.let, types.unit, fmt.debug, compiler.read-error, err.E0384]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-stmt-expr
+        title: Two kinds of code
+        markdown: |
+          **Statements do something. Expressions produce a value.**
+
+          `let x = 6;` is a statement: it creates `x`, but it isn't a value itself. `6`, `x + 1` and `add(2, 3)` are expressions: each one works out to a value.
+        code:
+          rust: |
+            // a statement:
+            let speed = 30;
+            // `speed + 5` is an expression:
+            let faster = speed + 5;
+            println!("{faster}");
+          verify: run
+          expectStdout: "35\n"
+        concepts: [expr.vs-stmt]
+
+      - type: mcq
+        id: mcq-which-statement
+        prompt: Which of these is a statement?
+        options:
+          - { id: a, code: "let speed = 30;" }
+          - { id: b, code: "30", why: "A literal like `30` is an expression: it's a value." }
+          - { id: c, code: "speed * 2", why: "A calculation works out to a value, so it's an expression." }
+          - { id: d, code: "add(1, 2)", why: "A function call produces a value, so it's an expression." }
+        answer: a
+        explanation: "A `let` line creates a variable but doesn't produce a value. The others all work out to a value."
+        concepts: [expr.vs-stmt]
+
+      - type: compiles
+        id: compiles-let-as-value
+        code:
+          rust: |
+            let a = (let b = 6);
+            println!("{a}");
+          verify: compile-fail
+          expectErrorMessage: "expected expression, found `let` statement"
+        answer: false
+        explanation: "`let b = 6` is a statement, so there's no value to put in `a`. The compiler says `expected expression, found let statement`."
+        concepts: [expr.vs-stmt]
+
+      - type: concept
+        id: concept-semicolon
+        title: The semicolon matters
+        markdown: |
+          **Adding `;` turns an expression into a statement**, and its value is thrown away.
+
+          That's why a function's tail has no `;`. With one, the body ends in a statement and returns `()` instead, which is error **E0308: mismatched types**.
+        code:
+          rust: |
+            fn plus_one(x: i32) -> i32 {
+                x + 1; // error[E0308]
+            }
+
+            fn main() {
+                println!("{}", plus_one(5));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        concepts: [expr.vs-stmt, err.E0308]
+
+      - type: true-false
+        id: tf-semicolon-statement
+        prompt: "`x + 1` is an expression, but `x + 1;` is a statement."
+        answer: true
+        explanation: "The semicolon ends the expression and discards its value, which makes it a statement."
+        concepts: [expr.vs-stmt]
+
+      - type: compiles
+        id: compiles-plus-one-semicolon
+        code:
+          rust: |
+            fn plus_one(x: i32) -> i32 {
+                x + 1;
+            }
+
+            fn main() {
+                let y = plus_one(5);
+                println!("{y}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The body produces the wrong type." }
+            - { id: c, text: "E0061: wrong number of arguments", why: "`plus_one(5)` passes one argument for one parameter." }
+          answer: a
+        explanation: "The `;` makes the body end in a statement, so it produces `()` while the signature promises `i32`. That mismatch is E0308."
+        concepts: [err.E0308, expr.vs-stmt]
+
+      - type: predict-output
+        id: predict-plus-one-twice
+        code:
+          rust: |
+            fn plus_one(x: i32) -> i32 {
+                x + 1
+            }
+
+            fn main() {
+                let y = plus_one(plus_one(1));
+                println!("{y}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "There are two calls. The inner one gives 2, and the outer one adds 1 more." }
+          - { id: c, text: "1", why: "`plus_one` returns `x + 1`; its tail has no `;`, so the value is returned." }
+        answer: a
+        explanation: "The tail `x + 1` has no semicolon, so it's returned. `plus_one(1)` is 2, and `plus_one(2)` is 3."
+        concepts: [expr.vs-stmt, fn.return]
+
+      - type: match-pairs
+        id: pairs-stmt-expr
+        pairs:
+          - ["let y = 6;", "statement: creates a variable"]
+          - ["y + 1", "expression: produces a value"]
+          - ["y + 1;", "statement: value thrown away"]
+          - ["E0308", "mismatched types"]
+        concepts: [expr.vs-stmt, err.E0308]
+
+      - type: true-false
+        id: tf-call-is-expression
+        prompt: "Calling a function, as in `add(2, 3)`, is an expression."
+        answer: true
+        explanation: "A call works out to the function's return value, so you can use it wherever a value fits."
+        concepts: [expr.vs-stmt]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-remove-semicolon
+        prompt: Which change does the compiler suggest?
+        code:
+          rust: |
+            fn plus_one(x: i32) -> i32 {
+                x + 1;
+            }
+
+            fn main() {
+                println!("{}", plus_one(5));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Remove the `;` after `x + 1`" }
+          - { id: b, text: "Delete `-> i32`", why: "Then `plus_one` returns `()`, which `println!` can't show with `{}`, and the 6 is still lost." }
+          - { id: c, text: "Change line 2 to `let x = x + 1;`", why: "That's still a statement, so the body still produces `()`." }
+        answer: a
+        explanation: "The help line says `remove this semicolon to return this value`. Without the `;`, `x + 1` becomes the tail expression."
+        concepts: [err.E0308, expr.vs-stmt]
+
+      - type: predict-output
+        id: predict-println-unit
+        code:
+          rust: |
+            let result = println!("Hi");
+            println!("{result:?}");
+          verify: run
+        options:
+          - { id: a, text: "Hi\n()" }
+          - { id: b, text: "Hi\nHi", why: "`result` holds the value `println!` produces, not the text it printed." }
+          - { id: c, text: "Hi", why: "`result` holds `()`, and `{:?}` prints it as `()`." }
+        answer: a
+        explanation: "`println!(\"Hi\")` is an expression too. It prints, then produces the unit value `()`, which Debug formatting shows as `()`."
+        concepts: [expr.vs-stmt, types.unit, fmt.debug]
+
+      - type: spot-bug
+        id: spot-semicolon-line
+        prompt: Tap the line you need to change to fix the error
+        code:
+          rust: |
+            fn square(n: i32) -> i32 {
+                n * n;
+            }
+
+            fn main() {
+                println!("{}", square(3));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 2
+        explanation: "The compiler reports E0308 at the `-> i32` on line 1, but the fix is on line 2: remove the `;` so `n * n` is returned."
+        concepts: [err.E0308, expr.vs-stmt]
+
+      - type: mcq
+        id: mcq-expression-part
+        prompt: "In `let total = add(2, 3);`, which part is an expression?"
+        options:
+          - { id: a, code: "add(2, 3)" }
+          - { id: b, code: "let total = add(2, 3);", why: "The whole line is a `let` statement. It contains an expression." }
+          - { id: c, code: "total", why: "Here `total` is the name being created, not a value being used." }
+        answer: a
+        explanation: "The right-hand side of `=` is an expression; its value is stored in `total`."
+        concepts: [expr.vs-stmt]
+
+      - type: compiles
+        id: compiles-println-tail
+        code:
+          rust: |
+            fn greet() {
+                println!("Hi")
+            }
+
+            fn main() {
+                greet();
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles. `println!(\"Hi\")` produces `()`, and `greet` returns `()`, so the types match without a `;`."
+        concepts: [expr.vs-stmt, types.unit]
+
+      - type: mcq
+        id: mcq-why-e0308
+        prompt: "Why does `fn plus_one(x: i32) -> i32 { x + 1; }` fail to compile?"
+        options:
+          - { id: a, text: "The `;` makes `x + 1` a statement, so the body produces `()`, not an `i32`" }
+          - { id: b, text: "`x` can't be changed because it isn't `mut`", why: "`x + 1` makes a new value. It doesn't change `x`." }
+          - { id: c, text: "Rust needs the word `return` to give back a value", why: "A tail expression without `;` returns a value with no `return`." }
+          - { id: d, text: "An `i32` can't hold the result of `x + 1`", why: "Adding two `i32`s gives an `i32`. The type problem is the `()`." }
+        answer: a
+        explanation: "A body that ends with a statement produces `()`. The signature promised an `i32`, so the types don't match."
+        concepts: [expr.vs-stmt, err.E0308]
+
+      - type: decode-error
+        id: decode-arg-e0308
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn set_volume(level: i32) {
+                println!("Volume {level}");
+            }
+
+            fn main() {
+                set_volume(7.5);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`level` must be an `i32`, but `7.5` is a decimal number" }
+          - { id: b, text: "`set_volume` needs a return type", why: "It only prints, so returning `()` is fine." }
+          - { id: c, text: "`level` must be declared with `let` first", why: "Parameters are created by the call. The problem is the argument's type." }
+        answer: a
+        explanation: "E0308 isn't only about return values. Any time a value's type doesn't match what's expected, including an argument, you get mismatched types."
+        concepts: [err.E0308, fn.params]
+
+      - type: fill-tokens
+        id: fill-stmt-then-tail
+        prompt: "Fill the blanks so the program prints `7`"
+        code:
+          rust: |
+            fn total(a: i32, b: i32) ___1___ i32 {
+                let sum = a + b___2___
+                sum
+            }
+
+            fn main() {
+                println!("{}", total(3, 4));
+            }
+          verify: run
+          expectStdout: "7\n"
+        blanks:
+          "1": { answer: ["->"] }
+          "2": { answer: [";"] }
+        bank: ["->", ";", ",", ":", "=>"]
+        explanation: "`let sum = a + b;` is a statement, so it needs its `;`. The last line, `sum`, has no `;`, so it's returned."
+        concepts: [expr.vs-stmt, fn.return]
+
+      - type: true-false
+        id: tf-e0308-meaning
+        prompt: "E0308 means a value's type doesn't match the type the code expects there."
+        answer: true
+        explanation: "The message shows both sides, for example `expected i32, found ()`. Read it as \"the code needed this, but got that\"."
+        concepts: [err.E0308]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-shipping
+        prompt: "Arrange the lines so the program prints `11`"
+        lines:
+          - { id: l1, text: "fn shipping(weight: i32) -> i32 {" }
+          - { id: l2, text: "    let base = 5;" }
+          - { id: l3, text: "    base + weight * 2" }
+          - { id: l4, text: "}" }
+          - { id: l5, text: "fn main() {" }
+          - { id: l6, text: '    println!("{}", shipping(3));' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    base + weight * 2;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l5, l6, l7, l1, l2, l3, l4]
+          - [l1, l2, l3, l7, l5, l6, l4]
+          - [l5, l6, l4, l1, l2, l3, l7]
+        verify:
+          mode: run
+          expectStdout: "11\n"
+        explanation: "The `let` statement comes first and the tail expression last, without a `;`. `5 + 3 * 2` is 11."
+        concepts: [expr.vs-stmt, fn.return]
+
+      - type: predict-output
+        id: predict-score-bonus
+        code:
+          rust: |
+            fn score(hits: i32) -> i32 {
+                let bonus = hits * 2;
+                bonus + 1
+            }
+
+            fn main() {
+                let a = score(2);
+                let b = score(a);
+                println!("{a} {b}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "5 11" }
+          - { id: b, text: "4 8", why: "The tail is `bonus + 1`, so 1 is added after doubling." }
+          - { id: c, text: "5 5", why: "`b` is `score(a)`, and `a` is 5, so `b` is 11." }
+        answer: a
+        explanation: "`score(2)` is 2 * 2 + 1 = 5. `score(5)` is 5 * 2 + 1 = 11."
+        concepts: [expr.vs-stmt, fn.return]
+
+      - type: compiles
+        id: compiles-tuple-semicolon
+        code:
+          rust: |
+            fn start() -> (i32, i32) {
+                (0, 0);
+            }
+
+            fn main() {
+                let (x, y) = start();
+                println!("{x}, {y}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0061: wrong number of arguments", why: "`start` takes no arguments and gets none." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "Every name here is defined. The type is the problem." }
+          answer: a
+        explanation: "The `;` after `(0, 0)` throws the tuple away, so the body produces `()` instead of `(i32, i32)`."
+        concepts: [err.E0308, expr.vs-stmt, types.tuple]
+
+      - type: spot-bug
+        id: spot-height-semicolon
+        prompt: Tap the line you need to change to fix the error
+        code:
+          rust: |
+            fn main() {
+                let w = width();
+                let h = height();
+                println!("{}", w * h);
+            }
+
+            fn width() -> i32 {
+                4
+            }
+
+            fn height() -> i32 {
+                3;
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 12
+        explanation: "`width` is fine. In `height`, the `;` after `3` means the body returns `()`. Removing it on line 12 fixes the error."
+        concepts: [err.E0308, expr.vs-stmt]
+
+      - type: decode-error
+        id: decode-implicit-unit
+        prompt: "What does `implicitly returns ()` mean here?"
+        code:
+          rust: |
+            fn lives_left(lost: i32) -> i32 {
+                3 - lost;
+            }
+
+            fn main() {
+                println!("{}", lives_left(1));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "The body has no tail expression, so it produces `()`" }
+          - { id: b, text: "The function can't be called because it returns nothing", why: "It can be called. The problem is that `()` doesn't match `-> i32`." }
+          - { id: c, text: "`()` is a typo the compiler found in your code", why: "There's no `()` in the body. The compiler is describing the value the body ends up with." }
+        answer: a
+        explanation: "With every line ending in `;`, the body ends in a statement, so its value is `()`. The help says to remove the semicolon."
+        concepts: [err.E0308, types.unit]
+
+      - type: mcq
+        id: mcq-body-compiles
+        prompt: "Which body compiles for `fn twice() -> i32`?"
+        options:
+          - { id: a, code: "{ let n = 4; n * 2 }" }
+          - { id: b, code: "{ let n = 4; n * 2; }", why: "The final `;` discards `n * 2`, so the body produces `()`." }
+          - { id: c, code: "{ let n = 4 }", why: "A `let` is a statement, so it can't be the tail. It's also missing its `;`." }
+          - { id: d, code: "{ n * 2 let n = 4; }", why: "Code runs top to bottom. `n` doesn't exist yet, and the tail must come last." }
+        answer: a
+        explanation: "Statements first, each ending in `;`, then a tail expression of type `i32` with no `;`."
+        concepts: [expr.vs-stmt, fn.return]
+
+      - type: true-false
+        id: tf-let-as-value
+        prompt: "A `let` can be used as a value, as in `let a = (let b = 1);`."
+        answer: false
+        explanation: "`let` is a statement and has no value. Some languages allow `a = b = 1`, but Rust doesn't."
+        concepts: [expr.vs-stmt]
+
+      - type: fill-tokens
+        id: fill-lose-one
+        prompt: "Fill the blanks so the program prints `2`"
+        code:
+          rust: |
+            fn lose_one(lives: i32) ___1___ i32 {
+                ___2___
+            }
+
+            fn main() {
+                let left = lose_one(3);
+                println!("{left}");
+            }
+          verify: run
+          expectStdout: "2\n"
+        blanks:
+          "1": { answer: ["->"] }
+          "2": { answer: ["lives - 1"] }
+        bank: ["->", "=>", "lives - 1", "lives - 1;", "let lives - 1"]
+        explanation: "The body's only line is the tail, so it has no `;`. With `lives - 1;` the function would return `()` (E0308)."
+        concepts: [expr.vs-stmt, err.E0308]
+
+      - type: predict-output
+        id: predict-semicolon-unit
+        code:
+          rust: |
+            fn add(a: i32, b: i32) {
+                a + b;
+            }
+
+            fn main() {
+                let r = add(1, 2);
+                println!("{r:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "()" }
+          - { id: b, text: "3", why: "The `;` throws the sum away, and `add` has no `->`, so it returns `()`." }
+          - { id: c, text: "(1, 2)", why: "`r` holds what `add` returns, not its arguments." }
+        answer: a
+        explanation: "This compiles because `add` has no `->`: it promises `()` and delivers `()`. The sum is worked out and thrown away."
+        concepts: [expr.vs-stmt, types.unit, fmt.debug]
+
+      - type: match-pairs
+        id: pairs-error-codes
+        pairs:
+          - ["E0308", "mismatched types"]
+          - ["E0061", "wrong number of arguments"]
+          - ["E0425", "name not found in this scope"]
+          - ["E0384", "assigned twice to a non-mut variable"]
+        concepts: [err.E0308, compiler.read-error, err.E0384]

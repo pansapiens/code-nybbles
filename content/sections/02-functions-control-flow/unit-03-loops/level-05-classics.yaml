@@ -1,0 +1,562 @@
+id: functions-control-flow.loops.classics
+title: Classic loop problems
+icon: trophy
+concepts: [practice.fizzbuzz]
+reviewConcepts: [ctrl.for, range.basics, ctrl.while, ctrl.loop, ctrl.break-value, ctrl.continue, ctrl.if, match.intro, ops.arith, macro.print-family]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-fizzbuzz
+        title: FizzBuzz
+        markdown: |
+          **FizzBuzz** is a classic warm-up. For each number: print `Fizz` if it divides by 3, `Buzz` if it divides by 5, `FizzBuzz` if both, otherwise the number.
+
+          `n % 3 == 0` means "divides by 3". Check 15 first, so that both-cases aren't caught by the 3 or 5 check.
+        code:
+          rust: |
+            for n in 1..=5 {
+                if n % 15 == 0 {
+                    println!("FizzBuzz");
+                } else if n % 3 == 0 {
+                    println!("Fizz");
+                } else if n % 5 == 0 {
+                    println!("Buzz");
+                } else {
+                    println!("{n}");
+                }
+            }
+          verify: run
+          expectStdout: "1\n2\nFizz\n4\nBuzz\n"
+        concepts: [practice.fizzbuzz]
+
+      - type: predict-output
+        id: predict-fizzbuzz-end
+        code:
+          rust: |
+            for n in 13..=15 {
+                if n % 15 == 0 {
+                    println!("FizzBuzz");
+                } else if n % 3 == 0 {
+                    println!("Fizz");
+                } else if n % 5 == 0 {
+                    println!("Buzz");
+                } else {
+                    println!("{n}");
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "13\n14\nFizzBuzz" }
+          - { id: b, text: "13\n14\nFizz", why: "15 divides by 15, and that check comes first." }
+          - { id: c, text: "13\n14", why: "`..=` includes 15." }
+        answer: a
+        explanation: "13 and 14 divide by neither 3 nor 5. 15 divides by both, so the first branch prints `FizzBuzz`."
+        concepts: [practice.fizzbuzz, range.basics]
+
+      - type: true-false
+        id: tf-order-matters
+        prompt: "If the `n % 3 == 0` check came before the `n % 15 == 0` check, 15 would print `Fizz`."
+        answer: true
+        explanation: "An `if` / `else if` chain runs the first branch whose condition is true. 15 divides by 3, so it would stop there."
+        concepts: [practice.fizzbuzz, ctrl.if]
+
+      - type: mcq
+        id: mcq-divides
+        prompt: "Which condition is true when `n` divides by 5?"
+        options:
+          - { id: a, code: "n % 5 == 0" }
+          - { id: b, code: "n / 5 == 0", why: "`n / 5` is the result of the division. It's 0 only when `n` is less than 5." }
+          - { id: c, code: "n % 5 == 5", why: "A remainder after dividing by 5 is always 0 to 4." }
+        answer: a
+        explanation: "`%` gives the remainder. A remainder of 0 means the division comes out exactly."
+        concepts: [practice.fizzbuzz, ops.arith]
+
+      - type: concept
+        id: concept-sum-evens
+        title: Add up some of the numbers
+        markdown: |
+          **To total only some numbers, put an `if` inside the loop.** Here only the even numbers from 1 to 10 are added.
+        code:
+          rust: |
+            let mut total = 0;
+            for n in 1..=10 {
+                if n % 2 == 0 {
+                    total += n;
+                }
+            }
+            println!("{total}");
+          verify: run
+          expectStdout: "30\n"
+        concepts: [practice.fizzbuzz]
+
+      - type: predict-output
+        id: predict-multiples-of-three
+        code:
+          rust: |
+            let mut total = 0;
+            for n in 1..10 {
+                if n % 3 == 0 {
+                    total += n;
+                }
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "18" }
+          - { id: b, text: "9", why: "`total` adds 3, 6 and 9, not only the last one." }
+          - { id: c, text: "3", why: "There are three multiples of 3 below 10, but the loop adds the numbers themselves." }
+        answer: a
+        explanation: "The multiples of 3 below 10 are 3, 6 and 9, which add up to 18."
+        concepts: [practice.fizzbuzz]
+
+      - type: fill-tokens
+        id: fill-sum-odds
+        prompt: "Fill the blanks so the program adds the odd numbers from 1 to 5 and prints `9`"
+        code:
+          rust: |
+            let mut total = 0;
+            for n in 1..=5 {
+                if n ___1___ 2 ___2___ 1 {
+                    total += n;
+                }
+            }
+            println!("{total}");
+          verify: run
+          expectStdout: "9\n"
+        blanks:
+          "1": { answer: ["%"] }
+          "2": { answer: ["=="] }
+        bank: ["%", "/", "==", "=", "!="]
+        explanation: "An odd number leaves remainder 1 when divided by 2. 1 + 3 + 5 is 9."
+        concepts: [practice.fizzbuzz, ops.arith]
+
+      - type: predict-output
+        id: predict-count-multiples
+        code:
+          rust: |
+            let mut count = 0;
+            for n in 1..=20 {
+                if n % 4 == 0 {
+                    count += 1;
+                }
+            }
+            println!("{count}");
+          verify: run
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "60", why: "`count += 1` counts the multiples. It doesn't add them up." }
+          - { id: c, text: "4", why: "`..=` includes 20, which is a multiple of 4." }
+        answer: a
+        explanation: "4, 8, 12, 16 and 20 are the multiples of 4 up to 20, so `count` is 5."
+        concepts: [practice.fizzbuzz]
+
+      - type: match-pairs
+        id: pairs-arith
+        prompt: "Match each expression to what it tells you about a positive `n`"
+        pairs:
+          - ["n % 2 == 0", "`n` is even"]
+          - ["n % 2 == 1", "`n` is odd"]
+          - ["n % 3 == 0", "`n` divides by 3"]
+          - ["n % 10", "the last digit of `n`"]
+          - ["n / 10", "`n` without its last digit"]
+        concepts: [practice.fizzbuzz, ops.arith]
+
+      - type: true-false
+        id: tf-seventeen-mod
+        prompt: "`17 % 5` is `2`."
+        answer: true
+        explanation: "17 is 3 fives (15) with 2 left over, and `%` gives what's left over."
+        concepts: [ops.arith]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-fibonacci
+        title: Fibonacci
+        markdown: |
+          **In the Fibonacci sequence, each number is the sum of the two before it.** Keep the last two in `a` and `b`, and move them along each pass.
+
+          `for _ in 0..6` means "repeat 6 times": `_` says you don't need the counter.
+        code:
+          rust: |
+            let mut a = 0;
+            let mut b = 1;
+            for _ in 0..6 {
+                print!("{a} ");
+                let next = a + b;
+                a = b;
+                b = next;
+            }
+            println!();
+          verify: run
+          expectStdout: "0 1 1 2 3 5 \n"
+        concepts: [practice.fizzbuzz]
+
+      - type: predict-output
+        id: predict-fib-eight
+        code:
+          rust: |
+            let mut a = 0;
+            let mut b = 1;
+            for _ in 0..8 {
+                print!("{a} ");
+                let next = a + b;
+                a = b;
+                b = next;
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "0 1 1 2 3 5 8 13" }
+          - { id: b, text: "1 1 2 3 5 8 13 21", why: "The first value printed is `a`, which starts at 0." }
+          - { id: c, text: "0 1 2 3 5 8 13 21", why: "1 + 0 is 1, so 1 appears twice near the start." }
+        answer: a
+        explanation: "Eight passes print eight numbers, each the sum of the two before: 0, 1, 1, 2, 3, 5, 8, 13."
+        concepts: [practice.fizzbuzz]
+
+      - type: spot-bug
+        id: spot-fib-order
+        prompt: "This prints `0 1 2 4 8` instead of `0 1 1 2 3`. Tap the line that uses a value that was already changed."
+        code:
+          rust: |
+            fn main() {
+                let mut a = 0;
+                let mut b = 1;
+                for _ in 0..5 {
+                    print!("{a} ");
+                    a = b;
+                    b = a + b;
+                }
+                println!();
+            }
+          verify: run
+          expectStdout: "0 1 2 4 8 \n"
+        answer: 7
+        explanation: "By line 7, `a` already holds the new value, so `b` doubles. Save `a + b` in `next` before changing `a`."
+        concepts: [practice.fizzbuzz]
+
+      - type: concept
+        id: concept-count-digits
+        title: Count the digits
+        markdown: |
+          **Integer division by 10 drops the last digit:** `4096 / 10` is `409`. Keep dividing until nothing is left, counting as you go.
+
+          You don't know in advance how many passes that takes, so `while` fits.
+        code:
+          rust: |
+            let mut n = 4096;
+            let mut digits = 0;
+            while n > 0 {
+                n = n / 10;
+                digits += 1;
+            }
+            println!("{digits}");
+          verify: run
+          expectStdout: "4\n"
+        concepts: [practice.fizzbuzz]
+
+      - type: predict-output
+        id: predict-digits-zeros
+        code:
+          rust: |
+            let mut n = 1000;
+            let mut digits = 0;
+            while n > 0 {
+                n = n / 10;
+                digits += 1;
+            }
+            println!("{digits}");
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "1", why: "Zeros are digits too. `n` goes 1000, 100, 10, 1, 0." }
+          - { id: c, text: "3", why: "`n` is still 1 after three divisions, so there's a fourth pass." }
+        answer: a
+        explanation: "`n` goes 1000, 100, 10, 1, 0. That's four divisions before `n > 0` is false."
+        concepts: [practice.fizzbuzz]
+
+      - type: predict-output
+        id: predict-digit-sum
+        code:
+          rust: |
+            let mut n = 1234;
+            let mut sum = 0;
+            while n > 0 {
+                sum += n % 10;
+                n = n / 10;
+            }
+            println!("{sum}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "4", why: "`sum` adds each digit's value, not 1 per digit." }
+          - { id: c, text: "1234", why: "`n % 10` takes one digit at a time: 4, 3, 2, 1." }
+        answer: a
+        explanation: "`n % 10` is the last digit and `n / 10` drops it. The digits 4, 3, 2 and 1 add up to 10."
+        concepts: [practice.fizzbuzz, ops.arith]
+
+      - type: true-false
+        id: tf-zero-digits
+        prompt: "With `n = 0`, the digit-counting loop gives `digits = 0`."
+        code:
+          rust: |
+            let mut n = 0;
+            let mut digits = 0;
+            while n > 0 {
+                n = n / 10;
+                digits += 1;
+            }
+            println!("{digits}");
+          verify: run
+          expectStdout: "0\n"
+        answer: true
+        explanation: "`0 > 0` is false, so the body never runs. To count 0 as one digit you'd need a special case."
+        concepts: [practice.fizzbuzz, ctrl.while]
+
+      - type: fill-tokens
+        id: fill-digit-sum
+        prompt: "Fill the blanks so the program adds the digits of 507 and prints `12`"
+        code:
+          rust: |
+            let mut n = 507;
+            let mut sum = 0;
+            while n > 0 {
+                sum += n ___1___ 10;
+                n = n ___2___ 10;
+            }
+            println!("{sum}");
+          verify: run
+          expectStdout: "12\n"
+        blanks:
+          "1": { answer: ["%"] }
+          "2": { answer: ["/"] }
+        bank: ["%", "/", "*", "-"]
+        explanation: "`% 10` takes the last digit and `/ 10` removes it. 7 + 0 + 5 is 12."
+        concepts: [practice.fizzbuzz, ops.arith]
+
+      - type: mcq
+        id: mcq-integer-division
+        prompt: "`n` is an integer holding 4096. What is `n / 10`?"
+        options:
+          - { id: a, text: "`409`" }
+          - { id: b, text: "`409.6`", why: "Dividing two integers gives an integer. The fraction is dropped." }
+          - { id: c, text: "`6`", why: "That's `n % 10`, the remainder." }
+        answer: a
+        explanation: "Integer division throws away the remainder, so `4096 / 10` is `409`."
+        concepts: [ops.arith]
+
+      - type: predict-output
+        id: predict-reverse
+        code:
+          rust: |
+            let mut n = 123;
+            let mut reversed = 0;
+            while n > 0 {
+                reversed = reversed * 10 + n % 10;
+                n = n / 10;
+            }
+            println!("{reversed}");
+          verify: run
+        options:
+          - { id: a, text: "321" }
+          - { id: b, text: "6", why: "That would be a digit sum. Here `reversed * 10` shifts the digits left before adding the next one." }
+          - { id: c, text: "123", why: "The last digit of `n` is taken first, so the digits come out backwards." }
+        answer: a
+        explanation: "`reversed` goes 3, 32, 321 as the digits are taken from the end of `n`."
+        concepts: [practice.fizzbuzz, ops.arith]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-sum-evens
+        prompt: "Arrange the lines to add the even numbers from 1 to 6 and print `12`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    for n in 1..=6 {" }
+          - { id: l4, text: "        if n % 2 == 0 {" }
+          - { id: l5, text: "            total += n;" }
+          - { id: l6, text: "        }" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: '    println!("{total}");' }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "        if n % 2 == 1 {" }
+          - { id: d2, text: "    for n in 1..6 {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        verify:
+          mode: run
+          expectStdout: "12\n"
+        explanation: "2 + 4 + 6 is 12, so the range must include 6. `% 2 == 1` would add the odd numbers instead."
+        concepts: [practice.fizzbuzz]
+
+      - type: parsons
+        id: parsons-count-digits
+        prompt: "Arrange the lines to count the digits in 2024 and print `4`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut n = 2024;" }
+          - { id: l3, text: "    let mut digits = 0;" }
+          - { id: l4, text: "    while n > 0 {" }
+          - { id: l5, text: "        n = n / 10;" }
+          - { id: l6, text: "        digits += 1;" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: '    println!("{digits}");' }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "        n = n % 10;" }
+          - { id: d2, text: "    for n > 0 {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        alternatives:
+          - [l1, l3, l2, l4, l5, l6, l7, l8, l9]
+          - [l1, l2, l3, l4, l6, l5, l7, l8, l9]
+          - [l1, l3, l2, l4, l6, l5, l7, l8, l9]
+        verify:
+          mode: run
+          expectStdout: "4\n"
+        explanation: "Divide by 10 and count, while `n` is above 0. `for` needs a range, so `for n > 0` isn't valid."
+        concepts: [practice.fizzbuzz, ctrl.while]
+
+      - type: predict-output
+        id: predict-fib-over-fifty
+        code:
+          rust: |
+            let mut a = 0;
+            let mut b = 1;
+            while b <= 50 {
+                let next = a + b;
+                a = b;
+                b = next;
+            }
+            println!("{b}");
+          verify: run
+        options:
+          - { id: a, text: "55" }
+          - { id: b, text: "34", why: "34 is still at most 50, so the loop runs again." }
+          - { id: c, text: "50", why: "50 isn't a Fibonacci number. The loop stops at the first one above 50." }
+        answer: a
+        explanation: "`b` goes 1, 2, 3, 5, 8, 13, 21, 34, 55. 55 is the first value over 50."
+        concepts: [practice.fizzbuzz, ctrl.while]
+
+      - type: fill-tokens
+        id: fill-fizzbuzz
+        prompt: "Fill the blanks to finish FizzBuzz"
+        code:
+          rust: |
+            for n in 1..=15 {
+                if n % ___1___ == 0 {
+                    println!("FizzBuzz");
+                } ___2___ n % 3 == 0 {
+                    println!("Fizz");
+                } else if n % 5 == 0 {
+                    println!("Buzz");
+                } else {
+                    println!("{n}");
+                }
+            }
+          verify: run
+          expectStdout: "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n"
+        blanks:
+          "1": { answer: ["15"] }
+          "2": { answer: ["else if"] }
+        bank: ["15", "8", "3", "else if", "else", "if"]
+        explanation: "Divisible by both 3 and 5 means divisible by 15. Each later check needs `else if` so only one line is printed per number."
+        concepts: [practice.fizzbuzz, ctrl.if]
+
+      - type: predict-output
+        id: predict-smallest-divisor
+        code:
+          rust: |
+            let n = 91;
+            let mut d = 2;
+            while n % d != 0 {
+                d += 1;
+            }
+            println!("{d}");
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "91", why: "91 isn't prime: 7 x 13 is 91." }
+          - { id: c, text: "3", why: "91 doesn't divide by 3: 3 x 30 is 90, leaving 1." }
+        answer: a
+        explanation: "The loop tries 2, 3, 4, 5, 6, 7 and stops at the first exact divisor, 7."
+        concepts: [practice.fizzbuzz, ctrl.while]
+
+      - type: spot-bug
+        id: spot-total-assign
+        prompt: "This should print `30`, the sum of the even numbers up to 10, but prints `10`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let mut total = 0;
+                for n in 1..=10 {
+                    if n % 2 == 0 {
+                        total = n;
+                    }
+                }
+                println!("{total}");
+            }
+          verify: run
+          expectStdout: "10\n"
+        answer: 5
+        explanation: "`total = n` replaces the total each time, so only the last even number is left. Use `total += n`."
+        concepts: [practice.fizzbuzz]
+
+      - type: predict-output
+        id: predict-match-fizz
+        code:
+          rust: |
+            for n in 1..=6 {
+                match n % 3 {
+                    0 => println!("Fizz"),
+                    _ => println!("{n}"),
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n2\nFizz\n4\n5\nFizz" }
+          - { id: b, text: "Fizz\n2\n3\nFizz\n5\n6", why: "`n % 3` is 0 for 3 and 6, not for 1 and 4." }
+          - { id: c, text: "1\n2\nFizz", why: "The range goes up to 6 and the `match` runs on every pass." }
+        answer: a
+        explanation: "`match` checks `n % 3`. It's 0 for 3 and 6, which print `Fizz`, and `_` catches every other remainder."
+        concepts: [practice.fizzbuzz, match.intro]
+
+      - type: mcq
+        id: mcq-which-loop-digits
+        prompt: "Why does the digit counter use `while` rather than `for`?"
+        options:
+          - { id: a, text: "The number of passes depends on the value, so there's no range to write in advance" }
+          - { id: b, text: "`for` can't do arithmetic inside its body", why: "A `for` body can hold any code. The issue is not knowing the range." }
+          - { id: c, text: "`while` loops run faster", why: "Speed isn't the reason. `while` fits a stopping condition like `n > 0`." }
+        answer: a
+        explanation: "Use `for` when you know what to step through, and `while` when you only know when to stop."
+        concepts: [practice.fizzbuzz, ctrl.while, ctrl.for]
+
+      - type: predict-output
+        id: predict-tiles-fizz
+        prompt: Build the output
+        code:
+          rust: |
+            for n in 9..=12 {
+                if n % 3 == 0 {
+                    print!("Fizz ");
+                } else if n % 5 == 0 {
+                    print!("Buzz ");
+                } else {
+                    print!("{n} ");
+                }
+            }
+            println!();
+          verify: run
+        tiles: ["Fizz", "Buzz", "11", "10", "9", "12"]
+        answer: "Fizz Buzz 11 Fizz"
+        explanation: "9 and 12 divide by 3, 10 divides by 5, and 11 divides by neither."
+        concepts: [practice.fizzbuzz]
+
+      - type: true-false
+        id: tf-underscore-loop
+        prompt: "`for _ in 0..3 { }` runs its body 3 times."
+        answer: true
+        explanation: "`_` means you don't need the value, but the loop still runs once for each of 0, 1 and 2."
+        concepts: [ctrl.for, range.basics]

@@ -1,0 +1,450 @@
+id: first-steps.formatting.print-family
+title: print!, eprintln! and format!
+icon: chat
+concepts: [macro.print-family]
+reviewConcepts: [fmt.width-precision, fmt.placeholders, fmt.inline-args, macro.println-basic, macro.bang, var.shadowing, types.unit]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-print
+        title: print! stays on the line
+        markdown: |
+          **`print!` works like `println!` but doesn't end the line.** The next output carries on from where it stopped.
+        code:
+          rust: |
+            print!("Ready, ");
+            print!("steady, ");
+            println!("go!");
+          verify: run
+          expectStdout: "Ready, steady, go!\n"
+        concepts: [macro.print-family]
+
+      - type: predict-output
+        id: predict-print-mix
+        code:
+          rust: |
+            print!("A");
+            println!("B");
+            print!("C");
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "AB\nC" }
+          - { id: b, text: "A\nB\nC", why: "`print!` doesn't end the line, so `B` follows straight after `A`." }
+          - { id: c, text: "ABC", why: "`println!(\"B\")` ends the line after `B`, so `C` starts a new one." }
+        answer: a
+        explanation: "`A` and `B` share a line because only `println!` ends it. `println!()` with nothing inside ends the line after `C`."
+        concepts: [macro.print-family]
+
+      - type: true-false
+        id: tf-print-newline
+        prompt: "`print!` moves to a new line after printing."
+        answer: false
+        explanation: "Only `println!` (print line) adds the line ending. `print!` leaves the cursor where the text stopped."
+        concepts: [macro.print-family]
+
+      - type: mcq
+        id: mcq-same-line
+        prompt: "You want to print `Loading` and then add `...` later on the same line. Which line prints `Loading` first?"
+        options:
+          - { id: a, code: 'print!("Loading");' }
+          - { id: b, code: 'println!("Loading");', why: "That ends the line, so `...` would appear on the next line." }
+          - { id: c, code: 'print("Loading");', why: "Without `!` this isn't the macro. Rust has no `print` function." }
+        answer: a
+        explanation: "`print!` leaves the line open, so the next output continues on it."
+        concepts: [macro.print-family, macro.bang]
+
+      - type: concept
+        id: concept-eprintln
+        title: Errors go to stderr
+        markdown: |
+          **A program has two output streams.** Standard output (stdout) is for results. Standard error (stderr) is for errors and warnings.
+
+          `eprintln!` and `eprint!` write to stderr. A terminal shows both, but stdout can be sent to a file on its own. The checks in this course read stdout only, so the warning below isn't part of the output.
+        code:
+          rust: |
+            println!("Result: 42");
+            eprintln!("warning: low battery");
+          verify: run
+          expectStdout: "Result: 42\n"
+        concepts: [macro.print-family]
+
+      - type: predict-output
+        id: predict-stdout-only
+        prompt: What does this print to standard output (stdout)?
+        code:
+          rust: |
+            println!("saved");
+            eprintln!("error: disk full");
+            println!("done");
+          verify: run
+        options:
+          - { id: a, text: "saved\ndone" }
+          - { id: b, text: "saved\nerror: disk full\ndone", why: "That's what a terminal shows, but the middle line went to stderr, not stdout." }
+          - { id: c, text: "saved", why: "`eprintln!` doesn't stop the program. The last line still runs." }
+        answer: a
+        explanation: "`eprintln!` sends its line to stderr, so stdout only gets `saved` and `done`."
+        concepts: [macro.print-family]
+
+      - type: fill-tokens
+        id: fill-eprintln
+        prompt: "Fill the blank so the error message goes to standard error"
+        code:
+          rust: |
+            ___1___("error: file not found");
+          verify: run
+          expectStdout: ""
+        blanks:
+          "1": { answer: ["eprintln!"] }
+        bank: ["eprintln!", "println!", "error!", "eprintln"]
+        explanation: "`eprintln!` prints a line to stderr. Rust has no built-in `error!`, and without `!` it isn't the macro."
+        concepts: [macro.print-family]
+
+      - type: concept
+        id: concept-format
+        title: format! builds text
+        markdown: |
+          **`format!` fills in a format string like `println!`, but gives you the text instead of printing it.** The result is a `String`, which you can store and print later.
+        code:
+          rust: |
+            let name = "Ferris";
+            let hp = 3;
+            let msg = format!("{name} has {hp} hp");
+            println!("{msg}");
+          verify: run
+          expectStdout: "Ferris has 3 hp\n"
+        concepts: [macro.print-family]
+
+      - type: predict-output
+        id: predict-format-width
+        code:
+          rust: |
+            let label = format!("{:>5}", 42);
+            println!("[{label}]");
+          verify: run
+        options:
+          - { id: a, text: "[   42]" }
+          - { id: b, text: "[42]", why: "`format!` applies the width when it builds the text, so the spaces are part of `label`." }
+          - { id: c, text: "[{:>5}]", why: "`format!` fills in the placeholder, the same way `println!` does." }
+        answer: a
+        explanation: "`format!` uses the same options as `println!`. `label` holds 3 spaces followed by `42`."
+        concepts: [macro.print-family, fmt.width-precision]
+
+      - type: mcq
+        id: mcq-what-format-does
+        prompt: "What does `format!` do?"
+        options:
+          - { id: a, text: "Builds a `String` from a format string, without printing it" }
+          - { id: b, text: "Prints text with formatting options such as width", why: "`format!` never prints. You print its result yourself." }
+          - { id: c, text: "Checks that a format string is valid", why: "The compiler checks every format string. `format!` builds text from one." }
+        answer: a
+        explanation: "`format!` returns the text as a `String`. Nothing appears until you print it."
+        concepts: [macro.print-family]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-format-silent
+        code:
+          rust: |
+            let greeting = format!("Hi, {}", "Ada");
+            println!("Done");
+          verify: run
+        options:
+          - { id: a, text: "Done" }
+          - { id: b, text: "Hi, Ada\nDone", why: "`format!` only builds the text. `greeting` is never printed." }
+          - { id: c, text: "Hi, Ada", why: "`println!(\"Done\")` still runs." }
+        answer: a
+        explanation: "`greeting` holds `Hi, Ada`, but only `Done` is printed. The compiler warns that `greeting` is unused."
+        concepts: [macro.print-family]
+
+      - type: compiles
+        id: compiles-println-value
+        code:
+          rust: |
+            let message = println!("hi");
+            println!("{message}");
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0277: `()` doesn't implement `std::fmt::Display`" }
+            - { id: b, text: "E0425: cannot find value `message` in this scope", why: "`message` exists. The problem is what it holds." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`message` is only assigned once." }
+          answer: a
+        explanation: "`println!` prints and gives back `()`, the unit value, which `{}` can't display. To keep the text, use `format!`."
+        concepts: [macro.print-family, types.unit]
+
+      - type: spot-bug
+        id: spot-two-lines
+        prompt: "This should print `Score: 10` on one line. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let score = 10;
+                println!("Score: ");
+                println!("{score}");
+            }
+          verify: run
+          expectStdout: "Score: \n10\n"
+        answer: 3
+        explanation: "`println!` on line 3 ends the line, so `10` lands on the next one. `print!(\"Score: \");` keeps them together."
+        concepts: [macro.print-family]
+
+      - type: true-false
+        id: tf-eprintln-stdout
+        prompt: "Text printed with `eprintln!` is part of a program's standard output."
+        answer: false
+        explanation: "`eprintln!` writes to standard error. A terminal shows both streams, but they are separate."
+        concepts: [macro.print-family]
+
+      - type: fill-tokens
+        id: fill-format-tag
+        prompt: "Fill the blanks so the program prints `<Ferris>` on its own line"
+        code:
+          rust: |
+            let name = "Ferris";
+            let tag = ___1___("<{name}>");
+            ___2___("{tag}");
+          verify: run
+          expectStdout: "<Ferris>\n"
+        blanks:
+          "1": { answer: ["format!"] }
+          "2": { answer: ["println!"] }
+        bank: ["format!", "println!", "eprintln!", "format"]
+        explanation: "`format!` builds the text into `tag`, and `println!` prints it with a line ending. `format` without `!` isn't the macro."
+        concepts: [macro.print-family, macro.bang]
+
+      - type: decode-error
+        id: decode-print-empty
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                print!("Name: Ada");
+                print!();
+            }
+          verify: compile-fail
+          expectErrorMessage: "requires at least a format string argument"
+        options:
+          - { id: a, text: "`print!` needs some text. To end the line, use `println!()` instead" }
+          - { id: b, text: "You can't call `print!` twice in a row", why: "You can call it as often as you like, but each call needs a format string." }
+          - { id: c, text: "Line 2 is missing a placeholder", why: "A format string doesn't need any placeholders. The error is on line 3." }
+        answer: a
+        explanation: "`println!()` on its own is allowed and ends the line. `print!()` would print nothing at all, so Rust requires a format string."
+        concepts: [macro.print-family, compiler.read-error]
+
+      - type: predict-output
+        id: predict-tiles-brackets
+        prompt: Build the output
+        code:
+          rust: |
+            print!("[");
+            print!("{:^5}", "x");
+            println!("]");
+          verify: run
+        tiles: ["[", "]", "  x  ", " x ", "x", " ]"]
+        answer: "[  x  ]"
+        explanation: "All three parts go on one line. `{:^5}` centres `x` with 2 spaces each side."
+        concepts: [macro.print-family, fmt.width-precision]
+
+      - type: mcq
+        id: mcq-error-where
+        prompt: "Your program can't open a file. Which line suits the message best?"
+        options:
+          - { id: a, code: 'eprintln!("error: cannot open scores.txt");' }
+          - { id: b, code: 'println!("error: cannot open scores.txt");', why: "That works, but the error would be mixed in with the results on stdout." }
+          - { id: c, code: 'format!("error: cannot open scores.txt");', why: "`format!` builds the text but doesn't print it." }
+        answer: a
+        explanation: "Errors go to stderr with `eprintln!`. Then someone saving your results to a file still sees the error in the terminal."
+        concepts: [macro.print-family]
+
+      - type: match-pairs
+        id: pairs-print-family
+        pairs:
+          - ["println!", "prints a line to stdout"]
+          - ["print!", "prints to stdout, line stays open"]
+          - ["eprintln!", "prints a line to stderr"]
+          - ["eprint!", "prints to stderr, line stays open"]
+          - ["format!", "returns a `String`"]
+        concepts: [macro.print-family]
+
+      - type: predict-output
+        id: predict-shadow-format
+        code:
+          rust: |
+            let total = 3;
+            let total = format!("{total:03}");
+            println!("{total}!");
+          verify: run
+        options:
+          - { id: a, text: "003!" }
+          - { id: b, text: "3!", why: "The second `total` is the text `format!` built, which is zero-padded to 3." }
+          - { id: c, text: "3.000!", why: "`03` means width 3 padded with zeros, not 3 decimal places." }
+        answer: a
+        explanation: "Shadowing replaces the number `total` with the `String` `\"003\"`, which is then printed."
+        concepts: [macro.print-family, var.shadowing, fmt.width-precision]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-loading
+        prompt: "Arrange the lines so the program prints `Loading... done` and then `Ready` on the next line"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    print!("Loading... ");' }
+          - { id: l3, text: '    println!("done");' }
+          - { id: l4, text: '    println!("Ready");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("Loading... ");' }
+          - { id: d2, text: '    print!("Ready");' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Loading... done\nReady\n"
+        explanation: "`print!` keeps `Loading... ` open so `done` joins it, and `println!(\"done\")` ends that line before `Ready`."
+        concepts: [macro.print-family]
+
+      - type: predict-output
+        id: predict-mixed-streams
+        prompt: What does this print to standard output (stdout)?
+        code:
+          rust: |
+            print!("a");
+            eprintln!("b");
+            print!("c");
+            println!("d");
+          verify: run
+        options:
+          - { id: a, text: "acd" }
+          - { id: b, text: "abcd", why: "`b` goes to stderr, so it isn't in stdout." }
+          - { id: c, text: "a\ncd", why: "The line ending from `eprintln!` also goes to stderr. Stdout never gets a line break until `d`." }
+        answer: a
+        explanation: "Only `print!` and `println!` write to stdout. They give `a`, `c` and `d` with one line ending at the end."
+        concepts: [macro.print-family]
+
+      - type: fill-tokens
+        id: fill-format-row
+        prompt: "Fill the blanks so the program prints `[Ada     42]` (name in 6 on the left, score in 4 on the right)"
+        code:
+          rust: |
+            let player = "Ada";
+            let score = 42;
+            let row = format!(
+                "{player:___1___}{score:___2___}"
+            );
+            println!("[{row}]");
+          verify: run
+          expectStdout: "[Ada     42]\n"
+        blanks:
+          "1": { answer: ["<6"] }
+          "2": { answer: [">4"] }
+        bank: ["<6", ">4", ">6", "<4", ".4"]
+        explanation: "`<6` pads `Ada` on the right to 6 characters, and `>4` puts 2 spaces before `42`."
+        concepts: [macro.print-family, fmt.width-precision]
+
+      - type: compiles
+        id: compiles-string-annotation
+        code:
+          rust: |
+            let lives = 3;
+            let text: String = format!("{lives}!");
+            println!("{text}");
+          verify: run
+          expectStdout: "3!\n"
+        answer: true
+        explanation: "`format!` returns a `String`, so the annotation matches. It prints `3!`."
+        concepts: [macro.print-family]
+
+      - type: compiles
+        id: compiles-unused-format
+        code:
+          rust: |
+            let score = 10;
+            format!("Score: {score}");
+          verify: compile
+        answer: true
+        explanation: "It compiles with a warning about an unused return value. The text is built and thrown away, so nothing prints."
+        concepts: [macro.print-family]
+
+      - type: spot-bug
+        id: spot-warning-stdout
+        prompt: "The warning should go to standard error, not standard output. Tap the line to change."
+        code:
+          rust: |
+            fn main() {
+                let battery = 5;
+                println!("Battery: {battery}%");
+                println!("warning: battery low");
+            }
+          verify: run
+          expectStdout: "Battery: 5%\nwarning: battery low\n"
+        answer: 4
+        explanation: "Line 4 is a warning, so it belongs on stderr: `eprintln!(\"warning: battery low\");`."
+        concepts: [macro.print-family]
+
+      - type: decode-error
+        id: decode-println-value
+        prompt: "Which change to line 3 fixes the error and prints `[3 hp]`?"
+        code:
+          rust: |
+            fn main() {
+                let hp = 3;
+                let text = println!("{hp} hp");
+                println!("[{text}]");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: 'let text = format!("{hp} hp");' }
+          - { id: b, code: 'let text = print!("{hp} hp");', why: "`print!` also prints and gives back `()`, so the error stays." }
+          - { id: c, code: 'let text = "{hp} hp";', why: "That compiles, but a plain string isn't filled in, so it prints `[{hp} hp]`." }
+        answer: a
+        explanation: "`println!` returns `()`, which `{}` can't display. `format!` returns the filled-in text instead."
+        concepts: [macro.print-family, types.unit]
+
+      - type: mcq
+        id: mcq-prints-nothing
+        prompt: "Which line puts nothing on standard output?"
+        options:
+          - { id: a, code: 'let s = format!("hi");' }
+          - { id: b, code: 'print!("hi");', why: "`print!` writes `hi` to stdout, without a line ending." }
+          - { id: c, code: "println!();", why: "This prints an empty line, which is a line ending on stdout." }
+        answer: a
+        explanation: "`format!` only builds a `String`. `print!` and `println!` both write to stdout."
+        concepts: [macro.print-family]
+
+      - type: predict-output
+        id: predict-format-price
+        code:
+          rust: |
+            let price = 2.5;
+            let label = format!("${price:.2}");
+            print!("{label}");
+            println!(" each");
+          verify: run
+        options:
+          - { id: a, text: "$2.50 each" }
+          - { id: b, text: "$2.50\n each", why: "`print!` doesn't end the line, so ` each` follows on the same one." }
+          - { id: c, text: "$2.5 each", why: "`.2` gives two decimal places when `format!` builds the label." }
+        answer: a
+        explanation: "`label` is `$2.50`. `print!` leaves the line open and `println!` adds ` each` before ending it."
+        concepts: [macro.print-family, fmt.width-precision]
+
+      - type: true-false
+        id: tf-empty-println
+        prompt: "`println!()` with nothing in the brackets prints an empty line."
+        code:
+          rust: |
+            println!("top");
+            println!();
+            println!("bottom");
+          verify: run
+          expectStdout: "top\n\nbottom\n"
+        answer: true
+        explanation: "It prints only the line ending, which leaves a blank line between `top` and `bottom`."
+        concepts: [macro.print-family]

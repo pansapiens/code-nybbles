@@ -5,3 +5,6 @@ colour: purple
 units:
   - unit-01-hello
   - unit-02-variables
+  - unit-03-scalars
+  - unit-04-compound
+  - unit-05-formatting

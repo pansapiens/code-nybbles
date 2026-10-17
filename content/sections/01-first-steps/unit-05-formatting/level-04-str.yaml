@@ -1,0 +1,435 @@
+id: first-steps.formatting.str
+title: String literals are &str
+icon: text
+concepts: [string.str-literal-intro]
+reviewConcepts: [string.literals, macro.print-family, fmt.width-precision, fmt.inline-args, types.char, types.int, var.shadowing]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-str-type
+        title: The type of a string literal
+        markdown: |
+          **Text in double quotes is a string literal, and its type is `&str`** (say "string slice"). The text is stored inside your compiled program, and the `&` means the variable refers to it.
+
+          You'll meet the details, and the growable `String` type, in Section 3.
+        code:
+          rust: |
+            let name: &str = "Ferris";
+            println!("Hi, {name}");
+          verify: run
+          expectStdout: "Hi, Ferris\n"
+        concepts: [string.str-literal-intro]
+
+      - type: mcq
+        id: mcq-literal-type
+        prompt: "What is the type of `\"Ferris\"`?"
+        options:
+          - { id: a, code: "&str" }
+          - { id: b, code: "String", why: "`format!` gives a `String`. A literal in quotes is a `&str`." }
+          - { id: c, code: "char", why: "A `char` is one character in single quotes, like `'F'`." }
+          - { id: d, code: "str", why: "Close, but a literal is always used through a reference: `&str`." }
+        answer: a
+        explanation: "Every string literal is a `&str`."
+        concepts: [string.str-literal-intro]
+
+      - type: true-false
+        id: tf-char-vs-str
+        prompt: "`'F'` and `\"F\"` have the same type."
+        answer: false
+        explanation: "`'F'` is a `char`, one character. `\"F\"` is a `&str`, text that happens to be one character long."
+        concepts: [string.str-literal-intro, types.char]
+
+      - type: concept
+        id: concept-len
+        title: How long is the text?
+        markdown: |
+          **`.len()` gives the length of a `&str` in bytes.** For plain English letters, digits and spaces, each character is one byte.
+        code:
+          rust: |
+            let city = "Perth";
+            println!("{}", city.len());
+            println!("{}", "".len());
+          verify: run
+          expectStdout: "5\n0\n"
+        concepts: [string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-len-crab
+        code:
+          rust: |
+            let word = "crab";
+            println!("{}", word.len());
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "crab", why: "`.len()` gives a number, the length, not the text." }
+          - { id: c, text: "6", why: "The quotes aren't part of the text. They only mark where it starts and ends." }
+        answer: a
+        explanation: "`crab` is 4 letters, and each is one byte."
+        concepts: [string.str-literal-intro]
+
+      - type: fill-tokens
+        id: fill-str-annotation
+        prompt: "Fill the blank with the type of a string literal"
+        code:
+          rust: |
+            let player_name: ___1___ = "Ada";
+            println!("{player_name}");
+          verify: run
+          expectStdout: "Ada\n"
+        blanks:
+          "1": { answer: ["&str"] }
+        bank: ["&str", "str", "String", "char"]
+        explanation: "`\"Ada\"` is a `&str`. Writing `String` or `char` here is a type mismatch."
+        concepts: [string.str-literal-intro]
+
+      - type: compiles
+        id: compiles-char-into-str
+        code:
+          rust: |
+            let initial: &str = 'F';
+            println!("{initial}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`initial` is only given one value." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "Nothing is missing. The value has the wrong type." }
+          answer: a
+        explanation: "`'F'` is a `char`, but the annotation says `&str`. Writing `\"F\"` would fix it."
+        concepts: [string.str-literal-intro, types.char]
+
+      - type: predict-output
+        id: predict-len-space
+        code:
+          rust: |
+            let greeting = "Hi there";
+            println!("{}", greeting.len());
+          verify: run
+        options:
+          - { id: a, text: "8" }
+          - { id: b, text: "7", why: "The space is a character too, and it takes a byte." }
+          - { id: c, text: "2", why: "`.len()` counts bytes, not words." }
+        answer: a
+        explanation: "7 letters plus 1 space makes 8 bytes."
+        concepts: [string.str-literal-intro]
+
+      - type: match-pairs
+        id: pairs-types
+        prompt: Match each value to its type
+        pairs:
+          - ['"Ferris"', "&str"]
+          - ["'F'", "char"]
+          - ['format!("F")', "String"]
+          - ['"Ferris".len()', "usize"]
+        explanation: "Double quotes make a `&str`, single quotes a `char`, and `format!` builds a `String`. A length is a `usize`."
+        concepts: [string.str-literal-intro, macro.print-family, types.char]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-len-bytes
+        title: Bytes, not letters
+        markdown: |
+          **Rust stores text as UTF-8, where some characters take more than one byte.** `é` takes 2, so `.len()` can be bigger than the number of letters you see.
+        code:
+          rust: |
+            println!("{}", "cafe".len());
+            println!("{}", "café".len());
+          verify: run
+          expectStdout: "4\n5\n"
+        concepts: [string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-len-accent
+        code:
+          rust: |
+            let word = "héllo";
+            println!("{}", word.len());
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "5", why: "`.len()` counts bytes. `é` takes 2 of them." }
+          - { id: c, text: "10", why: "Only `é` takes 2 bytes. Plain letters such as `h` take 1." }
+        answer: a
+        explanation: "4 plain letters at 1 byte each, plus `é` at 2 bytes, makes 6."
+        concepts: [string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-len-newline
+        code:
+          rust: |
+            let line = "\n";
+            println!("{}", line.len());
+          verify: run
+        options:
+          - { id: a, text: "1" }
+          - { id: b, text: "2", why: "`\\n` is how you write a newline in code. The string holds one newline character." }
+          - { id: c, text: "0", why: "A newline is a character, even though you can't see it." }
+        answer: a
+        explanation: "An escape stands for one character, so the string is one byte long."
+        concepts: [string.str-literal-intro, string.literals]
+
+      - type: predict-output
+        id: predict-tiles-raw-len
+        prompt: Build the output
+        code:
+          rust: |
+            println!("{}", r"\n".len());
+          verify: run
+        tiles: ["0", "1", "2", "3"]
+        answer: "2"
+        explanation: "A raw string has no escapes, so it holds a backslash and an `n`: 2 bytes."
+        concepts: [string.str-literal-intro, string.literals]
+
+      - type: decode-error
+        id: decode-format-into-str
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let score = 5;
+                let msg: &str = format!("{score}");
+                println!("{msg}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`format!` gives a `String`, but the annotation says `&str`" }
+          - { id: b, text: "`format!` can't be stored in a variable", why: "It can. Its result has a different type from a literal." }
+          - { id: c, text: "A number can't be put into text", why: "`format!` turns `score` into text without a problem." }
+        answer: a
+        explanation: "E0308 means mismatched types. Writing `let msg: String` or removing the annotation fixes it."
+        concepts: [string.str-literal-intro, macro.print-family, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-number-as-str
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let first: &str = "Ada";
+                let last: &str = "Lovelace";
+                let age: &str = 36;
+                println!("{first} {last} {age}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 4
+        explanation: "`36` is an integer, not text. Line 4 needs `\"36\"`, or an integer type such as `u32`."
+        concepts: [string.str-literal-intro]
+
+      - type: mcq
+        id: mcq-len-type
+        prompt: "In `let size = \"Ferris\".len();`, what type is `size`?"
+        options:
+          - { id: a, code: "usize" }
+          - { id: b, code: "i32", why: "`i32` is the default for a bare integer literal, but `.len()` always gives a `usize`." }
+          - { id: c, code: "&str", why: "`.len()` gives a number, not text." }
+          - { id: d, code: "u8", why: "A `u8` only goes up to 255. A length is a `usize`." }
+        answer: a
+        explanation: "Lengths and positions in Rust use `usize`, an unsigned integer sized for the machine."
+        concepts: [string.str-literal-intro, types.int]
+
+      - type: true-false
+        id: tf-len-chars
+        prompt: "`.len()` on a `&str` counts characters."
+        answer: false
+        explanation: "It counts bytes. That matches the character count for plain English text, but not for letters like `é`."
+        concepts: [string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-len-format
+        code:
+          rust: |
+            let name: &str = "Ada";
+            let label = format!("{name}!");
+            println!("{}", name.len());
+            println!("{}", label.len());
+          verify: run
+        options:
+          - { id: a, text: "3\n4" }
+          - { id: b, text: "3\n3", why: "`label` is `Ada!`, which has the extra `!`." }
+          - { id: c, text: "4\n4", why: "`name` is still `Ada`. `format!` built a new piece of text." }
+        answer: a
+        explanation: "`name` is 3 bytes. `label` is a `String` holding `Ada!`, 4 bytes, and `String` has `.len()` too."
+        concepts: [string.str-literal-intro, macro.print-family]
+
+      - type: compiles
+        id: compiles-empty-str
+        code:
+          rust: |
+            let empty: &str = "";
+            println!("[{empty}] {}", empty.len());
+          verify: run
+          expectStdout: "[] 0\n"
+        answer: true
+        explanation: "It compiles and prints `[] 0`. An empty literal is still a `&str`, with length 0."
+        concepts: [string.str-literal-intro]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-count-bytes
+        prompt: "Arrange the lines so the program prints `Ferris: 6 bytes`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let name: &str = "Ferris";' }
+          - { id: l3, text: "    let count = name.len();" }
+          - { id: l4, text: '    println!("{name}: {count} bytes");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let name: char = \"Ferris\";" }
+          - { id: d2, text: "    let count = name.len;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Ferris: 6 bytes\n"
+        explanation: "The literal is a `&str`, and `.len()` needs its brackets to be called."
+        concepts: [string.str-literal-intro]
+
+      - type: fill-tokens
+        id: fill-city-len
+        prompt: "Fill the blanks so the program prints `6`"
+        code:
+          rust: |
+            let city: ___1___ = "Hobart";
+            println!("{}", city.___2___());
+          verify: run
+          expectStdout: "6\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["len"] }
+        bank: ["&str", "len", "char", "length", "size"]
+        explanation: "`\"Hobart\"` is a `&str`, and its length method is `len`. Rust has no `length` or `size` method here."
+        concepts: [string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-width-counts-chars
+        code:
+          rust: |
+            let letter = "é";
+            println!("{}", letter.len());
+            println!("[{letter:>4}]");
+          verify: run
+        options:
+          - { id: a, text: "2\n[   é]" }
+          - { id: b, text: "2\n[  é]", why: "Width counts characters, not bytes. `é` is one character, so it gets 3 spaces." }
+          - { id: c, text: "1\n[   é]", why: "`.len()` counts bytes, and `é` takes 2." }
+        answer: a
+        explanation: "`.len()` counts the 2 bytes of `é`. Width counts characters, so 3 spaces pad the one character to 4."
+        concepts: [string.str-literal-intro, fmt.width-precision]
+
+      - type: predict-output
+        id: predict-len-tab
+        code:
+          rust: |
+            let cell = "tab\there";
+            println!("{}", cell.len());
+          verify: run
+        options:
+          - { id: a, text: "8" }
+          - { id: b, text: "9", why: "`\\t` is one tab character, not a backslash and a `t`." }
+          - { id: c, text: "7", why: "The tab is a character too, and it takes one byte." }
+        answer: a
+        explanation: "`tab` and `here` are 7 letters, plus 1 byte for the tab."
+        concepts: [string.str-literal-intro, string.literals]
+
+      - type: compiles
+        id: compiles-str-without-ref
+        code:
+          rust: |
+            let greeting: str = "hi";
+            println!("{greeting}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The type is missing its `&`: it should be `&str`" }
+            - { id: b, text: "`greeting` needs `mut`", why: "It's never changed, so `mut` wouldn't help." }
+            - { id: c, text: "`\"hi\"` is too short to be a string", why: "Any length works, even `\"\"`." }
+          answer: a
+        explanation: "A literal is a `&str`. The compiler reports a type mismatch (E0308) and suggests borrowing, which means adding `&`."
+        concepts: [string.str-literal-intro]
+
+      - type: decode-error
+        id: decode-char-fix
+        prompt: Which fix for line 2 is right?
+        code:
+          rust: |
+            fn main() {
+                let initial: &str = 'A';
+                println!("{initial}.");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: 'let initial: &str = "A";' }
+          - { id: b, code: 'let initial: char = "A";', why: "Now the type is `char` but the value is a `&str`, so the mismatch stays." }
+          - { id: c, code: "let initial: &char = 'A';", why: "`'A'` is a `char`, not a `&char`, so this is still a mismatch." }
+        answer: a
+        explanation: "Double quotes make a `&str`, which matches the annotation. `let initial: char = 'A';` would also work."
+        concepts: [string.str-literal-intro, types.char, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-len-no-brackets
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let name = "Ada";
+                println!("{name}");
+                println!("{}", name.len);
+            }
+          verify: compile-fail
+          expectErrors: [E0615]
+        answer: 4
+        explanation: "`len` is a method, so it needs brackets to be called: `name.len()`. The compiler's help says to add them."
+        concepts: [string.str-literal-intro]
+
+      - type: mcq
+        id: mcq-why-cafe
+        prompt: "Why does `\"café\".len()` return 5?"
+        options:
+          - { id: a, text: "`é` takes 2 bytes in UTF-8, and `.len()` counts bytes" }
+          - { id: b, text: "`.len()` counts the closing quote", why: "The quotes aren't part of the text." }
+          - { id: c, text: "Every string has a hidden end character", why: "Rust strings don't end with a hidden character. Their length is stored separately." }
+        answer: a
+        explanation: "`c`, `a` and `f` are 1 byte each, and `é` is 2."
+        concepts: [string.str-literal-intro]
+
+      - type: true-false
+        id: tf-str-string-print
+        prompt: "A `&str` and a `String` holding the same text print the same way with `{}`."
+        code:
+          rust: |
+            let a: &str = "hi";
+            let b: String = format!("hi");
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "hi hi\n"
+        answer: true
+        explanation: "They're different types, but both print their text with `{}`. This prints `hi hi`."
+        concepts: [string.str-literal-intro, macro.print-family]
+
+      - type: predict-output
+        id: predict-precision-len
+        code:
+          rust: |
+            let word = "Ferris";
+            let size = word.len();
+            println!("{word:.3}{size:>3}");
+          verify: run
+        options:
+          - { id: a, text: "Fer  6" }
+          - { id: b, text: "Fer  3", why: "Precision only changes what's printed. `word` is still 6 bytes long." }
+          - { id: c, text: "Ferris  6", why: "`.3` on text prints at most 3 characters." }
+        answer: a
+        explanation: "`{word:.3}` prints `Fer`, and `{size:>3}` right-aligns 6 in 3 characters."
+        concepts: [string.str-literal-intro, fmt.width-precision]

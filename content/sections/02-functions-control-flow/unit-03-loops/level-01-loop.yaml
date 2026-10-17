@@ -1,0 +1,606 @@
+id: functions-control-flow.loops.loop
+title: Repeat with loop
+icon: repeat
+concepts: [ctrl.loop, ctrl.break-value]
+reviewConcepts: [var.mut, err.E0384, ctrl.if, err.E0308, types.unit, fn.return]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-loop
+        title: Again and again
+        markdown: |
+          **`loop` runs its body over and over.** It never stops on its own.
+
+          Inside the loop, **`break`** stops it. Here an `if` checks `count` on every pass and breaks once it reaches 3.
+        code:
+          rust: |
+            let mut count = 0;
+            loop {
+                count += 1;
+                println!("{count}");
+                if count == 3 {
+                    break;
+                }
+            }
+          verify: run
+          expectStdout: "1\n2\n3\n"
+        concepts: [ctrl.loop]
+
+      - type: predict-output
+        id: predict-steps-of-two
+        code:
+          rust: |
+            let mut steps = 0;
+            loop {
+                steps += 2;
+                if steps == 6 {
+                    break;
+                }
+            }
+            println!("{steps}");
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "4", why: "`steps` reaches 6 first, and then the `if` sees `steps == 6` and breaks." }
+          - { id: c, text: "2\n4\n6", why: "The `println!` is after the loop, so it runs once, after `break`." }
+        answer: a
+        explanation: "`steps` goes 2, 4, 6. At 6 the `break` ends the loop, and then the `println!` prints 6."
+        concepts: [ctrl.loop]
+
+      - type: true-false
+        id: tf-loop-stops-itself
+        prompt: "A `loop` stops by itself after its body has run once."
+        answer: false
+        explanation: "`loop` repeats forever until a `break` runs. Without one, the program never leaves the loop."
+        concepts: [ctrl.loop]
+
+      - type: mcq
+        id: mcq-stop-keyword
+        prompt: Which keyword stops a `loop`?
+        options:
+          - { id: a, code: "break" }
+          - { id: b, code: "stop", why: "`stop` isn't a Rust keyword." }
+          - { id: c, code: "exit", why: "`exit` isn't a Rust keyword." }
+          - { id: d, code: "end", why: "`end` isn't a Rust keyword. Loops end at `break`." }
+        answer: a
+        explanation: "`break` leaves the loop straight away. The program carries on after the loop's closing `}`."
+        concepts: [ctrl.loop]
+
+      - type: predict-output
+        id: predict-lives
+        code:
+          rust: |
+            let mut lives = 3;
+            loop {
+                println!("Lives: {lives}");
+                lives -= 1;
+                if lives == 0 {
+                    break;
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "Lives: 3\nLives: 2\nLives: 1" }
+          - { id: b, text: "Lives: 3\nLives: 2\nLives: 1\nLives: 0", why: "When `lives` becomes 0 the loop breaks before the next `println!`." }
+          - { id: c, text: "Lives: 2\nLives: 1\nLives: 0", why: "The `println!` comes before `lives -= 1`, so the first line shows 3." }
+        answer: a
+        explanation: "Each pass prints first and then subtracts 1. After printing 1, `lives` becomes 0 and the loop breaks."
+        concepts: [ctrl.loop, var.mut]
+
+      - type: fill-tokens
+        id: fill-loop-break
+        prompt: "Fill the blanks so the program prints `1`, `2`, then stops"
+        code:
+          rust: |
+            let mut n = 0;
+            ___1___ {
+                n += 1;
+                println!("{n}");
+                if n == 2 {
+                    ___2___;
+                }
+            }
+          verify: run
+          expectStdout: "1\n2\n"
+        blanks:
+          "1": { answer: ["loop"] }
+          "2": { answer: ["break"] }
+        bank: ["loop", "repeat", "break", "stop", "return"]
+        explanation: "`loop` repeats the block and `break` ends it. Rust has no `repeat` or `stop` keyword."
+        concepts: [ctrl.loop]
+
+      - type: concept
+        id: concept-break-value
+        title: Getting a value out
+        markdown: |
+          **`break` can hand back a value.** Write the value after `break`, and the whole `loop` becomes that value.
+
+          Store it with `let`. The `let` statement needs its `;` after the loop's closing `}`.
+        code:
+          rust: |
+            let mut attempts = 0;
+            let result = loop {
+                attempts += 1;
+                if attempts == 4 {
+                    break attempts * 10;
+                }
+            };
+            println!("{result}");
+          verify: run
+          expectStdout: "40\n"
+        concepts: [ctrl.break-value]
+
+      - type: predict-output
+        id: predict-doubled
+        code:
+          rust: |
+            let mut x = 1;
+            let doubled = loop {
+                x = x * 2;
+                if x > 10 {
+                    break x;
+                }
+            };
+            println!("{doubled}");
+          verify: run
+        options:
+          - { id: a, text: "16" }
+          - { id: b, text: "8", why: "8 isn't more than 10, so the loop runs once more and `x` becomes 16." }
+          - { id: c, text: "10", why: "`x` only takes the values 2, 4, 8, 16. It never equals 10." }
+        answer: a
+        explanation: "`x` goes 2, 4, 8, 16. 16 is the first value over 10, so `break x` makes the loop's value 16."
+        concepts: [ctrl.break-value]
+
+      - type: true-false
+        id: tf-let-semicolon
+        prompt: "In `let result = loop { ... };`, the `;` after the closing `}` is required."
+        answer: true
+        explanation: "The loop is the value of a `let` statement, and every `let` statement ends with `;`."
+        concepts: [ctrl.break-value]
+
+      - type: match-pairs
+        id: pairs-loop-parts
+        prompt: Match each piece to what it does
+        pairs:
+          - ["loop { }", "repeats the block forever"]
+          - ["break;", "leaves the loop"]
+          - ["break total;", "leaves the loop with a value"]
+          - ["let x = loop { };", "stores the loop's value"]
+        concepts: [ctrl.loop, ctrl.break-value]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-multiple-of-seven
+        code:
+          rust: |
+            let mut n = 20;
+            let found = loop {
+                n += 1;
+                if n % 7 == 0 {
+                    break n;
+                }
+            };
+            println!("{found}");
+          verify: run
+        options:
+          - { id: a, text: "21" }
+          - { id: b, text: "28", why: "21 is the first number after 20 that divides by 7, and the loop stops there." }
+          - { id: c, text: "20", why: "`n += 1` runs before the check, so the first value checked is 21." }
+        answer: a
+        explanation: "The loop adds 1 and then checks. 21 is the first multiple of 7 it sees, so it breaks with 21."
+        concepts: [ctrl.break-value, ctrl.if]
+
+      - type: compiles
+        id: compiles-missing-semicolon
+        code:
+          rust: |
+            fn main() {
+                let mut n = 0;
+                let total = loop {
+                    n += 1;
+                    if n == 3 {
+                        break n;
+                    }
+                }
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The `let` statement needs a `;` after the loop's closing `}`" }
+            - { id: b, text: "`break n` needs a `;` after it", why: "`break n;` is already written with one on line 6." }
+            - { id: c, text: "A loop can't give a value to `let`", why: "It can, with `break value`. Only the `;` is missing." }
+          answer: a
+        explanation: "`let total = loop { ... };` is one `let` statement, so it ends with `;` like any other."
+        concepts: [ctrl.break-value]
+
+      - type: compiles
+        id: compiles-needs-mut
+        code:
+          rust: |
+            let count = 0;
+            loop {
+                count += 1;
+                if count == 3 {
+                    break;
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0308: mismatched types", why: "`count` holds whole numbers the whole time." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`count` exists. It can't change because it isn't `mut`." }
+          answer: a
+        explanation: "A counter that changes on each pass must be declared `let mut count`."
+        concepts: [ctrl.loop, var.mut, err.E0384]
+
+      - type: spot-bug
+        id: spot-fuel
+        prompt: "This should print 5, 4, 3, 2, 1 and stop, but it counts up instead. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let mut fuel = 5;
+                loop {
+                    println!("{fuel}");
+                    fuel += 1;
+                    if fuel == 0 {
+                        break;
+                    }
+                }
+            }
+          verify: compile
+        answer: 5
+        explanation: "`fuel += 1` moves away from 0, so `fuel == 0` is never true. It should be `fuel -= 1`."
+        concepts: [ctrl.loop]
+
+      - type: compiles
+        id: compiles-two-types
+        code:
+          rust: |
+            let mut n = 0;
+            let result = loop {
+                n += 1;
+                if n == 2 {
+                    break "two";
+                }
+                if n == 5 {
+                    break n;
+                }
+            };
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`n` is `mut`, so `n += 1` is fine." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "Every name here exists." }
+          answer: a
+        explanation: "Every `break` in a loop must give the same type. One gives text and the other a number."
+        concepts: [ctrl.break-value, err.E0308]
+
+      - type: mcq
+        id: mcq-plain-break-value
+        prompt: "What value does `result` get here?"
+        code:
+          rust: |
+            let result = loop {
+                break;
+            };
+            println!("{result:?}");
+          verify: run
+          expectStdout: "()\n"
+        options:
+          - { id: a, text: "`()`, the unit value" }
+          - { id: b, text: "`0`", why: "Rust doesn't fill in a default number. A `break` with no value gives `()`." }
+          - { id: c, text: "Nothing: this doesn't compile", why: "It compiles. `result` holds `()` and `{:?}` prints it." }
+        answer: a
+        explanation: "A plain `break;` is like `break ();`. The loop's value is the unit value `()`."
+        concepts: [ctrl.break-value, types.unit]
+
+      - type: predict-output
+        id: predict-after-break
+        code:
+          rust: |
+            let mut n = 0;
+            loop {
+                n += 1;
+                if n == 2 {
+                    break;
+                    println!("never");
+                }
+            }
+            println!("{n}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "never\n2", why: "`break` leaves the loop straight away. The line after it in the block never runs." }
+          - { id: c, text: "1\n2", why: "The `println!(\"{n}\")` is after the loop, so it prints once." }
+        answer: a
+        explanation: "Code after `break` in the same block never runs. The compiler warns about this `unreachable statement`."
+        concepts: [ctrl.loop]
+
+      - type: decode-error
+        id: decode-break-outside
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let score = 10;
+                if score > 5 {
+                    break;
+                }
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0268]
+        options:
+          - { id: a, text: "`break` only works inside a loop, and there's no loop here" }
+          - { id: b, text: "The `if` needs an `else` before it can use `break`", why: "`else` is optional. The problem is that `if` isn't a loop." }
+          - { id: c, text: "`break` needs a value, like `break 0;`", why: "A plain `break;` is fine inside a loop. Here there's no loop at all." }
+        answer: a
+        explanation: "E0268 means `break` outside of a loop. An `if` runs once, so there's nothing to break out of."
+        concepts: [ctrl.loop, ctrl.if]
+
+      - type: fill-tokens
+        id: fill-break-value
+        prompt: "Fill the blanks so the program prints `25`"
+        code:
+          rust: |
+            let mut side = 1;
+            let area = ___1___ {
+                side += 1;
+                if side == 5 {
+                    ___2___ side * side;
+                }
+            };
+            println!("{area}");
+          verify: run
+          expectStdout: "25\n"
+        blanks:
+          "1": { answer: ["loop"] }
+          "2": { answer: ["break"] }
+        bank: ["loop", "if", "break", "return", "let"]
+        explanation: "`break side * side` ends the loop with 25, and that becomes the value of `area`."
+        concepts: [ctrl.break-value]
+
+      - type: true-false
+        id: tf-break-type
+        prompt: "In one loop, `break 1;` and `break 2;` can both appear."
+        answer: true
+        explanation: "Both breaks give an integer, so the loop's type is consistent. Mixing types, like a number and text, is E0308."
+        concepts: [ctrl.break-value]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-liftoff
+        prompt: "Arrange the lines to print 3, 2, 1, then `Liftoff!`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut count = 3;" }
+          - { id: l3, text: "    loop {" }
+          - { id: l4, text: '        println!("{count}");' }
+          - { id: l5, text: "        count -= 1;" }
+          - { id: l6, text: "        if count == 0 {" }
+          - { id: l7, text: "            break;" }
+          - { id: l8, text: "        }" }
+          - { id: l9, text: "    }" }
+          - { id: l10, text: '    println!("Liftoff!");' }
+          - { id: l11, text: "}" }
+        distractors:
+          - { id: d1, text: "    let count = 3;" }
+          - { id: d2, text: "        count += 1;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11]
+        verify:
+          mode: run
+          expectStdout: "3\n2\n1\nLiftoff!\n"
+        explanation: "Print, then subtract, then check. `count` must be `mut`, and `Liftoff!` goes after the loop so it prints once."
+        concepts: [ctrl.loop, var.mut]
+
+      - type: predict-output
+        id: predict-tiles-tens
+        prompt: Build the output
+        code:
+          rust: |
+            let mut n = 0;
+            loop {
+                n += 10;
+                print!("{n} ");
+                if n >= 30 {
+                    break;
+                }
+            }
+            println!("done");
+          verify: run
+        tiles: ["10", "20", "30", "40", "0", "done"]
+        answer: "10 20 30 done"
+        explanation: "The loop prints 10, 20 and 30 on one line with `print!`. At 30 it breaks, and `println!` adds `done`."
+        concepts: [ctrl.loop]
+
+      - type: compiles
+        id: compiles-break-tail
+        code:
+          rust: |
+            let mut tries = 0;
+            let found = loop {
+                tries += 1;
+                if tries == 3 {
+                    break tries
+                }
+            };
+            println!("{found}");
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "`break tries` is the last thing in the `if` block, so it needs no `;`. The program prints 3."
+        concepts: [ctrl.break-value]
+
+      - type: spot-bug
+        id: spot-inner-variable
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let mut n = 0;
+                loop {
+                    n += 1;
+                    let last = n * 2;
+                    if n == 3 {
+                        break;
+                    }
+                }
+                println!("{last}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 10
+        explanation: "`last` is created inside the loop's block, so it's gone after the `}`. To use it outside, give it back with `break last`."
+        concepts: [ctrl.loop, ctrl.break-value]
+
+      - type: decode-error
+        id: decode-break-unit
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let mut n: u32 = 0;
+                let total: u32 = loop {
+                    n += 5;
+                    if n > 12 {
+                        break;
+                    }
+                };
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Change line 6 to `break n;`" }
+          - { id: b, text: "Change line 2 to `let n: u32 = 0;`", why: "Removing `mut` would add an E0384 error and leave this one." }
+          - { id: c, text: "Change line 3 to `let total: u32 = while n <= 12 {`", why: "A `while` loop can't give a value with `break`, so `total` still wouldn't be a `u32`." }
+        answer: a
+        explanation: "A plain `break;` gives `()`, but `total` must be a `u32`. `break n;` gives 15 instead."
+        concepts: [ctrl.break-value, err.E0308, types.unit]
+
+      - type: predict-output
+        id: predict-double-fn
+        code:
+          rust: |
+            fn double(x: i32) -> i32 {
+                x * 2
+            }
+
+            fn main() {
+                let mut n = 1;
+                let result = loop {
+                    n = double(n);
+                    if n >= 20 {
+                        break n - 1;
+                    }
+                };
+                println!("{result}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "31" }
+          - { id: b, text: "32", why: "The loop breaks with `n - 1`, not `n`." }
+          - { id: c, text: "15", why: "16 is less than 20, so the loop doubles once more to 32 first." }
+        answer: a
+        explanation: "`n` goes 2, 4, 8, 16, 32. 32 is the first value of at least 20, so the loop's value is 32 - 1."
+        concepts: [ctrl.break-value, fn.return]
+
+      - type: fill-tokens
+        id: fill-first-over
+        prompt: "Fill the blanks so the program prints `27`"
+        code:
+          rust: |
+            let mut power = 1;
+            let first = loop {
+                power = power * 3;
+                if power ___1___ 20 {
+                    break ___2___;
+                }
+            };
+            println!("{first}");
+          verify: run
+          expectStdout: "27\n"
+        blanks:
+          "1": { answer: [">"] }
+          "2": { answer: ["power"] }
+        bank: [">", "<", "==", "power", "first", "20"]
+        explanation: "`power` goes 3, 9, 27. The first value over 20 is 27, and `break power` hands it to `first`."
+        concepts: [ctrl.break-value, ctrl.if]
+
+      - type: predict-output
+        id: predict-loop-as-return
+        code:
+          rust: |
+            fn first_over(limit: i32) -> i32 {
+                let mut n = 1;
+                loop {
+                    n = n * 3;
+                    if n > limit {
+                        break n;
+                    }
+                }
+            }
+
+            fn main() {
+                println!("{}", first_over(10));
+            }
+          verify: run
+        options:
+          - { id: a, text: "27" }
+          - { id: b, text: "9", why: "9 isn't more than 10, so the loop runs again." }
+          - { id: c, text: "10", why: "The loop breaks with `n`, which is always a power of 3." }
+        answer: a
+        explanation: "The loop is the last expression in the function, so its `break` value is the return value."
+        concepts: [ctrl.break-value, fn.return]
+
+      - type: mcq
+        id: mcq-which-stops
+        prompt: "`n` starts at 0 in each loop. Which one stops?"
+        options:
+          - { id: a, code: "loop { n += 2; if n == 8 { break; } }" }
+          - { id: b, code: "loop { n += 3; if n == 8 { break; } }", why: "`n` goes 3, 6, 9 and jumps over 8, so `n == 8` is never true." }
+          - { id: c, code: "loop { n += 2; if n == 7 { break; } }", why: "`n` stays even, so it never equals 7." }
+          - { id: d, code: "loop { if n == 8 { break; } }", why: "`n` never changes, so it stays 0 forever." }
+        answer: a
+        explanation: "Only steps of 2 from 0 land exactly on 8. A loop whose `break` condition is never true runs forever."
+        concepts: [ctrl.loop]
+
+      - type: true-false
+        id: tf-semicolon-in-fn
+        prompt: "This is `first_over` with a `;` added after the loop's closing `}`. It still compiles."
+        code:
+          rust: |
+            fn first_over(limit: i32) -> i32 {
+                let mut n = 1;
+                loop {
+                    n = n * 3;
+                    if n > limit {
+                        break n;
+                    }
+                };
+            }
+
+            fn main() {
+                println!("{}", first_over(10));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        explanation: "With `;` the loop becomes a statement, so the function body gives `()` instead of an `i32`. That's E0308."
+        concepts: [ctrl.break-value, fn.return, err.E0308]

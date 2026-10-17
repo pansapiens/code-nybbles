@@ -1,0 +1,544 @@
+id: functions-control-flow.loops.while
+title: Loop while it's true
+icon: hourglass
+concepts: [ctrl.while]
+reviewConcepts: [ctrl.loop, ctrl.break-value, ctrl.if, var.mut, types.bool, fn.params, fn.return, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-while
+        title: Check, then run
+        markdown: |
+          **`while` checks a condition before every pass.** If it's `true`, the body runs. If it's `false`, the loop ends.
+
+          The condition must be a `bool`, the same as in an `if`.
+        code:
+          rust: |
+            let mut fuel = 3;
+            while fuel > 0 {
+                println!("Fuel: {fuel}");
+                fuel -= 1;
+            }
+            println!("Empty");
+          verify: run
+          expectStdout: "Fuel: 3\nFuel: 2\nFuel: 1\nEmpty\n"
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-times-three
+        code:
+          rust: |
+            let mut n = 1;
+            while n < 20 {
+                n = n * 3;
+            }
+            println!("{n}");
+          verify: run
+        options:
+          - { id: a, text: "27" }
+          - { id: b, text: "9", why: "9 is still less than 20, so the body runs again and `n` becomes 27." }
+          - { id: c, text: "20", why: "`n` only takes the values 1, 3, 9, 27. The loop stops at the first one that isn't below 20." }
+        answer: a
+        explanation: "`n` goes 1, 3, 9, 27. At 27 the condition `n < 20` is false, so the loop ends."
+        concepts: [ctrl.while]
+
+      - type: true-false
+        id: tf-never-runs
+        prompt: "If a `while` condition is `false` the first time it's checked, the body never runs."
+        answer: true
+        explanation: "`while` checks before each pass, including the first. A false condition skips the loop completely."
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-skipped
+        code:
+          rust: |
+            let mut n = 10;
+            while n < 5 {
+                n += 1;
+            }
+            println!("{n}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "11", why: "`10 < 5` is false straight away, so `n += 1` never runs." }
+          - { id: c, text: "5", why: "The loop doesn't move `n` towards 5. The body is skipped completely." }
+        answer: a
+        explanation: "The condition is false on the first check, so the body is skipped and `n` stays 10."
+        concepts: [ctrl.while]
+
+      - type: fill-tokens
+        id: fill-while-less
+        prompt: "Fill the blanks so the program prints 0, 1 and 2"
+        code:
+          rust: |
+            let mut count = 0;
+            ___1___ count ___2___ 3 {
+                println!("{count}");
+                count += 1;
+            }
+          verify: run
+          expectStdout: "0\n1\n2\n"
+        blanks:
+          "1": { answer: ["while"] }
+          "2": { answer: ["<"] }
+        bank: ["while", "loop", "if", "<", ">", "=="]
+        explanation: "`while count < 3` runs for 0, 1 and 2, then stops when `count` reaches 3."
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-sum-to-four
+        code:
+          rust: |
+            let mut i = 1;
+            let mut total = 0;
+            while i <= 4 {
+                total += i;
+                i += 1;
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "6", why: "`<=` includes 4, so the total is 1 + 2 + 3 + 4." }
+          - { id: c, text: "15", why: "The loop stops once `i` is 5, so 5 is never added." }
+        answer: a
+        explanation: "The body adds 1, 2, 3 and 4. Then `i` is 5, `5 <= 4` is false, and the loop ends."
+        concepts: [ctrl.while]
+
+      - type: concept
+        id: concept-while-vs-loop
+        title: while is a shortcut
+        markdown: |
+          **A `while` loop is a `loop` with the check built in.** These two do the same thing. Use `while` when the stopping rule fits at the top.
+        code:
+          rust: |
+            let mut n = 3;
+            while n > 0 {
+                n -= 1;
+            }
+
+            let mut m = 3;
+            loop {
+                if m == 0 {
+                    break;
+                }
+                m -= 1;
+            }
+            println!("{n} {m}");
+          verify: run
+          expectStdout: "0 0\n"
+        concepts: [ctrl.while, ctrl.loop]
+
+      - type: compiles
+        id: compiles-int-condition
+        code:
+          rust: |
+            let mut lives = 3;
+            while lives {
+                lives -= 1;
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`lives` is `mut`, so changing it is fine." }
+            - { id: c, text: "E0268: `break` outside of a loop", why: "There's no `break` here." }
+          answer: a
+        explanation: "A `while` condition must be a `bool`. `lives` is a number, and Rust doesn't treat numbers as true or false."
+        concepts: [ctrl.while, err.E0308, types.bool]
+
+      - type: match-pairs
+        id: pairs-loop-kinds
+        prompt: Match each piece to what it does
+        pairs:
+          - ["loop", "repeats until a `break`"]
+          - ["while n > 0", "repeats while the condition is true"]
+          - ["n > 0", "a `bool` condition"]
+          - ["n -= 1;", "moves `n` towards the end"]
+        concepts: [ctrl.while, ctrl.loop]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-step-order
+        code:
+          rust: |
+            let mut step = 0;
+            while step < 3 {
+                step += 1;
+                println!("Step {step}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Step 1\nStep 2\nStep 3" }
+          - { id: b, text: "Step 0\nStep 1\nStep 2", why: "`step += 1` runs before the `println!`, so the first line shows 1." }
+          - { id: c, text: "Step 1\nStep 2", why: "When `step` is 2 the condition is still true, so the body runs once more and prints 3." }
+        answer: a
+        explanation: "The body runs for `step` values 0, 1 and 2, adding 1 before each print, so it prints 1, 2, 3."
+        concepts: [ctrl.while]
+
+      - type: spot-bug
+        id: spot-counts-up
+        prompt: "This should print 3, 2, 1, but it counts up instead. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let mut countdown = 3;
+                while countdown > 0 {
+                    println!("{countdown}");
+                    countdown += 1;
+                }
+            }
+          verify: compile
+        answer: 5
+        explanation: "`countdown += 1` moves away from 0, so `countdown > 0` stays true. It should be `countdown -= 1`."
+        concepts: [ctrl.while]
+
+      - type: decode-error
+        id: decode-while-break-value
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut n = 0;
+                let found = while n < 10 {
+                    n += 3;
+                    if n > 5 {
+                        break n;
+                    }
+                };
+                println!("{found:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0571]
+        options:
+          - { id: a, text: "Only `loop` can give a value with `break`. A `while` loop can't." }
+          - { id: b, text: "`n` must be `mut` to be used in `break n`", why: "`n` is already `mut`. The problem is the kind of loop." }
+          - { id: c, text: "`break` can't be used inside an `if`", why: "`break` inside an `if` is fine. The problem is `break n` in a `while`." }
+        answer: a
+        explanation: "E0571 is `break` with a value in a `while` loop. A `while` might end because its condition is false, and then there'd be no value, so Rust only allows `break value` in `loop`."
+        concepts: [ctrl.while, ctrl.break-value]
+
+      - type: mcq
+        id: mcq-break-value-where
+        prompt: "Which kind of loop can end with `break value`?"
+        options:
+          - { id: a, text: "`loop` only" }
+          - { id: b, text: "`while` only", why: "A `while` loop gives `()`. `break value` inside one is error E0571." }
+          - { id: c, text: "Both `loop` and `while`", why: "A `while` can stop because its condition is false, with no value to give, so only `loop` allows it." }
+        answer: a
+        explanation: "A `loop` can only end at a `break`, so Rust knows every way out has a value."
+        concepts: [ctrl.while, ctrl.break-value]
+
+      - type: predict-output
+        id: predict-running-flag
+        code:
+          rust: |
+            let mut running = true;
+            let mut ticks = 0;
+            while running {
+                ticks += 1;
+                if ticks == 3 {
+                    running = false;
+                }
+            }
+            println!("{ticks}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "`ticks` reaches 3 in the same pass that sets `running` to `false`." }
+          - { id: c, text: "4", why: "The condition is checked at the top. After `running` becomes `false` the loop ends without another pass." }
+        answer: a
+        explanation: "On the third pass `running` becomes `false`. The next check at the top ends the loop."
+        concepts: [ctrl.while, types.bool]
+
+      - type: fill-tokens
+        id: fill-not-equal
+        prompt: "Fill the blanks so the program prints `7`"
+        code:
+          rust: |
+            let mut guess = 1;
+            while guess ___1___ 7 {
+                guess ___2___ 2;
+            }
+            println!("{guess}");
+          verify: run
+          expectStdout: "7\n"
+        blanks:
+          "1": { answer: ["!="] }
+          "2": { answer: ["+="] }
+        bank: ["!=", "==", "+=", "-=", "="]
+        explanation: "`guess` goes 1, 3, 5, 7. The loop runs while `guess != 7`, so it stops at 7."
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-fn-condition
+        code:
+          rust: |
+            fn is_small(n: i32) -> bool {
+                n < 100
+            }
+
+            fn main() {
+                let mut n = 5;
+                while is_small(n) {
+                    n = n * 4;
+                }
+                println!("{n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "320" }
+          - { id: b, text: "80", why: "80 is still small (below 100), so the body runs again." }
+          - { id: c, text: "100", why: "`n` goes 5, 20, 80, 320. It never equals 100." }
+        answer: a
+        explanation: "Any expression that gives a `bool` can be the condition, including a function call. `n` stops at 320."
+        concepts: [ctrl.while, fn.params, fn.return]
+
+      - type: compiles
+        id: compiles-assign-condition
+        code:
+          rust: |
+            let mut n = 3;
+            while n = 0 {
+                n -= 1;
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`n` is `mut`." }
+            - { id: c, text: "E0571: `break` with value from a `while` loop", why: "There's no `break` here." }
+          answer: a
+        explanation: "`n = 0` assigns, and an assignment's value is `()`, not a `bool`. To compare, write `n == 0` (here you'd want `n > 0`)."
+        concepts: [ctrl.while, err.E0308]
+
+      - type: mcq
+        id: mcq-how-many-passes
+        prompt: "How many times does the body run?"
+        code:
+          rust: |
+            let mut n = 10;
+            while n > 0 {
+                n -= 3;
+            }
+            println!("{n}");
+          verify: run
+          expectStdout: "-2\n"
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "After three passes `n` is 1, which is still above 0." }
+          - { id: c, text: "It never stops", why: "`n` jumps past 0 to -2, and `-2 > 0` is false, so it stops." }
+        answer: a
+        explanation: "`n` goes 10, 7, 4, 1, -2. That's 4 passes. Using `>` rather than `!=` means jumping past 0 still stops it."
+        concepts: [ctrl.while]
+
+      - type: true-false
+        id: tf-break-in-while
+        prompt: "This program prints `21`."
+        code:
+          rust: |
+            let mut n = 0;
+            while n < 100 {
+                n += 7;
+                if n > 20 {
+                    break;
+                }
+            }
+            println!("{n}");
+          verify: run
+          expectStdout: "21\n"
+        answer: true
+        explanation: "A plain `break` works in `while` too. `n` goes 7, 14, 21, and 21 is over 20, so the loop ends early."
+        concepts: [ctrl.while, ctrl.loop]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-countdown
+        prompt: "Arrange the lines to print 3, 2, 1, then `Go!`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut n = 3;" }
+          - { id: l3, text: "    while n > 0 {" }
+          - { id: l4, text: '        println!("{n}");' }
+          - { id: l5, text: "        n -= 1;" }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: '    println!("Go!");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    while n >= 0 {" }
+          - { id: d2, text: "    while n {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        verify:
+          mode: run
+          expectStdout: "3\n2\n1\nGo!\n"
+        explanation: "`n > 0` stops after 1. `n >= 0` would also print 0, and `while n` doesn't compile because `n` isn't a `bool`."
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-tiles-doubling
+        prompt: Build the output
+        code:
+          rust: |
+            let mut n = 1;
+            while n <= 8 {
+                print!("{n} ");
+                n = n * 2;
+            }
+            println!();
+          verify: run
+        tiles: ["1", "2", "4", "8", "16", "0"]
+        answer: "1 2 4 8"
+        explanation: "The body prints 1, 2, 4 and 8. Then `n` is 16, `16 <= 8` is false, and the loop ends."
+        concepts: [ctrl.while]
+
+      - type: spot-bug
+        id: spot-off-by-one
+        prompt: "This should print 1 to 5, but it stops at 4. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let mut n = 1;
+                while n < 5 {
+                    println!("{n}");
+                    n += 1;
+                }
+            }
+          verify: run
+          expectStdout: "1\n2\n3\n4\n"
+        answer: 3
+        explanation: "`n < 5` is false when `n` is 5, so 5 is never printed. Use `n <= 5`."
+        concepts: [ctrl.while]
+
+      - type: decode-error
+        id: decode-int-condition
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let mut lives = 3;
+                while lives {
+                    lives -= 1;
+                }
+                println!("{lives}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "while lives > 0 {" }
+          - { id: b, code: "while lives == true {", why: "Comparing a number with `true` is still a type mismatch." }
+          - { id: c, code: "while (lives) {", why: "Brackets don't change the type. `lives` is still a number." }
+        answer: a
+        explanation: "The condition must be a `bool`. `lives > 0` compares the number and gives `true` or `false`."
+        concepts: [ctrl.while, err.E0308, types.bool]
+
+      - type: fill-tokens
+        id: fill-halving
+        prompt: "Fill the blanks so the program prints `4`, the number of halvings needed to get `size` down to 1"
+        code:
+          rust: |
+            let mut size = 16;
+            let mut halvings = 0;
+            ___1___ size ___2___ 1 {
+                size = size / 2;
+                halvings ___3___ 1;
+            }
+            println!("{halvings}");
+          verify: run
+          expectStdout: "4\n"
+        blanks:
+          "1": { answer: ["while"] }
+          "2": { answer: [">"] }
+          "3": { answer: ["+="] }
+        bank: ["while", "loop", ">", "<", "+=", "="]
+        explanation: "`size` goes 16, 8, 4, 2, 1. That's 4 halvings, and `size > 1` is false once it reaches 1."
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-collatz-steps
+        code:
+          rust: |
+            let mut n = 6;
+            let mut steps = 0;
+            while n != 1 {
+                if n % 2 == 0 {
+                    n = n / 2;
+                } else {
+                    n = 3 * n + 1;
+                }
+                steps += 1;
+            }
+            println!("{steps}");
+          verify: run
+        options:
+          - { id: a, text: "8" }
+          - { id: b, text: "9", why: "Count the changes, not the values: 6, 3, 10, 5, 16, 8, 4, 2, 1 is 9 values but 8 steps." }
+          - { id: c, text: "3", why: "Odd numbers go up (`3 * n + 1`), so it takes more than 3 steps." }
+        answer: a
+        explanation: "`n` goes 6, 3, 10, 5, 16, 8, 4, 2, 1. That's 8 changes before `n != 1` becomes false."
+        concepts: [ctrl.while, ctrl.if]
+
+      - type: compiles
+        id: compiles-no-semicolon
+        code:
+          rust: |
+            let mut n = 3;
+            while n > 0 {
+                n -= 1
+            }
+            println!("{n}");
+          verify: run
+          expectStdout: "0\n"
+        answer: true
+        explanation: "`n -= 1` without `;` is the block's last expression. Its value is `()`, which is what a `while` body must give, so it compiles."
+        concepts: [ctrl.while]
+
+      - type: predict-output
+        id: predict-two-counters
+        code:
+          rust: |
+            let mut a = 0;
+            let mut b = 10;
+            while a < b {
+                a += 3;
+                b -= 1;
+            }
+            println!("{a} {b}");
+          verify: run
+        options:
+          - { id: a, text: "9 7" }
+          - { id: b, text: "6 8", why: "`6 < 8` is still true, so there's one more pass." }
+          - { id: c, text: "12 6", why: "After `a` is 9 and `b` is 7, `9 < 7` is false and the loop stops." }
+        answer: a
+        explanation: "The pairs go (3, 9), (6, 8), (9, 7). Then `a < b` is false."
+        concepts: [ctrl.while]
+
+      - type: mcq
+        id: mcq-best-loop
+        prompt: "You want to keep halving `size` while it's above 1. Which fits best?"
+        options:
+          - { id: a, code: "while size > 1 { size = size / 2; }" }
+          - { id: b, code: "loop { size = size / 2; }", why: "This never stops: there's no `break`." }
+          - { id: c, code: "if size > 1 { size = size / 2; }", why: "An `if` runs once at most. It doesn't repeat." }
+        answer: a
+        explanation: "The stopping rule is a condition you can check at the top, which is what `while` is for."
+        concepts: [ctrl.while, ctrl.if]
+
+      - type: match-pairs
+        id: pairs-how-many
+        prompt: "Each loop starts with `n = 0` and its body does `n += 1`. Match the condition to how many times the body runs."
+        pairs:
+          - ["while n < 3", "3 times"]
+          - ["while n <= 3", "4 times"]
+          - ["while n > 3", "0 times"]
+          - ["while n != 2", "2 times"]
+        concepts: [ctrl.while]

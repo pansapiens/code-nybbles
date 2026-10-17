@@ -207,8 +207,30 @@ also works. CI doesn't need either.
 ## M3: Beginner content (02 Sections 1-5)
 
 - [ ] Section 1 (5 units) - [ ] Section 2 (4) - [ ] Section 3 (5) - [ ] Section 4 (5) - [ ] Section 5 (4)
-- [ ] Guidebooks per unit; Code Reads every 2-3 units; checkpoints
+  - [x] Section 1 complete: Units 1.1-1.5 (1.5 ends with the Section 1 checkpoint, for placement later)
+  - [x] Section 2 Units 2.1-2.3 (2.3 ends with the Section 2 checkpoint)
+  - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
+  - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists
+    so agents only touch their own unit directory (briefs in the session log of 2026-10-17)
+- [x] Guidebooks per unit; checkpoints
+- [x] (new) Code Read node type (plans/03 type 14, pulled forward from v1 because M3 asks for them):
+  `code-read-*.yaml` = verified `program` + `chunks` (`lines` revealed, then questions). Compiles to a one-lesson
+  level with `program` and `reveals`; player shows the program above each question; 15 XP; no hearts
+  - [x] Code Reads: 1.1 Ferris says hello, 1.3 Temperature converter, 2.1 Area calculator, 2.3 Collatz sequence
+  - [ ] Code Reads library in the Practice hub (M4)
 - [ ] Content QA pass (03 §5 checklist)
+- [x] (new) rust-verify compile checks used `--emit=metadata`, which skips deny-by-default MIR lints
+  (`unconditional_panic`, `arithmetic_overflow`); now `--emit=mir`
+- [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives
+- [ ] (new) Register error-code concepts the authors wanted: E0277, E0004, E0317, E0061, E0425, E0069, E0604...
+  (items are tagged with the nearest topic concept for now)
+- [ ] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3); some are annotated mdBook-style already
+- [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports
+- [ ] (new) Build check: a fill-tokens bank tile that would also be correct (compile each alternative)
+- [ ] (new) predict-output can't express "this panics"; panics are mcq + `expectPanic` for now
+- [ ] (new) Two items rely on rustc 1.98 not catching `a[a.len()]` at compile time (unit-04 level-04
+  `spot-off-by-one`, checkpoint `spot-last-panic`); the build will flag them if that changes
+- [ ] (new) Level `icon:` is in the schema but unused by the app
 
 ## M4: Practice + review
 
@@ -257,3 +279,8 @@ also works. CI doesn't need either.
   celebration screens, Streak, Shop, Profile and Settings data controls. 31 unit + 6 e2e tests pass, strict content
   build clean. Next: M3 beginner content (Sections 1-5). Still not done: GitHub remote/CI run, Lighthouse, human
   playtest, backup reminder.
+
+- 2026-10-17: Session 3 (cont.). M3 started: Units 1.3-1.5 and 2.1-2.3 by six parallel agents (Section 1 complete,
+  Section 2 except the 2.4 Build project). Code Read nodes added, with four Code Reads. Fixed: verifier missed MIR
+  lints; parsons identical lines; crypto.randomUUID on plain-http LAN. 1237 exercises, 918 verified snippets,
+  strict build clean. Next: QA pass on the new units, then Sections 3-5.

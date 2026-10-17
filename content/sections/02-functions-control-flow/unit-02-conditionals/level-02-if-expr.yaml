@@ -1,0 +1,567 @@
+id: functions-control-flow.conditionals.if-expr
+title: if gives a value
+icon: equals
+concepts: [ctrl.if-expr]
+reviewConcepts: [ctrl.if, expr.vs-stmt, expr.block, err.E0308, fn.return, fn.params, types.unit, types.bool, ops.arith, var.shadowing]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-if-value
+        title: if is an expression
+        markdown: |
+          **An `if` / `else` produces a value**, so you can put it on the right of `let`. Each block ends with an expression and no `;`, and that expression is the block's value.
+
+          The `;` at the very end belongs to the `let` statement.
+        code:
+          rust: |
+            let score = 64;
+            let result = if score >= 50 {
+                "pass"
+            } else {
+                "fail"
+            };
+            println!("{result}");
+          verify: run
+          expectStdout: "pass\n"
+        concepts: [ctrl.if-expr]
+
+      - type: predict-output
+        id: predict-status
+        code:
+          rust: |
+            let lives = 0;
+            let status = if lives > 0 {
+                "alive"
+            } else {
+                "out"
+            };
+            println!("{status}");
+          verify: run
+        options:
+          - { id: a, text: "out" }
+          - { id: b, text: "alive", why: "`0 > 0` is false, so the `else` block gives the value." }
+          - { id: c, text: "status", why: "`{status}` prints the value of `status`, which the `if` chose." }
+        answer: a
+        explanation: "The condition is false, so the `if` evaluates to the `else` block's value, `\"out\"`, and `status` holds it."
+        concepts: [ctrl.if-expr]
+
+      - type: true-false
+        id: tf-ternary
+        prompt: "Rust has a ternary operator, `condition ? a : b`, for choosing between two values."
+        answer: false
+        explanation: "Rust has no `? :` operator. `if condition { a } else { b }` does the same job, because `if` is an expression."
+        concepts: [ctrl.if-expr]
+
+      - type: fill-tokens
+        id: fill-ticket-fee
+        prompt: "Fill the blanks so the program prints `5`"
+        code:
+          rust: |
+            let age = 9;
+            let fee = ___1___ age < 12 {
+                5
+            } ___2___ {
+                10
+            };
+            println!("{fee}");
+          verify: run
+          expectStdout: "5\n"
+        blanks:
+          "1": { answer: ["if"] }
+          "2": { answer: ["else"] }
+        bank: ["if", "else", "?", ":", "then"]
+        explanation: "`if age < 12 { 5 } else { 10 }` is a value. `9 < 12` is true, so `fee` is `5`."
+        concepts: [ctrl.if-expr]
+
+      - type: predict-output
+        id: predict-bonus-sum
+        code:
+          rust: |
+            let streak = 3;
+            let bonus = if streak >= 3 {
+                10
+            } else {
+                0
+            };
+            let total = 50 + bonus;
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "60" }
+          - { id: b, text: "50", why: "`3 >= 3` is true, so `bonus` is `10`, not `0`." }
+          - { id: c, text: "5010", why: "`bonus` is a number, and `+` adds numbers." }
+        answer: a
+        explanation: "`bonus` is `10` because the condition is true. Then `total` is `50 + 10`."
+        concepts: [ctrl.if-expr, ops.arith]
+
+      - type: concept
+        id: concept-same-type
+        title: Both blocks, one type
+        markdown: |
+          **Both blocks must give the same type.** A variable has one type, and Rust must know it at compile time, before it knows which block will run.
+
+          A number in one block and text in the other is error **E0308**: `if` and `else` have incompatible types.
+        code:
+          rust: |
+            let big = true;
+            let size = if big { 100 } else { 10 };
+            println!("{size}");
+          verify: run
+          expectStdout: "100\n"
+        concepts: [ctrl.if-expr, err.E0308]
+
+      - type: compiles
+        id: compiles-mixed-types
+        code:
+          rust: |
+            fn main() {
+                let big = true;
+                let size = if big {
+                    100
+                } else {
+                    "small"
+                };
+                println!("{size}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: `if` and `else` have incompatible types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`size` is assigned once. The two blocks give different types." }
+            - { id: c, text: "E0425: cannot find value `small`", why: "`\"small\"` is in quotes, so it's text, not a name." }
+          answer: a
+        explanation: "One block gives an integer and the other a `&str`. Rust needs one type for `size`, even though only the `if` block would run here."
+        concepts: [ctrl.if-expr, err.E0308]
+
+      - type: mcq
+        id: mcq-which-compiles
+        prompt: Which line compiles?
+        options:
+          - { id: a, code: "let x = if ready { 1 } else { 2 };" }
+          - { id: b, code: "let x = if ready 1 else 2;", why: "The braces are still required when `if` gives a value." }
+          - { id: c, code: "let x = if ready { 1 } else { \"two\" };", why: "The blocks give different types, which is E0308." }
+          - { id: d, code: "let x = ready ? 1 : 2;", why: "Rust has no ternary operator. Use `if` / `else`." }
+        answer: a
+        explanation: "An `if` expression needs braces around both blocks, and both blocks must have the same type."
+        concepts: [ctrl.if-expr]
+
+      - type: predict-output
+        id: predict-block-arm
+        code:
+          rust: |
+            let price = 20;
+            let member = true;
+            let total = if member {
+                let discount = 5;
+                price - discount
+            } else {
+                price
+            };
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "20", why: "`member` is true, so the first block runs and subtracts the discount." }
+          - { id: c, text: "5", why: "The block's value is its last expression, `price - discount`, not the `let` before it." }
+        answer: a
+        explanation: "A block can hold statements before its final expression. The `if` block's value is `20 - 5`."
+        concepts: [ctrl.if-expr, expr.block]
+
+      - type: match-pairs
+        id: pairs-if-types
+        prompt: Match each expression to its result
+        pairs:
+          - ["if ok { 1 } else { 2 }", "an integer"]
+          - ["if ok { \"y\" } else { \"n\" }", "a &str"]
+          - ["if ok { 1 } else { \"n\" }", "error E0308"]
+          - ["if ok { 1 > 0 } else { false }", "a bool"]
+        concepts: [ctrl.if-expr]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-no-else
+        title: No else, no value
+        markdown: |
+          **An `if` without `else` has the value `()`**, the unit type: when the condition is false there's nothing else to give. So you can't use it to pick a number or text.
+
+          `let bonus = if streak > 3 { 10 };` is error **E0317**: `if` may be missing an `else` clause.
+        code:
+          rust: |
+            let streak = 5;
+            let bonus = if streak > 3 {
+                10
+            } else {
+                0
+            };
+            println!("{bonus}");
+          verify: run
+          expectStdout: "10\n"
+        concepts: [ctrl.if-expr, types.unit]
+
+      - type: compiles
+        id: compiles-missing-else
+        code:
+          rust: |
+            fn main() {
+                let streak = 5;
+                let bonus = if streak > 3 { 10 };
+                println!("{bonus}");
+            }
+          verify: compile-fail
+          expectErrors: [E0317]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "There's no `else`, so there's no value for when the condition is false" }
+            - { id: b, text: "`bonus` must be declared `mut`", why: "`bonus` is given a value once. The `if` has no value for the false case." }
+            - { id: c, text: "`10` needs a `;` after it", why: "A `;` would make the block's value `()`, which still isn't a number." }
+          answer: a
+        explanation: "Rust needs a value for `bonus` either way. Add `else { 0 }` so both cases give an integer."
+        concepts: [ctrl.if-expr]
+
+      - type: predict-output
+        id: predict-inline-if
+        code:
+          rust: |
+            let steps = 7;
+            println!(
+                "{}",
+                if steps % 2 == 0 {
+                    "even"
+                } else {
+                    "odd"
+                }
+            );
+          verify: run
+        options:
+          - { id: a, text: "odd" }
+          - { id: b, text: "even", why: "`7 % 2` is `1`, not `0`, so the condition is false." }
+          - { id: c, text: "1", why: "The `if` gives one of the two texts, not the result of `%`." }
+        answer: a
+        explanation: "An `if` expression can go anywhere a value can, including after the format text in `println!`."
+        concepts: [ctrl.if-expr, ops.arith]
+
+      - type: predict-output
+        id: predict-else-if-value
+        code:
+          rust: |
+            let height = 180;
+            let size = if height < 150 {
+                "S"
+            } else if height < 180 {
+                "M"
+            } else {
+                "L"
+            };
+            println!("{size}");
+          verify: run
+        options:
+          - { id: a, text: "L" }
+          - { id: b, text: "M", why: "`180 < 180` is false, because `<` doesn't include the value itself." }
+          - { id: c, text: "S", why: "`180 < 150` is false, so the first block doesn't run." }
+        answer: a
+        explanation: "An `else if` chain is one expression too. Both conditions are false for 180, so the `else` block gives `\"L\"`."
+        concepts: [ctrl.if-expr]
+
+      - type: true-false
+        id: tf-let-semicolon
+        prompt: "In `let x = if ok { 1 } else { 2 };`, the `;` after the last `}` is required."
+        answer: true
+        explanation: "The whole line is a `let` statement, and `let` statements end with `;`. The `;` inside the blocks is what you leave out."
+        concepts: [ctrl.if-expr, expr.vs-stmt]
+
+      - type: spot-bug
+        id: spot-mixed-arm
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let level = 4;
+                let title = if level > 5 {
+                    "Expert"
+                } else if level > 2 {
+                    3
+                } else {
+                    "Beginner"
+                };
+                println!("{title}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 6
+        explanation: "The other blocks give text, but this one gives the integer `3`. Every block in the chain must have the same type."
+        concepts: [ctrl.if-expr, err.E0308]
+
+      - type: predict-output
+        id: predict-max-fn
+        code:
+          rust: |
+            fn larger(a: i32, b: i32) -> i32 {
+                if a > b { a } else { b }
+            }
+
+            fn main() {
+                println!("{}", larger(3, 9));
+                println!("{}", larger(4, 4));
+            }
+          verify: run
+        options:
+          - { id: a, text: "9\n4" }
+          - { id: b, text: "3\n4", why: "`3 > 9` is false, so the `else` block gives `b`, which is 9." }
+          - { id: c, text: "9\n0", why: "When `a > b` is false the function returns `b`, and here `b` is 4." }
+        answer: a
+        explanation: "The `if` is the last expression in the function body, so its value is returned. For equal values `a > b` is false and `b` is returned."
+        concepts: [ctrl.if-expr, fn.return]
+
+      - type: mcq
+        id: mcq-type-of-if
+        prompt: "What type does `if ready { 1 } else { 0 }` have?"
+        options:
+          - { id: a, text: "An integer (`i32` unless something says otherwise)" }
+          - { id: b, text: "`bool`", why: "The condition is a `bool`, but the value comes from the blocks, which hold integers." }
+          - { id: c, text: "`()`", why: "Only an `if` without `else`, or with blocks ending in `;`, has the value `()`." }
+        answer: a
+        explanation: "The `if` takes the type of its blocks. Integer literals default to `i32`."
+        concepts: [ctrl.if-expr]
+
+      - type: decode-error
+        id: decode-arm-semicolon
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let wide = true;
+                let label = if wide {
+                    "wide";
+                } else {
+                    "narrow"
+                };
+                println!("{label}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Remove the `;` after `\"wide\"`" }
+          - { id: b, text: "Add a `;` after `\"narrow\"`", why: "Then both blocks give `()`, and `println!` can't print `()` with `{}`." }
+          - { id: c, text: "Make `label` mutable", why: "The value isn't changed later. The two blocks have different types." }
+        answer: a
+        explanation: "The `;` turns `\"wide\"` into a statement, so that block's value is `()` while the other is a `&str`. Without the `;` both are `&str`."
+        concepts: [ctrl.if-expr, expr.vs-stmt, err.E0308]
+
+      - type: predict-output
+        id: predict-shadow-if
+        code:
+          rust: |
+            let lives = 3;
+            let lives = if lives > 2 {
+                lives - 1
+            } else {
+                lives + 1
+            };
+            println!("{lives}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "4", why: "`3 > 2` is true, so the first block, `lives - 1`, runs." }
+          - { id: c, text: "3", why: "The second `let` shadows `lives` with the value the `if` gives." }
+        answer: a
+        explanation: "The right side uses the old `lives` (3). The condition is true, so the new `lives` is `3 - 1`."
+        concepts: [ctrl.if-expr, var.shadowing]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-ticket-price
+        prompt: Arrange the lines to return a ticket price for an age
+        lines:
+          - { id: l1, text: "fn ticket_price(age: u32) -> u32 {" }
+          - { id: l2, text: "    if age < 12 {" }
+          - { id: l3, text: "        5" }
+          - { id: l4, text: "    } else if age >= 65 {" }
+          - { id: l5, text: "        7" }
+          - { id: l6, text: "    } else {" }
+          - { id: l7, text: "        12" }
+          - { id: l8, text: "    }" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "        5;" }
+          - { id: d2, text: "    };" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                let (a, b) = (ticket_price(8), ticket_price(70));
+                println!("{a} {b} {}", ticket_price(30));
+            }
+          mode: run
+          expectStdout: "5 7 12\n"
+        explanation: "The `if` chain is the function's last expression, so its value is returned. `5;` would make that block `()` instead of a `u32`."
+        concepts: [ctrl.if-expr, fn.return]
+
+      - type: fill-tokens
+        id: fill-distance
+        prompt: "Fill the blanks so `distance` returns how far apart two numbers are"
+        code:
+          rust: |
+            fn distance(a: i32, b: i32) -> i32 {
+                if a > b {
+                    ___1___
+                } else {
+                    ___2___
+                }
+            }
+
+            fn main() {
+                println!("{}", distance(2, 9));
+                println!("{}", distance(9, 2));
+            }
+          verify: run
+          expectStdout: "7\n7\n"
+        blanks:
+          "1": { answer: ["a - b"] }
+          "2": { answer: ["b - a"] }
+        bank: ["a - b", "b - a", "a - b;", "return", "a + b"]
+        explanation: "Subtract the smaller number from the larger. `a - b;` would end in `;`, giving `()` instead of an `i32`."
+        concepts: [ctrl.if-expr, fn.return]
+
+      - type: predict-output
+        id: predict-unit-value
+        code:
+          rust: |
+            let result = if true { 5; } else { 6; };
+            println!("{result:?}");
+          verify: run
+        options:
+          - { id: a, text: "()" }
+          - { id: b, text: "5", why: "`5;` is a statement, so the block's value is `()`, not `5`." }
+          - { id: c, text: "5;", why: "The `;` isn't part of any value. It ends a statement." }
+        answer: a
+        explanation: "Both blocks end with a statement, so both give `()`. The types match, so it compiles, and `{:?}` prints the unit value as `()`."
+        concepts: [ctrl.if-expr, expr.vs-stmt, types.unit]
+
+      - type: decode-error
+        id: decode-e0317
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let score = 75;
+                let message = if score > 50 {
+                    "Well done"
+                };
+                println!("{message}");
+            }
+          verify: compile-fail
+          expectErrors: [E0317]
+        options:
+          - { id: a, text: "Add `else { \"Keep going\" }` before the `;` on line 5" }
+          - { id: b, text: "Add a `;` after `\"Well done\"`", why: "That makes the block `()`, and `message` still has no text when the condition is false." }
+          - { id: c, text: "Write the condition as `score > 50 == true`", why: "The condition is fine. The missing `else` is the problem." }
+        answer: a
+        explanation: "Without `else`, Rust has no value for `message` when `score > 50` is false. An `else` block giving a `&str` fixes it."
+        concepts: [ctrl.if-expr]
+
+      - type: spot-bug
+        id: spot-semicolon-return
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn bonus(streak: u32) -> u32 {
+                if streak >= 3 {
+                    50;
+                } else {
+                    0
+                }
+            }
+
+            fn main() {
+                println!("{}", bonus(4));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 3
+        explanation: "`50;` is a statement, so that block gives `()` instead of a `u32`. Remove the `;`."
+        concepts: [ctrl.if-expr, fn.return, err.E0308]
+
+      - type: mcq
+        id: mcq-shorter-body
+        prompt: "This function compiles. Which body does the same job in less code?"
+        code:
+          rust: |
+            fn is_adult(age: u32) -> bool {
+                if age >= 18 { true } else { false }
+            }
+
+            fn main() {
+                println!("{}", is_adult(20));
+            }
+          verify: run
+          expectStdout: "true\n"
+        options:
+          - { id: a, code: "age >= 18" }
+          - { id: b, code: "if age >= 18 { true }", why: "Without `else` the `if` has no value for the false case, which is E0317." }
+          - { id: c, code: "age >= 18;", why: "The `;` makes the body a statement, so the function would return `()`, not `bool`." }
+        answer: a
+        explanation: "`age >= 18` is already a `bool`, so you can return it directly."
+        concepts: [ctrl.if-expr, fn.return, types.bool]
+
+      - type: true-false
+        id: tf-if-unit
+        prompt: "An `if` without an `else` is still an expression. Its value is `()`."
+        answer: true
+        explanation: "That's why it works as a statement but can't give a number or text to a `let`."
+        concepts: [ctrl.if-expr, types.unit]
+
+      - type: predict-output
+        id: predict-tiles-weather
+        prompt: Build the output
+        code:
+          rust: |
+            let temp = 18;
+            let feel = if temp > 25 {
+                "warm"
+            } else if temp > 15 {
+                "mild"
+            } else {
+                "cold"
+            };
+            println!("It is {feel} today");
+          verify: run
+        tiles: ["It", "is", "mild", "warm", "cold", "today"]
+        answer: "It is mild today"
+        explanation: "`18 > 25` is false and `18 > 15` is true, so `feel` is `\"mild\"`."
+        concepts: [ctrl.if-expr]
+
+      - type: compiles
+        id: compiles-if-in-arith
+        code:
+          rust: |
+            fn main() {
+                let busy = false;
+                let more = if busy { 2 } else { 0 };
+                let hours = 8 + more;
+                println!("{hours}");
+            }
+          verify: run
+          expectStdout: "8\n"
+        answer: true
+        explanation: "`more` gets an integer from the `if`, so it works in arithmetic like any other number. `busy` is false, so `hours` is 8."
+        concepts: [ctrl.if-expr]
+
+      - type: mcq
+        id: mcq-why-same-type
+        prompt: Why must both blocks of an `if` expression have the same type?
+        options:
+          - { id: a, text: "The variable gets one type at compile time, before Rust knows which block will run" }
+          - { id: b, text: "Rust runs both blocks and adds the results", why: "Only one block runs. The type still has to be fixed in advance." }
+          - { id: c, text: "It's only a style rule; the compiler warns but allows it", why: "It's an error, E0308, not a warning." }
+        answer: a
+        explanation: "Rust checks types when it compiles, but the condition is only known when the program runs. One type for both blocks makes the result safe to use either way."
+        concepts: [ctrl.if-expr, err.E0308]

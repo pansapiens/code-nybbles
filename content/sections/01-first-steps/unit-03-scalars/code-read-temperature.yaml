@@ -1,0 +1,102 @@
+id: first-steps.scalars.code-read-temperature
+title: Temperature converter
+concepts: []
+reviewConcepts: [types.float, types.inference, ops.arith, types.as-cast, types.bool, fmt.inline-args]
+program:
+  rust: |
+    fn main() {
+        let celsius: f64 = 25.0;
+        let fahrenheit = celsius * 9.0 / 5.0 + 32.0;
+        println!("{celsius} C is {fahrenheit} F");
+
+        let oven_f = 356.0;
+        let oven_c = (oven_f - 32.0) * 5.0 / 9.0;
+        println!("{oven_f} F is {oven_c} C");
+
+        let rounded = 179.9_f64 as i32;
+        println!("Cast: {rounded}");
+
+        let is_hot = oven_c > 100.0;
+        println!("Hot? {is_hot}");
+    }
+  verify: run
+  expectStdout: |
+    25 C is 77 F
+    356 F is 180 C
+    Cast: 179
+    Hot? true
+chunks:
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: why-nine-point-oh
+        prompt: "Line 3 writes `9.0` and `5.0`, not `9` and `5`. Why?"
+        options:
+          - { id: a, text: "`celsius` is an `f64`, and Rust won't do arithmetic between a float and an integer." }
+          - { id: b, text: "`9.0` is more accurate than `9`.", why: "Both are exact. The problem is the type: an integer literal next to an `f64` is a compile error." }
+          - { id: c, text: "It's only a style choice.", why: "With `9`, the program doesn't compile: Rust has no `f64 * integer` operation." }
+        answer: a
+        explanation: "Rust never converts between number types for you. `celsius * 9` would be a compile error, so the literals are written as floats."
+        concepts: [types.float, ops.arith]
+      - type: mcq
+        id: first-output
+        prompt: What does line 4 print?
+        options:
+          - { id: a, text: "`25 C is 77 F`" }
+          - { id: b, text: "`25.0 C is 77.0 F`", why: "`{}` prints a whole-number float without the `.0`." }
+          - { id: c, text: "`{celsius} C is {fahrenheit} F`", why: "`{celsius}` is replaced by the value of `celsius`." }
+        answer: a
+        explanation: "25 x 9 / 5 + 32 is 77. When an `f64` holds a whole number, `{}` prints it without a decimal point."
+        concepts: [types.float, fmt.inline-args]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: oven-type
+        prompt: "Line 6 has no type annotation. What type is `oven_f`?"
+        options:
+          - { id: a, text: "`f64`" }
+          - { id: b, text: "`f32`", why: "A float literal with no other clues defaults to `f64`, not `f32`." }
+          - { id: c, text: "`i32`", why: "`356.0` has a decimal point, so it is a float. `i32` is the default for integer literals." }
+        answer: a
+        explanation: "Rust infers the type from the literal. A float literal with no other information defaults to `f64`."
+        concepts: [types.inference, types.float]
+      - type: true-false
+        id: brackets-matter
+        prompt: "On line 7, removing the brackets would give the same result."
+        answer: false
+        explanation: "Without brackets, `oven_f - 32.0 * 5.0 / 9.0` multiplies and divides first, then subtracts. The brackets make the subtraction happen first."
+        concepts: [ops.arith]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: cast-truncates
+        prompt: "What does line 11 print?"
+        options:
+          - { id: a, text: "`Cast: 179`" }
+          - { id: b, text: "`Cast: 180`", why: "`as` doesn't round. It drops everything after the decimal point." }
+          - { id: c, text: "`Cast: 179.9`", why: "`rounded` is an `i32`, so it can't hold a fractional part." }
+        answer: a
+        explanation: "Casting a float to an integer with `as` truncates towards zero, so 179.9 becomes 179."
+        concepts: [types.as-cast]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: is-hot-type
+        prompt: "What type is `is_hot` on line 13?"
+        options:
+          - { id: a, text: "`bool`" }
+          - { id: b, text: "`f64`", why: "`>` compares two `f64` values, but the result of a comparison is a `bool`." }
+          - { id: c, text: "`&str`", why: "`is_hot` prints as `true`, but it holds a `bool`, not text." }
+        answer: a
+        explanation: "Comparison operators like `>` produce a `bool`: `true` or `false`."
+        concepts: [types.bool]
+      - type: mcq
+        id: last-output
+        prompt: What is the last line the program prints?
+        options:
+          - { id: a, text: "`Hot? true`" }
+          - { id: b, text: "`Hot? false`", why: "`oven_c` is 180, and 180 is greater than 100." }
+          - { id: c, text: "`Hot? 1`", why: "Rust prints a `bool` as `true` or `false`, not as a number." }
+        answer: a
+        explanation: "`oven_c` is 180.0, which is greater than 100.0, so `is_hot` is `true`."
+        concepts: [types.bool]

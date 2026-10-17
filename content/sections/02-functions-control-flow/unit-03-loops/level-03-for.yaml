@@ -1,0 +1,486 @@
+id: functions-control-flow.loops.for
+title: Count with for
+icon: list
+concepts: [ctrl.for, range.basics]
+reviewConcepts: [ctrl.while, ctrl.loop, types.array, types.int, var.mut, err.E0384, ctrl.if, macro.print-family]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-for-range
+        title: One pass per number
+        markdown: |
+          **`for i in 0..3` runs the body once for each number in the range.** `i` is 0, then 1, then 2.
+
+          The end of `0..3` is **not included**. You don't need a `mut` counter: `for` moves `i` along for you.
+        code:
+          rust: |
+            for i in 0..3 {
+                println!("Pass {i}");
+            }
+          verify: run
+          expectStdout: "Pass 0\nPass 1\nPass 2\n"
+        concepts: [ctrl.for, range.basics]
+
+      - type: predict-output
+        id: predict-one-to-four
+        code:
+          rust: |
+            for n in 1..4 {
+                println!("{n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n2\n3" }
+          - { id: b, text: "1\n2\n3\n4", why: "`1..4` stops before 4. The end isn't included." }
+          - { id: c, text: "0\n1\n2\n3", why: "The range starts at its first number, 1, not at 0." }
+        answer: a
+        explanation: "`1..4` is 1, 2 and 3. It starts at 1 and stops before 4."
+        concepts: [ctrl.for, range.basics]
+
+      - type: true-false
+        id: tf-range-end
+        prompt: "The range `0..5` includes the number 5."
+        answer: false
+        explanation: "`0..5` is 0, 1, 2, 3, 4: five numbers, stopping before 5."
+        concepts: [range.basics]
+
+      - type: concept
+        id: concept-inclusive
+        title: Include the end with ..=
+        markdown: |
+          **`..=` includes the end.** `1..=3` is 1, 2 and 3.
+
+          Use `..` when you mean "up to but not including", and `..=` when you mean "up to and including".
+        code:
+          rust: |
+            for n in 1..=3 {
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "1\n2\n3\n"
+        concepts: [range.basics]
+
+      - type: predict-output
+        id: predict-inclusive
+        code:
+          rust: |
+            for level in 2..=4 {
+                println!("Level {level}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Level 2\nLevel 3\nLevel 4" }
+          - { id: b, text: "Level 2\nLevel 3", why: "`..=` includes the end, so 4 is printed too." }
+          - { id: c, text: "Level 1\nLevel 2\nLevel 3\nLevel 4", why: "The range starts at 2." }
+        answer: a
+        explanation: "`2..=4` is 2, 3 and 4, because `..=` includes the end."
+        concepts: [range.basics]
+
+      - type: mcq
+        id: mcq-how-many-times
+        prompt: "How many times does the body of `for i in 0..10 { }` run?"
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "9", why: "0 counts too: 0 to 9 is ten numbers." }
+          - { id: c, text: "11", why: "That would be `0..=10`. With `..` the 10 isn't included." }
+        answer: a
+        explanation: "`0..10` is 0 to 9, which is 10 numbers. `a..b` always has `b - a` numbers."
+        concepts: [ctrl.for, range.basics]
+
+      - type: concept
+        id: concept-for-array
+        title: Loop over an array
+        markdown: |
+          **`for` can walk through an array.** Each pass, the loop variable holds the next element, from first to last.
+        code:
+          rust: |
+            let scores = [70, 85, 90];
+            for score in scores {
+                println!("{score}");
+            }
+          verify: run
+          expectStdout: "70\n85\n90\n"
+        concepts: [ctrl.for]
+
+      - type: predict-output
+        id: predict-array-total
+        code:
+          rust: |
+            let prices = [3, 5, 2];
+            let mut total = 0;
+            for price in prices {
+                total += price;
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "2", why: "`+=` adds each price to the total. It doesn't replace it." }
+          - { id: c, text: "3\n5\n2", why: "There's one `println!`, after the loop." }
+        answer: a
+        explanation: "The loop adds 3, 5 and 2 to `total`, which then holds 10."
+        concepts: [ctrl.for, types.array]
+
+      - type: fill-tokens
+        id: fill-for-in
+        prompt: "Fill the blanks so the program prints 1 to 5"
+        code:
+          rust: |
+            for n ___1___ 1___2___5 {
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "1\n2\n3\n4\n5\n"
+        blanks:
+          "1": { answer: ["in"] }
+          "2": { answer: ["..="] }
+        bank: ["in", "of", "..", "..=", ":"]
+        explanation: "A `for` loop is `for name in range`. `..=` includes the 5."
+        concepts: [ctrl.for, range.basics]
+
+      - type: match-pairs
+        id: pairs-ranges
+        prompt: Match each range to the numbers it gives
+        pairs:
+          - ["0..3", "0 1 2"]
+          - ["0..=3", "0 1 2 3"]
+          - ["1..3", "1 2"]
+          - ["3..3", "no numbers"]
+        concepts: [range.basics]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-rev
+        title: Count down with .rev()
+        markdown: |
+          **`.rev()` runs a range backwards.** Put the range in brackets first: `(1..4).rev()` is 3, 2, 1.
+
+          The range is the same numbers as before (the end is still excluded), in reverse order.
+        code:
+          rust: |
+            for n in (1..4).rev() {
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "3\n2\n1\n"
+        concepts: [range.basics]
+
+      - type: predict-output
+        id: predict-rev
+        code:
+          rust: |
+            for i in (0..3).rev() {
+                println!("{i}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "2\n1\n0" }
+          - { id: b, text: "3\n2\n1", why: "`0..3` is 0, 1, 2. Reversing doesn't add the 3." }
+          - { id: c, text: "3\n2\n1\n0", why: "`.rev()` reverses the same three numbers. The 3 still isn't included." }
+        answer: a
+        explanation: "`0..3` is 0, 1, 2, and `.rev()` gives them in the order 2, 1, 0."
+        concepts: [range.basics]
+
+      - type: compiles
+        id: compiles-rev-no-brackets
+        code:
+          rust: |
+            for i in 0..3.rev() {
+                println!("{i}");
+            }
+          verify: compile-fail
+          expectErrors: [E0689]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`.rev()` is applied to `3`, not the range. Write `(0..3).rev()`." }
+            - { id: b, text: "Ranges can't be reversed", why: "They can, with `.rev()`. The brackets are missing." }
+            - { id: c, text: "`i` needs to be `mut`", why: "`for` sets `i` for you, so it doesn't need `mut`." }
+          answer: a
+        explanation: "Without brackets, `.rev()` attaches to the number `3`, and a number has no `rev` method."
+        concepts: [range.basics]
+
+      - type: predict-output
+        id: predict-empty-range
+        code:
+          rust: |
+            for n in 5..2 {
+                println!("{n}");
+            }
+            println!("done");
+          verify: run
+        options:
+          - { id: a, text: "done" }
+          - { id: b, text: "5\n4\n3\ndone", why: "Ranges only count up. `5..2` has no numbers; use `(3..6).rev()` to count down." }
+          - { id: c, text: "5\n4\n3\n2\ndone", why: "A range never counts down, and the end isn't included anyway." }
+        answer: a
+        explanation: "A range whose start is past its end is empty, so the body never runs."
+        concepts: [range.basics]
+
+      - type: spot-bug
+        id: spot-assign-loop-var
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                for i in 0..3 {
+                    i += 1;
+                    println!("{i}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: 3
+        explanation: "The loop variable `i` is immutable. `for` gives it a new value each pass, but you can't change it yourself."
+        concepts: [ctrl.for, err.E0384]
+
+      - type: predict-output
+        id: predict-index-loop
+        code:
+          rust: |
+            let names = ["Ada", "Grace", "Linus"];
+            for i in 0..names.len() {
+                println!("{i}: {}", names[i]);
+            }
+          verify: run
+        options:
+          - { id: a, text: "0: Ada\n1: Grace\n2: Linus" }
+          - { id: b, text: "1: Ada\n2: Grace\n3: Linus", why: "Array indexes start at 0, and so does the range `0..names.len()`." }
+          - { id: c, text: "0: Ada\n1: Grace", why: "`names.len()` is 3, so the range is 0, 1, 2." }
+        answer: a
+        explanation: "`0..names.len()` is `0..3`, which gives every valid index of the array."
+        concepts: [ctrl.for, range.basics, types.array]
+
+      - type: true-false
+        id: tf-for-needs-counter
+        prompt: "A `for` loop over a range needs a `mut` counter variable that you increase yourself."
+        answer: false
+        explanation: "`for` gives the loop variable each value in the range. That's the main difference from `while`."
+        concepts: [ctrl.for, ctrl.while]
+
+      - type: mcq
+        id: mcq-one-to-ten
+        prompt: "Which loop runs for 1, 2, ..., 10?"
+        options:
+          - { id: a, code: "for n in 1..=10 { }" }
+          - { id: b, code: "for n in 1..10 { }", why: "`1..10` stops at 9." }
+          - { id: c, code: "for n in 0..10 { }", why: "This runs ten times, but for 0 to 9." }
+          - { id: d, code: "for n in (1..10).rev() { }", why: "This runs for 9 down to 1." }
+        answer: a
+        explanation: "`1..=10` starts at 1 and includes 10."
+        concepts: [range.basics]
+
+      - type: predict-output
+        id: predict-var-range
+        code:
+          rust: |
+            let start = 2;
+            let end = 5;
+            let mut total = 0;
+            for n in start..end {
+                total += n;
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "9" }
+          - { id: b, text: "14", why: "That adds 5 as well. `start..end` stops before `end`." }
+          - { id: c, text: "7", why: "The range has three numbers: 2, 3 and 4." }
+        answer: a
+        explanation: "A range can use variables. `2..5` is 2, 3, 4, which add up to 9."
+        concepts: [range.basics, ctrl.for]
+
+      - type: decode-error
+        id: decode-not-iterator
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let laps = 5;
+                for lap in laps {
+                    println!("Lap {lap}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "A single number can't be looped over. Use a range like `1..=laps`." }
+          - { id: b, text: "`laps` must be `mut` to be used in a loop", why: "Nothing changes `laps`. The problem is that a number isn't a sequence of values." }
+          - { id: c, text: "`lap` needs a type, like `lap: i32`", why: "The loop variable's type is worked out from what you loop over." }
+        answer: a
+        explanation: "`for` needs something that gives values one by one, like a range or an array. A plain integer isn't one."
+        concepts: [ctrl.for, range.basics]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-sum-to-five
+        prompt: "Arrange the lines to print `Total: 15`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    for n in 1..=5 {" }
+          - { id: l4, text: "        total += n;" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: '    println!("Total: {total}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    for n in 1..5 {" }
+          - { id: d2, text: "    let total = 0;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "Total: 15\n"
+        explanation: "1 + 2 + 3 + 4 + 5 is 15, so the range must include 5. `total` changes, so it needs `mut`."
+        concepts: [ctrl.for, range.basics, var.mut]
+
+      - type: predict-output
+        id: predict-tiles-countdown
+        prompt: Build the output
+        code:
+          rust: |
+            for i in (1..=3).rev() {
+                print!("{i} ");
+            }
+            println!("Go!");
+          verify: run
+        tiles: ["3", "2", "1", "0", "4", "Go!"]
+        answer: "3 2 1 Go!"
+        explanation: "`1..=3` is 1, 2, 3, and `.rev()` prints them as 3, 2, 1, all on one line, before `Go!`."
+        concepts: [range.basics, macro.print-family]
+
+      - type: spot-bug
+        id: spot-range-short
+        prompt: "This should print 1 to 5, but it stops at 4. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                for n in 1..5 {
+                    println!("{n}");
+                }
+            }
+          verify: run
+          expectStdout: "1\n2\n3\n4\n"
+        answer: 2
+        explanation: "`1..5` excludes 5. Write `1..=5` or `1..6`."
+        concepts: [range.basics]
+
+      - type: fill-tokens
+        id: fill-rev-countdown
+        prompt: "Fill the blanks so the program prints 5, 4, 3, 2, 1"
+        code:
+          rust: |
+            for n in (___1___).___2___() {
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "5\n4\n3\n2\n1\n"
+        blanks:
+          "1": { answer: ["1..=5", "1..6"] }
+          "2": { answer: ["rev"] }
+        bank: ["1..=5", "1..5", "5..1", "rev", "reverse"]
+        explanation: "`1..=5` is 1 to 5, and `.rev()` gives them backwards. `5..1` would be empty."
+        concepts: [range.basics]
+
+      - type: compiles
+        id: compiles-loop-var-after
+        code:
+          rust: |
+            for i in 0..=3 {
+                println!("{i}");
+            }
+            println!("Last: {i}");
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`i` only exists inside the loop" }
+            - { id: b, text: "`0..=3` isn't a valid range", why: "It is: 0, 1, 2, 3." }
+            - { id: c, text: "`i` must be `mut` to be printed", why: "Printing only reads a value. `i` is out of scope after the loop." }
+          answer: a
+        explanation: "The loop variable belongs to the loop's block. After the `}`, `i` is gone, so the compiler can't find it."
+        concepts: [ctrl.for]
+
+      - type: predict-output
+        id: predict-nested
+        code:
+          rust: |
+            for a in 1..3 {
+                for b in 1..3 {
+                    println!("{a}{b}");
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "11\n12\n21\n22" }
+          - { id: b, text: "11\n21\n12\n22", why: "The inner loop runs all the way through for each `a` before `a` changes." }
+          - { id: c, text: "11\n22", why: "The inner loop runs completely for each `a`, so there are 2 x 2 lines." }
+        answer: a
+        explanation: "For `a = 1`, `b` runs 1 then 2. Then `a = 2`, and `b` runs 1 then 2 again."
+        concepts: [ctrl.for]
+
+      - type: mcq
+        id: mcq-five-numbers
+        prompt: "Which range gives exactly five numbers?"
+        options:
+          - { id: a, code: "3..=7" }
+          - { id: b, code: "3..7", why: "That's 3, 4, 5, 6: four numbers." }
+          - { id: c, code: "0..=5", why: "That's 0 to 5: six numbers." }
+        answer: a
+        explanation: "`3..=7` is 3, 4, 5, 6, 7. An inclusive range `a..=b` has `b - a + 1` numbers."
+        concepts: [range.basics]
+
+      - type: predict-output
+        id: predict-highest
+        code:
+          rust: |
+            let temps = [18, 25, 21];
+            let mut highest = temps[0];
+            for t in temps {
+                if t > highest {
+                    highest = t;
+                }
+            }
+            println!("{highest}");
+          verify: run
+        options:
+          - { id: a, text: "25" }
+          - { id: b, text: "21", why: "21 isn't higher than 25, so `highest` stays 25." }
+          - { id: c, text: "18", why: "25 is higher than 18, so the `if` replaces it." }
+        answer: a
+        explanation: "`highest` starts at 18, becomes 25, and 21 doesn't beat it."
+        concepts: [ctrl.for, ctrl.if, types.array]
+
+      - type: true-false
+        id: tf-two-ways
+        prompt: "`for x in arr` and `for i in 0..arr.len()` can both visit every element of an array."
+        answer: true
+        explanation: "The first gives you each element. The second gives you each index, and `arr[i]` reads the element."
+        concepts: [ctrl.for, range.basics]
+
+      - type: decode-error
+        id: decode-index-type
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let scores = [70, 85, 90];
+                let count: i32 = 3;
+                for i in 0..count {
+                    println!("{}", scores[i]);
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: "for i in 0..scores.len() {" }
+          - { id: b, code: "for i in 0..=count {", why: "`i` would still be an `i32`, and 3 would be out of bounds too." }
+          - { id: c, code: "let mut count: i32 = 3;", why: "`mut` doesn't change the type. Indexes must be `usize`." }
+        answer: a
+        explanation: "Array indexes must be `usize`. `scores.len()` is a `usize`, so `i` becomes one too."
+        concepts: [ctrl.for, range.basics, types.int]

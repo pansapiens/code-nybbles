@@ -1,0 +1,100 @@
+id: functions-control-flow.loops.code-read-collatz
+title: Collatz sequence
+concepts: []
+reviewConcepts: [ctrl.while, ctrl.if, var.mut, ops.arith, macro.print-family]
+program:
+  rust: |
+    fn main() {
+        let mut n: u32 = 6;
+        let mut steps = 0;
+        while n != 1 {
+            if n % 2 == 0 {
+                n = n / 2;
+            } else {
+                n = 3 * n + 1;
+            }
+            steps = steps + 1;
+            print!("{n} ");
+        }
+        println!();
+        println!("{steps} steps");
+    }
+  verify: run
+  expectStdout: |
+    3 10 5 16 8 4 2 1 
+    8 steps
+chunks:
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: why-mut
+        prompt: "Why are `n` and `steps` declared with `mut`?"
+        options:
+          - { id: a, text: "The loop changes their values." }
+          - { id: b, text: "Every variable used in a loop needs `mut`.", why: "Only variables you assign to again need `mut`. Reading a variable in a loop is fine without it." }
+          - { id: c, text: "`mut` makes them numbers.", why: "`mut` only allows a variable to change. The type comes from the annotation or the value." }
+        answer: a
+        explanation: "Both variables are assigned new values later, and Rust variables can only change if they are declared `mut`."
+        concepts: [var.mut]
+  - lines: 6
+    exercises:
+      - type: mcq
+        id: even-test
+        prompt: "What does `n % 2 == 0` check?"
+        options:
+          - { id: a, text: "Whether `n` is even" }
+          - { id: b, text: "Whether `n` is half of 2", why: "`%` is the remainder operator, not division." }
+          - { id: c, text: "Whether `n` is 2", why: "`n % 2` is the remainder after dividing by 2. It is 0 for every even number." }
+        answer: a
+        explanation: "`%` gives the remainder. An even number divided by 2 leaves a remainder of 0."
+        concepts: [ops.arith, ctrl.if]
+      - type: mcq
+        id: first-step
+        prompt: "`n` starts at 6. What is `n` after the first time through the loop?"
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "19", why: "6 is even, so the `if` branch runs and halves it." }
+          - { id: c, text: "6", why: "Either branch changes `n`. 6 is even, so it becomes 3." }
+        answer: a
+        explanation: "6 is even, so `n = n / 2` runs and `n` becomes 3."
+        concepts: [ctrl.if]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: second-step
+        prompt: "`n` is now 3. What is it after the next time through the loop?"
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "1", why: "3 is odd, so the `else` branch runs: 3 x 3 + 1." }
+          - { id: c, text: "9", why: "Don't forget the `+ 1`: 3 x 3 + 1 is 10." }
+        answer: a
+        explanation: "3 is odd, so `n = 3 * n + 1` runs, giving 10."
+        concepts: [ctrl.if, ops.arith]
+      - type: true-false
+        id: print-no-newline
+        prompt: "Line 11 prints each number on its own line."
+        answer: false
+        explanation: "`print!` doesn't add a newline, so the numbers appear on one line, separated by spaces."
+        concepts: [macro.print-family]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: loop-stops
+        prompt: "When does the `while` loop stop?"
+        options:
+          - { id: a, text: "When `n` becomes 1" }
+          - { id: b, text: "After 6 steps", why: "The condition is about `n`, not a count. It keeps going while `n != 1`." }
+          - { id: c, text: "When `n` becomes even", why: "Even numbers only choose which branch runs. The loop checks `n != 1`." }
+        answer: a
+        explanation: "A `while` loop checks its condition before each pass. It stops once `n != 1` is false."
+        concepts: [ctrl.while]
+      - type: mcq
+        id: steps
+        prompt: "The numbers printed are `3 10 5 16 8 4 2 1`. What does the last line print?"
+        options:
+          - { id: a, text: "`8 steps`" }
+          - { id: b, text: "`7 steps`", why: "`steps` goes up once per number printed, and 8 numbers are printed." }
+          - { id: c, text: "`9 steps`", why: "The starting value 6 isn't printed or counted. Only the 8 changes are." }
+        answer: a
+        explanation: "Each pass through the loop changes `n`, adds 1 to `steps` and prints `n`. Eight numbers are printed, so `steps` is 8."
+        concepts: [ctrl.while]

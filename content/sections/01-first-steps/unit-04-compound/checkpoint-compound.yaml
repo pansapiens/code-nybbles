@@ -1,0 +1,247 @@
+id: first-steps.compound.checkpoint
+title: "Checkpoint: Compound Types"
+icon: flag
+concepts: []
+reviewConcepts:
+  - types.tuple
+  - types.unit
+  - types.array
+  - types.array-bounds
+  - panic.index
+  - fmt.debug
+  - var.mut
+  - var.shadowing
+  - var.const
+  - fmt.inline-args
+  - compiler.read-error
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-nested-update
+        code:
+          rust: |
+            let mut pair = (4, [1, 2]);
+            pair.1[1] += pair.0;
+            let (left, right) = pair;
+            println!("{left} {right:?}");
+          verify: run
+        options:
+          - { id: a, text: "4 [1, 6]" }
+          - { id: b, text: "4 [5, 2]", why: "`[1]` is the second element of the array, so the 2 changes." }
+          - { id: c, text: "4 [1, 2]", why: "`pair` is `mut`, so the array inside it changes to `[1, 6]` before it's unpacked." }
+        answer: a
+        explanation: "`pair.1[1]` is the 2 in the array, which becomes `2 + 4`. Then `right` gets the whole array."
+        concepts: [types.tuple, types.array, fmt.debug, var.mut]
+
+      - type: compiles
+        id: compiles-array-of-pairs
+        code:
+          rust: |
+            let points = [(0, 0), (3, 4.5)];
+            println!("{points:?}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "The two tuples have different types, `(i32, i32)` and `(i32, f64)`" }
+            - { id: b, text: "Arrays can't hold tuples", why: "They can, as long as every tuple has the same type." }
+            - { id: c, text: "`{:?}` can't print an array of tuples", why: "It can. The array itself isn't valid, because its elements differ in type." }
+          answer: a
+        explanation: "Every element of an array must have the same type. `4.5` makes the second tuple `(i32, f64)`."
+        concepts: [types.array, types.tuple]
+
+      - type: decode-error
+        id: decode-display-pair
+        prompt: Which fix for line 4 is right?
+        code:
+          rust: |
+            fn main() {
+                let city = "Darwin";
+                let range = (24, 33);
+                println!("{city}: {}", range);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: 'println!("{city}: {:?}", range);' }
+          - { id: b, code: 'println!("{city:?}: {}", range);', why: "The `:?` is on `city`, but `range` is the tuple that `{}` can't print." }
+          - { id: c, code: 'println!("{city}: {}", range[0]);', why: "Tuples don't use square brackets. That's E0608." }
+        answer: a
+        explanation: "The tuple needs `{:?}`. `city` is text, which `{}` prints fine."
+        concepts: [fmt.debug, compiler.read-error]
+
+      - type: mcq
+        id: mcq-runtime-or-compile
+        prompt: "`let a = [1, 2, 3];` Which line compiles, then panics when run?"
+        options:
+          - { id: a, code: "let x = a[std::env::args().count() + 4];" }
+          - { id: b, code: "let x = a[3];", why: "The compiler can see that index 3 is out of bounds, so this doesn't compile." }
+          - { id: c, code: "let x = a[2];", why: "Index 2 is the last element, so this is fine." }
+          - { id: d, code: "let x = a.3;", why: "Arrays don't use a dot. This is a compile error, E0609." }
+        answer: a
+        explanation: "The compiler can't know what `count()` gives, so the check happens at run time and the program panics."
+        concepts: [types.array-bounds, panic.index]
+
+      - type: predict-output
+        id: predict-unit-print
+        code:
+          rust: |
+            let first = println!("one");
+            let second = (first, println!("two"));
+            println!("{second:?}");
+          verify: run
+        options:
+          - { id: a, text: "one\ntwo\n((), ())" }
+          - { id: b, text: "((), ())", why: "Each `println!` still prints when it runs." }
+          - { id: c, text: "one\ntwo\n(one, two)", why: "The tuple holds what each `println!` gave back, which is `()`." }
+        answer: a
+        explanation: "Each `println!` prints its line and gives back `()`. `second` is a tuple of two units."
+        concepts: [types.unit, fmt.debug]
+
+      - type: spot-bug
+        id: spot-last-panic
+        prompt: This program panics. Tap the line that causes it.
+        code:
+          rust: |
+            fn main() {
+                let mut queue = [5, 6, 7, 8];
+                let end = queue.len();
+                queue[0] = 1;
+                println!("{queue:?}");
+                println!("{}", queue[end]);
+            }
+          verify: run
+          expectPanic: "the len is 4 but the index is 4"
+        answer: 6
+        explanation: "`end` is 4, one past the last index. Line 6 needs `queue[end - 1]`."
+        concepts: [types.array-bounds, panic.index]
+
+      - type: fill-tokens
+        id: fill-unpack-mixed
+        prompt: "Fill the blanks so the program prints `Ada: [3, 9]`"
+        code:
+          rust: |
+            let record = ("Ada", [3, 9]);
+            let (name, marks) = ___1___;
+            println!("{name}: {marks___2___}");
+          verify: run
+          expectStdout: "Ada: [3, 9]\n"
+        blanks:
+          "1": { answer: ["record"] }
+          "2": { answer: [":?"] }
+        bank: ["record", "record.0", ":?", ":#?", "[0]"]
+        explanation: "Destructure the whole tuple, then print the array with `{marks:?}` on one line."
+        concepts: [types.tuple, fmt.debug]
+
+      - type: true-false
+        id: tf-const-array
+        prompt: "This program compiles and prints `3`."
+        code:
+          rust: |
+            const SIZES: [i32; 3] = [8, 10, 12];
+
+            fn main() {
+                println!("{}", SIZES.len());
+            }
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "A constant can be an array, as long as its type is written out. `.len()` gives 3."
+        concepts: [types.array, var.const]
+
+      - type: predict-output
+        id: predict-shadow-array
+        code:
+          rust: |
+            let levels = [1, 2, 3];
+            let levels = (levels[2], levels.len());
+            println!("{levels:?}");
+          verify: run
+        options:
+          - { id: a, text: "(3, 3)" }
+          - { id: b, text: "[3, 3]", why: "The new `levels` is a tuple, so it prints with parentheses." }
+          - { id: c, text: "(2, 3)", why: "`levels[2]` is the third element, 3." }
+        answer: a
+        explanation: "The new `levels` shadows the array with a tuple of its last element and its length."
+        concepts: [types.array, types.tuple, var.shadowing, fmt.debug]
+
+      - type: parsons
+        id: parsons-team
+        prompt: "Arrange the lines so the program prints `[1, 0, 0]` and then `(\"Ada\", 1)`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut wins = [0; 3];" }
+          - { id: l3, text: "    wins[0] = 1;" }
+          - { id: l4, text: '    println!("{wins:?}");' }
+          - { id: l5, text: '    let leader = ("Ada", wins[0]);' }
+          - { id: l6, text: '    println!("{leader:?}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    let wins = [0; 3];" }
+          - { id: d2, text: '    println!("{leader}");' }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "[1, 0, 0]\n(\"Ada\", 1)\n"
+        explanation: "`wins` must be `mut` to change, and both the array and the tuple need `{:?}` to print."
+        concepts: [types.array, types.tuple, fmt.debug, var.mut]
+
+      - type: decode-error
+        id: decode-wrong-pattern
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let size = [1920, 1080];
+                let (width, height) = size;
+                println!("{width}x{height}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`size` is an array, but the pattern `(width, height)` is for a tuple" }
+          - { id: b, text: "`size` has too few elements", why: "It has two elements and the pattern has two names. The brackets are the problem." }
+          - { id: c, text: "Numbers this big need `i64`", why: "1920 fits in an `i32`. The error is the tuple pattern on an array." }
+        answer: a
+        explanation: "A tuple pattern only matches a tuple. Making `size` a tuple, `(1920, 1080)`, would fix it."
+        concepts: [types.tuple, types.array, compiler.read-error]
+
+      - type: mcq
+        id: mcq-panic-read
+        prompt: "A program stops with `panicked at src/main.rs:7:5:` and `the len is 2 but the index is 2`. What do you know?"
+        options:
+          - { id: a, text: "Line 7 used index 2 on an array with only indexes 0 and 1" }
+          - { id: b, text: "The array on line 7 is empty", why: "`the len is 2` means it has two elements." }
+          - { id: c, text: "The program failed to compile on line 7", why: "`panicked` means it compiled and then stopped while running." }
+        answer: a
+        explanation: "The location gives line 7, and length 2 means index 2 is one past the end."
+        concepts: [panic.index]
+
+      - type: match-pairs
+        id: pairs-checkpoint
+        pairs:
+          - ["(1, true)", "tuple"]
+          - ["[1, 2]", "array"]
+          - ["()", "unit"]
+          - ["{:#?}", "pretty Debug"]
+          - ["a[a.len()]", "always out of bounds"]
+        concepts: [types.tuple, types.array, types.unit, fmt.debug, types.array-bounds]
+
+      - type: compiles
+        id: compiles-tuple-mut-element
+        code:
+          rust: |
+            let mut stats = ("hp", [10, 10]);
+            stats.1[0] -= 3;
+            stats.0 = "health";
+            println!("{stats:?}");
+          verify: run
+          expectStdout: "(\"health\", [7, 10])\n"
+        answer: true
+        explanation: "It compiles and prints `(\"health\", [7, 10])`. Each element keeps its type: text replaces text, and a number in the array changes."
+        concepts: [types.tuple, types.array, var.mut, fmt.debug]

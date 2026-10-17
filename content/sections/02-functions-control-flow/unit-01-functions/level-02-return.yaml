@@ -1,0 +1,540 @@
+id: functions-control-flow.functions.return
+title: Returning values
+icon: rocket
+concepts: [fn.return]
+reviewConcepts: [fn.define, fn.params, var.let, var.shadowing, fmt.inline-args, intro.main, types.bool, types.float, types.tuple, types.unit, ops.arith]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-return-type
+        title: Giving a value back
+        markdown: |
+          **`-> i32` says the function returns an `i32`.** It goes after the `()`.
+
+          The **last expression** in the body, written **without** a semicolon, is the value the function gives back to its caller.
+        code:
+          rust: |
+            fn five() -> i32 {
+                5
+            }
+
+            fn main() {
+                let x = five();
+                println!("{x}");
+            }
+          verify: run
+          expectStdout: "5\n"
+        concepts: [fn.return]
+
+      - type: predict-output
+        id: predict-double
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                println!("{}", double(7));
+            }
+          verify: run
+        options:
+          - { id: a, text: "14" }
+          - { id: b, text: "7", why: "`double(7)` is replaced by the value the function returns, `7 * 2`." }
+          - { id: c, text: "n * 2", why: "`n * 2` is worked out, and the number is returned." }
+        answer: a
+        explanation: "`n` is 7, the body's last expression `n * 2` is 14, and that's what the call gives back."
+        concepts: [fn.return]
+
+      - type: mcq
+        id: mcq-arrow-meaning
+        prompt: "In `fn area(w: i32, h: i32) -> i32`, what does `-> i32` mean?"
+        options:
+          - { id: a, text: "The function returns an `i32`" }
+          - { id: b, text: "The function takes an `i32`", why: "What a function takes goes inside the `()`. The arrow describes what comes out." }
+          - { id: c, text: "The function prints an `i32`", why: "Returning and printing are different. The value goes back to the caller, which decides what to do with it." }
+          - { id: d, text: "`w` and `h` are converted to `i32`", why: "Their types are already given as `w: i32` and `h: i32`." }
+        answer: a
+        explanation: "The arrow `->` and a type after the parameter list give the function's return type."
+        concepts: [fn.return]
+
+      - type: concept
+        id: concept-use-result
+        title: Using the result
+        markdown: |
+          **A call to a function that returns a value is itself a value.** You can store it, print it, or use it in a calculation.
+        code:
+          rust: |
+            fn add(a: i32, b: i32) -> i32 {
+                a + b
+            }
+
+            fn main() {
+                let sum = add(2, 3);
+                println!("{sum} {}", add(sum, 1));
+            }
+          verify: run
+          expectStdout: "5 6\n"
+        concepts: [fn.return]
+
+      - type: predict-output
+        id: predict-add-calls
+        code:
+          rust: |
+            fn add(a: i32, b: i32) -> i32 {
+                a + b
+            }
+
+            fn main() {
+                let total = add(2, 3) + add(1, 1);
+                println!("{total}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "5", why: "Both calls are worked out and their results added: 5 + 2." }
+          - { id: c, text: "52", why: "The results are numbers, so `+` adds them. It doesn't join them like text." }
+        answer: a
+        explanation: "`add(2, 3)` is 5 and `add(1, 1)` is 2, so `total` is 7."
+        concepts: [fn.return]
+
+      - type: fill-tokens
+        id: fill-arrow
+        prompt: "Fill the blank so `square` returns an `i32`"
+        code:
+          rust: |
+            fn square(n: i32) ___1___ i32 {
+                n * n
+            }
+
+            fn main() {
+                println!("{}", square(4));
+            }
+          verify: run
+          expectStdout: "16\n"
+        blanks:
+          "1": { answer: ["->"] }
+        bank: ["->", "=>", ":", "="]
+        explanation: "Return types use a thin arrow `->`. A colon is for parameter and variable types, and `=>` belongs to `match`, which comes later."
+        concepts: [fn.return]
+
+      - type: true-false
+        id: tf-tail-is-returned
+        prompt: "The last line of a function body, written without a semicolon, is the value the function returns."
+        answer: true
+        explanation: "That last expression is called the tail expression. Its value becomes the function's return value."
+        concepts: [fn.return]
+
+      - type: compiles
+        id: compiles-no-arrow
+        code:
+          rust: |
+            fn five() {
+                5
+            }
+
+            fn main() {
+                let x = five();
+                println!("{x}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's missing?
+          options:
+            - { id: a, text: "`-> i32` after `fn five()`" }
+            - { id: b, text: "A `;` after `5`", why: "That would throw the 5 away, and `x` would get no number to print." }
+            - { id: c, text: "`let` before `5`", why: "`let` needs a name, and it wouldn't return anything." }
+          answer: a
+        explanation: "Without `->`, a function returns `()`, so a body ending in `5` is a type error. The compiler's help suggests adding `-> i32`."
+        concepts: [fn.return]
+
+      - type: predict-output
+        id: predict-nested-calls
+        code:
+          rust: |
+            fn add_one(n: i32) -> i32 {
+                n + 1
+            }
+
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                println!("{}", double(add_one(4)));
+            }
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "9", why: "The inner call runs first: `add_one(4)` is 5, then `double(5)` is 10." }
+          - { id: c, text: "8", why: "`add_one` runs too, so `double` gets 5, not 4." }
+        answer: a
+        explanation: "Inner calls run first. `add_one(4)` returns 5, and that 5 becomes the argument to `double`."
+        concepts: [fn.return]
+
+      - type: match-pairs
+        id: pairs-signature-parts
+        pairs:
+          - ["-> i32", "the function returns an i32"]
+          - ["(n: i32)", "the function takes an i32"]
+          - ["n * 2 (last line)", "the value given back"]
+          - ["double(4)", "a call that produces a value"]
+        concepts: [fn.return, fn.params]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-average
+        code:
+          rust: |
+            fn average(a: f64, b: f64) -> f64 {
+                (a + b) / 2.0
+            }
+
+            fn main() {
+                println!("{}", average(3.0, 4.0));
+            }
+          verify: run
+        options:
+          - { id: a, text: "3.5" }
+          - { id: b, text: "3", why: "The return type is `f64`, so the decimal part is kept." }
+          - { id: c, text: "5", why: "The brackets make `a + b` happen first, then the division: 7.0 / 2.0." }
+        answer: a
+        explanation: "`(3.0 + 4.0) / 2.0` is 3.5. Functions can return any type, including `f64`."
+        concepts: [fn.return]
+
+      - type: decode-error
+        id: decode-bool-vs-i32
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn is_adult(age: i32) -> i32 {
+                age >= 18
+            }
+
+            fn main() {
+                println!("{}", is_adult(20));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "The body produces a `bool`, but the signature promises an `i32`" }
+          - { id: b, text: "`18` should be written `18i32`", why: "`18` is already an `i32`. The problem is the type of the whole comparison." }
+          - { id: c, text: "`is_adult` needs a second parameter", why: "The call passes one argument for one parameter, which matches." }
+        answer: a
+        explanation: "A comparison like `age >= 18` is `true` or `false`. Changing the return type to `-> bool` fixes it."
+        concepts: [fn.return, types.bool]
+
+      - type: predict-output
+        id: predict-tuple-return
+        code:
+          rust: |
+            fn split(total: i32) -> (i32, i32) {
+                (total / 2, total % 2)
+            }
+
+            fn main() {
+                let (half, rest) = split(7);
+                println!("{half} {rest}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3 1" }
+          - { id: b, text: "3.5 0", why: "`7 / 2` with integers drops the remainder, so `half` is 3." }
+          - { id: c, text: "(3, 1)", why: "The tuple is destructured into `half` and `rest`, and each is printed with `{}`." }
+        answer: a
+        explanation: "A function can return a tuple to give back more than one value. `7 / 2` is 3 and `7 % 2` is 1."
+        concepts: [fn.return, types.tuple]
+
+      - type: mcq
+        id: mcq-no-arrow-returns
+        prompt: "What does a function with no `->` in its signature return?"
+        options:
+          - { id: a, text: "`()`, the unit type" }
+          - { id: b, text: "`0`", why: "Rust has no default number. A function without `->` returns the empty value `()`." }
+          - { id: c, text: "Whatever its last line works out to", why: "Without `->`, the last expression must be `()` too. A number there is a type error." }
+        answer: a
+        explanation: "No `->` is short for `-> ()`. Functions like `main` that only print return `()`."
+        concepts: [fn.return, types.unit]
+
+      - type: spot-bug
+        id: spot-area-plus
+        prompt: "This should print the area, `12`, but prints `7`. Tap the buggy line."
+        code:
+          rust: |
+            fn area(w: i32, h: i32) -> i32 {
+                w + h
+            }
+
+            fn main() {
+                let a = area(3, 4);
+                println!("{a}");
+            }
+          verify: run
+          expectStdout: "7\n"
+        answer: 2
+        explanation: "The tail expression adds instead of multiplying. Line 2 should be `w * h`."
+        concepts: [fn.return]
+
+      - type: fill-tokens
+        id: fill-fahrenheit
+        prompt: "Fill the blanks so the program prints `212`"
+        code:
+          rust: |
+            fn to_fahrenheit(c: f64) -> ___1___ {
+                c * 1.8 + 32.0
+            }
+
+            fn main() {
+                let f = ___2___(100.0);
+                println!("{f}");
+            }
+          verify: run
+          expectStdout: "212\n"
+        blanks:
+          "1": { answer: ["f64"] }
+          "2": { answer: ["to_fahrenheit"] }
+        bank: ["f64", "i32", "to_fahrenheit", "fn", "return"]
+        explanation: "The body works with decimals, so it returns an `f64`. A whole-valued `f64` like 212.0 prints as `212`."
+        concepts: [fn.return, types.float]
+
+      - type: true-false
+        id: tf-return-without-arrow
+        prompt: "A function can return a number without `->` in its signature, as long as the last line has no semicolon."
+        answer: false
+        explanation: "The return type must always be written. Without `->`, the function returns `()`, and a number in the tail position is error E0308."
+        concepts: [fn.return]
+
+      - type: compiles
+        id: compiles-ignore-result
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                double(5);
+                println!("done");
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles. You don't have to use a returned value; `double(5);` runs the function and throws the 10 away."
+        concepts: [fn.return]
+
+      - type: predict-output
+        id: predict-triple-twice
+        code:
+          rust: |
+            fn triple(n: i32) -> i32 {
+                n * 3
+            }
+
+            fn main() {
+                let a = triple(2);
+                let b = triple(a);
+                println!("{a} {b}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "6 18" }
+          - { id: b, text: "6 6", why: "`b` is `triple(a)`, and `a` is 6, so `b` is 18." }
+          - { id: c, text: "2 6", why: "`a` holds what `triple(2)` returned, which is 6." }
+        answer: a
+        explanation: "`a` is 6. Passing `a` to `triple` gives 18."
+        concepts: [fn.return]
+
+      - type: mcq
+        id: mcq-signature-for-call
+        prompt: "Which signature lets `let ok: bool = check(5);` compile?"
+        options:
+          - { id: a, code: "fn check(n: i32) -> bool" }
+          - { id: b, code: "fn check(n: bool) -> i32", why: "That swaps them: it would take a `bool` and return an `i32`." }
+          - { id: c, code: "fn check(n: i32)", why: "With no `->`, `check` returns `()`, which can't be stored in a `bool`." }
+          - { id: d, code: "fn check(n) -> bool", why: "The parameter needs a type." }
+        answer: a
+        explanation: "`5` is an `i32` going in, and `ok` needs a `bool` coming out."
+        concepts: [fn.return, fn.params]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-add
+        prompt: "Arrange the lines so the program prints `5`"
+        lines:
+          - { id: l1, text: "fn add(a: i32, b: i32) -> i32 {" }
+          - { id: l2, text: "    a + b" }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn main() {" }
+          - { id: l5, text: "    let sum = add(2, 3);" }
+          - { id: l6, text: '    println!("{sum}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    a + b;" }
+          - { id: d2, text: "fn add(a: i32, b: i32) {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l4, l5, l6, l7, l1, l2, l3]
+          - [l1, l2, l7, l4, l5, l6, l3]
+          - [l4, l5, l6, l3, l1, l2, l7]
+        verify:
+          mode: run
+          expectStdout: "5\n"
+        explanation: "`add` needs `-> i32` to return a value, and its tail `a + b` has no semicolon."
+        concepts: [fn.return, fn.define]
+
+      - type: predict-output
+        id: predict-seconds
+        code:
+          rust: |
+            fn to_secs(min: i32, sec: i32) -> i32 {
+                min * 60 + sec
+            }
+
+            fn main() {
+                println!("{}", to_secs(2, 5));
+            }
+          verify: run
+        options:
+          - { id: a, text: "125" }
+          - { id: b, text: "130", why: "`*` happens before `+`: 120 + 5, not 2 * 65." }
+          - { id: c, text: "25", why: "The first argument goes to `min`, so it's multiplied by 60: 2 minutes is 120 seconds." }
+        answer: a
+        explanation: "`2 * 60 + 5` is 125. Multiplication happens before addition, as in maths."
+        concepts: [fn.return, ops.arith]
+
+      - type: fill-tokens
+        id: fill-max-score
+        prompt: "Fill the blanks so the program prints `300`"
+        code:
+          rust: |
+            fn max_score(level: i32) -> ___1___ {
+                ___2___ * 100
+            }
+
+            fn main() {
+                println!("{}", max_score(3));
+            }
+          verify: run
+          expectStdout: "300\n"
+        blanks:
+          "1": { answer: ["i32"] }
+          "2": { answer: ["level"] }
+        bank: ["i32", "level", "()", "max_score", "3"]
+        explanation: "The function returns a whole number, so `-> i32`. The body uses the parameter `level`; writing `3` would ignore the argument."
+        concepts: [fn.return, fn.params]
+
+      - type: decode-error
+        id: decode-print-unit
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi {name}");
+            }
+
+            fn main() {
+                let message = greet("Ann");
+                println!("{message}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "`greet` returns `()`, which `{}` can't print" }
+          - { id: b, text: "`message` needs to be `mut`", why: "`message` is never changed. The problem is what it holds." }
+          - { id: c, text: "A function call can't be stored in a variable", why: "It can, as long as the function returns something useful." }
+        answer: a
+        explanation: "`greet` has no `->`, so `message` holds `()`. `{}` can't display `()`, so the compiler reports E0277."
+        concepts: [fn.return, types.unit]
+
+      - type: predict-output
+        id: predict-arg-unchanged
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                let n = 4;
+                let m = double(n);
+                println!("{n} {m}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "4 8" }
+          - { id: b, text: "8 8", why: "`double` returns a new value. The `n` in `main` stays 4." }
+          - { id: c, text: "4 4", why: "`m` holds the returned value, 8." }
+        answer: a
+        explanation: "Passing `n` gives `double` a copy of 4. The result goes into `m`; `n` itself doesn't change."
+        concepts: [fn.return, fn.params]
+
+      - type: predict-output
+        id: predict-shadow-calls
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                let x = 5;
+                let x = double(x);
+                let x = double(x) + 1;
+                println!("{x}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "21" }
+          - { id: b, text: "11", why: "There are two calls to `double`: 5 becomes 10, then 20, then 21." }
+          - { id: c, text: "22", why: "The `+ 1` is added to the result of `double(x)`, not before doubling." }
+        answer: a
+        explanation: "Each `let x` shadows the last one: 5, then 10, then 20 + 1 = 21."
+        concepts: [fn.return, var.shadowing]
+
+      - type: mcq
+        id: mcq-body-sum
+        prompt: "Which body makes `fn sum(a: i32, b: i32) -> i32` return the sum?"
+        options:
+          - { id: a, code: "{ a + b }" }
+          - { id: b, code: "{ a + b; }", why: "The semicolon throws the value away, so the body produces `()` instead of an `i32`." }
+          - { id: c, code: "{ let total = a + b; }", why: "The sum is stored, but nothing is returned. The body ends with a statement." }
+          - { id: d, code: "{ println!(\"{}\", a + b) }", why: "Printing isn't returning. `println!` produces `()`." }
+        answer: a
+        explanation: "The body must end with an expression of type `i32`, with no semicolon after it."
+        concepts: [fn.return]
+
+      - type: match-pairs
+        id: pairs-signatures
+        pairs:
+          - ["fn reset()", "takes nothing, returns ()"]
+          - ["fn id(n: i32) -> i32", "takes an i32, returns an i32"]
+          - ["fn half(n: i32) -> f64", "takes an i32, returns an f64"]
+          - ["fn pair() -> (i32, i32)", "takes nothing, returns a tuple"]
+        concepts: [fn.return, fn.params]
+
+      - type: true-false
+        id: tf-main-returns-unit
+        prompt: "`fn main()` has no `->`, so it returns `()`."
+        answer: true
+        explanation: "`main` follows the same rule as any other function. With no return type, it returns the unit value `()`."
+        concepts: [fn.return, intro.main, types.unit]
+
+      - type: compiles
+        id: compiles-nested-print
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                println!("{}", double(double(2)));
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles and prints 8. A call that returns an `i32` can be used anywhere an `i32` can, including as another call's argument."
+        concepts: [fn.return]

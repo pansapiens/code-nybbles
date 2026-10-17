@@ -1,0 +1,20 @@
+id: functions-control-flow.loops
+title: Loops
+description: Repeat code with loop, while and for, and control each pass with break and continue.
+colour: teal
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch03-05-control-flow.html#repetition-with-loops
+sources:
+  - name: The Rust Programming Language, ch. 3.5
+    url: https://doc.rust-lang.org/book/ch03-05-control-flow.html#repetition-with-loops
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-loop
+  - level: level-02-while
+  - level: level-03-for
+  - chest
+  - level: level-04-continue-labels
+  - level: level-05-classics
+  - code-read: code-read-collatz
+  - checkpoint: checkpoint-functions-control-flow

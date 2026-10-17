@@ -1,0 +1,21 @@
+id: first-steps.scalars
+title: Scalar Types
+description: Work with whole numbers, decimals, true/false values and characters, and convert between them.
+colour: blue
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch03-02-data-types.html
+sources:
+  - name: The Rust Programming Language, ch. 3.2
+    url: https://doc.rust-lang.org/book/ch03-02-data-types.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-integers
+  - level: level-02-inference
+  - level: level-03-arithmetic
+  - chest
+  - level: level-04-overflow
+  - level: level-05-bool-char
+  - level: level-06-casting
+  - code-read: code-read-temperature
+  - checkpoint: checkpoint-scalars

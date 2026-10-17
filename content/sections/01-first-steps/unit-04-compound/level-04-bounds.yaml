@@ -1,0 +1,463 @@
+id: first-steps.compound.bounds
+title: Staying in bounds
+icon: shield
+concepts: [types.array-bounds, panic.index]
+reviewConcepts: [types.array, types.tuple, types.unit, var.mut, fmt.placeholders, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-compile-bounds
+        title: Indexes must exist
+        markdown: |
+          **An array of length 3 has indexes 0, 1 and 2.** Index 3 doesn't exist.
+
+          When the index is a number written in the code, the compiler spots the problem and refuses to build the program:
+
+          ```text
+          error: this operation will panic at runtime
+           --> src/main.rs:3:20
+            |
+          3 |     println!("{}", scores[3]);
+            |                    ^^^^^^^^^ index out of bounds: the length is 3 but the index is 3
+          ```
+        code:
+          rust: |
+            fn main() {
+                let scores = [90, 72, 85];
+                println!("{}", scores[3]);
+            }
+          verify: compile-fail
+          expectErrorMessage: "this operation will panic at runtime"
+        concepts: [types.array-bounds]
+
+      - type: mcq
+        id: mcq-last-index
+        prompt: "What is the last valid index of `[4, 8, 15, 16, 23]`?"
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "5", why: "5 is the length. Indexes start at 0, so the last one is one less." }
+          - { id: c, text: "23", why: "23 is the last element's value, not its index." }
+          - { id: d, text: "-1", why: "Rust indexes can't be negative. Count from 0 up to the length minus 1." }
+        answer: a
+        explanation: "Five elements have indexes 0 to 4."
+        concepts: [types.array-bounds]
+
+      - type: true-false
+        id: tf-const-index
+        prompt: "This program compiles."
+        code:
+          rust: |
+            fn main() {
+                let laps = [61, 59, 60];
+                println!("{}", laps[3]);
+            }
+          verify: compile-fail
+          expectErrorMessage: "this operation will panic at runtime"
+        answer: false
+        explanation: "`laps` has indexes 0 to 2. The index 3 is written in the code, so the compiler catches it."
+        concepts: [types.array-bounds]
+
+      - type: decode-error
+        id: decode-const-index
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let rooms = [3, 1, 4, 1];
+                let last = rooms[4];
+                println!("{last}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "the length is 4 but the index is 4"
+        options:
+          - { id: a, text: "`rooms` has indexes 0 to 3, so `rooms[4]` would always fail" }
+          - { id: b, text: "`rooms` needs to be `mut` to be indexed", why: "Reading an element doesn't need `mut`. The index is too big." }
+          - { id: c, text: "The program ran and crashed on line 3", why: "This is an error from the compiler, so the program never ran. It says it *will* panic at runtime." }
+        answer: a
+        explanation: "The compiler can see the length 4 and the index 4, so it refuses to build a program that would always panic."
+        concepts: [types.array-bounds, compiler.read-error]
+
+      - type: concept
+        id: concept-runtime-panic
+        title: Panics at run time
+        markdown: |
+          **If the compiler can't know the index, Rust checks it while the program runs.** A bad index makes the program stop with a *panic*.
+
+          `std::env::args().count()` counts the words used to start the program. Run plainly, that's 1, but the compiler can't know it in advance. So `n` is 1, `index` is 3, and the program panics:
+
+          ```text
+          thread 'main' (2817) panicked at src/main.rs:5:20:
+          index out of bounds: the len is 3 but the index is 3
+          ```
+        code:
+          rust: |
+            fn main() {
+                let scores = [90, 72, 85];
+                let n = std::env::args().count();
+                let index = n + 2;
+                println!("{}", scores[index]);
+            }
+          verify: run
+          expectPanic: "main.rs:5:20:\nindex out of bounds: the len is 3 but the index is 3"
+        concepts: [panic.index]
+
+      - type: mcq
+        id: mcq-what-happens
+        prompt: What happens when you run this program?
+        code:
+          rust: |
+            fn main() {
+                let marks = [70, 85];
+                let n = std::env::args().count();
+                let index = n + 1;
+                println!("{}", marks[index]);
+            }
+          verify: run
+          expectPanic: "the len is 2 but the index is 2"
+        options:
+          - { id: a, text: "It panics: index out of bounds" }
+          - { id: b, text: "It prints `0`", why: "Rust never makes up a value for a missing element. It stops the program instead." }
+          - { id: c, text: "It prints `85`, the last element", why: "Rust doesn't round a bad index down to the last one." }
+          - { id: d, text: "It doesn't compile", why: "The compiler can't know what `count()` gives, so it can't reject this. The check happens at run time." }
+        answer: a
+        explanation: "`index` is 2 when you run it, and `marks` only has indexes 0 and 1, so the program panics."
+        concepts: [panic.index]
+
+      - type: true-false
+        id: tf-read-past-end
+        prompt: "Reading past the end of an array gives you whatever happens to be in memory there."
+        answer: false
+        explanation: "Rust checks every index. Out of range is either a compile error or a panic, never a random value."
+        concepts: [panic.index]
+
+      - type: predict-output
+        id: predict-start-panic
+        code:
+          rust: |
+            fn main() {
+                let a = [1, 2, 3];
+                println!("Start");
+                let n = std::env::args().count();
+                let i = n * 5;
+                println!("{}", a[i]);
+                println!("End");
+            }
+          verify: run
+          expectPanic: "the len is 3 but the index is 5"
+        options:
+          - { id: a, text: "Start" }
+          - { id: b, text: "Start\nEnd", why: "The panic on line 6 stops the program, so `End` is never printed." }
+          - { id: c, text: "Start\n3\nEnd", why: "Rust doesn't use the last element when the index is too big. It panics." }
+        answer: a
+        explanation: "`Start` prints, then `a[5]` panics and the program stops. The panic message goes to the error output, not this output."
+        concepts: [panic.index]
+
+      - type: match-pairs
+        id: pairs-bounds
+        pairs:
+          - ["scores[0]", "first element"]
+          - ["scores.len()", "number of elements"]
+          - ["too-big index written in the code", "compile error"]
+          - ["too-big index found at run time", "panic"]
+        concepts: [types.array-bounds, panic.index]
+
+      - type: mcq
+        id: mcq-what-is-panic
+        prompt: In Rust, what is a panic?
+        options:
+          - { id: a, text: "The running program stops with an error message" }
+          - { id: b, text: "The compiler refuses to build the program", why: "That's a compile error. A panic happens while the program is running." }
+          - { id: c, text: "A warning that the program carries on after", why: "A panic stops the program. It doesn't carry on." }
+        answer: a
+        explanation: "A panic is a run-time error. Rust stops the program rather than continue with a bad value."
+        concepts: [panic.index]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-read-panic
+        title: Reading a panic message
+        markdown: |
+          **A panic message tells you where and why.**
+
+          ```text
+          thread 'main' (2817) panicked at src/main.rs:5:20:
+          index out of bounds: the len is 4 but the index is 6
+          ```
+
+          - `src/main.rs:5:20` is the file, line 5, column 20.
+          - `the len is 4` is the array's length, so valid indexes are 0 to 3.
+          - `the index is 6` is the index the program tried to use.
+        concepts: [panic.index]
+
+      - type: mcq
+        id: mcq-len-four
+        prompt: "A program panics with `index out of bounds: the len is 4 but the index is 4`. What went wrong?"
+        options:
+          - { id: a, text: "It used index 4, but the last valid index is 3" }
+          - { id: b, text: "The array had 5 elements but expected 4", why: "`the len is 4` means the array has 4 elements. The index was the problem." }
+          - { id: c, text: "Index 4 is negative", why: "4 isn't negative. It's one past the last index." }
+        answer: a
+        explanation: "With length 4 the indexes are 0 to 3, so 4 is one past the end."
+        concepts: [panic.index]
+
+      - type: mcq
+        id: mcq-line-number
+        prompt: "In `panicked at src/main.rs:6:13:`, what does the 6 tell you?"
+        options:
+          - { id: a, text: "The panic happened on line 6" }
+          - { id: b, text: "The index was 6", why: "The index is given on the next line of the message. `6` here is a line number." }
+          - { id: c, text: "The array has 6 elements", why: "The length is on the next line too. `src/main.rs:6:13` is the line and column." }
+        answer: a
+        explanation: "The location is file, line, then column: line 6, column 13."
+        concepts: [panic.index]
+
+      - type: spot-bug
+        id: spot-panic-line
+        prompt: Tap the line that panics when this runs
+        code:
+          rust: |
+            fn main() {
+                let rooms = [3, 1, 4];
+                let n = std::env::args().count();
+                println!("{}", rooms[n]);
+                println!("{}", rooms[n + 2]);
+            }
+          verify: run
+          expectPanic: "the len is 3 but the index is 3"
+        answer: 5
+        explanation: "`n` is 1 when run plainly. `rooms[1]` is fine, but `rooms[3]` on line 5 is out of bounds."
+        concepts: [panic.index]
+
+      - type: predict-output
+        id: predict-args-index
+        code:
+          rust: |
+            let levels = [10, 20, 30];
+            let i = std::env::args().count();
+            println!("{}", levels[i]);
+          verify: run
+        options:
+          - { id: a, text: "20" }
+          - { id: b, text: "10", why: "`count()` is 1 when the program is run plainly, so this is `levels[1]`." }
+          - { id: c, text: "30", why: "`i` is 1, and index 1 is the second element." }
+        answer: a
+        explanation: "Run with no extra words, `count()` is 1, and `levels[1]` is 20."
+        concepts: [types.array, panic.index]
+
+      - type: compiles
+        id: compiles-runtime-index
+        code:
+          rust: |
+            let seats = [0, 0, 0];
+            let i = std::env::args().count() + 5;
+            println!("{}", seats[i]);
+          verify: compile
+        answer: true
+        explanation: "It compiles, because the compiler can't know what `i` will be. When you run it, it panics."
+        concepts: [panic.index, types.array-bounds]
+
+      - type: true-false
+        id: tf-compiles-no-panic
+        prompt: "If a program compiles, it can't panic because of a bad index."
+        answer: false
+        explanation: "The compiler only catches indexes it can work out. Indexes found at run time are checked as the program runs."
+        concepts: [panic.index, types.array-bounds]
+
+      - type: fill-tokens
+        id: fill-last-score
+        prompt: "Fill the blank so the program prints the last score, `64`"
+        code:
+          rust: |
+            let scores = [88, 71, 93, 64];
+            println!("{}", scores[___1___]);
+          verify: run
+          expectStdout: "64\n"
+        blanks:
+          "1": { answer: ["3", "scores.len() - 1"] }
+        bank: ["3", "4", "scores.len()", "-1"]
+        explanation: "Four elements have indexes 0 to 3. Using 4 or `scores.len()` would be out of bounds, and Rust indexes can't be negative."
+        concepts: [types.array-bounds]
+
+      - type: decode-error
+        id: decode-index-type
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let rooms = [3, 1, 4];
+                let index: i32 = 1;
+                println!("{}", rooms[index]);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "An array index must be a `usize`, not an `i32`" }
+          - { id: b, text: "Index 1 is out of bounds", why: "Index 1 is fine for three elements. The problem is its type." }
+          - { id: c, text: "`rooms` needs to be `mut` to be indexed", why: "Reading an element doesn't need `mut`." }
+        answer: a
+        explanation: "Indexes have the type `usize`. Removing `: i32` lets Rust pick `usize`."
+        concepts: [types.array, compiler.read-error]
+
+      - type: mcq
+        id: mcq-when-caught
+        prompt: "`let a = [1, 2, 3];` When is `a[7]` caught?"
+        options:
+          - { id: a, text: "When you compile, because 7 is written in the code" }
+          - { id: b, text: "Only when you run it", why: "The compiler can see the 7 and the array's length, so it catches this before running." }
+          - { id: c, text: "Never: it reads a random value", why: "Rust always checks indexes." }
+        answer: a
+        explanation: "The compiler knows both the length and the index here, so it reports the error at compile time."
+        concepts: [types.array-bounds]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-last-lap
+        prompt: "Arrange the lines so the program prints the last lap time, `60`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let laps = [61, 59, 60];" }
+          - { id: l3, text: "    let last = laps.len() - 1;" }
+          - { id: l4, text: '    println!("{}", laps[last]);' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let last = laps.len();" }
+          - { id: d2, text: '    println!("{}", laps.last);' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "60\n"
+        explanation: "The last index is the length minus 1. Using `laps.len()` as the index would panic."
+        concepts: [types.array-bounds]
+
+      - type: predict-output
+        id: predict-double-count
+        code:
+          rust: |
+            let sizes = [5, 6, 7];
+            let i = std::env::args().count() * 2;
+            println!("{}", sizes[i]);
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "6", why: "`i` is `1 * 2`, which is 2, so this reads the third element." }
+          - { id: c, text: "5", why: "`count()` is 1 here, not 0, so `i` is 2." }
+        answer: a
+        explanation: "`i` is 2, and index 2 is the last element, 7. It's still in bounds."
+        concepts: [panic.index, types.array]
+
+      - type: mcq
+        id: mcq-panic-message
+        prompt: Which message does this program panic with?
+        code:
+          rust: |
+            fn main() {
+                let slots = [0; 4];
+                let n = std::env::args().count();
+                let i = n * 6;
+                println!("{}", slots[i]);
+            }
+          verify: run
+          expectPanic: "the len is 4 but the index is 6"
+        options:
+          - { id: a, text: "index out of bounds: the len is 4 but the index is 6" }
+          - { id: b, text: "index out of bounds: the len is 0 but the index is 6", why: "`[0; 4]` has length 4. The 0 is the value of each element." }
+          - { id: c, text: "index out of bounds: the len is 4 but the index is 1", why: "`i` is `1 * 6`, so the index is 6." }
+        answer: a
+        explanation: "`[0; 4]` has four elements and `i` is 6, so the message says length 4 and index 6."
+        concepts: [panic.index]
+
+      - type: true-false
+        id: tf-len-as-index
+        prompt: "`a[a.len()]` is always out of bounds."
+        answer: true
+        explanation: "The last index is `a.len() - 1`, so `a.len()` is always one past the end."
+        concepts: [types.array-bounds]
+
+      - type: spot-bug
+        id: spot-off-by-one
+        prompt: This program panics. Tap the line that causes it.
+        code:
+          rust: |
+            fn main() {
+                let temps = [18, 22, 25];
+                let first = temps[0];
+                let last = temps[temps.len()];
+                println!("{first} {last}");
+            }
+          verify: run
+          expectPanic: "the len is 3 but the index is 3"
+        answer: 4
+        explanation: "`temps.len()` is 3, one past the last index. Line 4 needs `temps.len() - 1`."
+        concepts: [types.array-bounds, panic.index]
+
+      - type: decode-error
+        id: decode-tuple-bounds
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let size = (1920, 1080);
+                println!("{}", size.2);
+            }
+          verify: compile-fail
+          expectErrors: [E0609]
+        options:
+          - { id: a, text: "`size` only has positions 0 and 1, so there's no `.2`" }
+          - { id: b, text: "The program will panic when it runs", why: "Tuple positions are always checked by the compiler, so this never gets to run." }
+          - { id: c, text: "Tuples can't hold numbers above 1000", why: "Any `i32` fits. The problem is the position `.2`." }
+        answer: a
+        explanation: "A tuple position is always written in the code, so a bad one is always a compile error. Tuples never panic like this."
+        concepts: [types.tuple, types.array-bounds, compiler.read-error]
+
+      - type: fill-tokens
+        id: fill-first-element
+        prompt: "Fill the blank so the program prints `10`"
+        code:
+          rust: |
+            let points = [10, 20, 30];
+            let i = std::env::args().count() ___1___ 1;
+            println!("{}", points[i]);
+          verify: run
+          expectStdout: "10\n"
+        blanks:
+          "1": { answer: ["-"] }
+        bank: ["-", "+", "*", "/"]
+        explanation: "`count()` is 1, so `1 - 1` gives index 0. `+` gives index 2, and `*` and `/` give index 1."
+        concepts: [types.array, panic.index]
+
+      - type: match-pairs
+        id: pairs-panic-parts
+        pairs:
+          - ["src/main.rs:5:20", "where it panicked"]
+          - ["the len is 3", "how many elements"]
+          - ["the index is 3", "the index used"]
+          - ["index out of bounds", "the kind of problem"]
+        concepts: [panic.index]
+
+      - type: mcq
+        id: mcq-valid-range
+        prompt: "Which indexes are valid for an array of length 5?"
+        options:
+          - { id: a, text: "0 to 4" }
+          - { id: b, text: "1 to 5", why: "Indexes start at 0, not 1." }
+          - { id: c, text: "0 to 5", why: "That's six indexes. The last one is the length minus 1." }
+        answer: a
+        explanation: "Indexes run from 0 to the length minus 1."
+        concepts: [types.array-bounds]
+
+      - type: compiles
+        id: compiles-mut-review
+        code:
+          rust: |
+            let mut grid = [0; 3];
+            let i = std::env::args().count();
+            grid[i] = 7;
+            println!("{}", grid[1]);
+          verify: run
+          expectStdout: "7\n"
+        answer: true
+        explanation: "It compiles and prints 7. `grid` is `mut`, and `i` is 1 at run time, which is in bounds."
+        concepts: [types.array, var.mut, panic.index]

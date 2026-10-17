@@ -1,0 +1,278 @@
+id: first-steps.formatting.checkpoint
+title: "Checkpoint: First Steps"
+icon: flag
+concepts: []
+reviewConcepts:
+  - intro.main
+  - macro.println-basic
+  - macro.bang
+  - syntax.comments
+  - compiler.read-error
+  - var.let
+  - var.mut
+  - err.E0384
+  - var.shadowing
+  - var.const
+  - fmt.placeholders
+  - fmt.inline-args
+  - types.int
+  - types.float
+  - ops.arith
+  - types.overflow
+  - types.bool
+  - types.char
+  - types.as-cast
+  - types.tuple
+  - types.array
+  - types.array-bounds
+  - fmt.debug
+  - fmt.width-precision
+  - macro.print-family
+  - string.literals
+  - string.str-literal-intro
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-comments-print
+        code:
+          rust: |
+            // println!("one");
+            print!("two ");
+            /* print!("three "); */
+            println!("four");
+          verify: run
+        options:
+          - { id: a, text: "two four" }
+          - { id: b, text: "two\nfour", why: "`print!` doesn't end the line, so `four` follows on the same one." }
+          - { id: c, text: "one\ntwo three four", why: "Both `//` and `/* */` turn code into comments, which never run." }
+        answer: a
+        explanation: "The two commented-out lines don't run. `print!` leaves the line open for `four`."
+        concepts: [syntax.comments, macro.print-family]
+
+      - type: compiles
+        id: compiles-int-plus-float
+        code:
+          rust: |
+            let mut total = 10;
+            total += 2.5;
+            println!("{total:.1}");
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`total` is an integer, and Rust won't add a float to it" }
+            - { id: b, text: "`total` needs `mut`", why: "It already has `mut`. The problem is the types." }
+            - { id: c, text: "`{total:.1}` needs a float", why: "Precision on an integer is allowed. The error is on line 2." }
+          answer: a
+        explanation: "`10` makes `total` an integer, and `+=` with `2.5` mixes types. Writing `10.0` makes it a float, and then it prints `12.5`."
+        concepts: [types.float, types.int, var.mut]
+
+      - type: predict-output
+        id: predict-minutes
+        code:
+          rust: |
+            let minutes = 125;
+            let h = minutes / 60;
+            let m = minutes % 60;
+            println!("{h}:{m:02}");
+          verify: run
+        options:
+          - { id: a, text: "2:05" }
+          - { id: b, text: "2:5", why: "`:02` pads `5` with a zero to 2 characters." }
+          - { id: c, text: "02:05", why: "Only `m` has the `:02` option. `{h}` prints 2 as it is." }
+        answer: a
+        explanation: "125 / 60 is 2 with remainder 5, and `{m:02}` shows the 5 as `05`."
+        concepts: [ops.arith, fmt.width-precision]
+
+      - type: predict-output
+        id: predict-cast-average
+        code:
+          rust: |
+            let total = 7;
+            let avg = total as f64 / 2.0;
+            println!("{avg:.2}");
+          verify: run
+        options:
+          - { id: a, text: "3.50" }
+          - { id: b, text: "3.00", why: "`as f64` turns `total` into 7.0 before dividing, so nothing is lost." }
+          - { id: c, text: "3.5", why: "`.2` shows two decimal places, so a trailing zero is added." }
+        answer: a
+        explanation: "`as` binds more tightly than `/`, so this is 7.0 / 2.0 = 3.5, shown as `3.50`."
+        concepts: [types.as-cast, fmt.width-precision]
+
+      - type: spot-bug
+        id: spot-out-of-bounds
+        prompt: "This should print the last score, `60`. Tap the line that panics."
+        code:
+          rust: |
+            fn main() {
+                let scores = [90, 75, 60];
+                let count = scores.len();
+                println!("{count} scores");
+                println!("Last: {}", scores[count]);
+            }
+          verify: run
+          expectStdout: "3 scores\n"
+          expectPanic: "index out of bounds"
+        answer: 5
+        explanation: "The 3 items are at positions 0 to 2, so `scores[3]` is out of bounds and the program panics. The last item is `scores[count - 1]`."
+        concepts: [types.array-bounds, types.array]
+
+      - type: fill-tokens
+        id: fill-tuple-row
+        prompt: "Fill the blanks so the program prints `Ada  |  9.5`"
+        code:
+          rust: |
+            let (name, score) = ("Ada", 9.5);
+            println!(
+                "{___1___:<5}|{score:___2___}"
+            );
+          verify: run
+          expectStdout: "Ada  |  9.5\n"
+        blanks:
+          "1": { answer: ["name"] }
+          "2": { answer: [">5.1"] }
+        bank: ["name", ">5.1", "<5.1", "0", ">1.5"]
+        explanation: "Destructuring gives `name` and `score`. `>5.1` right-aligns `score` in 5 characters with one decimal place."
+        concepts: [types.tuple, fmt.width-precision]
+
+      - type: decode-error
+        id: decode-lives
+        prompt: Which change makes the program compile?
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                eprintln!("hit!");
+                lives -= 1;
+                println!("{lives}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        options:
+          - { id: a, text: "Change line 2 to `let mut lives = 3;`" }
+          - { id: b, text: "Change line 3 to `println!(\"hit!\");`", why: "`eprintln!` is fine. The error is about changing `lives`." }
+          - { id: c, text: "Change line 4 to `mut lives -= 1;`", why: "`mut` goes on the `let` that creates the variable." }
+        answer: a
+        explanation: "E0384: `lives` isn't `mut`, so `-=` can't change it."
+        concepts: [err.E0384, var.mut, macro.print-family]
+
+      - type: predict-output
+        id: predict-tiles-shadow-len
+        prompt: Build the output
+        code:
+          rust: |
+            let word = "héllo";
+            let word = word.len();
+            println!("{word:>3}|{:<3}|", word * 2);
+          verify: run
+        tiles: ["  6", "  5", "|", "12 ", " 12", "10 "]
+        answer: "  6|12 |"
+        explanation: "`é` takes 2 bytes, so `word` becomes 6. Numbers right-align in `{word:>3}`, but `<3` puts 12 on the left."
+        concepts: [var.shadowing, string.str-literal-intro, fmt.width-precision]
+
+      - type: predict-output
+        id: predict-debug-mixed
+        code:
+          rust: |
+            let flags = (true, 'x', "x");
+            println!("{:?}", flags);
+          verify: run
+        options:
+          - { id: a, text: "(true, 'x', \"x\")" }
+          - { id: b, text: "(true, x, x)", why: "Debug format shows a `char` in single quotes and text in double quotes." }
+          - { id: c, text: "(true, \"x\", \"x\")", why: "`'x'` is a `char`, which Debug shows with single quotes." }
+        answer: a
+        explanation: "`{:?}` prints a tuple in brackets, with each part in Debug format: `char` in single quotes, `&str` in double quotes."
+        concepts: [fmt.debug, types.tuple, types.char, types.bool]
+
+      - type: mcq
+        id: mcq-valid-const
+        prompt: Which line declares a constant correctly?
+        options:
+          - { id: a, code: "const MAX_LIVES: u32 = 3;" }
+          - { id: b, code: "const MAX_LIVES = 3;", why: "A constant must have its type written out." }
+          - { id: c, code: "const mut MAX_LIVES: u32 = 3;", why: "Constants can never be `mut`." }
+          - { id: d, code: "let const MAX_LIVES: u32 = 3;", why: "`const` replaces `let`. They aren't used together." }
+        answer: a
+        explanation: "`const`, a `SCREAMING_SNAKE_CASE` name, a type and a value."
+        concepts: [var.const]
+
+      - type: true-false
+        id: tf-array-display
+        prompt: "`println!(\"{}\", [1, 2, 3]);` compiles."
+        code:
+          rust: |
+            println!("{}", [1, 2, 3]);
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        explanation: "Arrays don't have a `{}` format. Use `{:?}` to print `[1, 2, 3]`."
+        concepts: [fmt.debug, types.array]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each error code to its meaning
+        pairs:
+          - ["E0384", "assigned twice to a non-`mut` variable"]
+          - ["E0308", "mismatched types"]
+          - ["E0425", "cannot find a value with that name"]
+          - ["E0277", "this type can't do that, like `{}` on an array"]
+        concepts: [compiler.read-error, err.E0384]
+
+      - type: parsons
+        id: parsons-area
+        prompt: "Arrange the lines so the program prints `Area:   12`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let (w, h) = (4, 3);" }
+          - { id: l3, text: "    let area = w * h;" }
+          - { id: l4, text: '    print!("Area: ");' }
+          - { id: l5, text: '    println!("{area:>4}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{area:>4f}");' }
+          - { id: d2, text: '    println!("Area: ");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l4, l2, l3, l5, l6]
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Area:   12\n"
+        explanation: "`print!` keeps `Area: ` on the line, and `{area:>4}` right-aligns 12 in 4 characters. Rust has no `f` format."
+        concepts: [types.tuple, macro.print-family, fmt.width-precision]
+
+      - type: predict-output
+        id: predict-raw-vs-escape
+        code:
+          rust: |
+            println!("{}|{}", r"\t", "\\t");
+          verify: run
+        options:
+          - { id: a, text: '\t|\t' }
+          - { id: b, text: "\t|\t", why: "Neither string holds a real tab. The raw string keeps `\\t` as written, and `\\\\` is one backslash." }
+          - { id: c, text: '\t|\\t', why: "`\\\\` is the escape for a single backslash." }
+        answer: a
+        explanation: "Both strings hold a backslash and a `t`: one because it's raw, the other because `\\\\` is an escaped backslash."
+        concepts: [string.literals]
+
+      - type: spot-bug
+        id: spot-integer-average
+        prompt: "This should print `3.50` but prints `3`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let total = 7;
+                let count = 2;
+                let average = total / count;
+                println!("{average:.2}");
+            }
+          verify: run
+          expectStdout: "3\n"
+        answer: 4
+        explanation: "Integer division drops the remainder, so `average` is the integer 3, and precision doesn't add decimals to an integer. Line 4 needs `total as f64 / count as f64`."
+        concepts: [ops.arith, types.as-cast, fmt.width-precision]

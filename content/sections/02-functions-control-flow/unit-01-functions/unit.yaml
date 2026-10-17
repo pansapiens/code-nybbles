@@ -1,0 +1,20 @@
+id: functions-control-flow.functions
+title: Functions
+description: Write your own functions, pass them values, and see how Rust builds results from expressions.
+colour: blue
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch03-03-how-functions-work.html
+sources:
+  - name: The Rust Programming Language, ch. 3.3
+    url: https://doc.rust-lang.org/book/ch03-03-how-functions-work.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-define
+  - level: level-02-return
+  - level: level-03-expressions
+  - chest
+  - level: level-04-blocks
+  - level: level-05-early-return
+  - code-read: code-read-area-calculator
+  - checkpoint: checkpoint-functions

@@ -1,0 +1,319 @@
+id: functions-control-flow.conditionals.checkpoint
+title: "Checkpoint: Conditionals"
+icon: flag
+concepts: []
+reviewConcepts:
+  - ctrl.if
+  - ctrl.if-expr
+  - match.intro
+  - err.E0308
+  - fn.params
+  - fn.return
+  - fn.early-return
+  - expr.vs-stmt
+  - expr.block
+  - types.bool
+  - var.mut
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-separate-ifs
+        code:
+          rust: |
+            let hits = 3;
+            let mut score = 0;
+            if hits > 2 {
+                score += 10;
+            }
+            if hits > 0 {
+                score += 1;
+            }
+            println!("{score}");
+          verify: run
+        options:
+          - { id: a, text: "11" }
+          - { id: b, text: "10", why: "These are two separate `if`s, not an `else if` chain, so both conditions are checked and both are true." }
+          - { id: c, text: "1", why: "`3 > 2` is true, so the first block adds 10." }
+        answer: a
+        explanation: "Only an `else if` chain stops at the first true condition. Two separate `if` statements each run when their own condition is true."
+        concepts: [ctrl.if, var.mut]
+
+      - type: compiles
+        id: compiles-char-str
+        code:
+          rust: |
+            fn main() {
+                let mark = 72;
+                let grade = if mark >= 50 {
+                    'P'
+                } else {
+                    "F"
+                };
+                println!("{grade}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: `if` and `else` have incompatible types" }
+            - { id: b, text: "E0317: `if` may be missing an `else` clause", why: "There is an `else`. Its type is the problem." }
+            - { id: c, text: "E0004: non-exhaustive patterns", why: "That error is for `match`, and there's no `match` here." }
+          answer: a
+        explanation: "`'P'` is a `char` and `\"F\"` is a `&str`. Both blocks must give the same type, so use double quotes for both."
+        concepts: [ctrl.if-expr, err.E0308]
+
+      - type: decode-error
+        id: decode-tail-if
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn bonus(level: u32) -> u32 {
+                if level > 3 {
+                    100
+                }
+            }
+
+            fn main() {
+                println!("{}", bonus(5));
+            }
+          verify: compile-fail
+          expectErrors: [E0317]
+        options:
+          - { id: a, text: "The function must return a `u32` every time, but there's no value when `level > 3` is false" }
+          - { id: b, text: "`100` needs `return` in front of it", why: "A final expression is returned without `return`. The missing case is the problem." }
+          - { id: c, text: "`level` must be `mut` to be compared", why: "Comparing only reads `level`." }
+        answer: a
+        explanation: "The `if` is the function's last expression, so it must give a `u32` either way. Add `else { 0 }`."
+        concepts: [ctrl.if-expr, fn.return]
+
+      - type: spot-bug
+        id: spot-else-order
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let temp = 5;
+                if temp > 30 {
+                    println!("hot");
+                } else {
+                    println!("not hot");
+                } else if temp < 10 {
+                    println!("cold");
+                }
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected expression, found keyword `else`"
+        answer: 7
+        explanation: "The plain `else` must come last. Once it closes on line 6, the chain is finished, so another `else if` can't follow."
+        concepts: [ctrl.if]
+
+      - type: fill-tokens
+        id: fill-shipping
+        prompt: "Fill the blanks so the program prints `10` and then `0`"
+        code:
+          rust: |
+            fn shipping(kg: u32) -> u32 {
+                match kg {
+                    0___1___2 => 5,
+                    3..=9 => 10,
+                    ___2___ => 0,
+                }
+            }
+
+            fn main() {
+                println!("{}", shipping(4));
+                println!("{}", shipping(25));
+            }
+          verify: run
+          expectStdout: "10\n0\n"
+        blanks:
+          "1": { answer: ["..="] }
+          "2": { answer: ["_"] }
+        bank: ["..=", "...", "->", "_", "else", ":"]
+        explanation: "`0..=2` covers 0, 1 and 2, and `_` covers everything from 10 up. 4 is in `3..=9` and 25 reaches `_`."
+        concepts: [match.intro, fn.return]
+
+      - type: parsons
+        id: parsons-fare
+        prompt: Arrange the lines so students pay 3 and everyone else pays by age
+        lines:
+          - { id: l1, text: "fn fare(age: u32, student: bool) -> u32 {" }
+          - { id: l2, text: "    if student {" }
+          - { id: l3, text: "        return 3;" }
+          - { id: l4, text: "    }" }
+          - { id: l5, text: "    match age {" }
+          - { id: l6, text: "        0..=4 => 0," }
+          - { id: l7, text: "        5..=17 => 2," }
+          - { id: l8, text: "        _ => 5," }
+          - { id: l9, text: "    }" }
+          - { id: l10, text: "}" }
+        distractors:
+          - { id: d1, text: "        3" }
+          - { id: d2, text: "    match age:" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10]
+        alternatives:
+          - [l1, l2, l3, l4, l5, l7, l6, l8, l9, l10]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{} {}", fare(20, true), fare(3, false));
+                println!("{} {}", fare(12, false), fare(40, false));
+            }
+          mode: run
+          expectStdout: "3 0\n2 5\n"
+        explanation: "The early `return 3;` handles students first. A bare `3` would make the `if` block give an integer, but an `if` without `else` must give `()`. The `match` is the last expression, so its value is returned."
+        concepts: [fn.early-return, match.intro, fn.return]
+
+      - type: predict-output
+        id: predict-match-block-shadow
+        code:
+          rust: |
+            let points = 7;
+            let points = match points {
+                0 => 0,
+                1..=5 => points * 2,
+                _ => {
+                    let capped = 10;
+                    capped + 1
+                }
+            };
+            println!("{points}");
+          verify: run
+        options:
+          - { id: a, text: "11" }
+          - { id: b, text: "14", why: "`1..=5` stops at 5, so 7 reaches the `_` arm." }
+          - { id: c, text: "10", why: "The block's value is its last expression, `capped + 1`." }
+        answer: a
+        explanation: "7 isn't 0 or in `1..=5`, so the `_` block runs and gives `10 + 1`. The second `let` shadows `points` with that value."
+        concepts: [match.intro, expr.block]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each error to its cause
+        pairs:
+          - ["E0308", "blocks or arms give different types"]
+          - ["E0317", "an `if` without `else` is used as a value"]
+          - ["E0004", "a `match` doesn't cover every value"]
+          - ["chained comparison", "writing `0 < x < 10`"]
+        concepts: [ctrl.if-expr, match.intro, err.E0308]
+
+      - type: compiles
+        id: compiles-bool-match
+        code:
+          rust: |
+            fn main() {
+                let is_open = true;
+                match is_open {
+                    true => println!("Come in"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0004: non-exhaustive patterns (`false` not covered)" }
+            - { id: b, text: "E0308: mismatched types", why: "`true` is a `bool`, the same type as `is_open`." }
+            - { id: c, text: "E0317: `if` may be missing an `else` clause", why: "That error is for `if`. `match` reports missing values as E0004." }
+          answer: a
+        explanation: "A `bool` has two values and only `true` has an arm. Add `false => ...` or `_ => ...`."
+        concepts: [match.intro]
+
+      - type: mcq
+        id: mcq-equivalent
+        prompt: "Which `if` gives the same value as `match n { 0 => \"none\", _ => \"some\" }`?"
+        options:
+          - { id: a, code: "if n == 0 { \"none\" } else { \"some\" }" }
+          - { id: b, code: "if n { \"some\" } else { \"none\" }", why: "`n` is an integer, and an `if` condition must be a `bool` (E0308)." }
+          - { id: c, code: "if n == 0 { \"none\" }", why: "Without `else` there's no value for other numbers, which is E0317." }
+          - { id: d, code: "if n != 0 { \"none\" } else { \"some\" }", why: "That swaps the two results." }
+        answer: a
+        explanation: "The `0` arm becomes the `n == 0` test and `_` becomes `else`."
+        concepts: [match.intro, ctrl.if-expr]
+
+      - type: predict-output
+        id: predict-grade-fn
+        code:
+          rust: |
+            fn grade(mark: u32) -> u32 {
+                if mark > 100 {
+                    return 0;
+                }
+                match mark {
+                    80..=100 => 3,
+                    50..=79 => 2,
+                    _ => 1,
+                }
+            }
+
+            fn main() {
+                let total = grade(80) + grade(49);
+                println!("{}", total + grade(120));
+            }
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "7", why: "`grade(120)` returns 0 early, before the `match`." }
+          - { id: c, text: "3", why: "`80..=100` includes 80, so `grade(80)` is 3, not 2." }
+        answer: a
+        explanation: "`grade(80)` is 3, `grade(49)` is 1, and `grade(120)` returns 0 early. The total is 4."
+        concepts: [match.intro, fn.early-return]
+
+      - type: true-false
+        id: tf-both-return
+        prompt: "Both an `if` / `else` and a `match` can be the last expression of a function, and their value is returned."
+        answer: true
+        explanation: "Both are expressions. Whichever block or arm runs gives the function's return value."
+        concepts: [ctrl.if-expr, match.intro, fn.return]
+
+      - type: decode-error
+        id: decode-condition-type
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn count_items() -> u32 {
+                0
+            }
+
+            fn main() {
+                if count_items() {
+                    println!("Cart has items");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "if count_items() > 0 {" }
+          - { id: b, code: "if count_items() == true {", why: "That compares a `u32` with a `bool`, which is still a type error." }
+          - { id: c, code: "if count_items(); {", why: "The `;` doesn't make a `bool`. The function returns a number." }
+        answer: a
+        explanation: "`count_items()` returns a `u32`, and `if` needs a `bool`. Comparing with `> 0` asks the question you mean."
+        concepts: [ctrl.if, err.E0308, fn.return]
+
+      - type: predict-output
+        id: predict-tiles-match
+        prompt: Build the output
+        code:
+          rust: |
+            let floor = 0;
+            let name = match floor {
+                0 => "ground",
+                1 | 2 => "low",
+                _ => "high",
+            };
+            let how = if floor > 0 {
+                "lift"
+            } else {
+                "stairs"
+            };
+            println!("{name} floor by {how}");
+          verify: run
+        tiles: ["ground", "low", "floor", "by", "lift", "stairs"]
+        answer: "ground floor by stairs"
+        explanation: "`floor` is 0, so `name` is `\"ground\"`. `0 > 0` is false, so `how` is `\"stairs\"`."
+        concepts: [match.intro, ctrl.if-expr]

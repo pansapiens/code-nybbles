@@ -1,0 +1,100 @@
+id: functions-control-flow.functions.code-read-area
+title: Area calculator
+concepts: []
+reviewConcepts: [fn.define, fn.params, fn.return, expr.vs-stmt, err.E0308, types.int, ops.arith]
+program:
+  rust: |
+    fn square(side: u32) -> u32 {
+        side * side
+    }
+
+    fn rectangle(width: u32, height: u32) -> u32 {
+        width * height
+    }
+
+    fn triangle(base: u32, height: u32) -> u32 {
+        rectangle(base, height) / 2
+    }
+
+    fn main() {
+        let total = square(3) + triangle(4, 5);
+        println!("Square: {}", square(3));
+        println!("Triangle: {}", triangle(4, 5));
+        println!("Total: {total}");
+    }
+  verify: run
+  expectStdout: |
+    Square: 9
+    Triangle: 10
+    Total: 19
+chunks:
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: no-semicolon
+        prompt: "Line 2 has no semicolon. What does that mean?"
+        options:
+          - { id: a, text: "`side * side` is the value the function returns." }
+          - { id: b, text: "It's a mistake, and the program won't compile.", why: "Leaving off the `;` on the last line is how a Rust function returns a value." }
+          - { id: c, text: "The function returns `()`.", why: "It's the other way round: adding a `;` would make the body return `()`." }
+        answer: a
+        explanation: "The last expression in a function body, without a semicolon, is the function's return value."
+        concepts: [fn.return, expr.vs-stmt]
+      - type: mcq
+        id: add-semicolon
+        prompt: "What happens if you write `side * side;` on line 2?"
+        options:
+          - { id: a, text: "Error E0308: the body returns `()`, but the signature says `u32`." }
+          - { id: b, text: "Nothing changes.", why: "The semicolon turns the expression into a statement, so the function no longer returns the product." }
+          - { id: c, text: "The function returns 0.", why: "Rust doesn't fill in a default number. It reports a type mismatch instead." }
+        answer: a
+        explanation: "With a semicolon the body ends in a statement, whose value is `()`. That doesn't match `-> u32`, so the compiler reports E0308."
+        concepts: [err.E0308, expr.vs-stmt]
+  - lines: 4
+    exercises:
+      - type: true-false
+        id: param-types
+        prompt: "You could write `fn rectangle(width, height) -> u32` and let Rust infer the parameter types."
+        answer: false
+        explanation: "Function parameters always need a type annotation in Rust. Inference works inside function bodies, not in signatures."
+        concepts: [fn.params]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: calls-rectangle
+        prompt: "What does `triangle(4, 5)` return?"
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "20", why: "That's `rectangle(4, 5)`. `triangle` divides it by 2." }
+          - { id: c, text: "9", why: "That's `square(3)`. Here `rectangle(4, 5)` is 20, and half of that is 10." }
+        answer: a
+        explanation: "`triangle` calls `rectangle(4, 5)`, which returns 20, then divides by 2."
+        concepts: [fn.define, fn.return]
+      - type: mcq
+        id: odd-triangle
+        prompt: "What would `triangle(3, 3)` return?"
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "4.5", why: "The function works with `u32`, which can't hold a fraction." }
+          - { id: c, text: "5", why: "Integer division doesn't round to the nearest number. It drops the remainder." }
+        answer: a
+        explanation: "`rectangle(3, 3)` is 9, and `9 / 2` with integers is 4. The remainder is dropped."
+        concepts: [ops.arith, types.int]
+  - lines: 6
+    exercises:
+      - type: true-false
+        id: order
+        prompt: "The program only compiles because `square`, `rectangle` and `triangle` are defined above `main`."
+        answer: false
+        explanation: "In Rust, functions can be defined in any order in the file. `main` could come first."
+        concepts: [fn.define]
+      - type: mcq
+        id: total
+        prompt: What does line 17 print?
+        options:
+          - { id: a, text: "`Total: 19`" }
+          - { id: b, text: "`Total: 29`", why: "`triangle(4, 5)` is 10, not 20. Check the division by 2." }
+          - { id: c, text: "`Total: 9 + 10`", why: "Line 14 adds the two numbers before printing, so `total` holds one number." }
+        answer: a
+        explanation: "`square(3)` is 9 and `triangle(4, 5)` is 10, so `total` is 19."
+        concepts: [fn.return]

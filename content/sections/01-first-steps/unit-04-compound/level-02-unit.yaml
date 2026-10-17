@@ -1,0 +1,353 @@
+id: first-steps.compound.unit
+title: The unit type
+icon: circle
+concepts: [types.unit]
+reviewConcepts: [types.tuple, var.mut, fmt.placeholders, fmt.inline-args, macro.println-basic, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-unit
+        title: The empty tuple
+        markdown: |
+          **A tuple with no elements is written `()`.** It's called *unit*. The type and its only value are both written `()`.
+
+          Unit means "no useful value". `{}` can't print it, but `{:?}` can.
+        code:
+          rust: |
+            let nothing = ();
+            println!("{:?}", nothing);
+          verify: run
+          expectStdout: "()\n"
+        concepts: [types.unit]
+
+      - type: true-false
+        id: tf-empty-tuple
+        prompt: "`()` is a tuple with no elements."
+        answer: true
+        explanation: "`()` is the empty tuple, also called the unit type."
+        concepts: [types.unit]
+
+      - type: mcq
+        id: mcq-unit-written
+        prompt: How do you write the unit value in Rust?
+        options:
+          - { id: a, code: "()" }
+          - { id: b, code: "[]", why: "Square brackets are for arrays. Unit is an empty tuple, so it uses parentheses." }
+          - { id: c, code: "0", why: "`0` is a number, which is a useful value. Unit holds no value at all." }
+          - { id: d, code: "null", why: "Rust has no `null`. `()` is used where there's no useful value." }
+        answer: a
+        explanation: "Unit is the empty tuple `()`. The same two characters name the type and the value."
+        concepts: [types.unit]
+
+      - type: concept
+        id: concept-println-unit
+        title: What println! gives back
+        markdown: |
+          **`println!` prints, then gives back `()`.** Printing is its whole job, so there's no useful value to return.
+
+          You can store that `()` in a variable, though there isn't much you can do with it.
+        code:
+          rust: |
+            let result = println!("Saved");
+            println!("{:?}", result);
+          verify: run
+          expectStdout: "Saved\n()\n"
+        concepts: [types.unit, macro.println-basic]
+
+      - type: predict-output
+        id: predict-done
+        code:
+          rust: |
+            let done = println!("Done");
+            println!("{done:?}");
+          verify: run
+        options:
+          - { id: a, text: "Done\n()" }
+          - { id: b, text: "Done\nDone", why: "`done` holds what `println!` gave back, which is `()`, not the text it printed." }
+          - { id: c, text: "()", why: "The first line still runs `println!`, so `Done` is printed first." }
+        answer: a
+        explanation: "Line 1 prints `Done` and stores `()` in `done`. Line 2 prints that `()`."
+        concepts: [types.unit, macro.println-basic]
+
+      - type: compiles
+        id: compiles-println-to-int
+        code:
+          rust: |
+            let count: i32 = println!("3");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types, expected `i32`, found `()`" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`count` is only assigned once. The problem is the type of the value." }
+            - { id: c, text: "E0425: cannot find value", why: "Nothing is missing. `println!` gives back `()`, which isn't an `i32`." }
+          answer: a
+        explanation: "Printing `3` doesn't make `println!` return 3. It returns `()`, which can't go in an `i32`."
+        concepts: [types.unit]
+
+      - type: match-pairs
+        id: pairs-unit-tuples
+        pairs:
+          - ["()", "no elements"]
+          - ["(7,)", "one element"]
+          - ["(7, 8)", "two elements"]
+          - ["(7)", "the number 7"]
+        concepts: [types.unit, types.tuple]
+
+      - type: true-false
+        id: tf-same-spelling
+        prompt: "The unit type and its only value are both written `()`."
+        answer: true
+        explanation: "`let nothing: () = ();` uses `()` as the type and as the value."
+        concepts: [types.unit]
+
+  - id: l2
+    exercises:
+      - type: fill-tokens
+        id: fill-unit-type
+        prompt: "Fill the blank with the type of `nothing`"
+        code:
+          rust: |
+            let nothing: ___1___ = ();
+            println!("{nothing:?}");
+          verify: run
+          expectStdout: "()\n"
+        blanks:
+          "1": { answer: ["()"] }
+        bank: ["()", "unit", "[]", "i32"]
+        explanation: "The type of `()` is also written `()`. *Unit* is its name in English, not in code."
+        concepts: [types.unit]
+
+      - type: mcq
+        id: mcq-which-unit
+        prompt: "Which of these values has the type `()`?"
+        options:
+          - { id: a, code: 'println!("hi")' }
+          - { id: b, code: "0", why: "`0` is an integer." }
+          - { id: c, code: "(0,)", why: "That's a tuple with one element, an integer. Unit has no elements." }
+          - { id: d, code: '"hi"', why: "That's text. `println!(\"hi\")` prints it and gives back `()`." }
+        answer: a
+        explanation: "`println!` gives back `()` after it prints."
+        concepts: [types.unit, macro.println-basic]
+
+      - type: decode-error
+        id: decode-store-print
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                let kept: i32 = println!("{lives}");
+                println!("{kept}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`println!` gives back `()`, so its result can't be stored as an `i32`" }
+          - { id: b, text: "`lives` must be `mut` to be printed", why: "Printing reads a variable without changing it, so `mut` isn't needed." }
+          - { id: c, text: "`println!` can't be used on the right of `let`", why: "It can. The problem is the type: you get `()`, not `i32`." }
+        answer: a
+        explanation: "The compiler says it expected `i32` but found `()`. Use `lives` directly if you need the number."
+        concepts: [types.unit, compiler.read-error]
+
+      - type: compiles
+        id: compiles-print-unit
+        code:
+          rust: |
+            let nothing = ();
+            println!("{nothing:?}");
+          verify: run
+          expectStdout: "()\n"
+        answer: true
+        explanation: "It compiles and prints `()`. `{:?}` can print the unit value."
+        concepts: [types.unit]
+
+      - type: true-false
+        id: tf-display-unit
+        prompt: 'This compiles: `println!("{}", ());`'
+        code:
+          rust: |
+            println!("{}", ());
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        explanation: "`{}` is for values meant for people, and `()` isn't one of them. `{:?}` prints it."
+        concepts: [types.unit]
+
+      - type: spot-bug
+        id: spot-unit-maths
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let score = 7;
+                let shown = println!("{score}");
+                let doubled = shown * 2;
+                println!("{doubled}");
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        answer: 4
+        explanation: "`shown` is `()`, not 7, so it can't be multiplied. Line 4 should use `score * 2`."
+        concepts: [types.unit]
+
+      - type: predict-output
+        id: predict-unit-in-tuple
+        code:
+          rust: |
+            let (gap, count) = ((), 3);
+            println!("{count} {gap:?}");
+          verify: run
+        options:
+          - { id: a, text: "3 ()" }
+          - { id: b, text: "() 3", why: "The text prints `count` first, then `gap`." }
+          - { id: c, text: "3", why: "`gap` holds `()`, and `{gap:?}` prints it as `()`." }
+        answer: a
+        explanation: "`()` can be an element of a tuple like any other value. `gap` gets `()` and `count` gets 3."
+        concepts: [types.unit, types.tuple]
+
+      - type: predict-output
+        id: predict-mut-tuple-review
+        code:
+          rust: |
+            let mut steps = (2, 5);
+            steps.1 = steps.0 + steps.1;
+            println!("{} {}", steps.0, steps.1);
+          verify: run
+        options:
+          - { id: a, text: "2 7" }
+          - { id: b, text: "7 5", why: "The result is stored in `steps.1`, the second element." }
+          - { id: c, text: "2 5", why: "`steps` is `mut`, so assigning to `steps.1` changes it." }
+        answer: a
+        explanation: "`steps.0 + steps.1` is 7, which replaces the second element."
+        concepts: [types.tuple, var.mut]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-ready
+        prompt: "Arrange the lines so the program prints `Ready` and then `()`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let status = println!("Ready");' }
+          - { id: l3, text: '    println!("{status:?}");' }
+          - { id: l4, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{status}");' }
+          - { id: d2, text: '    let status: i32 = println!("Ready");' }
+        answer: [l1, l2, l3, l4]
+        verify:
+          mode: run
+          expectStdout: "Ready\n()\n"
+        explanation: "`status` holds `()`, which needs `{:?}` to print. It can't be stored as an `i32`."
+        concepts: [types.unit, macro.println-basic]
+
+      - type: predict-output
+        id: predict-two-units
+        code:
+          rust: |
+            let t = (println!("a"), println!("b"));
+            println!("{:?}", t);
+          verify: run
+        options:
+          - { id: a, text: "a\nb\n((), ())" }
+          - { id: b, text: "((), ())", why: "Each `println!` still prints while the tuple is being built." }
+          - { id: c, text: "a\nb\n(a, b)", why: "The tuple holds what each `println!` gave back, which is `()`." }
+          - { id: d, text: "a\nb\n()", why: "The tuple has two elements, and each one is `()`." }
+        answer: a
+        explanation: "Building the tuple prints `a` and `b`. Each `println!` gives back `()`, so `t` is `((), ())`."
+        concepts: [types.unit, types.tuple]
+
+      - type: compiles
+        id: compiles-unit-annotated
+        code:
+          rust: |
+            let empty: () = ();
+            let pair: ((), i32) = (empty, 4);
+            println!("{}", pair.1);
+          verify: run
+          expectStdout: "4\n"
+        answer: true
+        explanation: "It compiles and prints 4. `()` is a type like any other, so it can appear inside a tuple type."
+        concepts: [types.unit, types.tuple]
+
+      - type: mcq
+        id: mcq-why-fails
+        prompt: 'Why does `let n: i32 = println!("5");` fail to compile?'
+        options:
+          - { id: a, text: "`println!` gives back `()`, not the number it printed" }
+          - { id: b, text: "`\"5\"` is text, so `println!` returns text", why: "`println!` returns `()` whatever it prints." }
+          - { id: c, text: "Variables can't have the type `i32`", why: "They can. The problem is that the value on the right isn't an `i32`." }
+        answer: a
+        explanation: "The type of `println!(...)` is always `()`, so it can't be stored as an `i32`."
+        concepts: [types.unit]
+
+      - type: true-false
+        id: tf-paren-five
+        prompt: "`let t = (5);` makes a tuple with one element."
+        answer: false
+        explanation: "Without a comma, `(5)` is the number 5 in parentheses. A one-element tuple is `(5,)`."
+        concepts: [types.tuple]
+
+      - type: fill-tokens
+        id: fill-pair-unit
+        prompt: "Fill the blank so the program prints `(1, ())`"
+        code:
+          rust: |
+            let pair = (1, ___1___);
+            println!("{pair:?}");
+          verify: run
+          expectStdout: "(1, ())\n"
+        blanks:
+          "1": { answer: ["()"] }
+        bank: ["()", "[]", "unit", "0"]
+        explanation: "The second element is the unit value, written `()`."
+        concepts: [types.unit, types.tuple]
+
+      - type: match-pairs
+        id: pairs-unit-review
+        pairs:
+          - ['println!("hi")', "prints, then gives back ()"]
+          - ["()", "the unit value"]
+          - ["(1, true)", "a two-element tuple"]
+          - ["t.0", "first element of t"]
+        concepts: [types.unit, types.tuple]
+
+      - type: spot-bug
+        id: spot-tuple-not-mut
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let totals = (0, 0);
+                let note = println!("Adding");
+                totals.0 = 10;
+                println!("{note:?} {}", totals.0);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 4
+        explanation: "`totals` isn't `mut`, so line 4 can't change it. Printing `note` with `{:?}` on line 5 is fine."
+        concepts: [types.tuple, types.unit, var.mut]
+
+      - type: decode-error
+        id: decode-unit-display
+        prompt: Which fix for line 3 is right?
+        code:
+          rust: |
+            fn main() {
+                let result = println!("Saved");
+                println!("{}", result);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: 'println!("{:?}", result);' }
+          - { id: b, code: 'println!("{result}");', why: "That's `{}` with the name inside, so it fails the same way." }
+          - { id: c, code: 'println!("{}", result.0);', why: "`()` has no elements, so there's no `.0` to read." }
+        answer: a
+        explanation: "`()` can't be printed with `{}`, but `{:?}` prints it as `()`."
+        concepts: [types.unit, compiler.read-error]

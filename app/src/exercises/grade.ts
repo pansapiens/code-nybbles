@@ -105,7 +105,12 @@ const graders: { [T in ExerciseType]: Grader<T> } = {
     solution: (ex) => ({ code: fillSolution(ex) }),
   },
   parsons: {
-    grade: (ex, r) => verdict([ex.answer, ...(ex.alternatives ?? [])].some((o) => o.join() === r.join())),
+    // Compare line text, not ids, so identical lines (two `}`) are interchangeable without listing alternatives.
+    grade: (ex, r) => {
+      const text = new Map([...ex.lines, ...(ex.distractors ?? [])].map((l) => [l.id, l.text]))
+      const shown = (ids: string[]) => JSON.stringify(ids.map((id) => text.get(id)))
+      return verdict([ex.answer, ...(ex.alternatives ?? [])].some((o) => shown(o) === shown(r)))
+    },
     solution: (ex) => ({ code: ex.answer.map((id) => ex.lines.find((l) => l.id === id)?.text ?? '').join('\n') }),
   },
   'match-pairs': {

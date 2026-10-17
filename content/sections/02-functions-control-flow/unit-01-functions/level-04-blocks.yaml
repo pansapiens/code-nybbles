@@ -1,0 +1,471 @@
+id: functions-control-flow.functions.blocks
+title: Blocks are expressions
+icon: layers
+concepts: [expr.block]
+reviewConcepts: [expr.vs-stmt, err.E0308, fn.return, var.shadowing, var.mut, types.unit, types.tuple, fmt.debug, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-block-value
+        title: A block has a value
+        markdown: |
+          **A block `{ }` is an expression.** Its value is its last expression, the one without a `;`.
+
+          The statements inside run first. The `;` after the closing `}` ends the `let`.
+        code:
+          rust: |
+            let y = {
+                let x = 3;
+                x + 1
+            };
+            println!("{y}");
+          verify: run
+          expectStdout: "4\n"
+        concepts: [expr.block]
+
+      - type: predict-output
+        id: predict-block-product
+        code:
+          rust: |
+            let total = {
+                let a = 2;
+                let b = 5;
+                a * b
+            };
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "5", why: "The block's value is its last expression, `a * b`, not the last variable created." }
+          - { id: c, text: "7", why: "The tail multiplies: `2 * 5`." }
+        answer: a
+        explanation: "The two `let`s run, then the tail `a * b` gives the block its value, 10."
+        concepts: [expr.block]
+
+      - type: true-false
+        id: tf-inner-var-outside
+        prompt: "After `let y = { let x = 3; x + 1 };`, you can still use `x`."
+        answer: false
+        explanation: "`x` is created inside the block, so it only exists until the `}`. Only the block's value escapes, into `y`."
+        concepts: [expr.block]
+
+      - type: concept
+        id: concept-block-unit
+        title: A block ending in a statement
+        markdown: |
+          **If a block's last line ends in `;`, the block's value is `()`.** It's the same rule as a function body, because a function body is a block.
+        code:
+          rust: |
+            let y = {
+                let x = 3;
+                x + 1;
+            };
+            println!("{y:?}");
+          verify: run
+          expectStdout: "()\n"
+        concepts: [expr.block, types.unit]
+
+      - type: predict-output
+        id: predict-block-pair
+        code:
+          rust: |
+            let a = { 7 };
+            let b = { 7; };
+            println!("{a} {b:?}");
+          verify: run
+        options:
+          - { id: a, text: "7 ()" }
+          - { id: b, text: "7 7", why: "The `;` inside the second block turns `7` into a statement, so `b` is `()`." }
+          - { id: c, text: "() ()", why: "`{ 7 }` has no `;` inside, so its value is 7." }
+        answer: a
+        explanation: "`{ 7 }` ends in an expression, so its value is 7. `{ 7; }` ends in a statement, so its value is `()`."
+        concepts: [expr.block, types.unit]
+
+      - type: mcq
+        id: mcq-block-type
+        prompt: "What is the type of `y` in `let y = { let x = 3; x + 1; };`?"
+        options:
+          - { id: a, text: "`()`" }
+          - { id: b, text: "`i32`", why: "`x + 1;` ends in a semicolon, so the block's value is `()`, not the number." }
+          - { id: c, text: "It doesn't compile", why: "It compiles. `y` holds `()`, which is a real value." }
+        answer: a
+        explanation: "The block's last line is a statement, so the block produces `()` and `y` has the unit type."
+        concepts: [expr.block, types.unit]
+
+      - type: fill-tokens
+        id: fill-area-block
+        prompt: "Fill the blanks so the program prints `12`"
+        code:
+          rust: |
+            let area = {
+                let width = 6;
+                let height = 2;
+                ___1___
+            }___2___
+            println!("{area}");
+          verify: run
+          expectStdout: "12\n"
+        blanks:
+          "1": { answer: ["width * height"] }
+          "2": { answer: [";"] }
+        bank: ["width * height", "width * height;", ";", ",", "let"]
+        explanation: "The tail `width * height` has no `;`, so it's the block's value. The `;` after `}` ends the `let` statement."
+        concepts: [expr.block]
+
+      - type: compiles
+        id: compiles-missing-let-semicolon
+        code:
+          rust: |
+            let y = { 5 }
+            println!("{y}");
+          verify: compile-fail
+          expectErrorMessage: "expected `;`, found `println`"
+        answer: false
+        explanation: "`let y = { 5 }` is still a `let` statement, so it needs a `;` after the `}`. The compiler's help says `add ; here`."
+        concepts: [expr.block, expr.vs-stmt]
+
+      - type: spot-bug
+        id: spot-block-semicolon
+        prompt: Tap the line you need to change to fix the error
+        code:
+          rust: |
+            fn main() {
+                let bonus = {
+                    let base = 10;
+                    base * 2;
+                };
+                println!("{bonus}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: 4
+        explanation: "The error appears at the `println!` on line 6, because `bonus` is `()`. The cause is the `;` on line 4; remove it so the block's value is 20."
+        concepts: [expr.block, types.unit]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-block-shadow
+        code:
+          rust: |
+            let x = 5;
+            let y = {
+                let x = x * 2;
+                x + 1
+            };
+            println!("{x} {y}");
+          verify: run
+        options:
+          - { id: a, text: "5 11" }
+          - { id: b, text: "10 11", why: "The inner `x` is a shadow that ends at `}`. The outer `x` is still 5." }
+          - { id: c, text: "5 6", why: "Inside the block, `x` is shadowed to 10 before `x + 1` runs." }
+        answer: a
+        explanation: "Inside the block, a new `x` is 10 and the block's value is 11. After `}`, the outer `x` (5) is visible again."
+        concepts: [expr.block, var.shadowing]
+
+      - type: compiles
+        id: compiles-inner-var
+        code:
+          rust: |
+            let total = {
+                let price = 4;
+                price * 3
+            };
+            println!("{price}");
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0425: cannot find value `price` in this scope" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `price` no longer exists at the `println!`." }
+            - { id: c, text: "E0308: mismatched types", why: "The block's value is an `i32`, and `total` takes it fine." }
+          answer: a
+        explanation: "`price` lives only inside the block. After `}`, only `total` holds the result."
+        concepts: [expr.block, compiler.read-error]
+
+      - type: decode-error
+        id: decode-block-e0308
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let total: i32 = {
+                    let a = 1;
+                    a + 2;
+                };
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "    a + 2" }
+          - { id: b, code: "let total = {", why: "Dropping `: i32` moves the problem: `total` becomes `()`, and printing it with `{}` fails." }
+          - { id: c, code: "    let a = 1 + 2;", why: "That leaves the block without a tail expression, so it's still `()`." }
+        answer: a
+        explanation: "The help says `remove this semicolon to return this value`. Then the block's value is 3, which matches `i32`."
+        concepts: [expr.block, err.E0308]
+
+      - type: mcq
+        id: mcq-body-is-block
+        prompt: "Why can a function return a value without the word `return`?"
+        options:
+          - { id: a, text: "Its body is a block, and a block's value is its last expression" }
+          - { id: b, text: "Rust adds `return` to the last line of every function", why: "Nothing is added. The block rule already gives the body a value." }
+          - { id: c, text: "Only functions with `-> i32` can do it", why: "It works for any return type, such as `f64`, `bool` or a tuple." }
+        answer: a
+        explanation: "Function bodies follow the same rule as any block: the tail expression is the value."
+        concepts: [expr.block, fn.return]
+
+      - type: predict-output
+        id: predict-nested-blocks
+        code:
+          rust: |
+            let outer = {
+                let inner = {
+                    let n = 2;
+                    n * 3
+                };
+                inner + 1
+            };
+            println!("{outer}");
+          verify: run
+        options:
+          - { id: a, text: "7" }
+          - { id: b, text: "6", why: "`inner` is 6, and the outer block's tail adds 1." }
+          - { id: c, text: "9", why: "The inner block runs first: `2 * 3`, then `6 + 1`." }
+        answer: a
+        explanation: "Blocks can nest. The inner block is 6, so the outer block's tail `inner + 1` is 7."
+        concepts: [expr.block]
+
+      - type: true-false
+        id: tf-every-block-value
+        prompt: "Every block has a value, even if that value is only `()`."
+        answer: true
+        explanation: "A block ending in an expression has that value. A block ending in a statement, or an empty block `{}`, has the value `()`."
+        concepts: [expr.block, types.unit]
+
+      - type: spot-bug
+        id: spot-forgot-bonus
+        prompt: "This should print `15`, but prints `10`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let base = 10;
+                let total = {
+                    let bonus = 5;
+                    base
+                };
+                println!("{total}");
+            }
+          verify: run
+          expectStdout: "10\n"
+        answer: 5
+        explanation: "The tail expression is only `base`, so `bonus` is never added. Line 5 should be `base + bonus`; the compiler even warns that `bonus` is unused."
+        concepts: [expr.block]
+
+      - type: fill-tokens
+        id: fill-tuple-block
+        prompt: "Fill the blank so the program prints `2:5`"
+        code:
+          rust: |
+            let seconds = 125;
+            let (mins, secs) = {
+                let m = seconds / 60;
+                let s = seconds % 60;
+                ___1___
+            };
+            println!("{mins}:{secs}");
+          verify: run
+          expectStdout: "2:5\n"
+        blanks:
+          "1": { answer: ["(m, s)"] }
+        bank: ["(m, s)", "(m, s);", "m, s", "[m, s]"]
+        explanation: "The block's value is the tuple `(m, s)`, which the `let` destructures. With a `;` it would be `()`, and `[m, s]` is an array, not a tuple."
+        concepts: [expr.block, types.tuple]
+
+      - type: true-false
+        id: tf-one-line-block
+        prompt: "A block must be spread over several lines to have a value."
+        answer: false
+        explanation: "Line breaks don't matter. `{ let x = 3; x + 1 }` on one line has the value 4."
+        concepts: [expr.block]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-shipping-block
+        prompt: "Arrange the lines so the program prints `25`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let price = 20;" }
+          - { id: l3, text: "    let total = {" }
+          - { id: l4, text: "        let shipping = 5;" }
+          - { id: l5, text: "        price + shipping" }
+          - { id: l6, text: "    };" }
+          - { id: l7, text: '    println!("{total}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "        price + shipping;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        verify:
+          mode: run
+          expectStdout: "25\n"
+        explanation: "The block's statement comes first and its tail last, with no `;`. The `};` closes the block and ends the `let`."
+        concepts: [expr.block]
+
+      - type: predict-output
+        id: predict-bill-tip
+        code:
+          rust: |
+            fn bill(cost: i32) -> i32 {
+                let tip = {
+                    let percent = 10;
+                    cost * percent / 100
+                };
+                cost + tip
+            }
+
+            fn main() {
+                println!("{}", bill(50));
+            }
+          verify: run
+        options:
+          - { id: a, text: "55" }
+          - { id: b, text: "5", why: "That's the value of `tip`. The function's tail adds it to `cost`." }
+          - { id: c, text: "60", why: "The tip is 10 percent of 50, which is 5, not 10." }
+        answer: a
+        explanation: "The inner block gives `tip` the value 50 * 10 / 100 = 5. The function's tail `cost + tip` returns 55."
+        concepts: [expr.block, fn.return]
+
+      - type: compiles
+        id: compiles-block-wrong-type
+        code:
+          rust: |
+            let label: i32 = { "high" };
+            println!("{label}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0425: cannot find value in this scope", why: "`label` exists. Its value has the wrong type." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`label` is only given a value once." }
+          answer: a
+        explanation: "The block's value is the text `\"high\"`, a `&str`, but `label` is annotated as `i32`."
+        concepts: [expr.block, err.E0308]
+
+      - type: decode-error
+        id: decode-unit-display
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let doubled = {
+                    let n = 21;
+                    n * 2;
+                };
+                println!("{doubled}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: "        n * 2" }
+          - { id: b, code: "    println!(\"{doubled:?}\");", why: "That compiles, but prints `()`. The 42 is still thrown away." }
+          - { id: c, code: "    let doubled: i32 = {", why: "The block still produces `()`, so this gives a different error, E0308." }
+        answer: a
+        explanation: "`()` can't be printed with `{}`, which is what the error says. The real problem is the `;` on line 4: without it, the block's value is 42."
+        concepts: [expr.block, types.unit]
+
+      - type: mcq
+        id: mcq-closing-semicolon
+        prompt: "In `let y = { 5 };`, what is the `;` after `}` for?"
+        options:
+          - { id: a, text: "It ends the `let` statement" }
+          - { id: b, text: "It makes the block's value `()`", why: "That only happens with a `;` inside the block, after its last expression." }
+          - { id: c, text: "Nothing; it's optional", why: "Leave it out and you get `expected ;`. A `let` always ends with `;`." }
+        answer: a
+        explanation: "The block is the value on the right of `=`, and the `;` finishes the whole `let` statement."
+        concepts: [expr.block, expr.vs-stmt]
+
+      - type: spot-bug
+        id: spot-price-scope
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let total = {
+                    let price = 8;
+                    let count = 2;
+                    price * count
+                };
+                println!("{total}");
+                println!("{price}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 8
+        explanation: "`price` only exists inside the block, so line 8 can't find it (E0425). `total` on line 7 is fine."
+        concepts: [expr.block, compiler.read-error]
+
+      - type: fill-tokens
+        id: fill-braces
+        prompt: "Fill the blanks so the program prints `12`"
+        code:
+          rust: |
+            fn main() {
+                let width = 3;
+                let area = ___1___
+                    let height = 4;
+                    width * height
+                ___2___;
+                println!("{area}");
+            }
+          verify: run
+          expectStdout: "12\n"
+        blanks:
+          "1": { answer: ["{"] }
+          "2": { answer: ["}"] }
+        bank: ["{", "}", "(", ")", "["]
+        explanation: "A block uses curly braces. Round brackets can group an expression, but they can't hold a `let` statement."
+        concepts: [expr.block]
+
+      - type: predict-output
+        id: predict-mut-in-block
+        code:
+          rust: |
+            let mut score = 1;
+            let bonus = {
+                score += 4;
+                score * 2
+            };
+            println!("{score} {bonus}");
+          verify: run
+        options:
+          - { id: a, text: "5 10" }
+          - { id: b, text: "1 10", why: "`score += 4` changes the outer `score`. It isn't a new variable, so the change stays after `}`." }
+          - { id: c, text: "5 2", why: "`score` is already 5 when `score * 2` runs." }
+        answer: a
+        explanation: "A block can change outer `mut` variables. `score` becomes 5, and the block's value is 10."
+        concepts: [expr.block, var.mut]
+
+      - type: match-pairs
+        id: pairs-block-values
+        prompt: Match each block to its value
+        pairs:
+          - ["{ 2 + 3 }", "5"]
+          - ["{ 2 + 3; }", "()"]
+          - ["{ let a = 2; a * a }", "4"]
+          - ["{ (1, 2) }", "(1, 2)"]
+        concepts: [expr.block, types.unit]
+
+      - type: true-false
+        id: tf-semicolon-five
+        prompt: "`let y = { 5; };` gives `y` the value `5`."
+        answer: false
+        explanation: "The `;` inside the braces turns `5` into a statement, so the block's value, and `y`, is `()`."
+        concepts: [expr.block, types.unit]

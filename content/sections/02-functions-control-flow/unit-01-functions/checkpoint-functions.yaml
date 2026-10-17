@@ -1,0 +1,303 @@
+id: functions-control-flow.functions.checkpoint
+title: "Checkpoint: Functions"
+icon: flag
+concepts: []
+reviewConcepts:
+  - fn.define
+  - fn.params
+  - fn.return
+  - expr.vs-stmt
+  - err.E0308
+  - expr.block
+  - fn.early-return
+  - var.const
+  - var.shadowing
+  - types.unit
+  - types.tuple
+  - fmt.debug
+  - fmt.width-precision
+  - compiler.read-error
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-arg-order-effects
+        code:
+          rust: |
+            fn main() {
+                show(first(), second());
+            }
+            fn first() -> i32 {
+                println!("first");
+                1
+            }
+            fn second() -> i32 {
+                println!("second");
+                2
+            }
+            fn show(a: i32, b: i32) {
+                println!("{a}{b}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "first\nsecond\n12" }
+          - { id: b, text: "12\nfirst\nsecond", why: "The arguments are worked out before `show` runs, so their prints come first." }
+          - { id: c, text: "second\nfirst\n12", why: "Arguments are worked out left to right: `first()` before `second()`." }
+          - { id: d, text: "first\nsecond\n3", why: "`{a}{b}` prints the two numbers side by side. It doesn't add them." }
+        answer: a
+        explanation: "Rust calls `first()` then `second()` to get the argument values, then runs `show`, which prints `12`."
+        difficulty: 3
+        concepts: [fn.params, fn.return]
+
+      - type: compiles
+        id: compiles-const-in-fn
+        code:
+          rust: |
+            const BONUS: i32 = 5;
+
+            fn add_bonus(score: i32) -> i32 {
+                score + BONUS
+            }
+
+            fn main() {
+                println!("{}", add_bonus(10));
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles and prints 15. A function can't see another function's `let` variables, but a `const` defined at the top level is visible everywhere in the file."
+        difficulty: 3
+        concepts: [fn.define, var.const]
+
+      - type: decode-error
+        id: decode-too-many-args
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                greet("Ann", 3);
+            }
+
+            fn greet(name: &str) {
+                println!("Hi, {name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0061]
+        options:
+          - { id: a, code: "    greet(\"Ann\");" }
+          - { id: b, code: "fn greet(name: &str, 3) {", why: "A parameter needs a name and a type, like `times: i32`. `3` is a value, not a parameter." }
+          - { id: c, code: "fn greet(name) {", why: "That removes the type and still has one parameter, so it's two problems." }
+        answer: a
+        explanation: "`greet` has one parameter but the call passes two arguments (E0061). The compiler's help suggests removing the extra one."
+        difficulty: 2
+        concepts: [fn.params, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-param-no-type
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let total = add(2, 3);
+                println!("{total}");
+            }
+
+            fn add(a: i32, b) -> i32 {
+                a + b
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected one of"
+        answer: 6
+        explanation: "`b` has no type. Every parameter needs one, even when the other parameters already have theirs: `b: i32`."
+        difficulty: 2
+        concepts: [fn.params]
+
+      - type: fill-tokens
+        id: fill-to-minutes
+        prompt: "Fill the blanks so the program prints `2`"
+        code:
+          rust: |
+            fn to_minutes(seconds: ___1___) -> i32 {
+                ___2___
+            }
+
+            fn main() {
+                let m = to_minutes(150);
+                println!("{m}");
+            }
+          verify: run
+          expectStdout: "2\n"
+        blanks:
+          "1": { answer: ["i32"] }
+          "2": { answer: ["seconds / 60"] }
+        bank: ["i32", "f64", "seconds / 60", "seconds / 60;", "let seconds / 60"]
+        explanation: "The argument and result are whole numbers, so both are `i32`. The tail has no `;`, and integer division drops the remainder: 150 / 60 is 2."
+        difficulty: 3
+        concepts: [fn.params, fn.return, expr.vs-stmt]
+
+      - type: parsons
+        id: parsons-stats
+        prompt: "Arrange the lines so the program prints `10 5`"
+        lines:
+          - { id: l1, text: "fn stats(a: i32, b: i32) -> (i32, i32) {" }
+          - { id: l2, text: "    let sum = a + b;" }
+          - { id: l3, text: "    (sum, sum / 2)" }
+          - { id: l4, text: "}" }
+          - { id: l5, text: "fn main() {" }
+          - { id: l6, text: "    let (total, half) = stats(6, 4);" }
+          - { id: l7, text: '    println!("{total} {half}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    (sum, sum / 2);" }
+          - { id: d2, text: "fn stats(a: i32, b: i32) {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l5, l6, l7, l8, l1, l2, l3, l4]
+          - [l1, l2, l3, l8, l5, l6, l7, l4]
+          - [l5, l6, l7, l4, l1, l2, l3, l8]
+        verify:
+          mode: run
+          expectStdout: "10 5\n"
+        explanation: "`stats` returns a tuple, so the signature says `-> (i32, i32)` and the tail `(sum, sum / 2)` has no `;`."
+        difficulty: 3
+        concepts: [fn.return, expr.vs-stmt, types.tuple]
+
+      - type: mcq
+        id: mcq-not-compile
+        prompt: "Which body does NOT compile for `fn lives() -> i32`?"
+        options:
+          - { id: a, code: "{ 4; }" }
+          - { id: b, code: "{ 4 }", why: "This compiles: the tail `4` is returned." }
+          - { id: c, code: "{ return 4; }", why: "This compiles: `return` hands back 4." }
+          - { id: d, code: "{ let n = 4; n }", why: "This compiles: the statement runs, then the tail `n` is returned." }
+        answer: a
+        explanation: "`4;` is a statement, so the body produces `()` instead of an `i32` (E0308)."
+        difficulty: 2
+        concepts: [expr.vs-stmt, err.E0308, fn.early-return]
+
+      - type: true-false
+        id: tf-see-main-vars
+        prompt: "A function can use a `let` variable from `main`, as long as `main` creates it before the call."
+        answer: false
+        explanation: "Functions only see their own parameters and variables (plus top-level items like `const`). Pass the value in as an argument instead."
+        difficulty: 2
+        concepts: [fn.params]
+
+      - type: predict-output
+        id: predict-block-shadow-call
+        code:
+          rust: |
+            fn half(n: i32) -> i32 {
+                n / 2
+            }
+
+            fn main() {
+                let x = 9;
+                let y = {
+                    let x = half(x);
+                    x * 10
+                };
+                println!("{x} {y}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "9 40" }
+          - { id: b, text: "4 40", why: "The `x` made inside the block is a shadow that ends at `}`. The outer `x` is still 9." }
+          - { id: c, text: "9 45", why: "`9 / 2` with integers is 4, not 4.5, so `y` is 40." }
+        answer: a
+        explanation: "Inside the block, `x` is shadowed with `half(9)`, which is 4, and the block's value is 40. After `}`, the outer `x` is 9 again."
+        difficulty: 4
+        concepts: [expr.block, fn.return, var.shadowing]
+
+      - type: match-pairs
+        id: pairs-keywords
+        pairs:
+          - ["fn", "defines a function"]
+          - ["->", "introduces the return type"]
+          - ["return", "leaves the function early"]
+          - [";", "turns an expression into a statement"]
+          - ["{ }", "a block, whose value is its tail"]
+        concepts: [fn.define, fn.return, fn.early-return, expr.vs-stmt, expr.block]
+
+      - type: predict-output
+        id: predict-tuple-with-unit
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                let pair = (double(2), { 3; });
+                println!("{pair:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "(4, ())" }
+          - { id: b, text: "(4, 3)", why: "The `;` inside `{ 3; }` makes the block's value `()`." }
+          - { id: c, text: "(2, ())", why: "The first element is the value `double(2)` returns, 4." }
+        answer: a
+        explanation: "`double(2)` is 4 and `{ 3; }` is `()`, so the tuple is `(4, ())`. Debug formatting shows `()` as it is."
+        difficulty: 4
+        concepts: [expr.block, types.unit, fmt.debug]
+
+      - type: compiles
+        id: compiles-explicit-unit
+        code:
+          rust: |
+            fn log_start() -> () {
+                println!("Starting");
+            }
+
+            fn main() {
+                log_start();
+            }
+          verify: compile
+        answer: true
+        explanation: "It compiles. `-> ()` is what a function without `->` returns anyway, so you never need to write it."
+        difficulty: 3
+        concepts: [fn.return, types.unit]
+
+      - type: decode-error
+        id: decode-caller-var
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let name = "Ferris";
+                greet();
+            }
+
+            fn greet() {
+                println!("Hi {name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, text: "Give `greet` a parameter `name: &str` and call `greet(name)`" }
+          - { id: b, text: "Make it `let mut name`", why: "`mut` controls changing a value. It doesn't let other functions see it." }
+          - { id: c, text: "Move `greet` above `main`", why: "Function order doesn't matter, and `greet` still can't see `main`'s variables." }
+        answer: a
+        explanation: "E0425 means `name` isn't in scope inside `greet`. Passing it as an argument gives `greet` its own `name`."
+        difficulty: 3
+        concepts: [fn.params, compiler.read-error]
+
+      - type: predict-output
+        id: predict-width-return
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                return n * 2;
+            }
+
+            fn main() {
+                println!("[{:>5}]", double(21));
+            }
+          verify: run
+        options:
+          - { id: a, text: "[   42]" }
+          - { id: b, text: "[42   ]", why: "`>` right-aligns, so the spaces go before the number." }
+          - { id: c, text: "[42]", why: "`:>5` pads the value to 5 characters wide." }
+        answer: a
+        explanation: "`double(21)` returns 42, and `{:>5}` right-aligns it in 5 columns, so three spaces come first."
+        difficulty: 3
+        concepts: [fn.early-return, fmt.width-precision]

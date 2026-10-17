@@ -1,0 +1,249 @@
+id: first-steps.scalars.checkpoint
+title: "Checkpoint: Scalar Types"
+icon: flag
+concepts: []
+reviewConcepts:
+  - types.int
+  - types.inference
+  - types.float
+  - ops.arith
+  - types.overflow
+  - types.bool
+  - types.char
+  - types.as-cast
+  - var.mut
+  - var.shadowing
+  - var.const
+  - fmt.inline-args
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-shadow-cast
+        code:
+          rust: |
+            let temp = 21.7;
+            let temp = temp as i32;
+            let temp = temp * 2;
+            println!("{temp}");
+          verify: run
+        options:
+          - { id: a, text: "42" }
+          - { id: b, text: "43.4", why: "The second `let` turns `temp` into the integer 21 before the doubling." }
+          - { id: c, text: "44", why: "`as i32` drops the `.7`. It doesn't round 21.7 up to 22." }
+        answer: a
+        explanation: "Each `let` makes a new `temp`: 21.7, then 21 (fraction dropped), then 42."
+        concepts: [types.as-cast, var.shadowing]
+
+      - type: compiles
+        id: compiles-cast-binds-tight
+        code:
+          rust: |
+            let total = 5 + 2.0 as i32;
+            println!("{total}");
+          verify: run
+          expectStdout: "7\n"
+        answer: true
+        explanation: "`as` binds tighter than `+`, so `2.0 as i32` is worked out first, giving 2. Then `5 + 2` is two integers: 7."
+        concepts: [types.as-cast, ops.arith]
+
+      - type: decode-error
+        id: decode-speed-hours
+        prompt: "The goal is `90`. Which change fixes the error?"
+        code:
+          rust: |
+            fn main() {
+                let speed = 60;
+                let hours = 1.5;
+                let distance = speed * hours;
+                println!("{distance}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: "let distance = speed as f64 * hours;" }
+          - { id: b, code: "let distance = speed * hours as i32;", why: "It compiles, but `1.5 as i32` is 1, so it prints 60." }
+          - { id: c, code: "let distance: f64 = speed * hours;", why: "The annotation doesn't convert `speed`. It's still an integer times a float." }
+        answer: a
+        explanation: "Convert the integer to `f64` so both sides are floats: 60.0 * 1.5 = 90.0, printed as `90`."
+        concepts: [ops.arith, types.as-cast, types.float]
+
+      - type: predict-output
+        id: predict-u8-as-i8
+        code:
+          rust: |
+            let top: u8 = 255;
+            println!("{}", top as i8);
+          verify: run
+        options:
+          - { id: a, text: "-1" }
+          - { id: b, text: "127", why: "Integer casts don't stick at the limit. They keep the bits, and 255's bits read as -1 in an `i8`." }
+          - { id: c, text: "255", why: "An `i8` can't hold 255." }
+        answer: a
+        explanation: "Integer casts keep the bits. As an `i8`, the bits of 255 mean -1."
+        concepts: [types.as-cast, types.int]
+
+      - type: fill-tokens
+        id: fill-in-range
+        prompt: "Fill the blanks so `in_range` is `true` only when `score` is from 50 to 99"
+        code:
+          rust: |
+            let score = 75;
+            let in_range = score ___1___ 50
+                ___2___ score < 100;
+            println!("{in_range}");
+          verify: run
+          expectStdout: "true\n"
+        blanks:
+          "1": { answer: [">="] }
+          "2": { answer: ["&&"] }
+        bank: [">=", "&&", "||", "=>", "and"]
+        explanation: "Both conditions must hold, so use `&&`. With `||`, every score would count, since each one is either at least 50 or below 100."
+        concepts: [types.bool]
+
+      - type: parsons
+        id: parsons-celsius-int
+        prompt: "Arrange the lines so the program prints `86`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let celsius: i32 = 30;" }
+          - { id: l3, text: "    let c = celsius as f64;" }
+          - { id: l4, text: "    let fahrenheit = c * 1.8 + 32.0;" }
+          - { id: l5, text: '    println!("{fahrenheit}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let fahrenheit = celsius * 1.8 + 32.0;" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "86\n"
+        explanation: "`celsius` is an `i32`, so convert it to `f64` before using it with float numbers. 30.0 * 1.8 + 32.0 is 86."
+        concepts: [types.as-cast, types.float, ops.arith]
+
+      - type: predict-output
+        id: predict-tiles-divide
+        prompt: Build the output
+        code:
+          rust: |
+            let sweets = 17;
+            let a = sweets / 5;
+            let b = sweets % 5;
+            let c = sweets as f64 / 5.0;
+            println!("{a} {b} {c}");
+          verify: run
+        tiles: ["3", "2", "3.4", "3.5", "4", "2.0"]
+        answer: "3 2 3.4"
+        explanation: "Integer division gives 3 with 2 left over. Converting to `f64` first keeps the fraction: 3.4."
+        concepts: [ops.arith, types.as-cast]
+
+      - type: spot-bug
+        id: spot-bool-from-int
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                const MAX_LIVES: u8 = 3;
+                let symbol: char = '♥';
+                let lives = MAX_LIVES - 1;
+                let alive: bool = lives;
+                println!("{symbol} {alive}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "`lives` is a `u8`, not a `bool`. A comparison would make one: `let alive = lives > 0;`."
+        concepts: [types.bool, types.char, var.const]
+
+      - type: compiles
+        id: compiles-no-mut-add
+        code:
+          rust: |
+            let level: u8 = 5;
+            level += 1;
+            println!("{level}");
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0308: mismatched types", why: "`1` becomes a `u8` to match `level`, so the types agree." }
+            - { id: c, text: "E0277: cannot add a float to an integer", why: "There are no floats here." }
+          answer: a
+        explanation: "`+=` changes `level`, so it needs `let mut`. The type is fine."
+        concepts: [var.mut, types.int]
+
+      - type: mcq
+        id: mcq-print-b
+        prompt: "Which line prints `b`?"
+        options:
+          - { id: a, code: 'println!("{}", 98u8 as char);' }
+          - { id: b, code: "println!(\"{}\", 'a' as u8 + 1);", why: "`'a' as u8` is the number 97, so this prints `98`." }
+          - { id: c, code: "println!(\"{}\", 'a' + 1);", why: "You can't do arithmetic on a `char`, so this doesn't compile." }
+        answer: a
+        explanation: "98 is the code for `'b'`, and `as char` turns a `u8` into its character."
+        concepts: [types.as-cast, types.char]
+
+      - type: predict-output
+        id: predict-i32-max-checked
+        code:
+          rust: |
+            let big = i32::MAX;
+            let next = big.checked_add(1);
+            println!("{next:?}");
+          verify: run
+        options:
+          - { id: a, text: "None" }
+          - { id: b, text: "Some(2147483648)", why: "That's one more than the largest `i32`, so it can't be stored." }
+          - { id: c, text: "Some(-2147483648)", why: "That's the wrapped value. `checked_add` never wraps." }
+        answer: a
+        explanation: "`i32::MAX` is the largest `i32`, so adding 1 overflows and `checked_add` gives `None`."
+        concepts: [types.overflow]
+
+      - type: match-pairs
+        id: pairs-mixed-results
+        prompt: Match each expression to its value
+        pairs:
+          - ["250u8.checked_add(10)", "None"]
+          - ["250u8.wrapping_add(10)", "4"]
+          - ["'a' as u8", "97"]
+          - ["true as u8", "1"]
+        explanation: "Checked adds give `None` on overflow, wrapping adds go round, and `as` turns a `char` or `bool` into its number."
+        concepts: [types.overflow, types.as-cast]
+
+      - type: predict-output
+        id: predict-next-year
+        code:
+          rust: |
+            let name = "Ferris";
+            let age = 7u8;
+            println!("{name} turns {}", age + 1);
+          verify: run
+        options:
+          - { id: a, text: "Ferris turns 8" }
+          - { id: b, text: "Ferris turns 7u8", why: "The suffix only sets the type. It isn't printed." }
+          - { id: c, text: "Ferris turns 71", why: "`age + 1` is number addition, not joining text." }
+        answer: a
+        explanation: "`{name}` prints the variable, and `{}` is filled by `age + 1`, which is 8."
+        concepts: [fmt.inline-args, types.inference]
+
+      - type: compiles
+        id: compiles-f32-plus-f64
+        code:
+          rust: |
+            let small: f32 = 3.0;
+            let large: f64 = 1.5;
+            println!("{}", small + large);
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error code appears first?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0604: only `u8` can be cast as `char`", why: "There's no cast in this program." }
+            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
+          answer: a
+        explanation: "`f32` and `f64` are different types, even though both are floats. Convert one: `small as f64 + large`."
+        concepts: [types.float, types.as-cast]

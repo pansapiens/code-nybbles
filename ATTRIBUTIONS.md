@@ -7,3 +7,9 @@ draw on these sources, under the licences shown:
 
 - [The Rust Programming Language, ch. 1.2](https://doc.rust-lang.org/book/ch01-02-hello-world.html), MIT OR Apache-2.0. Used in: Hello, Rust.
 - [The Rust Programming Language, ch. 3.1](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html), MIT OR Apache-2.0. Used in: Variables & Mutability.
+- [The Rust Programming Language, ch. 3.2](https://doc.rust-lang.org/book/ch03-02-data-types.html), MIT OR Apache-2.0. Used in: Scalar Types.
+- [The Rust Programming Language, ch. 3.2](https://doc.rust-lang.org/book/ch03-02-data-types.html#compound-types), MIT OR Apache-2.0. Used in: Compound Types.
+- [Rust standard library documentation, std::fmt](https://doc.rust-lang.org/std/fmt/index.html), MIT OR Apache-2.0. Used in: Formatting & Output.
+- [The Rust Programming Language, ch. 3.3](https://doc.rust-lang.org/book/ch03-03-how-functions-work.html), MIT OR Apache-2.0. Used in: Functions.
+- [The Rust Programming Language, ch. 3.5](https://doc.rust-lang.org/book/ch03-05-control-flow.html), MIT OR Apache-2.0. Used in: Conditionals.
+- [The Rust Programming Language, ch. 3.5](https://doc.rust-lang.org/book/ch03-05-control-flow.html#repetition-with-loops), MIT OR Apache-2.0. Used in: Loops.

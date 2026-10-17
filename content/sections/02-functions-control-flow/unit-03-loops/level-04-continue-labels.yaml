@@ -1,0 +1,570 @@
+id: functions-control-flow.loops.continue-labels
+title: Skip and jump out
+icon: skip
+concepts: [ctrl.continue, ctrl.labels]
+reviewConcepts: [ctrl.loop, ctrl.break-value, ctrl.while, ctrl.for, range.basics, types.bool, types.array, macro.print-family]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-continue
+        title: Skip the rest of this pass
+        markdown: |
+          **`continue` skips the rest of the body and starts the next pass.** The loop itself keeps going.
+
+          Here, when `n` is 3, `continue` jumps past the `println!`.
+        code:
+          rust: |
+            for n in 1..=5 {
+                if n == 3 {
+                    continue;
+                }
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "1\n2\n4\n5\n"
+        concepts: [ctrl.continue]
+
+      - type: predict-output
+        id: predict-skip-evens
+        code:
+          rust: |
+            for n in 1..=6 {
+                if n % 2 == 0 {
+                    continue;
+                }
+                println!("{n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n3\n5" }
+          - { id: b, text: "2\n4\n6", why: "`continue` skips the `println!` for the even numbers, so only odd ones are printed." }
+          - { id: c, text: "1", why: "`continue` doesn't end the loop. That would be `break`." }
+        answer: a
+        explanation: "For even `n`, `continue` skips the print. The odd numbers 1, 3, 5 get printed."
+        concepts: [ctrl.continue]
+
+      - type: true-false
+        id: tf-continue-ends
+        prompt: "`continue` ends the whole loop."
+        answer: false
+        explanation: "`continue` only skips the rest of the current pass. `break` is the one that ends the loop."
+        concepts: [ctrl.continue]
+
+      - type: mcq
+        id: mcq-which-keyword
+        prompt: "This prints 1, 2, 4, 5. What goes in place of `???`?"
+        code:
+          rust: |
+            for n in 1..=5 {
+                if n == 3 {
+                    ???
+                }
+                println!("{n}");
+            }
+          verify: none
+          verifyReason: "`???` is a placeholder for the answer; the version with `continue;` is verified in the first concept card"
+        options:
+          - { id: a, code: "continue;" }
+          - { id: b, code: "break;", why: "`break` would end the loop at 3, printing only 1 and 2." }
+          - { id: c, code: "return;", why: "`return` would leave `main` completely, printing only 1 and 2." }
+        answer: a
+        explanation: "Only 3 is missing and the loop carries on afterwards, so it's `continue`."
+        concepts: [ctrl.continue, ctrl.loop]
+
+      - type: predict-output
+        id: predict-break-instead
+        code:
+          rust: |
+            for n in 1..=5 {
+                if n == 3 {
+                    break;
+                }
+                println!("{n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n2" }
+          - { id: b, text: "1\n2\n4\n5", why: "That's what `continue` would print. `break` ends the loop at 3." }
+          - { id: c, text: "1\n2\n3", why: "`break` runs before the `println!` when `n` is 3." }
+        answer: a
+        explanation: "At 3, `break` leaves the loop straight away, so only 1 and 2 are printed."
+        concepts: [ctrl.continue, ctrl.loop]
+
+      - type: fill-tokens
+        id: fill-continue
+        prompt: "Fill the blank so the program prints every number from 1 to 5 except 4"
+        code:
+          rust: |
+            for n in 1..=5 {
+                if n == 4 {
+                    ___1___;
+                }
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "1\n2\n3\n5\n"
+        blanks:
+          "1": { answer: ["continue"] }
+        bank: ["continue", "break", "skip", "next"]
+        explanation: "`continue` skips the print for 4 and moves on to 5. Rust has no `skip` or `next` keyword."
+        concepts: [ctrl.continue]
+
+      - type: concept
+        id: concept-labels
+        title: Name a loop with a label
+        markdown: |
+          **`break` and `continue` act on the innermost loop.** To reach an outer loop, give it a **label**: a name starting with `'`, followed by `:`.
+
+          `break 'outer;` then ends the labelled loop, inner loop and all.
+        code:
+          rust: |
+            'outer: for a in 1..=3 {
+                for b in 1..=3 {
+                    if a * b == 4 {
+                        break 'outer;
+                    }
+                    println!("{a} {b}");
+                }
+            }
+          verify: run
+          expectStdout: "1 1\n1 2\n1 3\n2 1\n"
+        concepts: [ctrl.labels]
+
+      - type: predict-output
+        id: predict-inner-break
+        code:
+          rust: |
+            for a in 1..=2 {
+                for b in 1..=3 {
+                    if b == 2 {
+                        break;
+                    }
+                    println!("{a}{b}");
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "11\n21" }
+          - { id: b, text: "11", why: "A plain `break` only leaves the inner loop. The outer loop goes on to `a = 2`." }
+          - { id: c, text: "11\n12\n21\n22", why: "When `b` is 2, `break` runs before the `println!`." }
+        answer: a
+        explanation: "The inner loop breaks at `b = 2` each time, but the outer loop still runs for `a = 1` and `a = 2`."
+        concepts: [ctrl.labels, ctrl.for]
+
+      - type: predict-output
+        id: predict-labelled-break
+        code:
+          rust: |
+            'outer: for a in 1..=2 {
+                for b in 1..=3 {
+                    if b == 2 {
+                        break 'outer;
+                    }
+                    println!("{a}{b}");
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "11" }
+          - { id: b, text: "11\n21", why: "`break 'outer` ends the outer loop too, so `a` never becomes 2." }
+          - { id: c, text: "11\n12", why: "`break 'outer` runs when `b` is 2, before the `println!`." }
+        answer: a
+        explanation: "`break 'outer` leaves both loops at once, right after printing `11`."
+        concepts: [ctrl.labels]
+
+      - type: match-pairs
+        id: pairs-keywords
+        prompt: Match each piece to what it does
+        pairs:
+          - ["break;", "ends the innermost loop"]
+          - ["continue;", "skips to the next pass"]
+          - ["'outer:", "names a loop"]
+          - ["break 'outer;", "ends the loop named `'outer`"]
+          - ["continue 'outer;", "next pass of the loop named `'outer`"]
+        concepts: [ctrl.continue, ctrl.labels]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-while-continue
+        code:
+          rust: |
+            let mut n = 0;
+            while n < 5 {
+                n += 1;
+                if n == 2 || n == 4 {
+                    continue;
+                }
+                println!("{n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n3\n5" }
+          - { id: b, text: "1\n3", why: "`n` is increased before the check, so the pass with `n = 5` still prints." }
+          - { id: c, text: "0\n1\n3", why: "`n += 1` runs before the print, so the first value printed is 1." }
+        answer: a
+        explanation: "`continue` skips the print for 2 and 4. Because `n += 1` comes first, the loop still moves on."
+        concepts: [ctrl.continue, ctrl.while, types.bool]
+
+      - type: spot-bug
+        id: spot-stuck-continue
+        prompt: "This program gets stuck repeating forever once `n` is 2. Tap the line that keeps it stuck."
+        code:
+          rust: |
+            fn main() {
+                let mut n = 0;
+                while n < 5 {
+                    if n == 2 {
+                        continue;
+                    }
+                    println!("{n}");
+                    n += 1;
+                }
+            }
+          verify: compile
+        answer: 5
+        explanation: "`continue` jumps back to the condition before `n += 1` runs, so `n` stays 2. Put the increment before the `if`."
+        concepts: [ctrl.continue, ctrl.while]
+
+      - type: compiles
+        id: compiles-undeclared-label
+        code:
+          rust: |
+            for a in 1..=3 {
+                for b in 1..=3 {
+                    if a == b {
+                        break 'outer;
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0426]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0426: use of undeclared label `'outer`" }
+            - { id: b, text: "E0268: `break` outside of a loop", why: "The `break` is inside two loops. The problem is the label name." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here." }
+          answer: a
+        explanation: "No loop is labelled `'outer`. Writing `'outer: for a in 1..=3 {` on line 1 fixes it."
+        concepts: [ctrl.labels]
+
+      - type: predict-output
+        id: predict-continue-outer
+        code:
+          rust: |
+            'rows: for row in 1..=3 {
+                for col in 1..=3 {
+                    if col == row {
+                        continue 'rows;
+                    }
+                    println!("{row}{col}");
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "21\n31\n32" }
+          - { id: b, text: "12\n13\n21\n23\n31\n32", why: "That's what a plain `continue` gives. `continue 'rows` also skips the rest of the inner loop." }
+          - { id: c, text: "21", why: "`continue 'rows` moves on to the next row. It doesn't end the outer loop." }
+        answer: a
+        explanation: "When `col` reaches `row`, the rest of that row is skipped. Row 1 prints nothing, row 2 prints `21`, row 3 prints `31` and `32`."
+        concepts: [ctrl.labels, ctrl.continue]
+
+      - type: true-false
+        id: tf-label-apostrophe
+        prompt: "A loop label starts with an apostrophe, like `'outer`."
+        answer: true
+        explanation: "Labels are written `'name:` before the loop, and `'name` after `break` or `continue`."
+        concepts: [ctrl.labels]
+
+      - type: decode-error
+        id: decode-label-no-apostrophe
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                outer: for a in 1..=3 {
+                    for b in 1..=3 {
+                        if a + b == 4 {
+                            break outer;
+                        }
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrorMessage: "malformed loop label"
+        options:
+          - { id: a, text: "Labels need an apostrophe: `'outer:` and `break 'outer;`" }
+          - { id: b, text: "Labels only work on `loop`, not on `for`", why: "Any loop can have a label: `loop`, `while` or `for`." }
+          - { id: c, text: "`outer` must be created with `let` first", why: "A label isn't a variable. It's a name for a loop, written with `'`." }
+        answer: a
+        explanation: "Without `'`, Rust reads `outer` as an ordinary name. It reports a malformed label and can't find a value called `outer`."
+        concepts: [ctrl.labels]
+
+      - type: fill-tokens
+        id: fill-label
+        prompt: "Fill the blanks so the program prints `11`, `12`, then stops both loops"
+        code:
+          rust: |
+            ___1___ for a in 1..=3 {
+                for b in 1..=3 {
+                    if b == 3 {
+                        break ___2___;
+                    }
+                    println!("{a}{b}");
+                }
+            }
+          verify: run
+          expectStdout: "11\n12\n"
+        blanks:
+          "1": { answer: ["'search:"] }
+          "2": { answer: ["'search"] }
+        bank: ["'search:", "'search", "search:", "search", "loop"]
+        explanation: "The label is declared as `'search:` before the loop and used as `'search` after `break`."
+        concepts: [ctrl.labels]
+
+      - type: predict-output
+        id: predict-label-break-value
+        code:
+          rust: |
+            let found = 'outer: loop {
+                for n in 1..=5 {
+                    if n * n > 10 {
+                        break 'outer n;
+                    }
+                }
+            };
+            println!("{found}");
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "16", why: "The loop breaks with `n`, not `n * n`." }
+          - { id: c, text: "3", why: "3 x 3 is 9, which isn't more than 10." }
+        answer: a
+        explanation: "`break 'outer n` leaves the `for` and the labelled `loop`, giving the `loop` the value 4."
+        concepts: [ctrl.labels, ctrl.break-value]
+
+      - type: mcq
+        id: mcq-when-label
+        prompt: When do you need a loop label?
+        options:
+          - { id: a, text: "When code in an inner loop must `break` or `continue` an outer loop" }
+          - { id: b, text: "Every time you use `break`", why: "A plain `break` works fine for the innermost loop." }
+          - { id: c, text: "When a loop has more than one `continue`", why: "Several `continue`s in one loop all act on that loop. No label is needed." }
+        answer: a
+        explanation: "Without a label, `break` and `continue` act on the innermost loop. A label lets you pick an outer one."
+        concepts: [ctrl.labels]
+
+      - type: predict-output
+        id: predict-rev-continue
+        code:
+          rust: |
+            for n in (1..=6).rev() {
+                if n % 3 == 0 {
+                    continue;
+                }
+                print!("{n} ");
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "5 4 2 1" }
+          - { id: b, text: "1 2 4 5", why: "`.rev()` goes from 6 down to 1." }
+          - { id: c, text: "6 3", why: "`continue` skips the print for 6 and 3. The other numbers are printed." }
+        answer: a
+        explanation: "The loop counts down 6 to 1 and skips multiples of 3."
+        concepts: [ctrl.continue, range.basics]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-break-outer
+        prompt: "Arrange the lines to print `11` and `12`, then stop both loops"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    'outer: for a in 1..=3 {" }
+          - { id: l3, text: "        for b in 1..=3 {" }
+          - { id: l4, text: "            if a + b == 4 {" }
+          - { id: l5, text: "                break 'outer;" }
+          - { id: l6, text: "            }" }
+          - { id: l7, text: '            println!("{a}{b}");' }
+          - { id: l8, text: "        }" }
+          - { id: l9, text: "    }" }
+          - { id: l10, text: "}" }
+        distractors:
+          - { id: d1, text: "                break;" }
+          - { id: d2, text: "    outer: for a in 1..=3 {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10]
+        verify:
+          mode: run
+          expectStdout: "11\n12\n"
+        explanation: "The check comes before the print, so `13` is never printed. A plain `break` would let `a` carry on to 2."
+        concepts: [ctrl.labels]
+
+      - type: predict-output
+        id: predict-tiles-continue
+        prompt: Build the output
+        code:
+          rust: |
+            for n in 1..=7 {
+                if n % 2 == 1 {
+                    continue;
+                }
+                print!("{n} ");
+            }
+            println!("end");
+          verify: run
+        tiles: ["1", "2", "4", "6", "7", "end"]
+        answer: "2 4 6 end"
+        explanation: "Odd numbers hit `continue`, so only 2, 4 and 6 are printed, then `end`."
+        concepts: [ctrl.continue]
+
+      - type: spot-bug
+        id: spot-break-not-continue
+        prompt: "This should print the odd numbers from 1 to 9, but it only prints 1. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                for n in 1..10 {
+                    if n % 2 == 0 {
+                        break;
+                    }
+                    println!("{n}");
+                }
+            }
+          verify: run
+          expectStdout: "1\n"
+        answer: 4
+        explanation: "At `n = 2` the `break` ends the loop. `continue` would skip only the even numbers."
+        concepts: [ctrl.continue, ctrl.loop]
+
+      - type: fill-tokens
+        id: fill-continue-rows
+        prompt: "Fill the blanks so row 2 is skipped completely, `|` included. The program should print `11 12 |` then `31 32 |`."
+        code:
+          rust: |
+            'rows: for row in 1..=3 {
+                for col in 1..=2 {
+                    if row == 2 {
+                        ___1___ ___2___;
+                    }
+                    print!("{row}{col} ");
+                }
+                println!("|");
+            }
+          verify: run
+          expectStdout: "11 12 |\n31 32 |\n"
+        blanks:
+          "1": { answer: ["continue"] }
+          "2": { answer: ["'rows"] }
+        bank: ["continue", "break", "'rows", "rows", "'rows:"]
+        explanation: "`continue 'rows` skips the rest of the outer pass, including `println!(\"|\")`. A plain `break` or `continue` would still print `|` for row 2, and `break 'rows` would stop after row 1."
+        concepts: [ctrl.labels, ctrl.continue]
+
+      - type: compiles
+        id: compiles-label-while
+        code:
+          rust: |
+            let mut a = 0;
+            'outer: while a < 3 {
+                a += 1;
+                for b in 0..3 {
+                    if b == a {
+                        continue 'outer;
+                    }
+                }
+            }
+            println!("{a}");
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "Any loop can have a label: `loop`, `while` or `for`. This prints 3."
+        concepts: [ctrl.labels, ctrl.while]
+
+      - type: decode-error
+        id: decode-for-break-value
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let found = 'outer: for n in 1..10 {
+                    if n * n > 20 {
+                        break 'outer n;
+                    }
+                };
+                println!("{found:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0571]
+        options:
+          - { id: a, text: "A `for` loop can't give a value with `break`. Only `loop` can." }
+          - { id: b, text: "The label `'outer` is in the wrong place", why: "`'outer:` before `for` is the right place. The problem is `break` with a value." }
+          - { id: c, text: "`n` must be `mut`", why: "Nothing changes `n`. The `for` loop sets it." }
+        answer: a
+        explanation: "E0571 is `break` with a value in a `for` or `while` loop. Those loops can end without a `break`, so they always give `()`."
+        concepts: [ctrl.labels, ctrl.break-value]
+
+      - type: predict-output
+        id: predict-count-pairs
+        code:
+          rust: |
+            let mut pairs = 0;
+            for a in 1..=3 {
+                for b in 1..=3 {
+                    if a == b {
+                        continue;
+                    }
+                    pairs += 1;
+                }
+            }
+            println!("{pairs}");
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "9", why: "`continue` skips the three passes where `a == b`." }
+          - { id: c, text: "3", why: "Only the 3 matching pairs are skipped. The other 6 are counted." }
+        answer: a
+        explanation: "There are 3 x 3 = 9 pairs, and `continue` skips (1,1), (2,2) and (3,3), leaving 6."
+        concepts: [ctrl.continue]
+
+      - type: mcq
+        id: mcq-continue-outer
+        prompt: "Inside an inner loop, what does `continue 'outer;` do?"
+        options:
+          - { id: a, text: "Stops the inner loop and starts the next pass of the outer loop" }
+          - { id: b, text: "Ends both loops", why: "That's `break 'outer;`." }
+          - { id: c, text: "Starts the next pass of the inner loop", why: "That's a plain `continue;`." }
+        answer: a
+        explanation: "`continue 'outer` abandons the current inner loop and goes on with the outer loop's next value."
+        concepts: [ctrl.labels, ctrl.continue]
+
+      - type: true-false
+        id: tf-plain-continue-inner
+        prompt: "Without a label, `continue` in an inner loop moves on to the next pass of the inner loop."
+        answer: true
+        explanation: "Like `break`, a plain `continue` acts on the innermost loop it's in."
+        concepts: [ctrl.continue, ctrl.labels]
+
+      - type: predict-output
+        id: predict-skip-negative
+        code:
+          rust: |
+            let readings = [4, -1, 7, -3, 2];
+            let mut total = 0;
+            for r in readings {
+                if r < 0 {
+                    continue;
+                }
+                total += r;
+            }
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "13" }
+          - { id: b, text: "9", why: "`continue` skips only the negative readings. All three positive ones are added." }
+          - { id: c, text: "4", why: "`continue` doesn't stop the loop at -1. It moves on to 7." }
+        answer: a
+        explanation: "The negative readings are skipped, so the total is 4 + 7 + 2."
+        concepts: [ctrl.continue, types.array]

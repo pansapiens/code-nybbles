@@ -1,0 +1,423 @@
+id: first-steps.scalars.arithmetic
+title: Decimals and arithmetic
+icon: calculator
+concepts: [types.float, ops.arith]
+reviewConcepts: [types.int, types.inference, var.mut, fmt.inline-args]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-floats
+        title: Floating-point numbers
+        markdown: |
+          **Numbers with a decimal point are floats.** Rust has two float types: `f64` (the default) and `f32`, which uses half the memory but is less precise.
+
+          A float literal needs a decimal point: `7.0` is a float, `7` is an integer.
+        code:
+          rust: |
+            let temperature = 21.5;     // f64
+            let price: f32 = 9.99;
+            println!("{temperature} {price}");
+          verify: run
+          expectStdout: "21.5 9.99\n"
+        concepts: [types.float]
+
+      - type: mcq
+        id: mcq-float-literal
+        prompt: "Which of these is a float?"
+        options:
+          - { id: a, code: "7.0" }
+          - { id: b, code: "7", why: "Without a decimal point, `7` is an integer (`i32` by default)." }
+          - { id: c, code: "7u8", why: "The suffix `u8` makes this an integer." }
+          - { id: d, code: '"7.0"', why: "The double quotes make this text, not a number." }
+        answer: a
+        explanation: "The decimal point makes `7.0` a float, an `f64` by default."
+        concepts: [types.float]
+
+      - type: concept
+        id: concept-operators
+        title: Arithmetic operators
+        markdown: |
+          **Rust has the usual operators:** `+`, `-`, `*`, `/` and `%` (remainder).
+
+          **Integer division drops the fraction.** `7 / 2` is `3`, not `3.5`. The `%` operator gives what's left over. With floats, `/` keeps the fraction.
+        code:
+          rust: |
+            println!("{}", 7 / 2);
+            println!("{}", 7 % 2);
+            println!("{}", 7.0 / 2.0);
+          verify: run
+          expectStdout: "3\n1\n3.5\n"
+        concepts: [ops.arith, types.float]
+
+      - type: predict-output
+        id: predict-int-div
+        code:
+          rust: |
+            println!("{}", 10 / 3);
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "3.3333333333333335", why: "Both numbers are integers, so the result is an integer too." }
+          - { id: c, text: "4", why: "Integer division doesn't round to the nearest. It drops the fraction." }
+        answer: a
+        explanation: "`10 / 3` is 3.33..., and integer division throws away the `.33...`."
+        concepts: [ops.arith]
+
+      - type: predict-output
+        id: predict-remainder
+        code:
+          rust: |
+            println!("{}", 10 % 3);
+          verify: run
+        options:
+          - { id: a, text: "1" }
+          - { id: b, text: "3", why: "`%` gives the remainder, not the result of the division." }
+          - { id: c, text: "0.1", why: "`%` isn't percent. It's the remainder after dividing." }
+        answer: a
+        explanation: "3 goes into 10 three times (9), with 1 left over."
+        concepts: [ops.arith]
+
+      - type: true-false
+        id: tf-nine-halves
+        prompt: "In Rust, `9 / 2` is `4.5`."
+        answer: false
+        explanation: "`9` and `2` are integers, so the answer is the integer `4`. Write `9.0 / 2.0` to get `4.5`."
+        concepts: [ops.arith]
+
+      - type: predict-output
+        id: predict-hours-minutes
+        code:
+          rust: |
+            let minutes = 135;
+            let hours = minutes / 60;
+            let rest = minutes % 60;
+            println!("{hours}h {rest}m");
+          verify: run
+        options:
+          - { id: a, text: "2h 15m" }
+          - { id: b, text: "2.25h 15m", why: "`minutes` and `60` are integers, so `/` gives a whole number." }
+          - { id: c, text: "2h 0m", why: "`%` gives the 15 minutes left after taking out two hours." }
+        answer: a
+        explanation: "135 / 60 is 2 whole hours, and 135 % 60 is the 15 minutes left over."
+        concepts: [ops.arith, fmt.inline-args]
+
+      - type: fill-tokens
+        id: fill-left-over
+        prompt: "Fill the blank so the program prints how many sweets are left over: `2`"
+        code:
+          rust: |
+            let left_over = 17 ___1___ 5;
+            println!("{left_over}");
+          verify: run
+          expectStdout: "2\n"
+        blanks:
+          "1": { answer: ["%"] }
+        bank: ["%", "/", "-", "*"]
+        explanation: "`17 % 5` is the remainder after sharing 17 into groups of 5: three groups and 2 left."
+        concepts: [ops.arith]
+
+      - type: match-pairs
+        id: pairs-operators
+        pairs:
+          - ["+", "add"]
+          - ["-", "subtract"]
+          - ["*", "multiply"]
+          - ["/", "divide"]
+          - ["%", "remainder"]
+        concepts: [ops.arith]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-no-mixing
+        title: Don't mix integers and floats
+        markdown: |
+          **Both sides of an operator must be the same type.** Rust won't add an integer to a float. The compiler reports error **E0277**.
+
+          Write the integer as a float instead: `2.0 + 1.5`.
+        code:
+          rust: |
+            let total = 2 + 1.5; // error[E0277]
+          verify: compile-fail
+          expectErrors: [E0277]
+        concepts: [ops.arith, types.float]
+
+      - type: compiles
+        id: compiles-price-count
+        code:
+          rust: |
+            let price = 4.5;
+            let count = 3;
+            let total = price * count;
+            println!("{total}");
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0277: cannot multiply `{float}` by `{integer}`" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Each variable gets one value. The problem is the multiplication." }
+            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign in this program." }
+          answer: a
+        explanation: "`price` is a float and `count` is an integer, so `*` can't combine them. Writing `let count = 3.0;` fixes it."
+        concepts: [ops.arith, types.float]
+
+      - type: predict-output
+        id: predict-display-whole-float
+        code:
+          rust: |
+            let total = 2.5 + 2.5;
+            println!("{total}");
+            println!("{total:?}");
+          verify: run
+        options:
+          - { id: a, text: "5\n5.0" }
+          - { id: b, text: "5.0\n5.0", why: "`{}` leaves off `.0` for a whole float. Only `{:?}` shows it." }
+          - { id: c, text: "5\n5", why: "The Debug format `{:?}` keeps the `.0` so you can tell it's a float." }
+        answer: a
+        explanation: "`total` is the float `5.0`. `{}` prints it as `5`, while `{:?}` prints `5.0`."
+        concepts: [types.float, fmt.inline-args]
+
+      - type: predict-output
+        id: predict-point-three
+        code:
+          rust: |
+            println!("{}", 0.1 + 0.2);
+          verify: run
+        options:
+          - { id: a, text: "0.30000000000000004" }
+          - { id: b, text: "0.3", why: "Floats store numbers in binary, and `0.1` and `0.2` can't be stored exactly." }
+          - { id: c, text: "0.3000000000000000", why: "Rust prints the shortest digits that identify the stored value. That value is slightly above 0.3." }
+        answer: a
+        explanation: "Floats are close approximations. `0.1 + 0.2` lands a tiny bit above `0.3`, and Rust prints that value."
+        concepts: [types.float]
+
+      - type: decode-error
+        id: decode-average
+        prompt: "The goal is `7.5`. Which change fixes the error?"
+        code:
+          rust: |
+            fn main() {
+                let average = 15 / 2.0;
+                println!("{average}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: "let average = 15.0 / 2.0;" }
+          - { id: b, code: "let average = 15 / 2;", why: "This compiles, but integer division gives `7`, not `7.5`." }
+          - { id: c, code: "let average: f64 = 15 / 2.0;", why: "The annotation doesn't change `15`. It's still an integer divided by a float." }
+        answer: a
+        explanation: "`15` is an integer and `2.0` is a float, so `/` can't combine them. Writing `15.0` makes both sides floats."
+        concepts: [ops.arith, types.float, compiler.read-error]
+
+      - type: predict-output
+        id: predict-precedence
+        code:
+          rust: |
+            println!("{}", 2 + 3 * 4);
+          verify: run
+        options:
+          - { id: a, text: "14" }
+          - { id: b, text: "20", why: "`*` happens before `+`, like in maths. Use `(2 + 3) * 4` for 20." }
+          - { id: c, text: "24", why: "Only one `*` happens: 3 * 4 = 12, then 2 + 12." }
+        answer: a
+        explanation: "Multiplication and division happen before addition and subtraction: 3 * 4 = 12, then 2 + 12 = 14."
+        concepts: [ops.arith]
+
+      - type: true-false
+        id: tf-f32-default
+        prompt: "`f32` is the default float type."
+        answer: false
+        explanation: "The default is `f64`. It's about as fast as `f32` on modern computers and more precise."
+        concepts: [types.float, types.inference]
+
+      - type: spot-bug
+        id: spot-mixed-add
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let subtotal = 18.5;
+                let tip = 2.0;
+                let total = subtotal + 2;
+                println!("{total} {tip}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: 4
+        explanation: "`subtotal` is a float, but `2` is an integer. Line 4 needs `2.0` (or `tip`)."
+        concepts: [ops.arith, types.float]
+
+      - type: predict-output
+        id: predict-mut-float
+        code:
+          rust: |
+            let mut balance = 10.0;
+            balance -= 2.5;
+            balance *= 2.0;
+            println!("{balance}");
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "15.0", why: "`{}` prints a whole-valued float without `.0`." }
+          - { id: c, text: "5", why: "The steps run in order: subtract first (7.5), then double." }
+        answer: a
+        explanation: "10.0 - 2.5 = 7.5, then 7.5 * 2.0 = 15.0, which `{}` prints as `15`. `*=` works like `+=`."
+        concepts: [types.float, ops.arith, var.mut]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-negative-div
+        code:
+          rust: |
+            println!("{}", -7 / 2);
+          verify: run
+        options:
+          - { id: a, text: "-3" }
+          - { id: b, text: "-4", why: "Integer division rounds towards zero, not down. -3.5 becomes -3." }
+          - { id: c, text: "-3.5", why: "Both numbers are integers, so the result is an integer." }
+        answer: a
+        explanation: "Integer division drops the fraction, which moves the answer towards zero: -3.5 becomes -3."
+        concepts: [ops.arith]
+
+      - type: predict-output
+        id: predict-clock
+        code:
+          rust: |
+            let seconds = 3725;
+            let h = seconds / 3600;
+            let m = seconds % 3600 / 60;
+            let s = seconds % 60;
+            println!("{h}:{m}:{s}");
+          verify: run
+        options:
+          - { id: a, text: "1:2:5" }
+          - { id: b, text: "1:62:5", why: "`% 3600` first removes the whole hour, leaving 125 seconds, which is 2 minutes." }
+          - { id: c, text: "1.03:2:5", why: "Integer division gives whole numbers only." }
+        answer: a
+        explanation: "3725 / 3600 = 1 hour. 3725 % 3600 = 125, and 125 / 60 = 2 minutes. 3725 % 60 = 5 seconds."
+        concepts: [ops.arith]
+
+      - type: fill-tokens
+        id: fill-float-average
+        prompt: "Fill the blanks so the program prints `3.5`"
+        code:
+          rust: |
+            let total = 7.0;
+            let count = ___1___;
+            println!("{}", total ___2___ count);
+          verify: run
+          expectStdout: "3.5\n"
+        blanks:
+          "1": { answer: ["2.0"] }
+          "2": { answer: ["/"] }
+        bank: ["2.0", "2", "/", "%", "*"]
+        explanation: "`total` is a float, so `count` must be a float too: `2.0`. Then `7.0 / 2.0` is `3.5`."
+        concepts: [types.float, ops.arith]
+
+      - type: compiles
+        id: compiles-f32-from-int
+        code:
+          rust: |
+            let weight: f32 = 5;
+            println!("{weight}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic here. The value doesn't match the declared type." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`weight` is only given one value." }
+          answer: a
+        explanation: "`5` is an integer literal, and Rust won't use it as an `f32`. Write `5.0` instead."
+        concepts: [types.float]
+
+      - type: parsons
+        id: parsons-fahrenheit
+        prompt: "Arrange the lines to convert 25 °C to Fahrenheit and print `77`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let celsius = 25.0;" }
+          - { id: l3, text: "    let fahrenheit = celsius * 1.8 + 32.0;" }
+          - { id: l4, text: '    println!("{fahrenheit}");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let fahrenheit = celsius * 1.8 + 32;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "77\n"
+        explanation: "`celsius` is a float, so every number in the formula must be a float: `32.0`, not `32`."
+        concepts: [types.float, ops.arith]
+
+      - type: predict-output
+        id: predict-float-remainder
+        code:
+          rust: |
+            println!("{}", 10.5 % 3.0);
+          verify: run
+        options:
+          - { id: a, text: "1.5" }
+          - { id: b, text: "1", why: "With floats, `%` keeps the fraction of what's left over." }
+          - { id: c, text: "3.5", why: "That's `10.5 / 3.0`. `%` gives the remainder: 10.5 - 9.0." }
+        answer: a
+        explanation: "3.0 fits into 10.5 three times (9.0), leaving 1.5. `%` works with floats as well as integers."
+        concepts: [ops.arith, types.float]
+
+      - type: predict-output
+        id: predict-div-then-mul
+        code:
+          rust: |
+            println!("{}", 20 / 6 * 6);
+          verify: run
+        options:
+          - { id: a, text: "18" }
+          - { id: b, text: "20", why: "`20 / 6` is 3, not 3.33, so multiplying back by 6 can't restore the 20." }
+          - { id: c, text: "0", why: "`/` and `*` run left to right: (20 / 6) * 6, not 20 / (6 * 6)." }
+        answer: a
+        explanation: "`/` and `*` run left to right. `20 / 6` is 3 (the fraction is dropped), then 3 * 6 = 18."
+        concepts: [ops.arith]
+
+      - type: spot-bug
+        id: spot-half-share
+        prompt: "This program should print `10 2.5` but prints `10 2`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let total = 10.0;
+                let share = 5 / 2;
+                println!("{total} {share}");
+            }
+          verify: run
+          expectStdout: "10 2\n"
+        answer: 3
+        explanation: "`5 / 2` divides two integers, so the `.5` is dropped. `5.0 / 2.0` gives `2.5`."
+        concepts: [ops.arith, types.float]
+
+      - type: mcq
+        id: mcq-why-e0277
+        prompt: "Why does `let total = 2 + 1.5;` fail to compile?"
+        options:
+          - { id: a, text: "`2` is an integer and `1.5` is a float, and `+` needs the same type on both sides" }
+          - { id: b, text: "`total` needs `mut` to hold a calculated value", why: "`mut` is only needed to change a variable after it's created." }
+          - { id: c, text: "Rust can't add numbers that have a decimal point", why: "`2.0 + 1.5` works fine." }
+        answer: a
+        explanation: "Rust doesn't convert between integers and floats behind your back. Make both sides floats: `2.0 + 1.5`."
+        concepts: [ops.arith, types.float]
+
+      - type: match-pairs
+        id: pairs-results
+        prompt: Match each calculation to its result
+        pairs:
+          - ["7 / 2", "3"]
+          - ["7 % 2", "1"]
+          - ["7.0 / 2.0", "3.5"]
+          - ["-7 / 2", "-3"]
+        explanation: "Integer division drops the fraction, moving towards zero. Float division keeps it."
+        concepts: [ops.arith, types.float]

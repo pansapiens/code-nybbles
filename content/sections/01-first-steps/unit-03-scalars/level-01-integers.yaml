@@ -1,0 +1,421 @@
+id: first-steps.scalars.integers
+title: Whole numbers
+icon: hash
+concepts: [types.int]
+reviewConcepts: [var.let, var.mut, var.const, fmt.placeholders, fmt.inline-args]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-int-types
+        title: Integer types
+        markdown: |
+          **An integer is a whole number.** Rust has several integer types, and the name tells you two things:
+
+          - `i` means **signed**: the number can be negative. `u` means **unsigned**: zero or more.
+          - The number is the size in **bits**. `u8` uses 8 bits, `i32` uses 32.
+
+          You can write the type after the name with `: type`.
+        code:
+          rust: |
+            let temperature: i32 = -5;
+            let lives: u8 = 3;
+            println!("{temperature} {lives}");
+          verify: run
+          expectStdout: "-5 3\n"
+        concepts: [types.int]
+
+      - type: mcq
+        id: mcq-negative
+        prompt: "Which type can hold the value `-40`?"
+        options:
+          - { id: a, text: "`i16`" }
+          - { id: b, text: "`u8`", why: "`u` means unsigned: zero and up only." }
+          - { id: c, text: "`u32`", why: "A bigger unsigned type still can't hold negative numbers." }
+          - { id: d, text: "`usize`", why: "`usize` starts with `u`, so it's unsigned too." }
+        answer: a
+        explanation: "Only signed types (the ones starting with `i`) can hold negative numbers. `i16` covers -32768 to 32767."
+        concepts: [types.int]
+
+      - type: true-false
+        id: tf-u8-negative
+        prompt: "A `u8` can hold negative numbers."
+        answer: false
+        explanation: "The `u` stands for unsigned. A `u8` holds 0 to 255."
+        concepts: [types.int]
+
+      - type: concept
+        id: concept-ranges
+        title: Bigger types hold bigger numbers
+        markdown: |
+          **More bits, wider range.** Each type covers a fixed range:
+
+          | Type | Smallest | Largest |
+          |---|---|---|
+          | `u8` | 0 | 255 |
+          | `i8` | -128 | 127 |
+          | `u16` | 0 | 65535 |
+          | `i32` | about -2.1 billion | about 2.1 billion |
+
+          The sizes go `8`, `16`, `32`, `64` and `128` for both `i` and `u`. You can ask a type for its limits with `u8::MAX` and `i8::MIN`.
+        code:
+          rust: |
+            println!("{}", u8::MAX);
+            println!("{}", i8::MIN);
+          verify: run
+          expectStdout: "255\n-128\n"
+        concepts: [types.int]
+
+      - type: predict-output
+        id: predict-i8-max
+        code:
+          rust: |
+            println!("{}", i8::MAX);
+          verify: run
+        options:
+          - { id: a, text: "127" }
+          - { id: b, text: "128", why: "Zero takes one of the 256 slots, so the largest `i8` is 127, not 128." }
+          - { id: c, text: "255", why: "255 is the largest `u8`. An `i8` gives half its range to negative numbers." }
+        answer: a
+        explanation: "An `i8` holds -128 to 127. That's 256 values, the same count as a `u8`, shifted to include negatives."
+        concepts: [types.int]
+
+      - type: predict-output
+        id: predict-negative-i16
+        code:
+          rust: |
+            let depth: i16 = -300;
+            println!("Depth: {depth}");
+          verify: run
+        options:
+          - { id: a, text: "Depth: -300" }
+          - { id: b, text: "Depth: 300", why: "`i16` is signed, so it keeps the minus sign." }
+          - { id: c, text: "Depth: {depth}", why: "`{depth}` is replaced by the value of `depth`." }
+        answer: a
+        explanation: "`i16` is a signed type, so `-300` fits and prints as written."
+        concepts: [types.int, fmt.inline-args]
+
+      - type: mcq
+        id: mcq-u-means
+        prompt: "What does the `u` in `u32` stand for?"
+        options:
+          - { id: a, text: "Unsigned: the value is never negative" }
+          - { id: b, text: "Universal: it works for any number", why: "Each type has a fixed range. `u32` can't hold negatives or numbers above about 4.29 billion." }
+          - { id: c, text: "Unit: it holds a single digit", why: "A `u32` holds numbers up to about 4.29 billion." }
+        answer: a
+        explanation: "`u` types are unsigned and `i` types are signed (they can be negative)."
+        concepts: [types.int]
+
+      - type: match-pairs
+        id: pairs-ranges
+        pairs:
+          - ["u8", "0 to 255"]
+          - ["i8", "-128 to 127"]
+          - ["u16", "0 to 65535"]
+          - ["i64", "can be negative, 64 bits"]
+        concepts: [types.int]
+
+      - type: compiles
+        id: compiles-negative-u8
+        code:
+          rust: |
+            let change: u8 = -1;
+            println!("{change}");
+          verify: compile-fail
+          expectErrors: [E0600]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0600: cannot apply unary operator `-` to type `u8`" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`change` is only given a value once." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`change` is created on line 1, so it can be found." }
+          answer: a
+        explanation: "A `u8` can't be negative, so Rust refuses to put a minus sign in front of a `u8` value. Use a signed type such as `i8` instead."
+        concepts: [types.int]
+
+      - type: concept
+        id: concept-usize
+        title: isize and usize
+        markdown: |
+          **`isize` and `usize` match your computer.** Their size is the size of a memory address: 64 bits on most computers today.
+
+          You'll see `usize` whenever Rust counts or numbers things, such as the length of a list. For other whole numbers, `i32` is a good default.
+        concepts: [types.int]
+
+      - type: mcq
+        id: mcq-usize
+        prompt: "Which type does Rust use for counting things, like the length of a list?"
+        options:
+          - { id: a, text: "`usize`" }
+          - { id: b, text: "`isize`", why: "A count is never negative, so Rust uses the unsigned `usize`." }
+          - { id: c, text: "`u8`", why: "A list can hold far more than 255 items." }
+          - { id: d, text: "`i128`", why: "Counts can't be negative, and 128 bits is more than a memory address needs." }
+        answer: a
+        explanation: "`usize` is unsigned and as big as a memory address, so it can count anything that fits in memory."
+        concepts: [types.int]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-literals
+        title: Ways to write a number
+        markdown: |
+          **Underscores make big numbers readable.** `1_000_000` is one million. Rust ignores the `_`.
+
+          You can also write numbers in other bases with a prefix: `0x` for hexadecimal, `0o` for octal and `0b` for binary. They all print in ordinary decimal.
+        code:
+          rust: |
+            println!("{}", 1_000_000);
+            println!("{}", 0xff);
+            println!("{}", 0b1010);
+          verify: run
+          expectStdout: "1000000\n255\n10\n"
+        concepts: [types.int]
+
+      - type: predict-output
+        id: predict-hex
+        code:
+          rust: |
+            let colour = 0x10;
+            println!("{colour}");
+          verify: run
+        options:
+          - { id: a, text: "16" }
+          - { id: b, text: "0x10", why: "The `0x` prefix is only how you write it. The value prints in decimal." }
+          - { id: c, text: "10", why: "`0x10` is hexadecimal: one 16 and no units, which is 16." }
+        answer: a
+        explanation: "`0x10` is hexadecimal 10, which is 16 in decimal. `{}` prints integers in decimal."
+        concepts: [types.int]
+
+      - type: predict-output
+        id: predict-binary
+        code:
+          rust: |
+            let flags = 0b101;
+            println!("{flags}");
+          verify: run
+        options:
+          - { id: a, text: "5" }
+          - { id: b, text: "101", why: "`0b` means binary, so the digits are worth 4, 2 and 1." }
+          - { id: c, text: "0b101", why: "The prefix isn't printed. You see the value in decimal." }
+        answer: a
+        explanation: "Binary `101` is 4 + 0 + 1, which is 5."
+        concepts: [types.int]
+
+      - type: true-false
+        id: tf-underscore
+        prompt: "`1_000` and `1000` are the same number."
+        answer: true
+        explanation: "Underscores in number literals are only for readability. The compiler ignores them."
+        concepts: [types.int]
+
+      - type: predict-output
+        id: predict-tiles-bases
+        prompt: Build the output
+        code:
+          rust: |
+            println!("{} {} {}", 0b11, 0x20, 2_0);
+          verify: run
+        tiles: ["3", "32", "20", "11", "0x20", "2_0"]
+        answer: "3 32 20"
+        explanation: "`0b11` is 3, `0x20` is 32, and `2_0` is 20 with an underscore in the middle. All three print in decimal."
+        concepts: [types.int]
+
+      - type: compiles
+        id: compiles-u8-300
+        code:
+          rust: |
+            let max_players: u8 = 300;
+            println!("{max_players}");
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `u8`"
+        answer: false
+        followUp:
+          prompt: What does the compiler say?
+          options:
+            - { id: a, text: "literal out of range for `u8`" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`max_players` is only given a value once." }
+            - { id: c, text: "cannot find value `max_players`", why: "`max_players` is created on line 1." }
+          answer: a
+        explanation: "The largest `u8` is 255, so `300` doesn't fit. The compiler catches this before the program runs."
+        concepts: [types.int]
+
+      - type: spot-bug
+        id: spot-out-of-range
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let lives: u8 = 3;
+                let coins: u16 = 5_000;
+                let gems: u8 = 1_000;
+                println!("{lives} {coins} {gems}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `u8`"
+        answer: 4
+        explanation: "`1_000` is too big for a `u8`, which stops at 255. `5_000` fits in a `u16`, which goes up to 65535."
+        concepts: [types.int]
+
+      - type: fill-tokens
+        id: fill-year-type
+        prompt: "Fill the blank with a type that can hold the year"
+        code:
+          rust: |
+            let year: ___1___ = 2026;
+            println!("{year}");
+          verify: run
+          expectStdout: "2026\n"
+        blanks:
+          "1": { answer: ["u16", "i16"] }
+        bank: ["u16", "u8", "i8"]
+        explanation: "`u16` goes up to 65535, so 2026 fits. `u8` stops at 255 and `i8` at 127."
+        concepts: [types.int]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-hex-plus-binary
+        code:
+          rust: |
+            let mut score: u32 = 0x10;
+            score += 0b1;
+            println!("{score}");
+          verify: run
+        options:
+          - { id: a, text: "17" }
+          - { id: b, text: "11", why: "`0x10` is 16, not 10. Hexadecimal digits are worth 16 each." }
+          - { id: c, text: "0x11", why: "Integers print in decimal, whatever way you wrote them." }
+        answer: a
+        explanation: "`0x10` is 16 and `0b1` is 1, so `score` ends up as 17."
+        concepts: [types.int, var.mut]
+
+      - type: decode-error
+        id: decode-negative-unsigned
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let temperature: u8 = -3;
+                println!("{temperature}");
+            }
+          verify: compile-fail
+          expectErrors: [E0600]
+        options:
+          - { id: a, code: "let temperature: i8 = -3;" }
+          - { id: b, code: "let temperature: u16 = -3;", why: "`u16` is bigger, but still unsigned, so it can't be negative either." }
+          - { id: c, code: "let mut temperature: u8 = -3;", why: "`mut` lets a value change. It doesn't let a `u8` be negative." }
+        answer: a
+        explanation: "Temperatures can go below zero, so they need a signed type. `i8` holds -128 to 127."
+        concepts: [types.int]
+
+      - type: mcq
+        id: mcq-smallest-type
+        prompt: "A game score is always between 0 and 1000. Which is the smallest type that can hold it?"
+        options:
+          - { id: a, text: "`u16`" }
+          - { id: b, text: "`u8`", why: "`u8` stops at 255, so 1000 won't fit." }
+          - { id: c, text: "`i8`", why: "`i8` stops at 127." }
+          - { id: d, text: "`u128`", why: "It works, but uses 16 bytes where 2 are enough." }
+        answer: a
+        explanation: "`u16` holds 0 to 65535 in 2 bytes. In everyday code `i32` is fine too, but `u16` is the smallest that fits."
+        concepts: [types.int]
+
+      - type: compiles
+        id: compiles-i8-127
+        code:
+          rust: |
+            let level: i8 = 127;
+            println!("{level}");
+          verify: compile
+        answer: true
+        explanation: "127 is exactly the largest `i8`, so it fits."
+        concepts: [types.int]
+
+      - type: compiles
+        id: compiles-i8-128
+        code:
+          rust: |
+            let level: i8 = 128;
+            println!("{level}");
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `i8`"
+        answer: false
+        explanation: "An `i8` holds -128 to 127, so 128 is one too many. The compiler reports `literal out of range for i8`."
+        concepts: [types.int]
+
+      - type: true-false
+        id: tf-i128-u64
+        prompt: "An `i128` can hold larger positive numbers than a `u64`."
+        answer: true
+        explanation: "`i128` gives up one bit for the sign, but 127 bits is still far more than 64. Its maximum is about 1.7 × 10³⁸."
+        concepts: [types.int]
+
+      - type: fill-tokens
+        id: fill-binary-ten
+        prompt: "Fill the blank so the program prints `10`"
+        code:
+          rust: |
+            let mask = ___1___;
+            println!("{mask}");
+          verify: run
+          expectStdout: "10\n"
+        blanks:
+          "1": { answer: ["0b1010"] }
+        bank: ["0b1010", "0x1010", "0b1100", "1_0_1_0"]
+        explanation: "Binary `1010` is 8 + 2 = 10. `0x1010` is hexadecimal (4112), and `1_0_1_0` is the decimal number 1010."
+        concepts: [types.int]
+
+      - type: spot-bug
+        id: spot-const-range
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            const MAX_SPEED: u8 = 120;
+            const MAX_HEIGHT: u8 = 400;
+
+            fn main() {
+                println!("{MAX_SPEED}");
+                println!("{MAX_HEIGHT}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `u8`"
+        answer: 2
+        explanation: "Constants follow the same rules as variables. `400` doesn't fit in a `u8`, whose limit is 255."
+        concepts: [types.int, var.const]
+
+      - type: parsons
+        id: parsons-gems
+        prompt: "Arrange the lines so the program prints `1000`, then `1500`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut gems: u16 = 1_000;" }
+          - { id: l3, text: '    println!("{gems}");' }
+          - { id: l4, text: "    gems += 500;" }
+          - { id: l5, text: '    println!("{gems}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let mut gems: u8 = 1_000;" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "1000\n1500\n"
+        explanation: "`gems` needs `mut` to change, and a `u16` because 1000 is too big for a `u8`."
+        concepts: [types.int, var.mut]
+
+      - type: predict-output
+        id: predict-sum-literals
+        code:
+          rust: |
+            let big = 1_000;
+            let small = 0b11;
+            println!("{}", big + small);
+          verify: run
+        options:
+          - { id: a, text: "1003" }
+          - { id: b, text: "1011", why: "`0b11` is binary for 3, not the decimal number 11." }
+          - { id: c, text: "1_003", why: "Underscores are only for writing literals. Numbers print without them." }
+        answer: a
+        explanation: "`1_000` is 1000 and `0b11` is 3. The sum prints as plain decimal: 1003."
+        concepts: [types.int]

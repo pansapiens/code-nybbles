@@ -1,0 +1,551 @@
+id: functions-control-flow.functions.define
+title: Defining functions
+icon: pencil
+concepts: [fn.define, fn.params]
+reviewConcepts: [intro.main, macro.println-basic, var.let, fmt.placeholders, fmt.inline-args, style.snake-case, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-own-function
+        title: Your own functions
+        markdown: |
+          **`fn` defines a function.** You've already written `main`. You can write other functions the same way: `fn`, a name, `()`, then the body in `{ }`.
+
+          To run a function, **call** it: write its name followed by `()`.
+        code:
+          rust: |
+            fn main() {
+                say_hello();
+            }
+
+            fn say_hello() {
+                println!("Hello!");
+            }
+          verify: run
+          expectStdout: "Hello!\n"
+        concepts: [fn.define]
+
+      - type: predict-output
+        id: predict-call-twice
+        code:
+          rust: |
+            fn main() {
+                cheer();
+                cheer();
+            }
+
+            fn cheer() {
+                println!("Go!");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Go!\nGo!" }
+          - { id: b, text: "Go!", why: "`main` calls `cheer` twice, and each call runs its body again." }
+          - { id: c, text: "Go!Go!", why: "`println!` ends its line each time, so the two `Go!`s are on separate lines." }
+        answer: a
+        explanation: "Each `cheer();` runs the body of `cheer` once, so `Go!` is printed twice."
+        concepts: [fn.define]
+
+      - type: true-false
+        id: tf-define-before-call
+        prompt: A function must be defined above the place where it's called.
+        answer: false
+        explanation: "Rust doesn't care about the order of functions in a file. `main` can call a function defined below it."
+        concepts: [fn.define]
+
+      - type: predict-output
+        id: predict-call-order
+        code:
+          rust: |
+            fn main() {
+                println!("Start");
+                middle();
+                println!("End");
+            }
+
+            fn middle() {
+                println!("Middle");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Start\nMiddle\nEnd" }
+          - { id: b, text: "Start\nEnd\nMiddle", why: "A call runs the function straight away. `main` waits for `middle` to finish before printing `End`." }
+          - { id: c, text: "Middle\nStart\nEnd", why: "The program starts at `main`, not at the top of the file." }
+        answer: a
+        explanation: "`main` prints `Start`, then the call runs `middle`, then `main` carries on and prints `End`."
+        concepts: [fn.define, intro.main]
+
+      - type: concept
+        id: concept-params
+        title: Parameters
+        markdown: |
+          **A parameter lets you pass a value into a function.** Inside the `()`, write a name, a colon and a type: `score: i32`.
+
+          When you call the function, the value you pass (the **argument**) is given to that name.
+        code:
+          rust: |
+            fn main() {
+                show_score(7);
+            }
+
+            fn show_score(score: i32) {
+                println!("Score: {score}");
+            }
+          verify: run
+          expectStdout: "Score: 7\n"
+        concepts: [fn.params]
+
+      - type: predict-output
+        id: predict-param-value
+        code:
+          rust: |
+            fn main() {
+                show_lives(3);
+                show_lives(1);
+            }
+
+            fn show_lives(lives: i32) {
+                println!("Lives: {lives}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Lives: 3\nLives: 1" }
+          - { id: b, text: "Lives: 3\nLives: 3", why: "Each call passes its own argument. The second call gives `lives` the value `1`." }
+          - { id: c, text: "Lives: {lives}\nLives: {lives}", why: "`{lives}` inside `println!` is replaced by the value of `lives`." }
+        answer: a
+        explanation: "The first call sets `lives` to 3, the second to 1. Each call prints its own value."
+        concepts: [fn.params, fmt.inline-args]
+
+      - type: mcq
+        id: mcq-param-syntax
+        prompt: "Which line defines a function with one `i32` parameter called `level`?"
+        options:
+          - { id: a, code: "fn show(level: i32) {" }
+          - { id: b, code: "fn show(level) {", why: "Rust requires a type on every parameter. It won't guess." }
+          - { id: c, code: "fn show(i32 level) {", why: "The name comes first, then a colon, then the type: `level: i32`." }
+          - { id: d, code: "fn show(let level: i32) {", why: "Parameters don't use `let`. The name and type go straight inside the `()`." }
+        answer: a
+        explanation: "A parameter is written `name: type`, the same shape as an annotated `let` without the `let`."
+        concepts: [fn.params]
+
+      - type: fill-tokens
+        id: fill-define-call
+        prompt: "Fill the blanks so the program prints `Go team!`"
+        code:
+          rust: |
+            fn main() {
+                ___1___();
+            }
+
+            ___2___ cheer() {
+                println!("Go team!");
+            }
+          verify: run
+          expectStdout: "Go team!\n"
+        blanks:
+          "1": { answer: ["cheer"] }
+          "2": { answer: ["fn"] }
+        bank: ["cheer", "fn", "func", "def", "main", "function"]
+        explanation: "`fn cheer()` defines the function, and `cheer();` in `main` calls it. Rust's keyword is `fn`, not `func`, `def` or `function`."
+        concepts: [fn.define]
+
+      - type: true-false
+        id: tf-snake-case
+        prompt: "Function names use `snake_case`, like variable names: `print_score`, not `printScore`."
+        answer: true
+        explanation: "Functions and variables both use lowercase words joined by `_`. `printScore` compiles, but the compiler warns."
+        concepts: [fn.define, style.snake-case]
+
+      - type: match-pairs
+        id: pairs-anatomy
+        pairs:
+          - ["fn", "starts a function definition"]
+          - ["greet()", "calls the function greet"]
+          - ["(score: i32)", "a parameter and its type"]
+          - ["main", "where the program starts"]
+        concepts: [fn.define, fn.params]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-many-params
+        title: More than one parameter
+        markdown: |
+          **Separate parameters with commas.** Each one needs its own type, and the types can differ.
+
+          Arguments are matched to parameters **by position**: the first argument goes to the first parameter, and so on.
+        code:
+          rust: |
+            fn main() {
+                print_size(5, 'h');
+            }
+
+            fn print_size(value: i32, unit: char) {
+                println!("{value}{unit}");
+            }
+          verify: run
+          expectStdout: "5h\n"
+        concepts: [fn.params]
+
+      - type: predict-output
+        id: predict-two-params
+        code:
+          rust: |
+            fn main() {
+                print_area(3, 4);
+            }
+
+            fn print_area(width: i32, height: i32) {
+                println!("{}", width * height);
+            }
+          verify: run
+        options:
+          - { id: a, text: "12" }
+          - { id: b, text: "7", why: "The body multiplies with `*`. It doesn't add." }
+          - { id: c, text: "width * height", why: "`{}` is filled with the value of `width * height`, which is worked out first." }
+        answer: a
+        explanation: "`width` is 3 and `height` is 4, so `width * height` prints 12."
+        concepts: [fn.params, fmt.placeholders]
+
+      - type: compiles
+        id: compiles-missing-type
+        code:
+          rust: |
+            fn main() {
+                greet(3);
+            }
+
+            fn greet(times) {
+                println!("Hi x{times}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "if this is a parameter name, give it a type"
+        answer: false
+        followUp:
+          prompt: What's missing?
+          options:
+            - { id: a, text: "A type for `times`, such as `times: i32`" }
+            - { id: b, text: "`let` before `times`", why: "Parameters never use `let`. They need `name: type`." }
+            - { id: c, text: "A value for `times` in the definition", why: "The value comes from the call, `greet(3)`. The definition only names the parameter and its type." }
+          answer: a
+        explanation: "Every parameter needs a type, even when the call makes it look obvious. The compiler's help says: `if this is a parameter name, give it a type`."
+        concepts: [fn.params]
+
+      - type: decode-error
+        id: decode-e0061
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                print_area(4);
+            }
+
+            fn print_area(width: i32, height: i32) {
+                println!("{}", width * height);
+            }
+          verify: compile-fail
+          expectErrors: [E0061]
+        options:
+          - { id: a, text: "`print_area` needs two arguments, but the call gives it only one" }
+          - { id: b, text: "`print_area` doesn't exist", why: "It exists. The compiler even points to where it's defined." }
+          - { id: c, text: "`4` is the wrong type for `width`", why: "`4` is a fine `i32`. The problem is the missing second argument." }
+        answer: a
+        explanation: "E0061 means the number of arguments doesn't match the number of parameters. The note shows the definition, so you can see what it expects."
+        concepts: [fn.params, compiler.read-error]
+
+      - type: predict-output
+        id: predict-arg-order
+        code:
+          rust: |
+            fn main() {
+                let first = 1;
+                let second = 2;
+                show(second, first);
+            }
+
+            fn show(first: i32, second: i32) {
+                println!("{first}-{second}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "2-1" }
+          - { id: b, text: "1-2", why: "Arguments are matched by position, not by name. The first argument is `second`, which is 2." }
+          - { id: c, text: "first-second", why: "`{first}` is replaced by the value of the parameter `first`." }
+        answer: a
+        explanation: "The first argument (`2`) goes to the first parameter, `first`. Names in the caller don't matter."
+        concepts: [fn.params]
+
+      - type: spot-bug
+        id: spot-wrong-arg-type
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                set_volume(7.5);
+            }
+
+            fn set_volume(level: i32) {
+                println!("Volume {level}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 2
+        explanation: "`level` is an `i32`, a whole number, but the call on line 2 passes `7.5`. Rust never converts the argument for you."
+        concepts: [fn.params]
+
+      - type: mcq
+        id: mcq-argument
+        prompt: "In `fn greet(name: &str)` and the call `greet(\"Sam\")`, which is the argument?"
+        options:
+          - { id: a, text: "`\"Sam\"`" }
+          - { id: b, text: "`name`", why: "`name` is the parameter: the name the function uses for the value it receives." }
+          - { id: c, text: "`&str`", why: "`&str` is the parameter's type: text in quotes." }
+          - { id: d, text: "`greet`", why: "`greet` is the function's name." }
+        answer: a
+        explanation: "The argument is the value you pass in a call. The parameter is the name in the definition that receives it."
+        concepts: [fn.params]
+
+      - type: true-false
+        id: tf-infer-param
+        prompt: Rust can work out a parameter's type from the arguments you pass, so you can leave it out.
+        answer: false
+        explanation: "Inside a function body Rust infers a lot, but parameter types are always required, so every caller knows exactly what to pass."
+        concepts: [fn.params]
+
+      - type: fill-tokens
+        id: fill-param-types
+        prompt: "Fill the blanks so the program prints `3 items at 2.5`"
+        code:
+          rust: |
+            fn main() {
+                print_cost(3, 2.5);
+            }
+
+            fn print_cost(count: ___1___, each: ___2___) {
+                println!("{count} items at {each}");
+            }
+          verify: run
+          expectStdout: "3 items at 2.5\n"
+        blanks:
+          "1": { answer: ["i32"] }
+          "2": { answer: ["f64"] }
+        bank: ["i32", "f64", "int", "float", "let"]
+        explanation: "`3` is a whole number, so `count: i32`. `2.5` has a decimal point, so `each: f64`. Rust spells these types `i32` and `f64`, not `int` and `float`."
+        concepts: [fn.params]
+
+      - type: predict-output
+        id: predict-function-calls-function
+        code:
+          rust: |
+            fn main() {
+                greet("Ann");
+            }
+
+            fn greet(name: &str) {
+                println!("Hi, {name}");
+                wave();
+            }
+
+            fn wave() {
+                println!("*waves*");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Hi, Ann\n*waves*" }
+          - { id: b, text: "Hi, Ann", why: "`greet` calls `wave` after printing, so `*waves*` is printed too." }
+          - { id: c, text: "*waves*\nHi, Ann", why: "Inside `greet`, the `println!` comes before the call to `wave`." }
+        answer: a
+        explanation: "Functions can call other functions. `main` calls `greet`, which prints and then calls `wave`."
+        concepts: [fn.define, fn.params]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-print-double
+        prompt: "Arrange the lines so the program prints `42`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    print_double(21);" }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn print_double(n: i32) {" }
+          - { id: l5, text: '    println!("{}", n * 2);' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "fn print_double(n) {" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l4, l5, l6, l1, l2, l3]
+          - [l1, l2, l6, l4, l5, l3]
+          - [l4, l5, l3, l1, l2, l6]
+        verify:
+          mode: run
+          expectStdout: "42\n"
+        explanation: "`main` calls `print_double(21)`, and the parameter needs its type: `n: i32`. The two functions can come in either order."
+        concepts: [fn.define, fn.params]
+
+      - type: predict-output
+        id: predict-param-scope
+        code:
+          rust: |
+            fn main() {
+                let lives = 3;
+                show(lives + 1);
+                println!("{lives}");
+            }
+
+            fn show(lives: i32) {
+                println!("{lives}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "4\n3" }
+          - { id: b, text: "4\n4", why: "`show` gets its own `lives` with the value 4. The `lives` in `main` is a separate variable and stays 3." }
+          - { id: c, text: "3\n3", why: "The argument is `lives + 1`, which is worked out before the call: 4." }
+        answer: a
+        explanation: "The parameter `lives` belongs to `show`. It shares a name with the variable in `main`, but they're two different variables."
+        concepts: [fn.params, var.let]
+
+      - type: compiles
+        id: compiles-caller-variable
+        code:
+          rust: |
+            fn main() {
+                let name = "Ferris";
+                greet();
+            }
+
+            fn greet() {
+                println!("Hi {name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0425: cannot find value `name` in this scope" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `greet` can't see `name` at all." }
+            - { id: c, text: "E0061: wrong number of arguments", why: "`greet` takes no parameters and is called with none, so the count matches." }
+          answer: a
+        explanation: "A function can't see the variables of the function that calls it. Pass the value in as a parameter: `fn greet(name: &str)` and `greet(name)`."
+        concepts: [fn.params, compiler.read-error]
+
+      - type: decode-error
+        id: decode-e0425-typo
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                print_scroe(10);
+            }
+
+            fn print_score(score: i32) {
+                println!("Score: {score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, code: "print_score(10);" }
+          - { id: b, code: "fn print_scroe(score) {", why: "That renames the function but drops the parameter's type, which is a new error." }
+          - { id: c, code: "let print_scroe = 10;", why: "That makes a variable, not a function, so the call still fails." }
+        answer: a
+        explanation: "The call has a typo. The compiler's help points out that a function with a similar name, `print_score`, exists."
+        concepts: [fn.define, compiler.read-error]
+
+      - type: mcq
+        id: mcq-matching-call
+        prompt: "Which call matches `fn move_player(x: i32, y: i32, speed: f64)`?"
+        options:
+          - { id: a, code: "move_player(1, 2, 0.5);" }
+          - { id: b, code: "move_player(1, 2);", why: "There are three parameters, so the call needs three arguments (E0061)." }
+          - { id: c, code: "move_player(x: 1, y: 2, speed: 0.5);", why: "Rust has no named arguments. You pass values in order." }
+          - { id: d, code: "move_player(0.5, 1, 2);", why: "Arguments go in parameter order. `0.5` would land in `x`, which is an `i32`." }
+        answer: a
+        explanation: "Pass one value per parameter, in order, each of the right type."
+        concepts: [fn.params]
+
+      - type: spot-bug
+        id: spot-swapped-args
+        prompt: "This should print `Score: 10` then `Lives: 3`, but the numbers come out swapped. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let score = 10;
+                let lives = 3;
+                show_status(lives, score);
+            }
+
+            fn show_status(score: i32, lives: i32) {
+                println!("Score: {score}");
+                println!("Lives: {lives}");
+            }
+          verify: run
+          expectStdout: "Score: 3\nLives: 10\n"
+        answer: 4
+        explanation: "Both parameters are `i32`, so the compiler can't spot the mix-up. Line 4 should be `show_status(score, lives);` to match the parameter order."
+        concepts: [fn.params]
+
+      - type: fill-tokens
+        id: fill-reading
+        prompt: "Fill the blanks so the program prints `21.5°C`"
+        code:
+          rust: |
+            fn main() {
+                let temperature = 21.5;
+                ___1___(temperature, 'C');
+            }
+
+            fn show(value: ___2___, unit: ___3___) {
+                println!("{value}°{unit}");
+            }
+          verify: run
+          expectStdout: "21.5°C\n"
+        blanks:
+          "1": { answer: ["show"] }
+          "2": { answer: ["f64"] }
+          "3": { answer: ["char"] }
+        bank: ["show", "f64", "char", "i32", "&str", "print"]
+        explanation: "Call the function by its name, `show`. `21.5` is an `f64`, and `'C'` in single quotes is a `char`, not a `&str`."
+        concepts: [fn.params, fn.define]
+
+      - type: predict-output
+        id: predict-countdown
+        code:
+          rust: |
+            fn main() {
+                countdown(3);
+                countdown(1);
+            }
+
+            fn countdown(start: i32) {
+                println!("{start}");
+                println!("{}", start - 1);
+            }
+          verify: run
+        options:
+          - { id: a, text: "3\n2\n1\n0" }
+          - { id: b, text: "3\n1\n2\n0", why: "Each call runs the whole body before the next call starts." }
+          - { id: c, text: "3\n2", why: "There are two calls, and each prints two lines." }
+        answer: a
+        explanation: "The first call prints 3 and 2. The second call starts fresh with `start` set to 1 and prints 1 and 0."
+        concepts: [fn.params]
+
+      - type: mcq
+        id: mcq-fn-style
+        prompt: Which function name follows Rust style?
+        options:
+          - { id: a, code: "fn calculate_total() {" }
+          - { id: b, code: "fn calculateTotal() {", why: "It compiles, but the compiler warns: function names should be `snake_case`." }
+          - { id: c, code: "fn CalculateTotal() {", why: "Capitalised names are for types, which you'll meet later. Functions use `snake_case`." }
+          - { id: d, code: "fn calculate-total() {", why: "`-` isn't allowed in names. Rust would read it as a minus sign." }
+        answer: a
+        explanation: "Function names are lowercase words joined by `_`, the same as variable names."
+        concepts: [fn.define, style.snake-case]
+
+      - type: true-false
+        id: tf-empty-parens
+        prompt: "A function with no parameters is still called with parentheses, as in `reset();`."
+        answer: true
+        explanation: "The `()` is what makes it a call. Without it, `reset;` names the function but doesn't run it."
+        concepts: [fn.define]

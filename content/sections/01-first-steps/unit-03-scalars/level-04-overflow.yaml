@@ -1,0 +1,440 @@
+id: first-steps.scalars.overflow
+title: When numbers overflow
+icon: bug
+concepts: [types.overflow]
+reviewConcepts: [types.int, types.inference, ops.arith, var.mut]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-overflow-panic
+        title: Overflow
+        markdown: |
+          **Going past a type's limit is called overflow.** A `u8` can't hold 256, so adding 1 to 255 has no right answer.
+
+          When you build and run normally (`cargo run`), Rust checks every calculation. On overflow the program stops with a **panic**: an error message at run time.
+        code:
+          rust: |
+            let mut lives: u8 = 255;
+            lives += 1;
+            println!("{lives}");
+          verify: run
+          expectPanic: "attempt to add with overflow"
+        concepts: [types.overflow]
+
+      - type: mcq
+        id: mcq-speed-overflow
+        prompt: "What happens when you `cargo run` this program?"
+        code:
+          rust: |
+            let mut speed: u8 = 250;
+            speed += 10;
+            println!("{speed}");
+          verify: run
+          expectPanic: "attempt to add with overflow"
+        options:
+          - { id: a, text: "It panics with `attempt to add with overflow`" }
+          - { id: b, text: "It prints `260`", why: "A `u8` can't hold 260. Its limit is 255." }
+          - { id: c, text: "It prints `255`", why: "Rust doesn't quietly stop at the limit. It reports the overflow." }
+          - { id: d, text: "It doesn't compile", why: "It compiles. The overflow is only found when `+=` runs." }
+        answer: a
+        explanation: "250 + 10 is 260, which doesn't fit in a `u8`. A normal build checks for this and panics."
+        concepts: [types.overflow]
+
+      - type: true-false
+        id: tf-debug-wraps
+        prompt: "With `cargo run`, adding 1 to a `u8` holding 255 gives 0."
+        answer: false
+        explanation: "A normal (debug) build panics on overflow. Only a release build wraps around to 0."
+        concepts: [types.overflow]
+
+      - type: concept
+        id: concept-release-wrap
+        title: Release builds wrap
+        markdown: |
+          **Release builds skip the check and wrap around.** When you build for speed with `cargo run --release`, overflow doesn't panic. The value wraps back to the start of the range: for a `u8`, 255 + 1 becomes 0, and 0 - 1 becomes 255.
+
+          The wrapped value is almost never what you meant, so treat overflow as a bug in either mode.
+        concepts: [types.overflow]
+
+      - type: mcq
+        id: mcq-release-result
+        prompt: "In a release build, a `u8` holding 255 has 1 added. What value does it hold?"
+        options:
+          - { id: a, text: "0" }
+          - { id: b, text: "256", why: "256 doesn't fit in a `u8`. That's why it overflows." }
+          - { id: c, text: "255", why: "Release builds don't stop at the limit. They wrap around." }
+          - { id: d, text: "The program panics", why: "That's what a debug build does. Release builds skip the check." }
+        answer: a
+        explanation: "Without the check, the value wraps past 255 back to 0."
+        concepts: [types.overflow]
+
+      - type: mcq
+        id: mcq-subtract-below-zero
+        prompt: "What happens when you `cargo run` this program?"
+        code:
+          rust: |
+            let mut coins: u8 = 2;
+            coins -= 3;
+            println!("{coins}");
+          verify: run
+          expectPanic: "attempt to subtract with overflow"
+        options:
+          - { id: a, text: "It panics with `attempt to subtract with overflow`" }
+          - { id: b, text: "It prints `-1`", why: "A `u8` can't be negative." }
+          - { id: c, text: "It prints `0`", why: "Rust doesn't stop at zero. Going below it is an overflow." }
+        answer: a
+        explanation: "Overflow also happens at the bottom of the range. A `u8` can't go below 0."
+        concepts: [types.overflow]
+
+      - type: predict-output
+        id: predict-exact-limit
+        code:
+          rust: |
+            let mut coins: u8 = 250;
+            coins += 5;
+            println!("{coins}");
+          verify: run
+        options:
+          - { id: a, text: "255" }
+          - { id: b, text: "0", why: "255 is the largest `u8`, but it does fit. Nothing overflows." }
+          - { id: c, text: "4", why: "That would need a release build and a result above 255." }
+        answer: a
+        explanation: "250 + 5 is exactly 255, the largest `u8`, so there's no overflow."
+        concepts: [types.overflow, types.int]
+
+      - type: match-pairs
+        id: pairs-overflow
+        pairs:
+          - ["cargo run", "panics on overflow"]
+          - ["cargo run --release", "wraps on overflow"]
+          - ["u8::MAX", "255"]
+          - ["i8::MIN", "-128"]
+        concepts: [types.overflow, types.int]
+
+      - type: mcq
+        id: mcq-wider-type
+        prompt: "`lives += 1` overflows when `lives` is a `u8` holding 255. Which type would hold the result?"
+        options:
+          - { id: a, text: "`u16`" }
+          - { id: b, text: "`i8`", why: "`i8` stops at 127, even lower than `u8`." }
+          - { id: c, text: "`u8` with `mut`", why: "`mut` lets the value change, but the range is still 0 to 255." }
+        answer: a
+        explanation: "A `u16` goes up to 65535, so 256 fits easily."
+        concepts: [types.overflow, types.int]
+
+      - type: concept
+        id: concept-compile-time
+        title: The compiler catches what it can see
+        markdown: |
+          **If the compiler can see the overflow, it won't build the program.** A number that's too big for its type is an error. So is a sum like `255 + 1` written directly into a `u8`.
+
+          Overflow that depends on values changing as the program runs is only caught at run time.
+        code:
+          rust: |
+            let level: u8 = 255 + 1;
+            // error: ... will overflow
+          verify: compile-fail
+          expectErrorMessage: "this arithmetic operation will overflow"
+        concepts: [types.overflow]
+
+      - type: compiles
+        id: compiles-i8-200
+        code:
+          rust: |
+            let temperature: i8 = 200;
+            println!("{temperature}");
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `i8`"
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "200 is above 127, the largest `i8`" }
+            - { id: b, text: "An `i8` can't hold positive numbers", why: "It can: 0 to 127. It's signed, so it also holds negatives." }
+            - { id: c, text: "It compiles, but panics when run", why: "The compiler can see the number, so it stops the build." }
+          answer: a
+        explanation: "The compiler can see that 200 doesn't fit, so this overflow is a compile error, not a panic."
+        concepts: [types.overflow, types.int]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-wrapping-checked
+        title: Choosing what happens
+        markdown: |
+          **Number types have methods for overflow.** Call them with a dot after the value:
+
+          - `wrapping_add` always wraps around, in every build.
+          - `checked_add` gives `Some(answer)` if it fits, or `None` if it would overflow.
+
+          You'll learn how to use `Some` and `None` later. For now, print them with `{:?}`.
+        code:
+          rust: |
+            let gold: u8 = 250;
+            println!("{}", gold.wrapping_add(10));
+            println!("{:?}", gold.checked_add(10));
+            println!("{:?}", gold.checked_add(5));
+          verify: run
+          expectStdout: "4\nNone\nSome(255)\n"
+        concepts: [types.overflow]
+
+      - type: predict-output
+        id: predict-wrapping-zero
+        code:
+          rust: |
+            let top: u8 = 255;
+            println!("{}", top.wrapping_add(1));
+          verify: run
+        options:
+          - { id: a, text: "0" }
+          - { id: b, text: "256", why: "The result must be a `u8`, so it can't be 256." }
+          - { id: c, text: "255", why: "`wrapping_add` goes past the end and starts again from 0." }
+        answer: a
+        explanation: "`wrapping_add` wraps around in every build: 255 + 1 becomes 0."
+        concepts: [types.overflow]
+
+      - type: predict-output
+        id: predict-checked-none
+        code:
+          rust: |
+            let score: u8 = 200;
+            let next = score.checked_add(100);
+            println!("{next:?}");
+          verify: run
+        options:
+          - { id: a, text: "None" }
+          - { id: b, text: "Some(300)", why: "300 doesn't fit in a `u8`, so there's no answer to put in `Some`." }
+          - { id: c, text: "Some(44)", why: "That's the wrapped value. `checked_add` never wraps." }
+        answer: a
+        explanation: "200 + 100 would overflow a `u8`, so `checked_add` gives `None`."
+        concepts: [types.overflow]
+
+      - type: predict-output
+        id: predict-checked-some
+        code:
+          rust: |
+            let score: u8 = 200;
+            println!("{:?}", score.checked_add(50));
+          verify: run
+        options:
+          - { id: a, text: "Some(250)" }
+          - { id: b, text: "250", why: "`checked_add` wraps a successful answer in `Some(...)`, and `{:?}` shows it." }
+          - { id: c, text: "None", why: "250 fits in a `u8`, so the addition succeeds." }
+        answer: a
+        explanation: "200 + 50 fits, so `checked_add` returns `Some(250)`."
+        concepts: [types.overflow]
+
+      - type: compiles
+        id: compiles-visible-overflow
+        code:
+          rust: |
+            let max: u8 = 255;
+            let next = max + 1;
+            println!("{next}");
+          verify: compile-fail
+          expectErrorMessage: "this arithmetic operation will overflow"
+        answer: false
+        explanation: "`max` never changes, so the compiler can work out that `max + 1` is 256, which doesn't fit in a `u8`. Overflow the compiler can see is a compile error."
+        concepts: [types.overflow]
+
+      - type: true-false
+        id: tf-checked-panics
+        prompt: "`checked_add` panics when the result doesn't fit."
+        answer: false
+        explanation: "`checked_add` never panics. It returns `None` when the result doesn't fit."
+        concepts: [types.overflow]
+
+      - type: decode-error
+        id: decode-literal-range
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let max_level: u8 = 999;
+                println!("{max_level}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "literal out of range for `u8`"
+        options:
+          - { id: a, text: "999 is too big to be a `u8`" }
+          - { id: b, text: "`max_level` overflowed while the program was running", why: "The program never ran. This is a compile error." }
+          - { id: c, text: "Numbers with three digits need a suffix", why: "No suffix is needed. The problem is the range of `u8`." }
+        answer: a
+        explanation: "A `u8` holds 0 to 255. The compiler spots the out-of-range number before running anything."
+        concepts: [types.overflow, compiler.read-error]
+
+      - type: fill-tokens
+        id: fill-wrapping
+        prompt: "Fill the blank so the program prints `0`"
+        code:
+          rust: |
+            let counter: u8 = 255;
+            println!("{}", counter.___1___(1));
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["wrapping_add"] }
+        bank: ["wrapping_add", "checked_add", "add_wrap", "plus"]
+        explanation: "`wrapping_add` wraps 255 + 1 around to 0. `checked_add` would print `None`."
+        concepts: [types.overflow]
+
+      - type: mcq
+        id: mcq-gives-none
+        prompt: "Which of these prints `None`?"
+        options:
+          - { id: a, code: 'println!("{:?}", 100u8.checked_add(200));' }
+          - { id: b, code: 'println!("{:?}", 100u8.checked_add(100));', why: "100 + 100 = 200 fits in a `u8`, so this prints `Some(200)`." }
+          - { id: c, code: 'println!("{:?}", 100u8.wrapping_add(200));', why: "`wrapping_add` never gives `None`. This prints `44`." }
+        answer: a
+        explanation: "100 + 200 = 300 is too big for a `u8`, so `checked_add` returns `None`."
+        concepts: [types.overflow]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-wrapping-sub
+        code:
+          rust: |
+            let lives: u8 = 0;
+            println!("{}", lives.wrapping_sub(1));
+          verify: run
+        options:
+          - { id: a, text: "255" }
+          - { id: b, text: "-1", why: "A `u8` can't be negative, so the result wraps to the other end." }
+          - { id: c, text: "0", why: "`wrapping_sub` doesn't stop at zero. It goes round to 255." }
+        answer: a
+        explanation: "`wrapping_sub` is the subtraction version. Going below 0 wraps to the top: 255."
+        concepts: [types.overflow]
+
+      - type: mcq
+        id: mcq-i8-overflow
+        prompt: "What happens when you `cargo run` this program?"
+        code:
+          rust: |
+            let mut temperature: i8 = 120;
+            temperature += 10;
+            println!("{temperature}");
+          verify: run
+          expectPanic: "attempt to add with overflow"
+        options:
+          - { id: a, text: "It panics with `attempt to add with overflow`" }
+          - { id: b, text: "It prints `-126`", why: "That's the wrapped value a release build would give. `cargo run` panics." }
+          - { id: c, text: "It prints `130`", why: "The largest `i8` is 127." }
+        answer: a
+        explanation: "120 + 10 = 130 doesn't fit in an `i8`. Signed types overflow too."
+        concepts: [types.overflow]
+
+      - type: spot-bug
+        id: spot-fuel
+        prompt: "This program panics. Tap the line that causes the panic."
+        code:
+          rust: |
+            fn main() {
+                let mut fuel: u8 = 10;
+                fuel -= 4;
+                fuel -= 4;
+                fuel -= 4;
+                println!("{fuel}");
+            }
+          verify: run
+          expectPanic: "attempt to subtract with overflow"
+        answer: 5
+        explanation: "10 goes to 6, then 2. The third `fuel -= 4` would give -2, which a `u8` can't hold."
+        concepts: [types.overflow]
+
+      - type: fill-tokens
+        id: fill-checked
+        prompt: "Fill the blank so the program prints `None`"
+        code:
+          rust: |
+            let level: u8 = 250;
+            let next = level.___1___(10);
+            println!("{next:?}");
+          verify: run
+          expectStdout: "None\n"
+        blanks:
+          "1": { answer: ["checked_add"] }
+        bank: ["checked_add", "wrapping_add", "wrapping_sub", "checked_sub"]
+        explanation: "250 + 10 overflows, so `checked_add` gives `None`. `wrapping_add` would give `4`, and `checked_sub` gives `Some(240)`."
+        concepts: [types.overflow]
+
+      - type: predict-output
+        id: predict-tiles-wrap-check
+        prompt: Build the output
+        code:
+          rust: |
+            let a: u8 = 100;
+            let wrapped = a.wrapping_add(200);
+            let checked = a.checked_add(200);
+            println!("{wrapped} {checked:?}");
+          verify: run
+        tiles: ["44", "None", "300", "Some(300)", "0", "Some(44)"]
+        answer: "44 None"
+        explanation: "100 + 200 = 300, which is 44 more than 256, so wrapping gives 44. `checked_add` gives `None`."
+        concepts: [types.overflow]
+
+      - type: compiles
+        id: compiles-runtime-overflow
+        code:
+          rust: |
+            let mut big: i32 = 2_147_483_647;
+            big += 1;
+            println!("{big}");
+          verify: compile
+        answer: true
+        explanation: "It compiles, because the overflow happens when `+=` runs. Running it with `cargo run` panics."
+        concepts: [types.overflow]
+
+      - type: mcq
+        id: mcq-overflow-true
+        prompt: "Which statement about integer overflow is true?"
+        options:
+          - { id: a, text: "A normal build panics, a release build wraps" }
+          - { id: b, text: "Both kinds of build wrap around", why: "A normal (debug) build checks every calculation and panics." }
+          - { id: c, text: "Only `u8` can overflow", why: "Every integer type has limits, even `i128`." }
+          - { id: d, text: "The compiler always catches overflow", why: "It catches overflow it can see. Values that change at run time are checked when the program runs." }
+        answer: a
+        explanation: "Debug builds check for overflow and panic. Release builds skip the check for speed and wrap."
+        concepts: [types.overflow]
+
+      - type: parsons
+        id: parsons-checked-gold
+        prompt: "Arrange the lines so the program prints `Some(200)`, then `None`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let gold: u8 = 150;" }
+          - { id: l3, text: '    println!("{:?}", gold.checked_add(50));' }
+          - { id: l4, text: '    println!("{:?}", gold.checked_add(150));' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{:?}", gold.wrapping_add(150));' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Some(200)\nNone\n"
+        explanation: "150 + 50 = 200 fits, so it's `Some(200)`. 150 + 150 = 300 doesn't, so it's `None`."
+        concepts: [types.overflow]
+
+      - type: true-false
+        id: tf-u64-overflow
+        prompt: "A `u64` can overflow too."
+        answer: true
+        explanation: "Every integer type has a largest value. `u64` stops at about 1.8 × 10¹⁹, and going past it overflows."
+        concepts: [types.overflow, types.int]
+
+      - type: predict-output
+        id: predict-wider-sum
+        code:
+          rust: |
+            let small: u16 = 250;
+            let total = small + 10;
+            println!("{total}");
+          verify: run
+        options:
+          - { id: a, text: "260" }
+          - { id: b, text: "4", why: "`small` is a `u16`, which goes up to 65535. There's no overflow." }
+          - { id: c, text: "It panics", why: "260 fits in a `u16`." }
+        answer: a
+        explanation: "A `u16` has plenty of room for 260. Overflow depends on the type, not the size of the numbers."
+        concepts: [types.overflow, types.int]

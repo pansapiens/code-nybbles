@@ -1,0 +1,19 @@
+id: first-steps.compound
+title: Compound Types
+description: Group values together with tuples and arrays, and print them with Debug formatting.
+colour: orange
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch03-02-data-types.html#compound-types
+sources:
+  - name: The Rust Programming Language, ch. 3.2
+    url: https://doc.rust-lang.org/book/ch03-02-data-types.html#compound-types
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-tuples
+  - level: level-02-unit
+  - level: level-03-arrays
+  - chest
+  - level: level-04-bounds
+  - level: level-05-debug
+  - checkpoint: checkpoint-compound

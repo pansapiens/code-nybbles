@@ -38,9 +38,16 @@ describe('graders', () => {
   })
 
   it('parsons accepts listed alternative orders', () => {
-    const ex = { type: 'parsons', lines: [], answer: ['a', 'b', 'c'], alternatives: [['b', 'a', 'c']] } as unknown as Ex<'parsons'>
+    const ex = { type: 'parsons', lines: ['a', 'b', 'c'].map((id) => ({ id, text: id })), answer: ['a', 'b', 'c'], alternatives: [['b', 'a', 'c']] } as unknown as Ex<'parsons'>
     expect(grade(ex, ['a', 'b', 'c']).correct).toBe(true)
     expect(grade(ex, ['b', 'a', 'c']).correct).toBe(true)
     expect(grade(ex, ['c', 'b', 'a']).correct).toBe(false)
+  })
+
+  it('parsons treats lines with identical text as interchangeable', () => {
+    const lines = [{ id: 'a', text: 'x' }, { id: 'b', text: '}' }, { id: 'c', text: '}' }]
+    const ex = { type: 'parsons', lines, answer: ['a', 'b', 'c'] } as unknown as Ex<'parsons'>
+    expect(grade(ex, ['a', 'c', 'b']).correct).toBe(true)
+    expect(grade(ex, ['b', 'a', 'c']).correct).toBe(false)
   })
 })

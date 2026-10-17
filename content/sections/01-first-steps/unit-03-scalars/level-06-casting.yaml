@@ -1,0 +1,441 @@
+id: first-steps.scalars.casting
+title: Converting with as
+icon: layers
+concepts: [types.as-cast]
+reviewConcepts: [types.int, types.float, ops.arith, types.overflow, types.bool, types.char, types.inference]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-as
+        title: Converting with as
+        markdown: |
+          **`as` converts a number to another type.** Rust won't mix types in a calculation, so you convert one side yourself.
+
+          Write the value, then `as`, then the type you want.
+        code:
+          rust: |
+            let count = 7;
+            let half = count as f64 / 2.0;
+            println!("{half}");
+          verify: run
+          expectStdout: "3.5\n"
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-as-f64
+        code:
+          rust: |
+            let total = 9;
+            println!("{}", total as f64 / 2.0);
+          verify: run
+        options:
+          - { id: a, text: "4.5" }
+          - { id: b, text: "4", why: "`total as f64` is the float 9.0, so this is float division, which keeps the fraction." }
+          - { id: c, text: "It doesn't compile", why: "Without `as` it would fail. With it, both sides are `f64`." }
+        answer: a
+        explanation: "`total as f64` turns 9 into 9.0, and `9.0 / 2.0` is 4.5."
+        concepts: [types.as-cast]
+
+      - type: concept
+        id: concept-float-to-int
+        title: Floats to integers
+        markdown: |
+          **Converting a float to an integer drops the fraction.** It doesn't round: `2.9 as i32` is `2`, and `-2.9 as i32` is `-2`.
+        code:
+          rust: |
+            println!("{}", 2.9 as i32);
+            println!("{}", -2.9 as i32);
+          verify: run
+          expectStdout: "2\n-2\n"
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-price-u32
+        code:
+          rust: |
+            let price = 9.99;
+            println!("{}", price as u32);
+          verify: run
+        options:
+          - { id: a, text: "9" }
+          - { id: b, text: "10", why: "`as` doesn't round to the nearest. It drops the `.99`." }
+          - { id: c, text: "9.99", why: "A `u32` is an integer, so it can't keep the fraction." }
+        answer: a
+        explanation: "Converting to an integer drops everything after the decimal point."
+        concepts: [types.as-cast]
+
+      - type: true-false
+        id: tf-as-rounds
+        prompt: "`as` rounds a float to the nearest integer."
+        answer: false
+        explanation: "`as` drops the fraction, so `2.9 as i32` is `2`, not `3`."
+        concepts: [types.as-cast]
+
+      - type: mcq
+        id: mcq-fix-mixing
+        prompt: "`hits` is an `i32`. Which line compiles and gives `0.7` when `hits` is 7?"
+        options:
+          - { id: a, code: "let ratio = hits as f64 / 10.0;" }
+          - { id: b, code: "let ratio = hits / 10.0;", why: "An integer divided by a float is error E0277." }
+          - { id: c, code: "let ratio = (hits / 10) as f64;", why: "This compiles, but `7 / 10` is integer division: 0. Converting 0 gives 0.0." }
+          - { id: d, code: "let ratio = f64 hits / 10.0;", why: "The type goes after `as`, following the value." }
+        answer: a
+        explanation: "Convert `hits` first, then divide two floats."
+        concepts: [types.as-cast, ops.arith]
+
+      - type: fill-tokens
+        id: fill-as-keyword
+        prompt: "Fill the blank so the program prints `0.7`"
+        code:
+          rust: |
+            let hits = 7;
+            let ratio = hits ___1___ f64 / 10.0;
+            println!("{ratio}");
+          verify: run
+          expectStdout: "0.7\n"
+        blanks:
+          "1": { answer: ["as"] }
+        bank: ["as", "to", "into", ":"]
+        explanation: "`hits as f64` converts `hits` to a float so it can be divided by `10.0`."
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-widen
+        code:
+          rust: |
+            let level: u8 = 200;
+            let big = level as u32 + 100;
+            println!("{big}");
+          verify: run
+        options:
+          - { id: a, text: "300" }
+          - { id: b, text: "It panics with overflow", why: "`level as u32` is a `u32`, which has room for 300." }
+          - { id: c, text: "44", why: "That would be the wrapped `u8` result. Here the sum is a `u32`." }
+        answer: a
+        explanation: "Converting to `u32` first gives plenty of room, so 200 + 100 is 300."
+        concepts: [types.as-cast, types.overflow]
+
+      - type: compiles
+        id: compiles-as-multiply
+        code:
+          rust: |
+            let boxes = 5;
+            let weight = 2.5;
+            let total = boxes as f64 * weight;
+            println!("{total}");
+          verify: run
+          expectStdout: "12.5\n"
+        answer: true
+        explanation: "`boxes as f64` makes both sides floats, so `*` works. It prints `12.5`."
+        concepts: [types.as-cast, types.float]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-cast-pitfalls
+        title: When the value doesn't fit
+        markdown: |
+          **`as` never fails, so it can quietly change your value.**
+
+          - Integer to a smaller integer: the extra bits are cut off. `300` as a `u8` becomes `44` (300 - 256).
+          - Negative to unsigned: `-1` as a `u8` becomes `255`.
+          - Float to integer: values beyond the range stick at the limit. `300.0 as u8` is `255`, and `-5.0 as u8` is `0`.
+        code:
+          rust: |
+            let big: i32 = 300;
+            let minus: i32 = -1;
+            println!("{}", big as u8);
+            println!("{}", minus as u8);
+            println!("{}", 300.0 as u8);
+          verify: run
+          expectStdout: "44\n255\n255\n"
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-minus-one-u8
+        code:
+          rust: |
+            let change: i32 = -1;
+            println!("{}", change as u8);
+          verify: run
+        options:
+          - { id: a, text: "255" }
+          - { id: b, text: "0", why: "That's what a float would give. Integer casts keep the bits, and -1's bits read as 255." }
+          - { id: c, text: "-1", why: "A `u8` can't be negative." }
+          - { id: d, text: "It panics", why: "`as` never panics. It gives some value, even if it's surprising." }
+        answer: a
+        explanation: "Casting -1 to `u8` wraps around to 255, the top of the range."
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-float-saturate
+        code:
+          rust: |
+            let reading = 300.0;
+            println!("{}", reading as u8);
+          verify: run
+        options:
+          - { id: a, text: "255" }
+          - { id: b, text: "44", why: "That's what the integer 300 gives. Floats stick at the limit instead of wrapping." }
+          - { id: c, text: "300", why: "A `u8` can't hold 300." }
+        answer: a
+        explanation: "A float too big for the target stops at the largest value: 255 for a `u8`."
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-int-truncate
+        code:
+          rust: |
+            let big: i32 = 300;
+            println!("{}", big as u8);
+          verify: run
+        options:
+          - { id: a, text: "44" }
+          - { id: b, text: "255", why: "That's what the float 300.0 gives. An integer cast wraps instead of stopping at the limit." }
+          - { id: c, text: "It panics", why: "`as` never panics or checks for overflow." }
+        answer: a
+        explanation: "Integer casts keep only the bits that fit. 300 - 256 = 44."
+        concepts: [types.as-cast]
+
+      - type: mcq
+        id: mcq-safe-cast
+        prompt: "Which cast always keeps the same value?"
+        options:
+          - { id: a, code: "200u8 as i32" }
+          - { id: b, code: "-5i8 as u8", why: "A `u8` can't hold -5, so this gives 251." }
+          - { id: c, code: "300i32 as u8", why: "300 doesn't fit in a `u8`, so this gives 44." }
+          - { id: d, code: "2.5 as i32", why: "The fraction is dropped, giving 2." }
+        answer: a
+        explanation: "Every `u8` value (0 to 255) fits in an `i32`, so this conversion is always exact."
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-char-codes
+        code:
+          rust: |
+            println!("{}", 'A' as u8);
+            println!("{}", 66u8 as char);
+          verify: run
+        options:
+          - { id: a, text: "65\nB" }
+          - { id: b, text: "A\n66", why: "`as` converts the value: `'A' as u8` is a number, and `66u8 as char` is a character." }
+          - { id: c, text: "1\nB", why: "Characters are numbered by Unicode, where `'A'` is 65." }
+        answer: a
+        explanation: "Each character has a number. `'A'` is 65, so 66 is `'B'`."
+        concepts: [types.as-cast, types.char]
+
+      - type: compiles
+        id: compiles-i32-as-char
+        code:
+          rust: |
+            let code = 66;
+            let letter = code as char;
+            println!("{letter}");
+          verify: compile-fail
+          expectErrors: [E0604]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0604: only `u8` can be cast as `char`, not `i32`" }
+            - { id: b, text: "E0308: mismatched types", why: "The compiler has a more specific error for this cast." }
+            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
+          answer: a
+        explanation: "`code` defaults to `i32`, and only a `u8` can be cast to a `char`. Writing `66u8` fixes it."
+        concepts: [types.as-cast, types.char, types.inference]
+
+      - type: true-false
+        id: tf-bool-as-int
+        prompt: "`true as i32` is `1`."
+        answer: true
+        explanation: "A `bool` can be cast to an integer: `true` becomes 1 and `false` becomes 0. The other way round isn't allowed."
+        concepts: [types.as-cast, types.bool]
+
+      - type: match-pairs
+        id: pairs-float-casts
+        prompt: Match each cast to its result
+        pairs:
+          - ["2.9 as i32", "2"]
+          - ["-2.9 as i32", "-2"]
+          - ["300.0 as u8", "255"]
+          - ["-1.0 as u8", "0"]
+        explanation: "Float to integer drops the fraction, and values outside the range stick at the nearest limit."
+        concepts: [types.as-cast]
+
+      - type: decode-error
+        id: decode-e0604
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let code = 67;
+                let letter = code as char;
+                println!("{letter}");
+            }
+          verify: compile-fail
+          expectErrors: [E0604]
+        options:
+          - { id: a, code: "let code: u8 = 67;" }
+          - { id: b, code: "let code = 67.0;", why: "Only `u8` can be cast to `char`, so a float doesn't work either." }
+          - { id: c, code: "let letter: char = code;", why: "Rust never converts number types on its own, so this is a type mismatch." }
+        answer: a
+        explanation: "Casting to `char` only works from a `u8`. With `code: u8`, the program prints `C`."
+        concepts: [types.as-cast, types.char, compiler.read-error]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-average-two-ways
+        code:
+          rust: |
+            let total = 10;
+            let count = 4;
+            println!("{}", total / count);
+            let t = total as f64;
+            let c = count as f64;
+            println!("{}", t / c);
+          verify: run
+        options:
+          - { id: a, text: "2\n2.5" }
+          - { id: b, text: "2.5\n2.5", why: "The first division uses the integers, so the `.5` is dropped." }
+          - { id: c, text: "2\n2", why: "The second division is between two `f64`s, so it keeps the fraction." }
+        answer: a
+        explanation: "Integer division gives 2. After converting both to `f64`, 10.0 / 4.0 is 2.5."
+        concepts: [types.as-cast, ops.arith]
+
+      - type: predict-output
+        id: predict-cast-too-late
+        code:
+          rust: |
+            println!("{}", (7 / 2) as f64);
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "3.5", why: "`7 / 2` is worked out first, as integers, giving 3. Converting 3 can't bring back the `.5`." }
+          - { id: c, text: "3.0", why: "The value is the float 3.0, but `{}` prints a whole float without `.0`." }
+        answer: a
+        explanation: "The brackets run first: integer division gives 3. Then `as f64` makes 3.0, which `{}` prints as `3`."
+        concepts: [types.as-cast, ops.arith, types.float]
+
+      - type: spot-bug
+        id: spot-average-late-cast
+        prompt: "This should print `2.5` but prints `2`. Tap the buggy line."
+        code:
+          rust: |
+            fn main() {
+                let total = 5;
+                let count = 2;
+                let mean = (total / count) as f64;
+                println!("{mean}");
+            }
+          verify: run
+          expectStdout: "2\n"
+        answer: 4
+        explanation: "The division happens before the cast, so the fraction is already gone. Convert first: `total as f64 / count as f64`."
+        concepts: [types.as-cast, ops.arith]
+
+      - type: fill-tokens
+        id: fill-whole-degrees
+        prompt: "Fill the blanks so the program prints `36`"
+        code:
+          rust: |
+            let body_temp = 36.6;
+            let whole = body_temp ___1___ ___2___;
+            println!("{whole}");
+          verify: run
+          expectStdout: "36\n"
+        blanks:
+          "1": { answer: ["as"] }
+          "2": { answer: ["i32", "u8", "u16", "u32", "i64", "u64", "i16"] }
+        bank: ["as", "i32", "f64", "char", "to"]
+        explanation: "`as i32` drops the `.6`, giving 36. Casting to `f64` would keep 36.6, and a float can't be cast to `char`."
+        concepts: [types.as-cast]
+
+      - type: predict-output
+        id: predict-cast-before-add
+        code:
+          rust: |
+            let max: u8 = 255;
+            let next = max as u16 + 1;
+            println!("{next}");
+          verify: run
+        options:
+          - { id: a, text: "256" }
+          - { id: b, text: "0", why: "The `+ 1` happens on a `u16`, which has room for 256." }
+          - { id: c, text: "It panics with overflow", why: "`as u16` comes first, so the addition is done in `u16`." }
+        answer: a
+        explanation: "`as` binds tighter than `+`, so `max` becomes a `u16` before 1 is added. 256 fits in a `u16`."
+        concepts: [types.as-cast, types.overflow]
+
+      - type: parsons
+        id: parsons-hours
+        prompt: "Arrange the lines so the program prints `1.5`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let minutes: u32 = 90;" }
+          - { id: l3, text: "    let hours = minutes as f64 / 60.0;" }
+          - { id: l4, text: '    println!("{hours}");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let hours = minutes / 60.0;" }
+          - { id: d2, text: "    let hours = (minutes / 60) as f64;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "1.5\n"
+        explanation: "Convert `minutes` to `f64` before dividing. Without `as` it doesn't compile, and casting after the division gives `1`."
+        concepts: [types.as-cast, ops.arith]
+
+      - type: compiles
+        id: compiles-no-auto-widen
+        code:
+          rust: |
+            let score: u8 = 250;
+            let total: u32 = score;
+            println!("{total}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0604: only `u8` can be cast as `char`", why: "There's no cast here at all. That's the problem." }
+            - { id: c, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic or float here." }
+          answer: a
+        explanation: "Even though every `u8` fits in a `u32`, Rust won't convert for you. Write `score as u32`."
+        concepts: [types.as-cast, types.inference]
+
+      - type: predict-output
+        id: predict-negative-float-u8
+        code:
+          rust: |
+            let temperature = -3.7;
+            println!("{}", temperature as u8);
+          verify: run
+        options:
+          - { id: a, text: "0" }
+          - { id: b, text: "253", why: "Wrapping happens for integer casts. A float below the range sticks at 0." }
+          - { id: c, text: "3", why: "The minus sign isn't dropped. -3.7 is below 0, the smallest `u8`." }
+        answer: a
+        explanation: "A float below the range of the target type gives its smallest value, which is 0 for a `u8`."
+        concepts: [types.as-cast]
+
+      - type: true-false
+        id: tf-silent-change
+        prompt: "`as` can change a value without any warning or panic."
+        answer: true
+        explanation: "`as` always produces a value, even if it's cut off or stuck at a limit. Check that the value fits before you cast."
+        concepts: [types.as-cast]
+
+      - type: mcq
+        id: mcq-checked-vs-cast
+        prompt: "`level` is a `u8` holding 250. Which line prints `260`?"
+        options:
+          - { id: a, code: 'println!("{}", level as u16 + 10);' }
+          - { id: b, code: 'println!("{}", (level + 10) as u16);', why: "`level + 10` is done in `u8` first, which overflows and panics." }
+          - { id: c, code: 'println!("{}", level.wrapping_add(10));', why: "That wraps around in `u8` and prints 4." }
+        answer: a
+        explanation: "Convert to the bigger type before adding. Converting afterwards is too late: the `u8` addition has already overflowed."
+        concepts: [types.as-cast, types.overflow]

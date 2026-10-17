@@ -1,0 +1,8 @@
+id: functions-control-flow
+title: Functions & Control Flow
+description: Structure logic with functions, conditionals and loops, and see how Rust treats almost everything as an expression.
+colour: blue
+units:
+  - unit-01-functions
+  - unit-02-conditionals
+  - unit-03-loops

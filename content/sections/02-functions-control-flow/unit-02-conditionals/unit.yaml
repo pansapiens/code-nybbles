@@ -1,0 +1,17 @@
+id: functions-control-flow.conditionals
+title: Conditionals
+description: Choose what your program does with if, else and a first look at match.
+colour: rust
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch03-05-control-flow.html
+sources:
+  - name: The Rust Programming Language, ch. 3.5
+    url: https://doc.rust-lang.org/book/ch03-05-control-flow.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-if
+  - level: level-02-if-expr
+  - chest
+  - level: level-03-match-intro
+  - checkpoint: checkpoint-conditionals
