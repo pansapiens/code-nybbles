@@ -1,0 +1,377 @@
+id: first-steps.hello.macros
+title: The ! means macro
+icon: sparkles
+concepts: [macro.bang]
+reviewConcepts: [intro.main, macro.println-basic]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-bang
+        title: The ! means macro
+        markdown: |
+          `println!` is a **macro**, not a function. A macro is code that writes more
+          code for you while your program compiles. The **`!`** after the name tells you,
+          and the compiler, that you're calling a macro.
+        code:
+          rust: |
+            println!("I'm a macro call!");
+          verify: run
+          expectStdout: "I'm a macro call!\n"
+        concepts: [macro.bang]
+
+      - type: mcq
+        id: mcq-bang
+        prompt: "What does the `!` in `println!` tell you?"
+        options:
+          - { id: a, text: "It's a macro, not a regular function" }
+          - { id: b, text: The line is extra important, why: "Rust has no syntax for importance; `!` here marks a macro." }
+          - { id: c, text: The text is printed in bold, why: "`println!` prints plain text." }
+        answer: a
+        explanation: "A name followed by `!` is a macro call. Macros can do things functions can't, like take a varying number of arguments."
+        concepts: [macro.bang]
+
+      - type: true-false
+        id: tf-same-thing
+        prompt: "`println` (without `!`) and `println!` are the same thing."
+        answer: false
+        explanation: "The macro's name is used with `!` when you call it. `println` without `!` asks for a function, and there isn't one with that name."
+        concepts: [macro.bang]
+
+      - type: mcq
+        id: mcq-which-macro
+        prompt: Which of these is a macro call?
+        options:
+          - { id: a, code: 'println!("Hi")' }
+          - { id: b, code: "main()", why: "There's no `!`, so this is a function call." }
+          - { id: c, code: "fn main()", why: "This defines a function called `main`; it doesn't call anything." }
+        answer: a
+        explanation: "The `!` before the parentheses marks a macro call."
+        concepts: [macro.bang]
+
+      - type: spot-bug
+        id: spot-missing-bang
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                println!("one");
+                println("two");
+                println!("three");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: 3
+        explanation: "`println` without `!` names the macro as if it were a function. Macro calls need the `!`."
+        concepts: [macro.bang]
+
+      - type: concept
+        id: concept-why-macro
+        title: Why a macro?
+        markdown: |
+          A Rust function always takes the same number of arguments. `println!` can take
+          a different number each time, and it checks its text while compiling. Only a
+          macro can do that, so `println!` is a macro.
+        code:
+          rust: |
+            println!("Hi");
+            println!();
+          verify: run
+          expectStdout: "Hi\n\n"
+        concepts: [macro.bang]
+
+      - type: true-false
+        id: tf-fn-varargs
+        prompt: A Rust function can take a different number of arguments each time you call it.
+        answer: false
+        explanation: "A function takes a fixed number of arguments. Macros like `println!` don't have that limit, which is why `println!()` and `println!(\"Hi\")` both work."
+        concepts: [macro.bang]
+
+      - type: match-pairs
+        id: pairs-macro-fn
+        pairs:
+          - ["println!", "a macro"]
+          - ["main", "a function"]
+          - ["fn", "defines a function"]
+          - ["!", "marks a macro call"]
+        concepts: [macro.bang, intro.main]
+
+      - type: mcq
+        id: mcq-when-expanded
+        prompt: When does a macro write out its code?
+        options:
+          - { id: a, text: While your program compiles }
+          - { id: b, text: Each time the program runs that line, why: "By the time your program runs, the macro has already been turned into ordinary code." }
+          - { id: c, text: When you install Rust, why: "Macros are expanded each time you compile code that uses them." }
+        answer: a
+        explanation: The compiler expands macros into ordinary Rust code before it finishes compiling.
+        concepts: [macro.bang]
+
+  - id: l2
+    exercises:
+      - type: compiles
+        id: compiles-no-bang
+        code:
+          rust: |
+            fn main() {
+                println("Hi");
+            }
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`println` is a macro, so it needs `!`" }
+            - { id: b, text: "A `;` is missing", why: "The line ends with `;`. The problem is the missing `!`." }
+            - { id: c, text: "`main` needs a return type", why: "`fn main()` with no return type is fine." }
+          answer: a
+        explanation: "Without `!`, Rust looks for a function called `println`, but `println` is a macro."
+        concepts: [macro.bang]
+
+      - type: mcq
+        id: mcq-vec-macro
+        prompt: "You see `vec![1, 2, 3]` in someone's code. What is `vec!`?"
+        options:
+          - { id: a, text: A macro }
+          - { id: b, text: A function, why: "A function call has no `!` before its brackets." }
+          - { id: c, text: A comment, why: "Comments start with `//` or `/*`. The `!` marks a macro call." }
+        answer: a
+        explanation: "The `!` after the name marks a macro, whatever brackets follow it. You'll meet `vec!` properly later."
+        concepts: [macro.bang]
+
+      - type: predict-output
+        id: predict-empty-then-text
+        code:
+          rust: |
+            fn main() {
+                println!();
+                println!("after a gap");
+            }
+          verify: run
+        options:
+          - { id: a, text: "\nafter a gap" }
+          - { id: b, text: "after a gap", why: "The first `println!()` prints an empty line before the text." }
+          - { id: c, text: "()\nafter a gap", why: "The `()` are part of the macro call and aren't printed." }
+        answer: a
+        explanation: "`println!()` with no arguments prints an empty line, then the second call prints the text."
+        concepts: [macro.bang, macro.println-basic]
+
+      - type: true-false
+        id: tf-always-bang
+        prompt: "You must write the `!` every time you call `println!`."
+        answer: true
+        explanation: "The `!` is part of how you call a macro. Leave it out and the code doesn't compile."
+        concepts: [macro.bang]
+
+      - type: spot-bug
+        id: spot-bang-bye
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                println!("Welcome!");
+                println!();
+                println("Bye!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: 4
+        explanation: "Line 4 calls `println` without `!`. Line 3 is fine: `println!()` prints an empty line."
+        concepts: [macro.bang]
+
+      - type: mcq
+        id: mcq-main-vs-println
+        prompt: "Which is true about `main` and `println!`?"
+        options:
+          - { id: a, text: "`main` is a function you define; `println!` is a macro you call" }
+          - { id: b, text: Both are macros, why: "`main` has no `!`. It's a function, defined with `fn`." }
+          - { id: c, text: Both are functions, why: "The `!` in `println!` shows that it's a macro." }
+        answer: a
+        explanation: "You define `main` with `fn`. Inside it you call the macro `println!`."
+        concepts: [macro.bang, intro.main]
+
+      - type: fill-tokens
+        id: fill-bang-twice
+        prompt: Fill the blanks so the program prints `Line one` and then an empty line
+        code:
+          rust: |
+            fn main() {
+                ___1___("Line one");
+                ___2___();
+            }
+          verify: run
+          expectStdout: "Line one\n\n"
+        blanks:
+          "1": { answer: ["println!"] }
+          "2": { answer: ["println!"] }
+        bank: ["println!", "println", "print_line!", "echo!"]
+        explanation: "Both lines call the `println!` macro, with its `!`. With no arguments it prints an empty line."
+        concepts: [macro.bang, macro.println-basic]
+
+      - type: predict-output
+        id: predict-review-order
+        code:
+          rust: |
+            fn main() {
+                println!("3");
+                println!("2");
+                println!("1");
+                println!("Lift-off!");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3\n2\n1\nLift-off!" }
+          - { id: b, text: "1\n2\n3\nLift-off!", why: "Statements run top to bottom, in the order they're written." }
+          - { id: c, text: "3 2 1 Lift-off!", why: "Each `println!` prints its own line." }
+        answer: a
+        explanation: "Each `println!` prints one line, top to bottom."
+        concepts: [macro.println-basic]
+
+      - type: mcq
+        id: mcq-why-macro
+        prompt: "Why is `println!` a macro rather than a function?"
+        options:
+          - { id: a, text: "It can take a varying number of arguments and check its text while compiling" }
+          - { id: b, text: Macros print faster than functions, why: "Speed isn't the reason. The difference is what a macro can accept and check." }
+          - { id: c, text: "Functions can't print anything", why: "Functions can print: `main` is a function, and it prints by calling `println!`." }
+        answer: a
+        explanation: "Functions take a fixed number of arguments. A macro can accept zero or more and check the text at compile time."
+        concepts: [macro.bang]
+
+  - id: l3
+    exercises:
+      - type: decode-error
+        id: decode-no-bang
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                println("Hi!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0423]
+        options:
+          - { id: a, text: "`println` is a macro, so call it with `!`" }
+          - { id: b, text: "You need to write a function called `println` first", why: "There's no need: the `println!` macro already exists. The fix is to add `!`." }
+          - { id: c, text: "The text needs single quotes", why: "Text goes in double quotes, as it is here. The problem is the missing `!`." }
+        answer: a
+        explanation: "The error says Rust expected a function but found a macro, and the `help` line shows where to add `!`."
+        concepts: [macro.bang]
+
+      - type: parsons
+        id: parsons-gap
+        prompt: Arrange the lines so the program prints `Hi`, an empty line, then `Bye`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    println!("Hi");' }
+          - { id: l3, text: "    println!();" }
+          - { id: l4, text: '    println!("Bye");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    println();" }
+          - { id: d2, text: '    print_line!("Bye");' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Hi\n\nBye\n"
+        explanation: "`println!()` prints the empty line. The distractors call `println` without `!` and a macro that doesn't exist."
+        concepts: [macro.bang, macro.println-basic]
+
+      - type: compiles
+        id: compiles-empty-println
+        code:
+          rust: |
+            fn main() {
+                println!();
+            }
+          verify: run
+          expectStdout: "\n"
+        answer: true
+        explanation: "`println!` is a macro, so it can be called with no arguments. It prints an empty line."
+        concepts: [macro.bang]
+
+      - type: fill-tokens
+        id: fill-all-punctuation
+        prompt: Fill the blanks so the program compiles and prints `Hi`
+        code:
+          rust: |
+            fn main___1___ {
+                println___2___("Hi")___3___
+            }
+          verify: run
+          expectStdout: "Hi\n"
+        blanks:
+          "1": { answer: ["()"] }
+          "2": { answer: ["!"] }
+          "3": { answer: [";"] }
+        bank: ["()", "!", ";", "[]", ":", "?"]
+        explanation: "`main` needs `()` after its name, `println` needs `!` to call the macro, and the statement ends with `;`."
+        concepts: [macro.bang, intro.main, macro.println-basic]
+
+      - type: match-pairs
+        id: pairs-parts
+        pairs:
+          - ['println!("Hi")', "a macro call"]
+          - ["fn main() {}", "a function definition"]
+          - ['"Hi"', "text in double quotes"]
+          - [";", "ends a statement"]
+        concepts: [macro.bang, intro.main, macro.println-basic]
+
+      - type: mcq
+        id: mcq-correct-call
+        prompt: Which line calls the macro correctly?
+        options:
+          - { id: a, code: 'println!("ok");' }
+          - { id: b, code: 'println("ok");', why: "Without `!`, this asks for a function called `println`." }
+          - { id: c, code: '!println("ok");', why: "The `!` goes after the name, not before it." }
+          - { id: d, code: 'println!"ok";', why: "A macro call needs brackets around its arguments." }
+        answer: a
+        explanation: "A macro call is the name, then `!`, then the arguments in brackets."
+        concepts: [macro.bang]
+
+      - type: predict-output
+        id: predict-review-quotes
+        code:
+          rust: |
+            fn main() {
+                println!("Rust is fun!");
+                println!();
+                println!("Bye!");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Rust is fun!\n\nBye!" }
+          - { id: b, text: "Rust is fun\n\nBye", why: "The `!` inside the quotes is part of the text, so it's printed." }
+          - { id: c, text: "Rust is fun!\nBye!", why: "The middle `println!()` prints an empty line." }
+        answer: a
+        explanation: "A `!` inside the quotes is ordinary text. Only the `!` after `println` marks the macro."
+        concepts: [macro.bang, macro.println-basic]
+
+      - type: true-false
+        id: tf-brackets
+        prompt: "Functions are called like `name(...)` and macros like `name!(...)`."
+        answer: true
+        explanation: "The `!` between the name and the brackets is what tells a macro call apart from a function call."
+        concepts: [macro.bang]
+
+      - type: spot-bug
+        id: spot-bang-greeting
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                println!("Ferris here.");
+                println!();
+                println!("Ready?");
+                println("Let's go!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: 5
+        explanation: "Line 5 is missing the `!`, so Rust looks for a function called `println` and doesn't find one."
+        concepts: [macro.bang]

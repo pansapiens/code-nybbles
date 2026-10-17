@@ -1,0 +1,420 @@
+id: first-steps.hello.first-errors
+title: Your first compiler errors
+icon: bug
+concepts: [compiler.read-error]
+reviewConcepts: [intro.what-is-rust, intro.main, macro.println-basic, macro.bang, syntax.comments]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-read-error
+        title: Reading an error
+        markdown: |
+          When your code has a mistake, the compiler stops and tells you. The compiler is
+          helping here, so read the message from the top:
+
+          ```text
+          error: expected `;`, found `println`
+           --> src/main.rs:2:22
+          ```
+
+          The first line says **what** is wrong. The `-->` line says **where**: file,
+          line 2, column 22.
+        concepts: [compiler.read-error]
+
+      - type: compiles
+        id: compiles-missing-semicolon
+        code:
+          rust: |
+            fn main() {
+                println!("Hello")
+                println!("world");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "A `;` is missing after the first `println!`" }
+            - { id: b, text: "`main` needs a return type", why: "`fn main()` with no return type is fine." }
+            - { id: c, text: "You can't call `println!` twice", why: "You can call `println!` as many times as you like." }
+          answer: a
+        explanation: "Statements are separated by `;`. Without it, Rust can't tell where the first `println!` ends."
+        concepts: [compiler.read-error, macro.println-basic]
+
+      - type: mcq
+        id: mcq-arrow-line
+        prompt: "An error shows `--> src/main.rs:2:22`. What does the `2` tell you?"
+        options:
+          - { id: a, text: The problem is on line 2 }
+          - { id: b, text: The problem is in column 2, why: "The numbers are line, then column. Column 22 is the second number." }
+          - { id: c, text: There are 2 errors, why: "The `-->` line gives a position, not a count of errors." }
+        answer: a
+        explanation: "The `-->` line gives the file, then the line number, then the column."
+        concepts: [compiler.read-error]
+
+      - type: decode-error
+        id: decode-semicolon-help
+        prompt: Which fix does the compiler suggest?
+        code:
+          rust: |
+            fn main() {
+                println!("Hello")
+                println!("world");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "help: add `;` here"
+        options:
+          - { id: a, text: "Add `;` at the end of line 2" }
+          - { id: b, text: "Delete line 3", why: "Line 3 is fine. It's marked as the unexpected token because line 2 didn't end with `;`." }
+          - { id: c, text: "Add `!` after `println` on line 3", why: "Line 3 already has its `!`. Look at the `help:` text under line 2." }
+        answer: a
+        explanation: "The `^` points right after line 2's `)`, and `help: add ; here` tells you the fix."
+        concepts: [compiler.read-error]
+
+      - type: true-false
+        id: tf-help-lines
+        prompt: "The `help:` lines in a compiler error often suggest a fix."
+        answer: true
+        explanation: "Rust's compiler tries to suggest fixes. Read the `help:` lines, but check the suggestion makes sense for your code."
+        concepts: [compiler.read-error]
+
+      - type: concept
+        id: concept-missing-quote
+        title: A missing quote
+        markdown: |
+          If you forget the closing `"` of some text, Rust keeps reading everything after it
+          as part of the text. The error can then point at a **later** line than the
+          real mistake, so check the lines above it too.
+        concepts: [compiler.read-error]
+
+      - type: decode-error
+        id: decode-missing-quote
+        prompt: The error points at line 3. Where is the real mistake?
+        code:
+          rust: |
+            fn main() {
+                println!("Hello);
+                println!("world");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0765]
+        options:
+          - { id: a, text: "Line 2 is missing the closing `\"` after `Hello`" }
+          - { id: b, text: "Line 3 is missing a quote", why: "Line 3 is fine. Its first `\"` closes the text that line 2 left open." }
+          - { id: c, text: "The `}` on line 4 is missing", why: "The `}` is there, but Rust reads it as part of the unfinished text." }
+        answer: a
+        explanation: "The text that starts on line 2 never closes there, so Rust thinks a new string starts at the closing quote on line 3 and runs to the end of the file."
+        concepts: [compiler.read-error, macro.println-basic]
+
+      - type: true-false
+        id: tf-line-always
+        prompt: The line number in an error is always the line with the mistake.
+        answer: false
+        explanation: "Often it is, but not always. A missing `;` or `\"` can make the compiler notice the problem on a later line."
+        concepts: [compiler.read-error]
+
+      - type: mcq
+        id: mcq-error-code
+        prompt: "Some errors have a code, like `error[E0765]`. What is `E0765`?"
+        options:
+          - { id: a, text: "An error code you can look up with `rustc --explain E0765`" }
+          - { id: b, text: "The number of errors in your file", why: "The code names the kind of error. The count comes at the end: `aborting due to 1 previous error`." }
+          - { id: c, text: "The line where the error is", why: "The line is on the `-->` line below the message." }
+        answer: a
+        explanation: "Each error code has a longer explanation with examples. `rustc --explain` shows it, and so does the online error index."
+        concepts: [compiler.read-error]
+
+  - id: l2
+    exercises:
+      - type: spot-bug
+        id: spot-missing-quote
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                println!("Start");
+                println!("Middle);
+                println!("End");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0765]
+        answer: 3
+        explanation: "Line 3 is missing the `\"` after `Middle`. The compiler reports it on line 4, where the leftover quote starts a string that never ends."
+        concepts: [compiler.read-error]
+
+      - type: decode-error
+        id: decode-misspelled-macro
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                printline!("Hi!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "cannot find macro `printline`"
+        options:
+          - { id: a, text: "There's no macro called `printline!`. It should be `println!`." }
+          - { id: b, text: "Macros can't print text", why: "`println!` is a macro, and it prints text." }
+          - { id: c, text: "A `;` is missing", why: "The line ends with `;`. The problem is the name." }
+        answer: a
+        explanation: "The compiler says it can't find `printline` and suggests the similar name `println`."
+        concepts: [compiler.read-error, macro.bang]
+
+      - type: decode-error
+        id: decode-unclosed-brace
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                println!("Hi");
+                println!("Bye");
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "unclosed delimiter"
+        options:
+          - { id: a, text: "The `{` after `main()` is never closed with `}`" }
+          - { id: b, text: "The last line needs another `;`", why: "Both statements have their `;`. The file ends before `main`'s body is closed." }
+          - { id: c, text: "Some text is missing a `\"`", why: "Each string has both quotes. A delimiter here means a bracket, and the `{` is the one left open." }
+        answer: a
+        explanation: "A delimiter is a bracket like `{`. The `-` under the `{` on line 1 marks the one that is never closed."
+        concepts: [compiler.read-error, intro.main]
+
+      - type: spot-bug
+        id: spot-missing-semicolon
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                println!("Step 1");
+                println!("Step 2")
+                println!("Step 3");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: 3
+        explanation: "Line 3 is missing its `;`. The compiler also marks line 4, because that's where it found something it didn't expect."
+        concepts: [compiler.read-error, macro.println-basic]
+
+      - type: compiles
+        id: compiles-last-no-semicolon
+        code:
+          rust: |
+            fn main() {
+                println!("Hi");
+                println!("Bye")
+            }
+          verify: run
+          expectStdout: "Hi\nBye\n"
+        answer: true
+        explanation: "The `;` separates a statement from what follows, and nothing follows the last line, so Rust accepts it. Most code still ends every `println!` with `;`; you'll learn why this works in the functions section."
+        concepts: [compiler.read-error, macro.println-basic]
+
+      - type: decode-error
+        id: decode-extra-brace
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                println!("Hi");
+            }
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "unexpected closing delimiter"
+        options:
+          - { id: a, text: "Delete the extra `}` on line 4" }
+          - { id: b, text: "Add a `{` at the start of line 4", why: "A `{` there isn't valid Rust either. The `}` on line 4 has nothing to close, so remove it." }
+          - { id: c, text: "Add `;` after the `}` on line 3", why: "A function body doesn't end with `;`. The problem is the second `}`." }
+        answer: a
+        explanation: "The compiler shows which `{` the `}` on line 3 closes, so the `}` on line 4 has nothing left to close."
+        concepts: [compiler.read-error, intro.main]
+
+      - type: mcq
+        id: mcq-fix-first
+        prompt: The compiler reports three errors. Which do you fix first?
+        options:
+          - { id: a, text: "The first one, then compile again" }
+          - { id: b, text: "The last one", why: "Later errors are often side effects of an earlier one, so start at the top." }
+          - { id: c, text: All three at once; they're always separate problems, why: "One mistake, like a missing quote, can cause several errors. Fixing it may clear the rest." }
+        answer: a
+        explanation: "Fix the first error and recompile. One mistake often causes the errors that follow it."
+        concepts: [compiler.read-error]
+
+      - type: true-false
+        id: tf-aborting
+        prompt: "`error: aborting due to 1 previous error` is a second problem you need to fix."
+        answer: false
+        explanation: "It's a summary: the compiler stopped because of the 1 error shown above it."
+        concepts: [compiler.read-error]
+
+      - type: match-pairs
+        id: pairs-error-parts
+        pairs:
+          - ["error:", "what went wrong"]
+          - ["-->", "file, line and column"]
+          - ["^", "points at the spot"]
+          - ["help:", "a suggested fix"]
+          - ["warning:", "still compiles, but check it"]
+        concepts: [compiler.read-error]
+
+  - id: l3
+    exercises:
+      - type: decode-error
+        id: decode-no-quotes
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                println!(Hi);
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "format argument must be a string literal"
+        options:
+          - { id: a, code: 'println!("Hi");' }
+          - { id: b, code: "println(Hi);", why: "Removing `!` makes it a function call, and `Hi` still has no quotes." }
+          - { id: c, code: "println!('Hi');", why: "Single quotes hold one character, not text. Use double quotes." }
+        answer: a
+        explanation: "`println!` needs a string literal: text in double quotes. The `help` line guesses that `Hi` is a value to print, which you'll meet in the next unit, but here you want the text `Hi`."
+        concepts: [compiler.read-error, macro.println-basic]
+
+      - type: spot-bug
+        id: spot-unclosed-comment
+        prompt: Tap the line that causes the error
+        code:
+          rust: |
+            fn main() {
+                println!("Hello!");
+                /* print the menu next
+                println!("Menu");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0758]
+        answer: 3
+        explanation: "The `/*` on line 3 is never closed, so the comment swallows the rest of the file, including the `}`."
+        concepts: [compiler.read-error, syntax.comments]
+
+      - type: fill-tokens
+        id: fill-fix-all
+        prompt: Fill the blanks to fix the program so it prints `Hello` and `Bye`
+        code:
+          rust: |
+            fn main() {
+                println!("Hello___1___)___2___
+                println!("Bye");
+            ___3___
+          verify: run
+          expectStdout: "Hello\nBye\n"
+        blanks:
+          "1": { answer: ['"'] }
+          "2": { answer: [";"] }
+          "3": { answer: ["}"] }
+        bank: ['"', ";", "}", "'", ":", "{"]
+        explanation: "The text needs its closing `\"`, the statement needs its `;`, and `main`'s body needs its closing `}`."
+        concepts: [compiler.read-error, intro.main, macro.println-basic]
+
+      - type: compiles
+        id: compiles-capital-main
+        code:
+          rust: |
+            fn Main() {
+                println!("Hi");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0601]
+        answer: false
+        followUp:
+          prompt: What will the compiler complain about?
+          options:
+            - { id: a, text: "There's no `main` function" }
+            - { id: b, text: "A `;` is missing", why: "Every statement has its `;`. The problem is the function's name." }
+            - { id: c, text: "`println!` is missing its `!`", why: "`println!` is written correctly here." }
+          answer: a
+        explanation: "Names in Rust are case-sensitive, so `Main` is not `main`. The compiler reports E0601: `main` function not found."
+        concepts: [compiler.read-error, intro.main]
+
+      - type: parsons
+        id: parsons-fixed
+        prompt: Arrange the lines into a program that compiles and prints `Bug found.` then `Fixed!`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    println!("Bug found.");' }
+          - { id: l3, text: '    println!("Fixed!");' }
+          - { id: l4, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("Fixed!);' }
+          - { id: d2, text: '    println("Bug found.");' }
+        answer: [l1, l2, l3, l4]
+        verify:
+          mode: run
+          expectStdout: "Bug found.\nFixed!\n"
+        explanation: "The distractors each have a mistake from this level: a missing closing quote and a missing `!`."
+        concepts: [compiler.read-error, macro.bang]
+
+      - type: mcq
+        id: mcq-explain
+        prompt: "What does `rustc --explain E0758` do?"
+        options:
+          - { id: a, text: Shows a longer explanation of error E0758 with examples }
+          - { id: b, text: Fixes error E0758 in your code, why: "It only explains the error. You make the fix yourself." }
+          - { id: c, text: Compiles your program again, why: "It doesn't compile anything; it prints documentation about one error code." }
+        answer: a
+        explanation: "`rustc --explain` prints the documentation for an error code, usually with a broken example and a fixed one."
+        concepts: [compiler.read-error]
+
+      - type: compiles
+        id: compiles-semicolon-comment
+        code:
+          rust: |
+            fn main() {
+                println!("A") // first
+                println!("B");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "Line 2 needs a `;` before the comment" }
+            - { id: b, text: "Comments can't go after code", why: "A `//` comment after code is fine. The `;` must come before it." }
+            - { id: c, text: "`// first` should be `/* first */`", why: "Either comment style works. The missing `;` is the problem." }
+          answer: a
+        explanation: "The comment is ignored, so the compiler sees `println!(\"A\")` followed straight away by `println!`, with no `;` between them."
+        concepts: [compiler.read-error, syntax.comments]
+
+      - type: true-false
+        id: tf-runs-with-error
+        prompt: A program with one compile error still gives you a program you can run.
+        answer: false
+        explanation: "If compiling fails, no program is produced. You fix the error first, then compile again."
+        concepts: [compiler.read-error, intro.what-is-rust]
+
+      - type: decode-error
+        id: decode-dangling-doc
+        prompt: What does the `help:` line suggest?
+        code:
+          rust: |
+            fn main() {
+                println!("Hi");
+                /// all done
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0585]
+        options:
+          - { id: a, text: "Use `//` for a normal comment" }
+          - { id: b, text: "Delete the `println!`", why: "The `println!` is fine. The problem is the `///` comment with nothing after it." }
+          - { id: c, text: "Add a `;` after the comment", why: "Comments never need `;`. The help line points to `//`." }
+        answer: a
+        explanation: "A `///` doc comment must come before something to document. For a plain note, use `//`."
+        concepts: [compiler.read-error, syntax.comments]

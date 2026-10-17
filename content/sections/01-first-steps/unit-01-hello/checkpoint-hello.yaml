@@ -1,0 +1,247 @@
+id: first-steps.hello.checkpoint
+title: "Checkpoint: Hello, Rust"
+icon: trophy
+concepts: []
+reviewConcepts: [intro.what-is-rust, intro.main, macro.println-basic, macro.bang, syntax.comments, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-everything
+        code:
+          rust: |
+            /// Says hello and goodbye.
+            fn main() {
+                println!("Hi!"); // greet
+                /* println!("Wait");
+                println!(); */
+                println!();
+                println!("// Bye");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Hi!\n\n// Bye" }
+          - { id: b, text: "Hi!\n// Bye", why: "The `println!()` on line 6 is outside the block comment, so it prints an empty line." }
+          - { id: c, text: "Hi!\n\nBye", why: "The `//` is inside the quotes, so it's printed as text." }
+          - { id: d, text: "Hi!\nWait\n\n\n// Bye", why: "Lines 4 and 5 are inside `/* */`, so they don't run." }
+        answer: a
+        explanation: "Lines 4-5 are a block comment. Line 6 prints an empty line, and the `//` on line 7 is inside quotes, so it's printed."
+        difficulty: 3
+        concepts: [syntax.comments, macro.println-basic]
+
+      - type: spot-bug
+        id: spot-checkpoint-bang
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                // Count down
+                println!("3");
+                println!("2");
+                println("1");
+                println!("Go!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: 5
+        explanation: "Line 5 calls `println` without `!`, so Rust looks for a function that doesn't exist."
+        difficulty: 2
+        concepts: [macro.bang, compiler.read-error]
+
+      - type: decode-error
+        id: decode-checkpoint-quote
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                println!("Ready");
+                println!("Steady);
+                println!("Go");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrors: [E0765]
+        options:
+          - { id: a, code: '    println!("Steady");' }
+          - { id: b, code: '    println!("Go"");', why: "Line 4 is fine. The missing quote is on line 3, even though the error points at line 4." }
+          - { id: c, code: '    println!(Steady);', why: "Text needs double quotes around it; removing them causes a different error." }
+        answer: a
+        explanation: "The text on line 3 never closes, so the compiler reports a string that runs from line 4 to the end of the file. Closing the quote on line 3 fixes it."
+        difficulty: 3
+        concepts: [compiler.read-error, macro.println-basic]
+
+      - type: compiles
+        id: compiles-nested-comment
+        code:
+          rust: |
+            fn main() {
+                /* one /* two */ three */
+                println!("ok");
+            }
+          verify: run
+          expectStdout: "ok\n"
+        answer: true
+        explanation: "Rust block comments nest, so the comment ends at the second `*/`, which matches the first `/*`."
+        difficulty: 4
+        concepts: [syntax.comments]
+
+      - type: fill-tokens
+        id: fill-checkpoint-program
+        prompt: Fill the blanks so the program compiles and prints `Hello, Rust!`
+        code:
+          rust: |
+            ___1___ Greets the learner.
+            ___2___ main() {
+                ___3___("Hello, Rust!");
+            }
+          verify: run
+          expectStdout: "Hello, Rust!\n"
+        blanks:
+          "1": { answer: ["///", "//"] }
+          "2": { answer: ["fn"] }
+          "3": { answer: ["println!"] }
+        bank: ["///", "fn", "println!", "#", "println", "func"]
+        explanation: "A `///` doc comment describes `main`, `fn` defines the function, and `println!` needs its `!`."
+        difficulty: 3
+        concepts: [syntax.comments, intro.main, macro.bang]
+
+      - type: parsons
+        id: parsons-checkpoint
+        prompt: Arrange the lines so the program prints `Rust`, an empty line, then `rocks`
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    println!("Rust");' }
+          - { id: l3, text: "    println!();" }
+          - { id: l4, text: '    println!("rocks");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println("rocks");' }
+          - { id: d2, text: "    println!(rocks);" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Rust\n\nrocks\n"
+        explanation: "`println!()` prints the empty line. The distractors are missing the `!` or the quotes around `rocks`."
+        difficulty: 3
+        concepts: [intro.main, macro.println-basic, macro.bang]
+
+      - type: mcq
+        id: mcq-checkpoint-cargo
+        prompt: "You fixed a compile error in `src/main.rs`. What's the quickest way to check the fix and see the output?"
+        options:
+          - { id: a, text: "Run `cargo run`" }
+          - { id: b, text: "Run `cargo new` again", why: "That creates a new project. Your code is already in one." }
+          - { id: c, text: "Run the old program file again", why: "The old program was built before your fix, and a failed build doesn't replace it." }
+        answer: a
+        explanation: "`cargo run` recompiles the changed file and, if it compiles, runs the new program."
+        difficulty: 2
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-checkpoint-expand
+        prompt: "`println!` is expanded into ordinary code while your program compiles."
+        answer: true
+        explanation: "Macros are expanded at compile time. The running program contains the code the macro wrote."
+        difficulty: 2
+        concepts: [macro.bang, intro.what-is-rust]
+
+      - type: compiles
+        id: compiles-checkpoint-doc
+        code:
+          rust: |
+            /// Prints one line.
+            fn main() {
+                println!("Hi"); /// done
+            }
+          verify: compile-fail
+          expectErrors: [E0585]
+        answer: false
+        followUp:
+          prompt: What's the problem?
+          options:
+            - { id: a, text: "The second `///` comment has nothing after it to document" }
+            - { id: b, text: "`fn main` can't have a doc comment", why: "The first `///` comment, before `fn main`, is fine." }
+            - { id: c, text: "The `;` should come after the comment", why: "The `;` is in the right place. Changing `/// done` to `// done` fixes it." }
+          answer: a
+        explanation: "A doc comment must come before an item. `/// done` comes at the end of the body, so Rust rejects it."
+        difficulty: 4
+        concepts: [syntax.comments, compiler.read-error]
+
+      - type: predict-output
+        id: predict-checkpoint-tiles
+        prompt: Build the output of this program
+        code:
+          rust: |
+            fn hidden() {
+                println!("secret");
+            }
+
+            fn main() {
+                println!("Ferris says");
+                // println!("hello");
+                println!("hi there");
+            }
+          verify: run
+        tiles: ["Ferris", "says", "hi", "there", "hello", "secret"]
+        answer: "Ferris says\nhi there"
+        explanation: "The program starts at `main`. `hidden` is never called, and the `hello` line is a comment."
+        difficulty: 4
+        concepts: [intro.main, syntax.comments]
+
+      - type: match-pairs
+        id: pairs-checkpoint
+        pairs:
+          - ["cargo run", "compile, then run"]
+          - ["fn main", "where the program starts"]
+          - ["println!", "macro that prints a line"]
+          - ["/* */", "block comment"]
+          - ["-->", "where the error is"]
+        concepts: [intro.what-is-rust, intro.main, macro.bang, syntax.comments, compiler.read-error]
+
+      - type: decode-error
+        id: decode-checkpoint-semicolon
+        prompt: Which line do you need to change?
+        code:
+          rust: |
+            fn main() {
+                println!("Loading");
+                println!("Done") // last step?
+                println!("Exit");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        options:
+          - { id: a, text: "Line 3: add `;` after `println!(\"Done\")`" }
+          - { id: b, text: "Line 4: delete the line", why: "Line 4 is fine. It's marked because line 3 didn't end its statement." }
+          - { id: c, text: "Line 3: remove the comment", why: "The comment is ignored. Without the `;`, removing it still leaves the error." }
+        answer: a
+        explanation: "The `help` line shows where the `;` goes: after `)` on line 3, before the comment."
+        difficulty: 3
+        concepts: [compiler.read-error, syntax.comments]
+
+      - type: spot-bug
+        id: spot-checkpoint-main
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            // Prints a welcome
+            fn main()
+                println!("Welcome!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "unexpected closing delimiter"
+        answer: 2
+        explanation: "The compiler points at line 4, but the mistake is on line 2: it's missing the `{` that opens `main`'s body, so the `}` has nothing to close."
+        difficulty: 4
+        concepts: [intro.main, compiler.read-error]
+
+      - type: true-false
+        id: tf-checkpoint-first-error
+        prompt: When you see several errors, fixing the first one can make some of the others go away.
+        answer: true
+        explanation: One mistake, like a missing quote, can confuse the compiler about everything after it. Fix the first error and recompile.
+        difficulty: 2
+        concepts: [compiler.read-error]

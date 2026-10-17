@@ -1,0 +1,279 @@
+id: first-steps.hello.what-is-rust
+title: What is Rust?
+icon: rocket
+concepts: [intro.what-is-rust]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-compiled
+        title: Rust is compiled
+        markdown: |
+          You write Rust in text files ending in **`.rs`**. Before the code can run,
+          the Rust compiler, **`rustc`**, turns it into a program your computer runs
+          directly. This step is called **compiling**.
+        code:
+          rust: |
+            fn main() {
+                println!("Hello, world!");
+            }
+          verify: run
+          expectStdout: "Hello, world!\n"
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-compile-first
+        prompt: Rust code is compiled before it runs.
+        answer: true
+        explanation: "`rustc` turns your source code into a program first. Only then can you run it."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-rustc-does
+        prompt: "What does `rustc` do?"
+        options:
+          - { id: a, text: Turns your source code into a program you can run }
+          - { id: b, text: Reads your code line by line and runs each line straight away, why: "That's how an interpreter works. Rust compiles the whole program first." }
+          - { id: c, text: Tidies the layout of your code, why: "That's the job of a formatter (`rustfmt`), not the compiler." }
+        answer: a
+        explanation: "`rustc` is the Rust compiler. It checks your code and produces a program you can run."
+        concepts: [intro.what-is-rust]
+
+      - type: predict-output
+        id: predict-hello
+        prompt: The Rust Playground starts with this program. What does it print?
+        code:
+          rust: |
+            fn main() {
+                println!("Hello, world!");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Hello, world!" }
+          - { id: b, text: "\"Hello, world!\"", why: "The quotes mark where the text starts and ends. They aren't printed." }
+          - { id: c, text: "println!(\"Hello, world!\");", why: "The program runs the line; it doesn't print its own code." }
+        answer: a
+        explanation: "`println!` prints the text between the quotes, without the quotes."
+        concepts: [intro.what-is-rust]
+
+      - type: concept
+        id: concept-safe-fast
+        title: Safe and fast
+        markdown: |
+          The compiler checks your program **before** it runs. Many bugs that crash
+          programs in other languages, like using memory that has already been freed,
+          are compile errors in Rust.
+
+          Rust has no garbage collector, so programs run fast and use little memory.
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-gc
+        prompt: Rust uses a garbage collector to clean up memory while your program runs.
+        answer: false
+        explanation: "Rust has no garbage collector. The compiler works out when memory can be freed, which you'll learn about in the ownership section."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-when-errors
+        prompt: When does Rust report most mistakes in your code?
+        options:
+          - { id: a, text: When you compile the program }
+          - { id: b, text: Only when the program crashes, why: "Rust catches many mistakes earlier, while compiling, so they never reach a running program." }
+          - { id: c, text: Never; you have to find them by testing, why: "Testing still helps, but the compiler finds many mistakes for you." }
+        answer: a
+        explanation: The compiler checks your code before it runs and reports problems as compile errors.
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-rs-extension
+        prompt: "Rust source files end in `.rs`."
+        answer: true
+        explanation: "Rust files use the `.rs` extension, like `main.rs`."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-known-for
+        prompt: Which pair of features is Rust best known for?
+        options:
+          - { id: a, text: Speed and memory safety }
+          - { id: b, text: No compile step and dynamic typing, why: "Rust is compiled, and every value has a type the compiler knows." }
+          - { id: c, text: Running only inside web browsers, why: "Rust runs almost anywhere: desktops, servers, phones, small devices and browsers." }
+        answer: a
+        explanation: Rust aims to be as fast as C and C++ while preventing whole classes of memory bugs at compile time.
+        concepts: [intro.what-is-rust]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-cargo
+        title: rustc and Cargo
+        markdown: |
+          `rustc main.rs` compiles a single file. Most projects use **Cargo**,
+          Rust's build tool, which calls `rustc` for you:
+
+          - `cargo new hello` creates a project with `Cargo.toml` (settings) and `src/main.rs` (your code)
+          - `cargo build` compiles it
+          - `cargo run` compiles it, then runs it
+        concepts: [intro.what-is-rust]
+
+      - type: match-pairs
+        id: pairs-commands
+        pairs:
+          - ["rustc main.rs", "compiles one file"]
+          - ["cargo new", "creates a project"]
+          - ["cargo build", "compiles a project"]
+          - ["cargo run", "compiles, then runs"]
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-compile-and-run
+        prompt: You want to compile your project and run it in one step. Which command do you use?
+        options:
+          - { id: a, text: "`cargo run`" }
+          - { id: b, text: "`cargo build`", why: "`cargo build` compiles the project but doesn't run it." }
+          - { id: c, text: "`cargo new`", why: "`cargo new` creates a new project; it doesn't compile anything." }
+          - { id: d, text: "`rustc run`", why: "`rustc` compiles files. It has no `run` command." }
+        answer: a
+        explanation: "`cargo run` compiles your project if needed, then runs the program."
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-build-runs
+        prompt: "`cargo build` runs your program after compiling it."
+        answer: false
+        explanation: "`cargo build` only compiles. Use `cargo run` to compile and run."
+        concepts: [intro.what-is-rust]
+
+      - type: concept
+        id: concept-playground
+        title: The Rust Playground
+        markdown: |
+          The **Rust Playground** at play.rust-lang.org compiles and runs Rust in your
+          browser. You can try a snippet there without installing anything.
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-playground-install
+        prompt: You need to install Rust on your computer to try code in the Rust Playground.
+        answer: false
+        explanation: The Playground compiles and runs your code on a server, so a browser is all you need.
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-where-code
+        prompt: "You ran `cargo new hello`. Which file holds your program's code?"
+        options:
+          - { id: a, text: "`src/main.rs`" }
+          - { id: b, text: "`Cargo.toml`", why: "`Cargo.toml` holds project settings, like its name and version." }
+          - { id: c, text: "`hello.rs`", why: "Cargo puts the code in `src/main.rs`, not a file named after the project." }
+        answer: a
+        explanation: "Cargo creates `src/main.rs` for your code and `Cargo.toml` for the project's settings."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-rustc-output
+        prompt: "What does `rustc main.rs` give you?"
+        options:
+          - { id: a, text: A program file you can then run }
+          - { id: b, text: The output of the program, why: "`rustc` only compiles. You run the program it produces as a separate step." }
+          - { id: c, text: A new Cargo project, why: "That's `cargo new`." }
+        answer: a
+        explanation: "`rustc` compiles `main.rs` into a program file (called `main`, or `main.exe` on Windows) that you then run."
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-cargo-calls-rustc
+        prompt: "Cargo calls `rustc` for you behind the scenes."
+        answer: true
+        explanation: "Cargo works out what needs compiling and runs `rustc` with the right options."
+        concepts: [intro.what-is-rust]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-new-project
+        prompt: Put the terminal commands in order to create a project called `greeter` and run it
+        lines:
+          - { id: l1, text: "cargo new greeter" }
+          - { id: l2, text: "cd greeter" }
+          - { id: l3, text: "cargo run" }
+        distractors:
+          - { id: d1, text: "rustc run greeter" }
+        answer: [l1, l2, l3]
+        explanation: "`cargo new` creates the project folder, `cd` moves into it, and `cargo run` compiles and runs it."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-edit-then-run
+        prompt: "You change `src/main.rs` and type `cargo run`. What happens?"
+        options:
+          - { id: a, text: "Cargo compiles the changed code, then runs the new version" }
+          - { id: b, text: Cargo runs the old version from before your change, why: "Cargo notices the file changed and compiles it again first." }
+          - { id: c, text: "You get an error because you must run `cargo build` first", why: "`cargo run` builds for you when it needs to." }
+        answer: a
+        explanation: "`cargo run` checks for changes, recompiles if needed, then runs the program."
+        concepts: [intro.what-is-rust]
+
+      - type: match-pairs
+        id: pairs-project
+        pairs:
+          - ["Cargo.toml", "project settings"]
+          - ["src/main.rs", "your program's code"]
+          - ["rustc", "the Rust compiler"]
+          - ["Playground", "Rust in your browser"]
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-runs-partly
+        prompt: "If your program has a compile error, `cargo run` still runs the parts that compiled."
+        answer: false
+        explanation: "A compile error stops the build, so there is no new program to run. You fix the error first."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-share-program
+        prompt: You compiled a Rust program and want to give it to a friend. What do they need?
+        options:
+          - { id: a, text: Only the compiled program file (for the same kind of computer) }
+          - { id: b, text: "Cargo and `rustc`, so they can run it", why: "Cargo and `rustc` are only needed to compile. The compiled program runs on its own." }
+          - { id: c, text: Your `.rs` source files, why: "Source files are needed to compile the program, not to run it." }
+        answer: a
+        explanation: A compiled program runs directly on the computer, so your friend doesn't need Rust installed.
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-checks-slow
+        prompt: "A friend says: \"Rust checks so much, its programs must run slowly.\" What's the best reply?"
+        options:
+          - { id: a, text: "Most checks happen while compiling, so they don't slow the running program" }
+          - { id: b, text: "They're right: Rust re-checks your code every time it runs", why: "The compiler checks the code once, before it runs." }
+          - { id: c, text: Rust skips its safety checks to stay fast, why: "Rust keeps its safety rules. It enforces them while compiling instead." }
+        answer: a
+        explanation: Rust does most of its checking at compile time, so safe code can still run as fast as C.
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-new-compiles
+        prompt: "`cargo new` compiles your program."
+        answer: false
+        explanation: "`cargo new` only creates the project files. `cargo build` or `cargo run` compiles them."
+        concepts: [intro.what-is-rust]
+
+      - type: mcq
+        id: mcq-change-message
+        prompt: "In a Cargo project, which file do you edit to change what your program prints?"
+        options:
+          - { id: a, text: "`src/main.rs`" }
+          - { id: b, text: "`Cargo.toml`", why: "`Cargo.toml` holds settings like the project's name, not its code." }
+          - { id: c, text: The compiled program file, why: "You change the source code and compile again; you don't edit the compiled file." }
+        answer: a
+        explanation: "Your code lives in `src/main.rs`. Edit it, then `cargo run` to see the change."
+        concepts: [intro.what-is-rust]
+
+      - type: true-false
+        id: tf-memory-bugs
+        prompt: The Rust compiler can catch some memory bugs that would crash programs written in other languages.
+        answer: true
+        explanation: Rust's rules let the compiler reject code that would use memory incorrectly, such as reading memory after it's freed.
+        concepts: [intro.what-is-rust]

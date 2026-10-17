@@ -150,6 +150,9 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
   if (code) {
     const lines = code.rust.replace(/\n$/, '').split('\n')
     if (lines.length > MAX_LINES) issues.warn(where, `${lines.length} code lines (> ${MAX_LINES})`)
+    // A top-level `fn` without `main` (say `fn Main`) gets wrapped in a second main, which changes the result.
+    if (code.wrap === 'auto' && /^fn\s/m.test(code.rust) && !/\bfn\s+main\b/.test(code.rust))
+      issues.warn(where, 'top-level `fn` without `main` under `wrap: auto`; set `wrap: none` if this is a whole program')
     const wide = lines.filter((l) => l.length > MAX_COLS).length
     if (wide) issues.warn(where, `${wide} code line(s) wider than ${MAX_COLS} columns`)
   }
@@ -461,6 +464,8 @@ if (import.meta.main) {
       `${r.issues.errors.length} errors, ${r.issues.list.length - r.issues.errors.length} warnings`,
   )
   if (r.issues.errors.length) process.exit(1)
-  writeFileSync(join(repo, 'ATTRIBUTIONS.md'), attributionsMarkdown(r.manifest!.attributions))
-  console.log(`wrote ${values.out} and ATTRIBUTIONS.md (content ${r.manifest!.contentVersion})`)
+  // Only the real course owns the repo's ATTRIBUTIONS.md; test builds of other dirs must not overwrite it.
+  const ownCourse = values.content === join(repo, 'content')
+  if (ownCourse) writeFileSync(join(repo, 'ATTRIBUTIONS.md'), attributionsMarkdown(r.manifest!.attributions))
+  console.log(`wrote ${values.out}${ownCourse ? ' and ATTRIBUTIONS.md' : ''} (content ${r.manifest!.contentVersion})`)
 }

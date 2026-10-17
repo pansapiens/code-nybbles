@@ -161,7 +161,15 @@ also works. CI doesn't need either.
 - [~] Content: Section 1, Units 1.1-1.2 vertical slice (02 §4)
   - [x] course.yaml, concepts.yaml (Units 1.1-1.2), section 1, unit 1.1 with guidebook
   - [x] Seed level `level-02-anatomy` lesson l1: 10 exercises, one of each MVP type, all verified
-  - [ ] Rest of Unit 1.1 (levels 1, 3-5, 3-5 lessons each, checkpoint) and Unit 1.2
+  - [x] Unit 1.1 complete: 5 levels x 3 lessons x 9 exercises + checkpoint (14); guidebook for the unit
+  - [ ] Unit 1.2
+  - [ ] (new) Pools: lessons are exactly 9 items, no extra pooled exercises yet
+  - [ ] (new) Build check: a parsons answer with a distractor swapped in must fail verification (catches
+    distractors that also compile, e.g. a final `println!` without `;`)
+  - [x] (new) Warn on a top-level `fn` without `main` under `wrap: auto` (a misspelled `fn Main` was
+    silently wrapped in a second `main`)
+  - [x] (new) CLI writes `ATTRIBUTIONS.md` only when building the repo's own `content/`
+  - Note: shell commands (`cargo new`, `cargo run`) appear only in prose; nothing verifies them
 - [~] (new) App content loader `src/content/loader.ts` (manifest + cached section fetch); SW precaches bundles
 - [ ] Done-check: complete real lessons offline; all snippets verified in CI
 

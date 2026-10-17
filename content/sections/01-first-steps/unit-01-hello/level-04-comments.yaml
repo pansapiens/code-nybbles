@@ -1,0 +1,413 @@
+id: first-steps.hello.comments
+title: Comments
+icon: chat
+concepts: [syntax.comments]
+reviewConcepts: [intro.main, macro.println-basic, macro.bang]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-line-comment
+        title: Line comments
+        markdown: |
+          A **comment** is a note for people reading your code. The compiler ignores it.
+          A line comment starts with **`//`** and runs to the end of the line. It can sit on
+          its own line or after some code.
+        code:
+          rust: |
+            // Greet the user
+            println!("Hello!"); // prints a line
+          verify: run
+          expectStdout: "Hello!\n"
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-commented-out
+        code:
+          rust: |
+            fn main() {
+                println!("Apple");
+                // println!("Banana");
+                println!("Cherry");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Apple\nCherry" }
+          - { id: b, text: "Apple\nBanana\nCherry", why: "Line 3 starts with `//`, so it's a comment and doesn't run." }
+          - { id: c, text: "Apple\n// println!(\"Banana\");\nCherry", why: "Comments aren't printed. The compiler skips them." }
+        answer: a
+        explanation: "The `//` turns the middle line into a comment, so only two lines are printed."
+        concepts: [syntax.comments]
+
+      - type: true-false
+        id: tf-comments-print
+        prompt: Adding a comment changes what your program prints.
+        answer: false
+        explanation: The compiler ignores comments, so they never change what the program does.
+        concepts: [syntax.comments]
+
+      - type: concept
+        id: concept-block-comment
+        title: Block comments
+        markdown: |
+          A **block comment** starts with **`/*`** and ends with **`*/`**. Everything in
+          between is ignored, even across several lines.
+        code:
+          rust: |
+            /* This program
+               says hello. */
+            println!("Hello!");
+          verify: run
+          expectStdout: "Hello!\n"
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-block-out
+        code:
+          rust: |
+            fn main() {
+                println!("One");
+                /* println!("Two");
+                println!("Three"); */
+                println!("Four");
+            }
+          verify: run
+        options:
+          - { id: a, text: "One\nFour" }
+          - { id: b, text: "One\nThree\nFour", why: "The block comment runs from `/*` to `*/`, so it covers both lines." }
+          - { id: c, text: "One\nTwo\nThree\nFour", why: "Lines 3 and 4 are inside `/* */`, so they don't run." }
+        answer: a
+        explanation: "Everything between `/*` and `*/` is a comment, including the line break."
+        concepts: [syntax.comments]
+
+      - type: mcq
+        id: mcq-which-comment
+        prompt: Which of these is a Rust comment?
+        options:
+          - { id: a, code: "// check the score" }
+          - { id: b, code: "# check the score", why: "`#` starts a comment in Python and shell scripts, not in Rust." }
+          - { id: c, code: "-- check the score", why: "`--` starts a comment in SQL and Haskell, not in Rust." }
+          - { id: d, code: '\\ check the score', why: "Rust comments use forward slashes `//`, not backslashes." }
+        answer: a
+        explanation: "Rust line comments start with two forward slashes: `//`."
+        concepts: [syntax.comments]
+
+      - type: true-false
+        id: tf-after-code
+        prompt: "A `//` comment can start after some code on the same line."
+        answer: true
+        explanation: "The code before `//` runs as normal; only the rest of the line is a comment."
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-same-line
+        code:
+          rust: |
+            fn main() {
+                println!("A"); // println!("B");
+            }
+          verify: run
+        options:
+          - { id: a, text: "A" }
+          - { id: b, text: "A\nB", why: "Everything after `//` is a comment, so the second `println!` never runs." }
+          - { id: c, text: "B", why: "The code before `//` still runs." }
+        answer: a
+        explanation: "The first `println!` runs. Everything after `//` on that line is ignored."
+        concepts: [syntax.comments]
+
+      - type: mcq
+        id: mcq-why-comment
+        prompt: What are comments for?
+        options:
+          - { id: a, text: Explaining your code to people who read it }
+          - { id: b, text: Making the program run faster, why: "The compiler ignores comments, so they have no effect on speed." }
+          - { id: c, text: Printing messages for the user, why: "That's what `println!` does. Comments aren't part of the running program." }
+        answer: a
+        explanation: Comments are notes for humans, including you in a few months' time.
+        concepts: [syntax.comments]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-doc-comment
+        title: Doc comments (a preview)
+        markdown: |
+          A comment starting with **`///`** is a **doc comment**. It describes the item
+          that comes right after it, like a function. Tools such as `cargo doc` turn doc
+          comments into documentation. You'll use them more later.
+        code:
+          rust: |
+            /// Prints a greeting.
+            fn main() {
+                println!("Hello!");
+            }
+          verify: run
+          expectStdout: "Hello!\n"
+        concepts: [syntax.comments]
+
+      - type: match-pairs
+        id: pairs-comment-kinds
+        pairs:
+          - ["//", "line comment"]
+          - ["/* */", "block comment"]
+          - ["///", "doc comment"]
+          - ["!", "marks a macro call"]
+        concepts: [syntax.comments, macro.bang]
+
+      - type: predict-output
+        id: predict-slashes-in-string
+        code:
+          rust: |
+            fn main() {
+                println!("// not a comment");
+            }
+          verify: run
+        options:
+          - { id: a, text: "// not a comment" }
+          - { id: b, text: "not a comment", why: "The `//` is inside the quotes, so it's part of the text and is printed." }
+          - { id: c, text: "\"// not a comment\"", why: "The quotes mark the start and end of the text. They aren't printed." }
+        answer: a
+        explanation: "Inside a string, `//` is ordinary text. Comments only start outside quotes."
+        concepts: [syntax.comments, macro.println-basic]
+
+      - type: compiles
+        id: compiles-unclosed-block
+        code:
+          rust: |
+            fn main() {
+                /* Say hello
+                println!("Hello!");
+            }
+          verify: compile-fail
+          expectErrors: [E0758]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The `/*` comment is never closed with `*/`" }
+            - { id: b, text: "Block comments can't go inside `main`", why: "Comments can go anywhere. This one is missing its `*/`." }
+            - { id: c, text: "A `;` is missing", why: "Every statement here has its `;`. The comment swallows the rest of the file." }
+          answer: a
+        explanation: "Without `*/`, the comment runs to the end of the file, including the `}`. Rust reports an unterminated block comment."
+        concepts: [syntax.comments]
+
+      - type: true-false
+        id: tf-nested
+        prompt: "Rust block comments can be nested: in `/* a /* b */ c */` everything is one comment."
+        code:
+          rust: |
+            fn main() {
+                /* a /* b */ c */
+                println!("ok");
+            }
+          verify: run
+          expectStdout: "ok\n"
+        answer: true
+        explanation: "Rust counts each `/*` and `*/`, so a block comment ends at the `*/` that matches its first `/*`."
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-inline-block
+        code:
+          rust: |
+            fn main() {
+                println!(/* greeting */ "Hi");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Hi" }
+          - { id: b, text: "greeting Hi", why: "`/* greeting */` is a comment, so it isn't printed." }
+          - { id: c, text: "/* greeting */ Hi", why: "The comment is outside the quotes, so it's ignored." }
+        answer: a
+        explanation: "A block comment can sit in the middle of a line. Only the text in quotes is printed."
+        concepts: [syntax.comments]
+
+      - type: mcq
+        id: mcq-doc-where
+        prompt: "Where does a `///` doc comment go?"
+        options:
+          - { id: a, text: Right before the item it describes }
+          - { id: b, text: At the end of the file, why: "A doc comment describes the item that comes after it, so it goes right before that item." }
+          - { id: c, text: Inside the quotes of a `println!`, why: "Inside quotes, `///` would be printed as text." }
+        answer: a
+        explanation: "A doc comment documents whatever comes next, such as `fn main()`."
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-tiles-comments
+        prompt: Build the output of this program
+        code:
+          rust: |
+            fn main() {
+                // Say hello
+                println!("Hello there");
+                /* then goodbye */
+                println!("Goodbye");
+            }
+          verify: run
+        tiles: ["Hello", "there", "Goodbye", "Say", "hello", "then", "goodbye"]
+        answer: "Hello there\nGoodbye"
+        explanation: The two comments are ignored, so only the two `println!` lines produce output.
+        concepts: [syntax.comments, macro.println-basic]
+
+      - type: true-false
+        id: tf-block-one-line
+        prompt: "A `/* */` comment can only cover one line."
+        answer: false
+        explanation: "A block comment runs from `/*` to `*/`, however many lines that is."
+        concepts: [syntax.comments]
+
+  - id: l3
+    exercises:
+      - type: compiles
+        id: compiles-dangling-doc
+        code:
+          rust: |
+            fn main() {
+                println!("Hi");
+                /// The end
+            }
+          verify: compile-fail
+          expectErrors: [E0585]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The `///` doc comment has nothing after it to document" }
+            - { id: b, text: "Comments can't go at the end of a function", why: "A `//` comment there would be fine. Doc comments need an item to describe." }
+            - { id: c, text: "`println!` needs a `///` comment before it", why: "Comments are always optional." }
+          answer: a
+        explanation: "A `///` comment documents the item after it. Here nothing follows, so Rust reports an error and suggests `//`."
+        concepts: [syntax.comments]
+
+      - type: fill-tokens
+        id: fill-comment-markers
+        prompt: Fill the blanks so the program compiles and prints only `Done`
+        code:
+          rust: |
+            fn main() {
+                ___1___ TODO: add a menu
+                ___2___ println!("Old");
+                println!("Older"); ___3___
+                println!("Done");
+            }
+          verify: run
+          expectStdout: "Done\n"
+        blanks:
+          "1": { answer: ["//"] }
+          "2": { answer: ["/*"] }
+          "3": { answer: ["*/"] }
+        bank: ["//", "/*", "*/", "#", "--", "\\\\"]
+        explanation: "`//` makes the TODO a line comment, and `/*` ... `*/` turns both old `println!` lines into one block comment."
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-mixed
+        code:
+          rust: |
+            fn main() {
+                // println!("1");
+                println!("2"); // println!("3");
+                /* println!("4");
+                println!("5"); */
+                println!("6");
+            }
+          verify: run
+        options:
+          - { id: a, text: "2\n6" }
+          - { id: b, text: "2\n3\n6", why: "`println!(\"3\")` comes after `//` on line 3, so it's part of a comment." }
+          - { id: c, text: "2\n5\n6", why: "The block comment runs from `/*` on line 4 to `*/` on line 5, so it covers both lines." }
+          - { id: d, text: "1\n2\n3\n4\n5\n6", why: "Commented-out lines don't run." }
+        answer: a
+        explanation: "Only lines 3 (before its `//`) and 6 are code. Everything else is inside a comment."
+        concepts: [syntax.comments]
+
+      - type: spot-bug
+        id: spot-single-slash
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                / Print a greeting
+                println!("Hi");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "expected expression, found `/`"
+        answer: 2
+        explanation: "A line comment needs two slashes. A single `/` is read as code, and the compiler can't make sense of it."
+        concepts: [syntax.comments]
+
+      - type: parsons
+        id: parsons-documented
+        prompt: Arrange the lines into a documented program that prints `Hello!`
+        lines:
+          - { id: l1, text: "/// Greets the user." }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    // Say hello" }
+          - { id: l4, text: '    println!("Hello!");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    # Say hello" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "Hello!\n"
+        explanation: "The doc comment goes right before `fn main`, and the line comment sits above the code it describes. `#` isn't a comment in Rust."
+        concepts: [syntax.comments, intro.main]
+
+      - type: mcq
+        id: mcq-disable-line
+        prompt: You want to stop one line running for now without deleting it. What do you do?
+        options:
+          - { id: a, text: "Put `//` at the start of the line" }
+          - { id: b, text: "Put `!` at the start of the line", why: "`!` isn't a comment marker; the line would still be code, and it wouldn't compile." }
+          - { id: c, text: Wrap the line in double quotes, why: "Quotes make text, not a comment, and the quotes already in the line would clash with the new ones." }
+        answer: a
+        explanation: "Turning code into a comment, often called commenting it out, keeps it in the file without running it."
+        concepts: [syntax.comments]
+
+      - type: predict-output
+        id: predict-review-empty
+        code:
+          rust: |
+            fn main() {
+                println!("Top"); // first
+                println!();
+                // println!("Middle");
+                println!("Bottom");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Top\n\nBottom" }
+          - { id: b, text: "Top\nMiddle\nBottom", why: "Line 4 is a comment, so `Middle` is never printed." }
+          - { id: c, text: "Top\nBottom", why: "`println!()` on line 3 prints an empty line." }
+        answer: a
+        explanation: "`println!()` prints an empty line, and the commented-out line doesn't run."
+        concepts: [syntax.comments, macro.println-basic]
+
+      - type: compiles
+        id: compiles-block-in-string
+        code:
+          rust: |
+            fn main() {
+                println!("/* hi");
+                println!("bye */");
+            }
+          verify: run
+          expectStdout: "/* hi\nbye */\n"
+        answer: true
+        explanation: "Both `/*` and `*/` are inside quotes, so they're text, not a comment. The program prints them."
+        concepts: [syntax.comments]
+
+      - type: true-false
+        id: tf-url
+        prompt: "In `println!(\"https://rust-lang.org\");`, the `//` starts a comment."
+        code:
+          rust: |
+            println!("https://rust-lang.org");
+          verify: run
+          expectStdout: "https://rust-lang.org\n"
+        answer: false
+        explanation: "The `//` is inside the quotes, so it's part of the text. The whole address is printed."
+        concepts: [syntax.comments]
