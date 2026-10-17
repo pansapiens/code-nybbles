@@ -76,6 +76,39 @@ const base = {
   hint: z.string().optional(),
 }
 
+/**
+ * Stack/heap memory diagram (plans/02 Section 3: a diagram on every level). Frames are drawn top to bottom
+ * on the left, heap boxes on the right; `points` draws an arrow to a heap box or a variable with that `id`.
+ */
+export const DiagramVar = z
+  .object({
+    name: z.string(),
+    /** Target for `points` from elsewhere (references point at variables). */
+    id: Slug.optional(),
+    value: z.string().optional(),
+    points: Slug.optional(),
+    /** Ownership moved out: drawn greyed with "moved". */
+    moved: z.boolean().optional(),
+  })
+  .strict()
+  .refine((v) => v.moved || (v.value === undefined) !== (v.points === undefined), 'a variable needs exactly one of `value` or `points` (or `moved: true`)')
+
+export const Diagram = z
+  .object({
+    caption: z.string().optional(),
+    frames: z.array(z.object({ name: z.string(), vars: z.array(DiagramVar).min(1) }).strict()).min(1),
+    heap: z
+      .array(z.object({ id: Slug, value: z.string(), freed: z.boolean().optional() }).strict())
+      .default([]),
+  })
+  .strict()
+  .superRefine((d, ctx) => {
+    const ids = [...d.heap.map((h) => h.id), ...d.frames.flatMap((f) => f.vars.flatMap((v) => (v.id ? [v.id] : [])))]
+    if (new Set(ids).size !== ids.length) ctx.addIssue({ code: 'custom', message: 'diagram ids must be unique' })
+    for (const v of d.frames.flatMap((f) => f.vars))
+      if (v.points && !ids.includes(v.points)) ctx.addIssue({ code: 'custom', message: `diagram: "${v.points}" isn't a heap box or variable id` })
+  })
+
 export const ConceptCard = z
   .object({
     type: z.literal('concept'),
@@ -83,12 +116,21 @@ export const ConceptCard = z
     title: z.string().optional(),
     markdown: z.string().min(1),
     code: Code.optional(),
+    diagram: Diagram.optional(),
     concepts: z.array(ConceptId).optional(),
   })
   .strict()
 
 export const Mcq = z
-  .object({ type: z.literal('mcq'), ...base, prompt: z.string(), code: Code.optional(), options: Options, answer: OptionId })
+  .object({
+    type: z.literal('mcq'),
+    ...base,
+    prompt: z.string(),
+    code: Code.optional(),
+    diagram: Diagram.optional(),
+    options: Options,
+    answer: OptionId,
+  })
   .strict()
 
 export const PredictOutput = z
@@ -188,7 +230,14 @@ export const DecodeError = z
   .strict()
 
 export const TrueFalse = z
-  .object({ type: z.literal('true-false'), ...base, prompt: z.string(), code: Code.optional(), answer: z.boolean() })
+  .object({
+    type: z.literal('true-false'),
+    ...base,
+    prompt: z.string(),
+    code: Code.optional(),
+    diagram: Diagram.optional(),
+    answer: z.boolean(),
+  })
   .strict()
 
 export const Exercise = z.discriminatedUnion('type', [
@@ -300,6 +349,7 @@ export const Concept = z
 export const Concepts = z.array(Concept)
 
 export type Code = z.output<typeof Code>
+export type Diagram = z.output<typeof Diagram>
 export type Option = z.output<typeof Option>
 export type Exercise = z.output<typeof Exercise>
 export type ExerciseType = Exercise['type']

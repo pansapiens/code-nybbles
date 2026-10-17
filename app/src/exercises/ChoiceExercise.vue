@@ -4,6 +4,7 @@
     <!-- eslint-disable-next-line vue/no-v-html -- build-rendered, html:false Markdown -->
     <h1 class="md" v-html="exercise.prompt" />
     <CodeCard v-if="exercise.code" :code="exercise.code.rust" :line-numbers="exercise.type === 'decode-error'" />
+    <MemoryDiagram v-if="diagram" :diagram="diagram" />
     <pre v-if="compilerOutput" class="terminal" tabindex="0" aria-label="Compiler output">{{ compilerOutput }}</pre>
     <OptionList
       v-model="picked"
@@ -18,6 +19,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import CodeCard from '@/components/CodeCard.vue'
+import MemoryDiagram from '@/components/MemoryDiagram.vue'
 import type { Ex } from './grade'
 import OptionList from './OptionList.vue'
 
@@ -34,6 +36,7 @@ const TF = [
 const ex = computed(() => props.exercise)
 const options = computed(() => (ex.value.type === 'true-false' ? TF : (ex.value.options ?? [])))
 const answer = computed(() => String(ex.value.answer))
+const diagram = computed(() => ('diagram' in ex.value ? ex.value.diagram : undefined))
 const compilerOutput = computed(() => (ex.value.type === 'decode-error' ? ex.value.verified?.compilerOutput : undefined))
 // true-false answers are booleans; everything else is an option id.
 const picked = computed({

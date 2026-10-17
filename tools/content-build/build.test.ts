@@ -111,3 +111,14 @@ test('predict-output tiles must be able to spell the answer', async () => {
   assert.equal(assemblable(['21.5', 'C'], '21.5C'), false) // tiles are joined with spaces
   assert.equal(assemblable(['a b', 'c', 'a'], 'a b c'), true)
 })
+
+test('concept diagrams validate their arrows', async () => {
+  const card = (points: string) => ({
+    type: 'concept',
+    id: 'k',
+    markdown: 'm',
+    diagram: { frames: [{ name: 'main', vars: [{ name: 's', points }] }], heap: [{ id: 'h1', value: '"hi"' }] },
+  })
+  assert.equal(await errors([card('h1'), predict('a')]), '')
+  assert.match(await errors([card('h2'), predict('a')]), /"h2" isn't a heap box or variable id/)
+})

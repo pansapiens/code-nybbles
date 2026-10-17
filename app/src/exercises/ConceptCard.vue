@@ -5,11 +5,13 @@
     <!-- eslint-disable-next-line vue/no-v-html -- build-rendered, html:false Markdown -->
     <div class="md" v-html="exercise.markdown" />
     <CodeCard v-if="exercise.code" :code="exercise.code.rust" />
+    <MemoryDiagram v-if="exercise.diagram" :diagram="exercise.diagram" />
   </article>
 </template>
 
 <script setup lang="ts">
 import CodeCard from '@/components/CodeCard.vue'
+import MemoryDiagram from '@/components/MemoryDiagram.vue'
 import type { Ex } from './grade'
 
 defineProps<{ exercise: Ex<'concept'>; checked: boolean }>()
