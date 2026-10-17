@@ -33,7 +33,8 @@ Commands (from repo root): `pnpm content:build`, `pnpm dev`, `pnpm build`, `pnpm
 in `app/`: `pnpm test:e2e`, `pnpm lint`, `pnpm lint:style`.
 
 Local environment note: this machine's PATH `cc` is micromamba's conda gcc (old sysroot), which can't link
-Rust std. Run content builds/tests with `RUST_VERIFY_LINKER=/usr/bin/gcc`. CI doesn't need it.
+Rust std. Strip micromamba from PATH before every command (see `CLAUDE.md`). `RUST_VERIFY_LINKER=/usr/bin/gcc`
+also works. CI doesn't need either.
 
 ---
 
