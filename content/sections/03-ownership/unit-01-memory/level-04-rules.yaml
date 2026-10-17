@@ -1,0 +1,498 @@
+id: ownership.memory.rules
+title: The ownership rules
+icon: key
+concepts: [own.rules]
+reviewConcepts: [own.scope-drop, mem.stack-heap, string.string-vs-literal, types.tuple, types.array, fmt.debug, var.mut, err.E0384, ctrl.for, ctrl.if]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-rules
+        title: Three rules
+        markdown: |
+          **Rust manages memory with three ownership rules:**
+          1. Each value has an **owner**.
+          2. There is only **one owner at a time**.
+          3. When the owner goes out of scope, the value is **dropped**.
+
+          Here `name` owns the `String`, so the text is freed when `name`'s scope ends.
+        code:
+          rust: |
+            let name = String::from("Ferris");
+            println!("{name}");
+          verify: run
+          expectStdout: "Ferris\n"
+        diagram:
+          caption: "name is the owner of the String"
+          frames:
+            - name: main
+              vars:
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ferris"' }
+        concepts: [own.rules]
+
+      - type: true-false
+        id: tf-one-owner
+        prompt: "In Rust, each value has exactly one owner at a time."
+        answer: true
+        explanation: "That's the second ownership rule. Having one owner means it's always clear who drops the value."
+        concepts: [own.rules]
+
+      - type: mcq
+        id: mcq-who-owns
+        prompt: "In `let city = String::from(\"Perth\");`, what owns the `String`?"
+        options:
+          - { id: a, text: "The variable `city`" }
+          - { id: b, text: "The literal `\"Perth\"`", why: "The literal is only copied from. The new `String` belongs to the variable it's stored in." }
+          - { id: c, text: "Nothing: heap values have no owner", why: "Every value has an owner. Here it's `city`, which points at the heap text." }
+        answer: a
+        explanation: "The variable a value is stored in is its owner. When `city` goes out of scope, the `String` is dropped."
+        concepts: [own.rules]
+
+      - type: match-pairs
+        id: pairs-rules
+        prompt: Match each rule to what it says
+        pairs:
+          - ["rule 1", "each value has an owner"]
+          - ["rule 2", "one owner at a time"]
+          - ["rule 3", "owner leaves scope, value dropped"]
+        explanation: "Together these rules decide exactly when every value is freed, without you writing any clean-up code."
+        concepts: [own.rules]
+
+      - type: concept
+        id: concept-nested-owner
+        title: Owners can contain owners
+        markdown: |
+          **A tuple or array owns the values inside it.** When `player` is dropped, the `String` inside it is dropped too.
+        code:
+          rust: |
+            let player = (String::from("Ada"), 3);
+            println!("{:?}", player);
+          verify: run
+          expectStdout: "(\"Ada\", 3)\n"
+        diagram:
+          caption: "player.0 points at heap text"
+          frames:
+            - name: main
+              vars:
+                - { name: player.0, points: h1 }
+                - { name: player.1, value: "3" }
+          heap:
+            - { id: h1, value: '"Ada"' }
+        concepts: [own.rules]
+
+      - type: predict-output
+        id: predict-tuple-debug
+        code:
+          rust: |
+            let entry = (String::from("Bo"), 42);
+            println!("{:?}", entry);
+          verify: run
+        options:
+          - { id: a, text: "(\"Bo\", 42)" }
+          - { id: b, text: "(Bo, 42)", why: "`{:?}` shows text inside a tuple with its quotes, whether it's a `String` or a `&str`." }
+          - { id: c, text: "(String::from(\"Bo\"), 42)", why: "The `String` was created when `entry` was. Debug prints its text, not the code that made it." }
+        answer: a
+        explanation: "Debug format prints the tuple in brackets and shows the `String`'s text in quotes."
+        concepts: [own.rules, fmt.debug]
+
+      - type: true-false
+        id: tf-tuple-drops-inside
+        prompt: "When a tuple goes out of scope, a `String` inside it is dropped too."
+        code:
+          rust: |
+            {
+                let pair = (String::from("hi"), 1);
+                println!("{:?}", pair);
+            }
+          verify: run
+          expectStdout: "(\"hi\", 1)\n"
+        answer: true
+        explanation: "`pair` owns the tuple, and the tuple owns the `String`. Dropping the tuple drops everything it owns, so the heap text is freed at the `}`."
+        concepts: [own.rules, types.tuple]
+
+      - type: mcq
+        id: mcq-diagram-owner
+        prompt: "In this picture, which variable owns the text `\"Bea\"`?"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: first, points: h1 }
+                - { name: second, points: h2 }
+                - { name: count, value: "2" }
+          heap:
+            - { id: h1, value: '"Ada"' }
+            - { id: h2, value: '"Bea"' }
+        options:
+          - { id: a, text: "`second`" }
+          - { id: b, text: "`first`", why: "`first`'s arrow goes to the `\"Ada\"` box." }
+          - { id: c, text: "Both `first` and `second`", why: "Each heap box has one arrow, from one owner." }
+        answer: a
+        explanation: "The arrow from `second` leads to `\"Bea\"`. Each `String` has its own heap text and its own owner."
+        concepts: [own.rules, mem.stack-heap]
+
+      - type: true-false
+        id: tf-numbers-owned
+        prompt: "The ownership rules apply to every value, numbers included, not only to `String`s."
+        answer: true
+        explanation: "Every value has an owner and is dropped when its owner's scope ends. For a number there's no heap memory to free, so you don't notice."
+        concepts: [own.rules]
+
+      - type: predict-output
+        id: predict-owner-scope
+        code:
+          rust: |
+            let team = String::from("Kites");
+            {
+                let coach = String::from("Lee");
+                println!("{coach} coaches {team}");
+            }
+            println!("{team} play on");
+          verify: run
+        options:
+          - { id: a, text: "Lee coaches Kites\nKites play on" }
+          - { id: b, text: "Lee coaches Kites\nKites play on\nLee", why: "There is no third `println!`. `coach` is dropped at the inner `}`." }
+          - { id: c, text: "Lee coaches team\nteam play on", why: "`{team}` prints the value that `team` owns." }
+        answer: a
+        explanation: "`coach` is dropped at the inner `}`, while `team` is still in scope for the last line."
+        concepts: [own.rules, own.scope-drop]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-reassign
+        title: Replacing a value drops the old one
+        markdown: |
+          **Assigning a new value to a variable drops the value it owned before.** The old text is freed right away, because nothing owns it any more.
+        code:
+          rust: |
+            let mut note = String::from("draft");
+            note = String::from("final");
+            println!("{note}");
+          verify: run
+          expectStdout: "final\n"
+        diagram:
+          caption: "After line 2"
+          frames:
+            - name: main
+              vars:
+                - { name: note, points: h2 }
+          heap:
+            - { id: h1, value: '"draft"', freed: true }
+            - { id: h2, value: '"final"' }
+        concepts: [own.rules]
+
+      - type: mcq
+        id: mcq-old-freed
+        prompt: "When is the text `\"red\"` freed?"
+        code:
+          rust: |
+            let mut colour = String::from("red");
+            println!("{colour}");
+            colour = String::from("blue");
+            println!("{colour}");
+          verify: run
+          expectStdout: "red\nblue\n"
+        options:
+          - { id: a, text: "On line 3, when `colour` gets a new value" }
+          - { id: b, text: "At the end of `main`", why: "That's when `\"blue\"` is freed. `\"red\"` lost its owner on line 3." }
+          - { id: c, text: "Never: `colour` owns both strings", why: "A variable owns one value. The new value replaces the old one." }
+        answer: a
+        explanation: "Line 3 gives `colour` a new `String`. The old one has no owner left, so Rust drops it there."
+        concepts: [own.rules]
+
+      - type: compiles
+        id: compiles-reassign-no-mut
+        code:
+          rust: |
+            fn main() {
+                let status = String::from("off");
+                println!("{status}");
+                status = String::from("on");
+                println!("{status}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: b, text: "E0308: mismatched types", why: "Both values are `String`s, so the types match." }
+            - { id: c, text: "E0596: cannot borrow as mutable", why: "That's for calling methods like `push_str` without `mut`. Here it's an assignment with `=`." }
+          answer: a
+        explanation: "Replacing a `String` with `=` needs `mut`, the same as replacing a number."
+        concepts: [own.rules, err.E0384]
+
+      - type: mcq
+        id: mcq-array-frees
+        prompt: "When `names` goes out of scope, how many heap blocks are freed?"
+        code:
+          rust: |
+            let names = [
+                String::from("Ada"),
+                String::from("Bea"),
+                String::from("Cy"),
+            ];
+            println!("{:?}", names);
+          verify: run
+          expectStdout: "[\"Ada\", \"Bea\", \"Cy\"]\n"
+        options:
+          - { id: a, text: "3: one for each `String`" }
+          - { id: b, text: "1: the array", why: "The array itself has a fixed size, so it's on the stack. Each `String` inside has its own heap block." }
+          - { id: c, text: "0: only the variable `names` is removed", why: "`names` owns the array, which owns the `String`s, so they're all dropped." }
+        answer: a
+        explanation: "Dropping the array drops each `String` it owns, and each frees its own heap text."
+        concepts: [own.rules, types.array]
+
+      - type: true-false
+        id: tf-diagram-array
+        prompt: "`names` owns both `String`s, so both heap boxes are freed when `names` goes out of scope."
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: "names[0]", points: h1 }
+                - { name: "names[1]", points: h2 }
+          heap:
+            - { id: h1, value: '"Ada"' }
+            - { id: h2, value: '"Bea"' }
+        answer: true
+        explanation: "The array is the owner of its elements, so dropping it drops both `String`s and frees both heap boxes."
+        concepts: [own.rules, mem.stack-heap]
+
+      - type: spot-bug
+        id: spot-tuple-scope
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let bonus = 5;
+                {
+                    let t = (String::from("a"), 1);
+                    println!("{:?}", t);
+                }
+                println!("{}", t.1 + bonus);
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 7
+        explanation: "`t` was dropped at the `}` on line 6, along with everything it owned. Line 7 can't use it."
+        concepts: [own.rules, own.scope-drop]
+
+      - type: decode-error
+        id: decode-e0384-string
+        prompt: Which change makes the program compile and print `off` then `on`?
+        code:
+          rust: |
+            fn main() {
+                let status = String::from("off");
+                println!("{status}");
+                status = String::from("on");
+                println!("{status}");
+            }
+          verify: compile-fail
+          expectErrors: [E0384]
+        options:
+          - { id: a, text: "Change line 2 to `let mut status = String::from(\"off\");`" }
+          - { id: b, text: "Change line 4 to `status.push_str(\"on\");`", why: "That also needs `mut`, and it would print `offon`." }
+          - { id: c, text: "Change line 4 to `status = \"on\";`", why: "`status` is a `String`, so a `&str` is the wrong type, and it still needs `mut`." }
+        answer: a
+        explanation: "With `mut`, line 4 can give `status` a new `String`. The old `\"off\"` is dropped at that moment."
+        concepts: [own.rules, err.E0384, compiler.read-error]
+
+      - type: match-pairs
+        id: pairs-events
+        prompt: Match each line to what happens
+        pairs:
+          - ["let s = String::from(\"a\");", "s becomes the owner"]
+          - ["s = String::from(\"b\");", "the old value is dropped"]
+          - ["} closing s's scope", "s's value is dropped"]
+          - ["let t = (String::from(\"c\"), 1);", "t owns the String inside"]
+        explanation: "Every value gets an owner when it's created, and is dropped when its owner moves on to a new value or leaves scope."
+        concepts: [own.rules]
+
+      - type: predict-output
+        id: predict-best
+        code:
+          rust: |
+            let mut best = String::from("none");
+            for score in [3, 9, 4] {
+                if score > 5 {
+                    best = format!("got {score}");
+                }
+            }
+            println!("{best}");
+          verify: run
+        options:
+          - { id: a, text: "got 9" }
+          - { id: b, text: "none", why: "`best` is declared outside the loop, so the new value assigned inside it is kept." }
+          - { id: c, text: "got 4", why: "Only scores above 5 replace `best`, and 4 isn't." }
+        answer: a
+        explanation: "Only 9 is above 5, so `best` gets a new `String` once, and the old `\"none\"` is dropped then."
+        concepts: [own.rules, ctrl.for, ctrl.if]
+
+  - id: l3
+    exercises:
+      - type: concept
+        id: concept-move-preview
+        title: "Coming next: moves"
+        markdown: |
+          **What about `let s2 = s1;`?** Rule 2 allows only one owner, so Rust **moves** ownership: `s2` becomes the owner and `s1` can't be used any more.
+
+          That way the text is freed once, when `s2` goes out of scope. The next unit covers moves in detail.
+        code:
+          rust: |
+            let s1 = String::from("hi");
+            let s2 = s1;
+            println!("{s2}");
+          verify: run
+          expectStdout: "hi\n"
+        diagram:
+          caption: "After let s2 = s1;"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, moved: true }
+                - { name: s2, points: h1 }
+          heap:
+            - { id: h1, value: '"hi"' }
+        concepts: [own.rules]
+
+      - type: true-false
+        id: tf-double-free
+        prompt: "If two variables both owned the same heap text, it would be freed twice when they both went out of scope."
+        answer: true
+        explanation: "Each owner drops its value at the end of its scope. Freeing the same memory twice is a serious bug, and the one-owner rule rules it out."
+        concepts: [own.rules]
+
+      - type: fill-tokens
+        id: fill-replace
+        prompt: "Fill the blanks so the program prints `on`"
+        code:
+          rust: |
+            let ___1___ status = String::from("off");
+            status = ___2___("on");
+            println!("{status}");
+          verify: run
+          expectStdout: "on\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["String::from"] }
+        bank: ["mut", "String::from", "String::new", "let", "&str"]
+        explanation: "`mut` lets `status` take a new `String`, and `String::from` makes one. The old `\"off\"` is dropped on line 2."
+        concepts: [own.rules, var.mut]
+
+      - type: parsons
+        id: parsons-player
+        prompt: "Arrange the lines so the program prints `(\"Ada!\", 10)`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let mut player = (String::from("Ada"), 0);' }
+          - { id: l3, text: "    player.1 += 10;" }
+          - { id: l4, text: '    player.0.push_str("!");' }
+          - { id: l5, text: '    println!("{:?}", player);' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: '    let player = (String::from("Ada"), 0);' }
+          - { id: d2, text: '    let mut player = ("Ada", 0);' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "(\"Ada!\", 10)\n"
+        explanation: "The tuple owns a `String` that can grow. Changing either part needs `let mut player`."
+        concepts: [own.rules, types.tuple, string.string-vs-literal]
+
+      - type: compiles
+        id: compiles-assign-inner
+        code:
+          rust: |
+            let mut name = String::from("Ada");
+            {
+                name = String::from("Bea");
+            }
+            println!("{name}");
+          verify: run
+          expectStdout: "Bea\n"
+        answer: true
+        explanation: "The new `String` is owned by `name`, whose scope is the outer block. It isn't dropped at the inner `}`, so this prints `Bea`."
+        concepts: [own.rules, own.scope-drop]
+
+      - type: mcq
+        id: mcq-when-bea-freed
+        prompt: "When is the text `\"Bea\"` freed?"
+        code:
+          rust: |
+            fn main() {
+                let mut name = String::from("Ada");
+                {
+                    name = String::from("Bea");
+                }
+                println!("{name}");
+            }
+          verify: run
+          expectStdout: "Bea\n"
+        options:
+          - { id: a, text: "At the `}` on line 7, when `name` goes out of scope" }
+          - { id: b, text: "At the `}` on line 5", why: "`\"Bea\"` is owned by `name`, not by anything in the inner block, so it outlives that `}`." }
+          - { id: c, text: "On line 4", why: "Line 4 frees `\"Ada\"`, the old value. `\"Bea\"` is the new value." }
+        answer: a
+        explanation: "A value is dropped when its owner goes out of scope. The owner here is `name`, whose scope ends with `main`."
+        concepts: [own.rules, own.scope-drop]
+
+      - type: predict-output
+        id: predict-tiles-pair
+        prompt: Build the output
+        code:
+          rust: |
+            let pair = (String::from("ab"), 5);
+            let total = pair.0.len() + pair.1;
+            println!("{total} {}", pair.0);
+          verify: run
+        tiles: ["7", "ab", "5", "2", "pair.0"]
+        answer: "7 ab"
+        explanation: "`pair.0` is the `String` `ab`, 2 bytes long, so `total` is 2 + 5."
+        concepts: [own.rules, types.tuple]
+
+      - type: decode-error
+        id: decode-tuple-literal
+        prompt: Which change makes the program compile and print `("Ada!", 0)`?
+        code:
+          rust: |
+            fn main() {
+                let mut player = ("Ada", 0);
+                player.0.push_str("!");
+                println!("{:?}", player);
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        options:
+          - { id: a, text: "Change line 2 to `let mut player = (String::from(\"Ada\"), 0);`" }
+          - { id: b, text: "Change line 3 to `player.push_str(\"!\");`", why: "A tuple has no `push_str`. The method belongs to the `String` inside it." }
+          - { id: c, text: "Remove `mut` from line 2", why: "The tuple still holds a `&str`, which has no `push_str`." }
+        answer: a
+        explanation: "`player.0` is a literal, a `&str`, so it can't grow. A tuple holding a `String` can have its text changed."
+        concepts: [own.rules, string.string-vs-literal, compiler.read-error]
+
+      - type: true-false
+        id: tf-main-end
+        prompt: "When `main` ends, every value still owned by its variables is dropped."
+        answer: true
+        explanation: "`main`'s body is a scope like any other, so rule 3 applies at its closing `}`."
+        concepts: [own.rules, own.scope-drop]
+
+      - type: mcq
+        id: mcq-which-rule
+        prompt: Which of these is one of Rust's ownership rules?
+        options:
+          - { id: a, text: "There is only one owner of a value at a time" }
+          - { id: b, text: "Every value is stored on the heap", why: "Fixed-size values like numbers go on the stack. Ownership applies to both." }
+          - { id: c, text: "You must free each value before `main` ends", why: "Rust drops values for you when their owners go out of scope." }
+          - { id: d, text: "A value is dropped right after its last use", why: "It's dropped when its owner goes out of scope, which can be later than its last use." }
+        answer: a
+        explanation: "The rules are: each value has an owner, there's one owner at a time, and the value is dropped when its owner goes out of scope."
+        concepts: [own.rules]

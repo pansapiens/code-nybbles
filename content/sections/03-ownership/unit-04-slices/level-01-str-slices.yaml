@@ -1,0 +1,512 @@
+id: ownership.slices.str-slices
+title: String slices
+icon: scissors
+concepts: [slice.str]
+reviewConcepts: [borrow.shared, string.string-vs-literal, string.str-literal-intro, range.basics, own.move, err.E0382]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-slice
+        title: Borrow part of a String
+        markdown: |
+          **A string slice borrows part of a `String`.** `&s[0..5]` refers to bytes 0 up to (not including) 5 of `s`'s text.
+
+          No text is copied. `hello` and `world` both point into the same heap text that `s` owns.
+        code:
+          rust: |
+            let s = String::from("hello world");
+            let hello = &s[0..5];
+            let world = &s[6..11];
+            println!("{hello}|{world}");
+          verify: run
+          expectStdout: "hello|world\n"
+        diagram:
+          caption: "`hello` covers bytes 0 to 4 of the heap text and `world` covers bytes 6 to 10."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: hello, points: h1 }
+                - { name: world, points: h1 }
+          heap:
+            - { id: h1, value: '"hello world"' }
+        concepts: [slice.str]
+
+      - type: predict-output
+        id: predict-sun
+        code:
+          rust: |
+            let s = String::from("sunshine");
+            let part = &s[0..3];
+            println!("{part}");
+          verify: run
+        options:
+          - { id: a, text: "sun" }
+          - { id: b, text: "suns", why: "The end of a range is left out, so `0..3` stops after byte 2." }
+          - { id: c, text: "uns", why: "Byte indexes start at 0, so byte 0 is `s`." }
+        answer: a
+        explanation: "`0..3` covers bytes 0, 1 and 2: `s`, `u` and `n`."
+        concepts: [slice.str]
+
+      - type: true-false
+        id: tf-slice-copies
+        prompt: "`let hello = &s[0..5];` copies the first five bytes of `s` into new heap memory."
+        diagram:
+          caption: "After let hello = &s[0..5]; (hello covers the first 5 bytes)"
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: hello, points: h1 }
+          heap:
+            - { id: h1, value: '"hello all"' }
+        answer: false
+        explanation: "A slice is a borrow. It stores where its part of the text starts and how long it is, and points into the text `s` already owns."
+        concepts: [slice.str]
+
+      - type: mcq
+        id: mcq-rust
+        prompt: "Given `let s = String::from(\"rustacean\");`, which slice is `rust`?"
+        options:
+          - { id: a, code: "&s[0..4]" }
+          - { id: b, code: "&s[1..4]", why: "Byte indexes start at 0, so this skips the `r` and gives `ust`." }
+          - { id: c, code: "&s[0..3]", why: "The end is left out, so this stops after byte 2: `rus`." }
+          - { id: d, code: "&s[0..=4]", why: "`..=` includes the end, so this is five bytes: `rusta`." }
+        answer: a
+        explanation: "`rust` is bytes 0 to 3, and a range `0..4` stops before 4."
+        concepts: [slice.str, range.basics]
+
+      - type: concept
+        id: concept-shorthand
+        title: Leave out the start or end
+        markdown: |
+          **Drop a number to mean "from the start" or "to the end".**
+
+          - `&s[..4]` is the same as `&s[0..4]`
+          - `&s[4..]` runs from byte 4 to the end
+          - `&s[..]` is the whole text
+        code:
+          rust: |
+            let s = String::from("rainbow");
+            println!("{}", &s[..4]);
+            println!("{}", &s[4..]);
+            println!("{}", &s[..]);
+          verify: run
+          expectStdout: "rain\nbow\nrainbow\n"
+        concepts: [slice.str]
+
+      - type: predict-output
+        id: predict-football
+        code:
+          rust: |
+            let s = String::from("football");
+            let start = &s[..4];
+            let end = &s[4..];
+            println!("{end} {start}");
+          verify: run
+        options:
+          - { id: a, text: "ball foot" }
+          - { id: b, text: "foot ball", why: "The `println!` prints `end` first." }
+          - { id: c, text: "ball footb", why: "`..4` stops before byte 4, so `start` is `foot`." }
+        answer: a
+        explanation: "`..4` is `foot` and `4..` is `ball`. The two slices together cover the whole text."
+        concepts: [slice.str]
+
+      - type: match-pairs
+        id: pairs-sandcastle
+        prompt: "Given `let s = String::from(\"sandcastle\");`, match each slice to its text"
+        pairs:
+          - ["&s[..4]", "sand"]
+          - ["&s[4..]", "castle"]
+          - ["&s[..]", "sandcastle"]
+          - ["&s[1..4]", "and"]
+        concepts: [slice.str]
+
+      - type: compiles
+        id: compiles-no-ampersand
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("hello");
+                let start = s[0..2];
+                println!("{start}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "It needs `&` in front: `&s[0..2]`" }
+            - { id: b, text: "`s` must be `mut` to slice it", why: "Slicing only reads `s`, so it doesn't need `mut`." }
+            - { id: c, text: "Ranges can't be used on text", why: "They can, but only through a reference: `&s[0..2]`." }
+          answer: a
+        explanation: "A slice is always used through a reference. Without `&`, Rust would need to store the text itself in `start`, and its size isn't known when compiling (E0277)."
+        concepts: [slice.str]
+
+      - type: fill-tokens
+        id: fill-moon
+        prompt: "Fill the blank so the program prints `moon`"
+        code:
+          rust: |
+            let s = String::from("honeymoon");
+            let part = &s[___1___];
+            println!("{part}");
+          verify: run
+          expectStdout: "moon\n"
+        blanks:
+          "1": { answer: ["5.."] }
+        bank: ["5..", "..5", "4..", "6.."]
+        explanation: "`m` is byte 5 (counting from 0), and `5..` runs from there to the end."
+        concepts: [slice.str]
+
+      - type: mcq
+        id: mcq-slice-type
+        prompt: "What is the type of `&s[0..5]` when `s` is a `String`?"
+        options:
+          - { id: a, code: "&str" }
+          - { id: b, code: "String", why: "A slice doesn't own anything. It borrows part of `s`." }
+          - { id: c, code: "&String", why: "`&s` would be a `&String`, a reference to the whole `String`. A range gives a `&str`." }
+          - { id: d, code: "char", why: "A `char` is one character. A slice can cover many." }
+        answer: a
+        explanation: "A string slice has type `&str`, often read as \"string slice\"."
+        concepts: [slice.str]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-ptr-len
+        title: A pointer and a length
+        markdown: |
+          **A `&str` stores two things:** where its text starts and how many bytes it covers. That's why `world.len()` is 5.
+
+          String literals are `&str` too. `"hi"` is a slice of text stored inside your program.
+        code:
+          rust: |
+            let s = String::from("hello world");
+            let world: &str = &s[6..];
+            let greeting: &str = "hi";
+            println!("{greeting} {}", world.len());
+          verify: run
+          expectStdout: "hi 5\n"
+        diagram:
+          caption: "`world` points at byte 6 of the heap text and stores the length 5."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: world, points: h1 }
+                - { name: greeting, value: '"hi"' }
+          heap:
+            - { id: h1, value: '"hello world"' }
+        concepts: [slice.str, string.str-literal-intro]
+
+      - type: true-false
+        id: tf-literal-str
+        prompt: "A string literal such as `\"hello\"` has type `&str`."
+        answer: true
+        explanation: "A literal is a slice of text that is stored inside the compiled program. You borrow it; nobody needs to free it."
+        concepts: [slice.str, string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-tiles-sky
+        prompt: Build the output
+        code:
+          rust: |
+            let s = String::from("blue sky");
+            let a = &s[..4];
+            let b = &s[5..];
+            println!("{b} {a} {}", a.len());
+          verify: run
+        tiles: ["sky", "blue", "4", "8", "3", "blue sky"]
+        answer: "sky blue 4"
+        explanation: "`a` is `blue` (bytes 0 to 3) and `b` is `sky` (byte 5 to the end). `a.len()` is the slice's length, 4."
+        concepts: [slice.str]
+
+      - type: compiles
+        id: compiles-move-while-sliced
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("hello");
+                let part = &s[..2];
+                let t = s;
+                println!("{part} {t}");
+            }
+          verify: compile-fail
+          expectErrors: [E0505]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`s` is moved into `t` while `part` still borrows it" }
+            - { id: b, text: "Making `part` already moved `s`", why: "`&s[..2]` borrows. `s` only moves on the next line." }
+            - { id: c, text: "A `String` can only be sliced once", why: "You can make as many shared slices as you like." }
+          answer: a
+        explanation: "`part` borrows `s`'s text and is used on line 5. Moving `s` before then would leave `part` pointing at text `s` no longer owns."
+        concepts: [slice.str, own.move]
+
+      - type: spot-bug
+        id: spot-cat-bounds
+        prompt: "This program panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("cat");
+                let first = &s[0..1];
+                let rest = &s[1..4];
+                println!("{first} {rest}");
+            }
+          verify: run
+          expectPanic: "out of bounds"
+        answer: 4
+        explanation: "`cat` has 3 bytes, so the last valid end is 3. `1..4` runs past the end and panics. Use `&s[1..]`."
+        concepts: [slice.str]
+
+      - type: mcq
+        id: mcq-past-end
+        prompt: "What happens when you run this?"
+        code:
+          rust: |
+            let s = String::from("cat");
+            println!("{}", &s[0..5]);
+          verify: run
+          expectPanic: "end byte index 5 is out of bounds"
+        options:
+          - { id: a, text: "It panics: `end byte index 5 is out of bounds`" }
+          - { id: b, text: "It prints `cat`", why: "Rust doesn't shorten the range for you. It checks it and stops." }
+          - { id: c, text: "It doesn't compile", why: "The length of a `String` is only known when the program runs, so the check happens then." }
+        answer: a
+        explanation: "Slice ranges are checked like array indexes. A range past the end of the text panics at run time."
+        concepts: [slice.str, panic.index]
+
+      - type: predict-output
+        id: predict-weekend
+        code:
+          rust: |
+            let s = String::from("weekend");
+            println!("{}", &s[0..=3]);
+          verify: run
+        options:
+          - { id: a, text: "week" }
+          - { id: b, text: "wee", why: "`..=` includes the end, so byte 3 (`k`) is in the slice." }
+          - { id: c, text: "weeke", why: "`0..=3` is bytes 0, 1, 2 and 3: four bytes." }
+        answer: a
+        explanation: "An inclusive range `0..=3` works for slices too. It's the same as `0..4`."
+        concepts: [slice.str, range.basics]
+
+      - type: decode-error
+        id: decode-string-from-slice
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("hello");
+                let start: String = &s[..2];
+                println!("{start}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "A slice is a `&str`, not a `String`, so it can't go in a `String` variable" }
+          - { id: b, text: "`..2` is not a valid range", why: "`..2` is fine: it means `0..2`." }
+          - { id: c, text: "`s` needs to be `mut`", why: "Slicing only reads `s`. The problem is the type on the left." }
+        answer: a
+        explanation: "E0308 means mismatched types: expected `String`, found `&str`. Write `let start: &str` or leave the type out."
+        concepts: [slice.str, err.E0308]
+
+      - type: fill-tokens
+        id: fill-world-type
+        prompt: "Fill the blanks so the program prints `world`"
+        code:
+          rust: |
+            let s = String::from("hello world");
+            let world: ___1___ = ___2___s[6..];
+            println!("{world}");
+          verify: run
+          expectStdout: "world\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["&"] }
+        bank: ["&str", "&", "String", "&String", "*"]
+        explanation: "Slicing needs `&`, and the result is a `&str`."
+        concepts: [slice.str]
+
+      - type: true-false
+        id: tf-read-while-sliced
+        prompt: "While a slice `part = &s[0..2]` is still in use, you can still print `s`."
+        diagram:
+          caption: "`part` covers bytes 0 and 1 of the text `s` owns."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: part, points: h1 }
+          heap:
+            - { id: h1, value: '"hello"' }
+        answer: true
+        explanation: "A slice is a shared borrow. Any number of readers are allowed at once, and `s` is still the owner."
+        concepts: [slice.str, borrow.shared]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-apple4
+        code:
+          rust: |
+            let s = String::from("pineapple");
+            let fruit = &s[4..];
+            let tree = &s[..4];
+            println!("{}{}", fruit, tree.len());
+          verify: run
+        options:
+          - { id: a, text: "apple4" }
+          - { id: b, text: "apple 4", why: "There's no space between the two `{}`." }
+          - { id: c, text: "eapple4", why: "Byte 4 is the `a`: `p`, `i`, `n`, `e` are bytes 0 to 3." }
+          - { id: d, text: "apple9", why: "`tree.len()` is the slice's length, 4, not the length of `s`." }
+        answer: a
+        explanation: "`fruit` is `apple` and `tree` is `pine`, which is 4 bytes long."
+        concepts: [slice.str]
+
+      - type: mcq
+        id: mcq-diagram-day
+        prompt: "`s` holds `good day`. Which line makes the `part` in this diagram?"
+        diagram:
+          caption: "`part` covers bytes 5 to 7 of the heap text."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: part, points: h1 }
+          heap:
+            - { id: h1, value: '"good day"' }
+        options:
+          - { id: a, code: "let part = &s[5..];" }
+          - { id: b, code: "let part = &s[..5];", why: "That covers bytes 0 to 4: `good ` with its space." }
+          - { id: c, code: "let part = &s[4..];", why: "Byte 4 is the space, so this is ` day`." }
+          - { id: d, code: "let part = &s;", why: "That borrows the whole `String`, not bytes 5 to 7." }
+        answer: a
+        explanation: "`good day` has 8 bytes. Bytes 5 to 7 are `day`, which `5..` reaches because it runs to the end."
+        concepts: [slice.str]
+
+      - type: compiles
+        id: compiles-slice-literal
+        code:
+          rust: |
+            let s = "hello world";
+            let hello: &str = &s[..5];
+            println!("{hello}");
+          verify: run
+          expectStdout: "hello\n"
+        answer: true
+        explanation: "You can slice a `&str` as well as a `String`. Slicing a slice gives another `&str`."
+        concepts: [slice.str, string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-empty
+        code:
+          rust: |
+            let s = String::from("abc");
+            let empty = &s[2..2];
+            println!("[{empty}] {}", empty.len());
+          verify: run
+        options:
+          - { id: a, text: "[] 0" }
+          - { id: b, text: "[c] 1", why: "`2..2` starts and stops at 2, so it covers no bytes." }
+          - { id: c, text: "[b] 1", why: "Byte 2 is `c`, and `2..2` doesn't include it anyway." }
+        answer: a
+        explanation: "A range with the same start and end is empty. An empty slice is allowed and has length 0."
+        concepts: [slice.str, range.basics]
+
+      - type: true-false
+        id: tf-same-type
+        prompt: "When `s` is a `String`, `&s` and `&s[..]` have the same type."
+        answer: false
+        explanation: "`&s` is a `&String`, a reference to the whole `String`. `&s[..]` is a `&str` slice covering all of its text."
+        concepts: [slice.str, borrow.shared]
+
+      - type: decode-error
+        id: decode-moved-then-sliced
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("teapot");
+                let t = s;
+                let tea = &s[..3];
+                println!("{tea} {t}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "let tea = &t[..3];", why: "Correct: `t` owns the text now, so slice `t`." }
+          - { id: b, code: "let tea = s[..3];", why: "`s` has still moved, and a slice needs `&`." }
+          - { id: c, code: "let tea = &mut s[..3];", why: "A mutable borrow of a moved value fails the same way." }
+        answer: a
+        explanation: "After `let t = s;`, `s` is no longer usable (E0382). The text now belongs to `t`, so borrow from `t`."
+        concepts: [slice.str, err.E0382, own.move]
+
+      - type: spot-bug
+        id: spot-rai
+        prompt: "This should print `rain`, but prints `rai`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("rainy");
+                let word = &s[0..3];
+                println!("{word}");
+            }
+          verify: run
+          expectStdout: "rai\n"
+        answer: 3
+        explanation: "`0..3` stops before byte 3. Use `0..4` (or `..4`) to include the `n`."
+        concepts: [slice.str, range.basics]
+
+      - type: match-pairs
+        id: pairs-ranges
+        prompt: Match each range to the bytes it covers
+        pairs:
+          - ["0..3", "bytes 0, 1 and 2"]
+          - ["0..=3", "bytes 0, 1, 2 and 3"]
+          - ["..2", "bytes 0 and 1"]
+          - ["3..", "byte 3 to the end"]
+          - ["..", "all of the text"]
+        concepts: [slice.str, range.basics]
+
+      - type: parsons
+        id: parsons-sunday
+        prompt: "Arrange the lines so the program prints `day`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let s = String::from("Sunday");' }
+          - { id: l3, text: "    let day = &s[3..];" }
+          - { id: l4, text: '    println!("{day}");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let day = s[3..];" }
+          - { id: d2, text: "    let day = &s[4..];" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "day\n"
+        explanation: "`S`, `u`, `n` are bytes 0 to 2, so `day` starts at byte 3. The slice needs `&`."
+        concepts: [slice.str]
+
+      - type: fill-tokens
+        id: fill-hamburger
+        prompt: "Fill the blanks so the program prints `burger ham`"
+        code:
+          rust: |
+            let s = String::from("hamburger");
+            let meat = &s[___1___];
+            let bun = &s[___2___];
+            println!("{bun} {meat}");
+          verify: run
+          expectStdout: "burger ham\n"
+        blanks:
+          "1": { answer: ["..3"] }
+          "2": { answer: ["3.."] }
+        bank: ["..3", "3..", "..2", "4..", "..4"]
+        explanation: "`..3` is bytes 0 to 2 (`ham`) and `3..` is the rest (`burger`). The `println!` prints `bun` first."
+        concepts: [slice.str]

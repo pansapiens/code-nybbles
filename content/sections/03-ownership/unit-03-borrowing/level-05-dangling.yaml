@@ -1,0 +1,515 @@
+id: ownership.borrowing.dangling
+title: No dangling references
+icon: shield
+concepts: [borrow.dangling, err.E0106]
+reviewConcepts: [borrow.shared, own.scope-drop, own.fn-return, own.clone, borrow.nll]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-dangling
+        title: A reference can't outlive its value
+        markdown: |
+          **A dangling reference points at a value that has been freed.** Rust never allows one.
+
+          Here `let r;` creates `r` and gives it a value later. At the inner `}`, `s` is dropped and its text freed, but `r` is used after that. The compiler rejects it: `s` does not live long enough (E0597).
+        code:
+          rust: |
+            let r;
+            {
+                let s = String::from("hi");
+                r = &s;
+            }
+            println!("{r}");
+          verify: compile-fail
+          expectErrors: [E0597]
+        diagram:
+          caption: "If Rust allowed it: at the inner }"
+          frames:
+            - name: main
+              vars:
+                - { name: r, points: s }
+            - name: "inner { }"
+              vars:
+                - { name: s, id: s, points: h1 }
+          heap:
+            - { id: h1, value: '"hi"', freed: true }
+        concepts: [borrow.dangling]
+
+      - type: true-false
+        id: tf-scope-frees
+        prompt: "When a `String` variable goes out of scope, its heap text is freed."
+        answer: true
+        explanation: "The owner drops the value at the end of its scope. Any reference still pointing at it would dangle."
+        concepts: [own.scope-drop, borrow.dangling]
+
+      - type: compiles
+        id: compiles-inner-borrow
+        code:
+          rust: |
+            let s = String::from("hi");
+            {
+                let r = &s;
+                println!("{r}");
+            }
+            println!("{s}");
+          verify: run
+          expectStdout: "hi\nhi\n"
+        answer: true
+        explanation: "This time the reference is in the inner block and the value outside it. `s` outlives `r`, so nothing dangles."
+        concepts: [borrow.dangling]
+
+      - type: concept
+        id: concept-return-local
+        title: Returning a reference to a local
+        markdown: |
+          **A function can't return a reference to its own local variable.** The local is dropped when the function returns, so the reference would dangle.
+
+          The compiler reports **E0106**, missing lifetime specifier: there's no value for the reference to be borrowed from. Lifetimes come in Section 9. The usual fix is to return the `String` itself.
+        code:
+          rust: |
+            fn dangle() -> &String {
+                let s = String::from("hi");
+                &s
+            }
+
+            fn main() {
+                let r = dangle();
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        diagram:
+          caption: "If Rust allowed it: after dangle returns"
+          frames:
+            - name: main
+              vars:
+                - { name: r, points: s }
+            - name: dangle (gone)
+              vars:
+                - { name: s, id: s, points: h1 }
+          heap:
+            - { id: h1, value: '"hi"', freed: true }
+        concepts: [borrow.dangling, err.E0106]
+
+      - type: decode-error
+        id: decode-dangle-fix
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn dangle() -> &String {
+                let s = String::from("hi");
+                &s
+            }
+
+            fn main() {
+                let r = dangle();
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        options:
+          - { id: a, text: "Return `String` on line 1 and `s` on line 3, so ownership moves to the caller" }
+          - { id: b, text: "Return `&mut String` on line 1 and `&mut s` on line 3", why: "That's still a reference to `s`, which is dropped when the function returns." }
+          - { id: c, text: "Add `'static` as the compiler suggests: `&'static String`", why: "Then the compiler says you can't return a reference to the local `s` (E0515). `s` is still dropped." }
+        answer: a
+        explanation: "Returning the `String` moves ownership out of the function, so nothing is freed and nothing dangles."
+        concepts: [err.E0106, borrow.dangling, own.fn-return]
+
+      - type: mcq
+        id: mcq-why-reject
+        prompt: Why does Rust reject a function that returns `&s`, where `s` is its own local `String`?
+        options:
+          - { id: a, text: "`s` is freed when the function returns, so the reference would point at freed memory" }
+          - { id: b, text: "Functions can't return a `String`", why: "They can. Returning the `String` itself is the usual fix." }
+          - { id: c, text: "Functions can never return references", why: "They can return a reference they were given. The problem is pointing at a local." }
+        answer: a
+        explanation: "The local `String` lives only as long as the function call. A reference to it can't leave the function."
+        concepts: [borrow.dangling]
+
+      - type: fill-tokens
+        id: fill-greeting
+        prompt: "Fill the blanks so the program compiles and prints `hello`"
+        code:
+          rust: |
+            fn make_greeting() -> ___1___ {
+                let s = String::from("hello");
+                ___2___
+            }
+
+            fn main() {
+                let g = make_greeting();
+                println!("{g}");
+            }
+          verify: run
+          expectStdout: "hello\n"
+        blanks:
+          "1": { answer: ["String"] }
+          "2": { answer: ["s"] }
+        bank: ["String", "&String", "s", "&s"]
+        explanation: "Return the owned `String` and hand back `s` itself. A `&String` return would point at a local that's about to be dropped."
+        concepts: [borrow.dangling, own.fn-return]
+
+      - type: predict-output
+        id: predict-no-dangle
+        code:
+          rust: |
+            fn no_dangle() -> String {
+                let s = String::from("safe");
+                s
+            }
+
+            fn main() {
+                let word = no_dangle();
+                println!("{word} {}", word.len());
+            }
+          verify: run
+        options:
+          - { id: a, text: "safe 4" }
+          - { id: b, text: "safe 0", why: "`word` now owns the text that `no_dangle` made. Nothing was freed." }
+          - { id: c, text: "4 safe", why: "The values fill the placeholders in order: `word`, then its length." }
+        answer: a
+        explanation: "Returning `s` moves the `String` to `word` in `main`, so the text is still there."
+        concepts: [borrow.dangling, own.fn-return]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each error code to its message
+        pairs:
+          - ["E0106", "missing lifetime specifier"]
+          - ["E0597", "does not live long enough"]
+          - ["E0382", "borrow of moved value"]
+          - ["E0499", "borrow as mutable more than once"]
+        concepts: [err.E0106, borrow.dangling, err.E0499]
+
+  - id: l2
+    exercises:
+      - type: compiles
+        id: compiles-echo
+        code:
+          rust: |
+            fn echo(s: &String) -> &String {
+                s
+            }
+
+            fn main() {
+                let name = String::from("Zoe");
+                let r = echo(&name);
+                println!("{r}");
+            }
+          verify: run
+          expectStdout: "Zoe\n"
+        answer: true
+        explanation: "`echo` returns the reference it was given, which points at `name` in `main`. `name` is still alive, so nothing dangles."
+        concepts: [borrow.dangling]
+
+      - type: compiles
+        id: compiles-label
+        code:
+          rust: |
+            fn label() -> &String {
+                let l = String::from("new");
+                &l
+            }
+
+            fn main() {
+                println!("{}", label());
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0106: missing lifetime specifier" }
+            - { id: b, text: "E0382: borrow of moved value", why: "Nothing is used after a move. The problem is the return type." }
+            - { id: c, text: "E0502: cannot borrow as mutable because it is also borrowed as immutable", why: "There's only one borrow here." }
+          answer: a
+        explanation: "`label` has no parameters, so its returned `&String` could only point at a local, which is dropped on return."
+        concepts: [err.E0106]
+
+      - type: spot-bug
+        id: spot-city-dropped
+        prompt: "Tap the line where `city` is dropped"
+        code:
+          rust: |
+            fn main() {
+                let r;
+                {
+                    let city = String::from("Ayr");
+                    r = &city;
+                }
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0597]
+        answer: 6
+        explanation: "`city` lives until the `}` on line 6. Line 7 uses `r` after that, so the compiler reports E0597."
+        concepts: [borrow.dangling, own.scope-drop]
+
+      - type: predict-output
+        id: predict-in-out
+        code:
+          rust: |
+            let total = String::from("ten");
+            {
+                let r = &total;
+                println!("in: {r}");
+            }
+            println!("out: {total}");
+          verify: run
+        options:
+          - { id: a, text: "in: ten\nout: ten" }
+          - { id: b, text: "in: ten", why: "`r` goes out of scope at `}`, but that only ends the borrow. `total` is still alive." }
+          - { id: c, text: "in: &ten\nout: ten", why: "Printing a reference shows the value it points at." }
+        answer: a
+        explanation: "Dropping a reference frees nothing. `total` still owns its text after the block."
+        concepts: [borrow.dangling]
+
+      - type: decode-error
+        id: decode-e0597
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let r;
+                {
+                    let s = String::from("ok");
+                    r = &s;
+                }
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0597]
+        options:
+          - { id: a, text: "`s` is dropped at the end of the inner block, but `r` still refers to it on line 7" }
+          - { id: b, text: "`r` must be declared `mut` to be given a value later", why: "`let r;` can be given its value once without `mut`." }
+          - { id: c, text: "`let r;` needs a value straight away", why: "It can get its value later, as long as that happens before it's used." }
+        answer: a
+        explanation: "The value has to live at least as long as the reference is used. `s` doesn't, so Rust stops `r` dangling."
+        concepts: [borrow.dangling]
+
+      - type: true-false
+        id: tf-runtime
+        prompt: "Rust catches dangling references when the program runs, by panicking."
+        answer: false
+        explanation: "They're caught at compile time. A program that compiles never has a dangling reference."
+        concepts: [borrow.dangling]
+
+      - type: mcq
+        id: mcq-diagram-echo
+        prompt: "`echo` returns `s`. Is the returned reference safe to use in `main`?"
+        diagram:
+          caption: "Inside echo(&name)"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+            - name: echo
+              vars:
+                - { name: s, points: name }
+          heap:
+            - { id: h1, value: '"Zoe"' }
+        options:
+          - { id: a, text: "Yes: it points at `name` in `main`, which is still alive" }
+          - { id: b, text: "No: `s` is dropped when `echo` returns, so the text is freed", why: "`s` is only a reference. Dropping it frees nothing; `name` owns the text." }
+          - { id: c, text: "No: a function can't return a reference", why: "It can, as long as the value it points at outlives the call." }
+        answer: a
+        explanation: "The reference points at the caller's `String`, which outlives the call to `echo`."
+        concepts: [borrow.dangling]
+
+      - type: predict-output
+        id: predict-shout-owned
+        code:
+          rust: |
+            fn shout(s: &String) -> String {
+                let mut loud = s.clone();
+                loud.push_str("!");
+                loud
+            }
+
+            fn main() {
+                let w = String::from("hey");
+                let l = shout(&w);
+                println!("{w} {l}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "hey hey!" }
+          - { id: b, text: "hey! hey!", why: "`loud` is a clone, so `push_str` changes the copy, not `w`." }
+          - { id: c, text: "hey hey", why: "`loud` gets the `!` before it's returned." }
+        answer: a
+        explanation: "`shout` borrows `w`, builds a new `String`, and returns it with ownership. `w` is unchanged."
+        concepts: [borrow.dangling, own.clone, own.fn-return]
+
+      - type: true-false
+        id: tf-return-given
+        prompt: "A function with one `&String` parameter can return that same reference."
+        answer: true
+        explanation: "The reference points at the caller's value, which is still alive after the call."
+        concepts: [borrow.dangling]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-tagline
+        prompt: "Fill the blanks so `tagline` compiles and returns `Rust rocks`"
+        code:
+          rust: |
+            fn tagline() -> ___1___ {
+                let mut t = String::from("Rust");
+                t.push_str(" rocks");
+                ___2___
+            }
+
+            fn main() {
+                println!("{}", tagline());
+            }
+          verify: run
+          expectStdout: "Rust rocks\n"
+        blanks:
+          "1": { answer: ["String"] }
+          "2": { answer: ["t"] }
+        bank: ["String", "&String", "t", "&t", "*t"]
+        explanation: "The function builds a new `String`, so it returns it by value. `&t` would point at a local that's about to be dropped."
+        concepts: [borrow.dangling, err.E0106]
+
+      - type: parsons
+        id: parsons-title
+        prompt: Arrange the lines into a function that builds and returns `Dr. Who`
+        lines:
+          - { id: l1, text: "fn make_title() -> String {" }
+          - { id: l2, text: '    let mut title = String::from("Dr");' }
+          - { id: l3, text: '    title.push_str(". Who");' }
+          - { id: l4, text: "    title" }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "fn make_title() -> &String {" }
+          - { id: d2, text: "    &title" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{}", make_title());
+            }
+          mode: run
+          expectStdout: "Dr. Who\n"
+        explanation: "The function owns `title`, so it returns it by value. Returning `&title` would dangle once the function ends."
+        concepts: [borrow.dangling]
+
+      - type: decode-error
+        id: decode-default-name
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn default_name() -> &String {
+                let n = String::from("guest");
+                &n
+            }
+
+            fn main() {
+                println!("{}", default_name());
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        options:
+          - { id: a, text: "The return type is a reference, but the function has no parameter it could be borrowing from" }
+          - { id: b, text: "A function can't return a `String`", why: "It can. The suggested fix is to return `String` instead of `&String`." }
+          - { id: c, text: "Line 3 is missing a semicolon", why: "`&n` is the return value, so it has no semicolon on purpose." }
+        answer: a
+        explanation: "With no parameters, the only thing the reference could point at is a local, and locals are dropped on return."
+        concepts: [err.E0106]
+
+      - type: compiles
+        id: compiles-biggest
+        code:
+          rust: |
+            fn biggest() -> &i32 {
+                let n = 99;
+                &n
+            }
+
+            fn main() {
+                println!("{}", biggest());
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0106: missing lifetime specifier" }
+            - { id: b, text: "E0382: borrow of moved value", why: "An `i32` is copied, never moved, and nothing is used after a move here." }
+            - { id: c, text: "E0499: cannot borrow as mutable more than once", why: "There are no `&mut` borrows here." }
+          answer: a
+        explanation: "The same rule applies to numbers: `n` is a local, so `&n` can't be returned. Return `i32` instead."
+        concepts: [err.E0106, borrow.dangling]
+
+      - type: mcq
+        id: mcq-safe-signature
+        prompt: Which function can create a new `String` and hand it to the caller?
+        options:
+          - { id: a, code: "fn make() -> String" }
+          - { id: b, code: "fn make() -> &String", why: "The new `String` would be a local, dropped on return. This is E0106." }
+          - { id: c, code: "fn make() -> &mut String", why: "Still a reference to a local that's dropped on return." }
+        answer: a
+        explanation: "Returning by value moves ownership to the caller, so the `String` lives on."
+        concepts: [borrow.dangling, own.fn-return]
+
+      - type: predict-output
+        id: predict-owl
+        code:
+          rust: |
+            fn make() -> String {
+                String::from("owl")
+            }
+
+            fn count(s: &String) -> usize {
+                s.len()
+            }
+
+            fn main() {
+                let bird = make();
+                let n = count(&bird);
+                println!("{bird}: {n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "owl: 3" }
+          - { id: b, text: "owl: 0", why: "`bird` owns the text that `make` created, and `count` reads it." }
+          - { id: c, text: ": 3", why: "`count` only borrows `bird`, so `main` can still print it." }
+        answer: a
+        explanation: "`make` hands over ownership, then `count` borrows `bird` to read its length."
+        concepts: [own.fn-return, borrow.shared]
+
+      - type: true-false
+        id: tf-diagram-owned
+        prompt: "`word` now owns the heap text that `make` created."
+        diagram:
+          caption: "After let word = make();"
+          frames:
+            - name: main
+              vars:
+                - { name: word, id: word, points: h1 }
+          heap:
+            - { id: h1, value: '"hi"' }
+        answer: true
+        explanation: "Returning a `String` by value moves ownership to the caller, so `word` is the owner now."
+        concepts: [own.fn-return, borrow.dangling]
+
+      - type: match-pairs
+        id: pairs-signatures
+        prompt: Match each signature to what the compiler thinks
+        pairs:
+          - ["fn f() -> String", "fine: gives away a new String"]
+          - ["fn f() -> &String", "E0106: nothing to borrow from"]
+          - ["fn f(s: &String) -> &String", "fine: returns the borrow it got"]
+          - ["fn f(s: String) -> String", "fine: takes and gives back"]
+        concepts: [err.E0106, borrow.dangling]
+
+      - type: true-false
+        id: tf-drop-ref
+        prompt: "When a reference goes out of scope, the value it points at is freed."
+        answer: false
+        explanation: "Only the owner frees a value. A reference ending just ends the borrow."
+        concepts: [borrow.dangling, own.scope-drop]

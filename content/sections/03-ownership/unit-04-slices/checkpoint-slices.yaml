@@ -1,0 +1,290 @@
+id: ownership.slices.checkpoint
+title: "Checkpoint: Slices"
+icon: flag
+concepts: []
+reviewConcepts:
+  - slice.str
+  - slice.str-param
+  - slice.array
+  - slice.utf8
+  - practice.first-word
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-uber
+        code:
+          rust: |
+            let s = String::from("über cool");
+            let w = &s[..5];
+            println!("{w}|{}", w.len());
+          verify: run
+        options:
+          - { id: a, text: "über|5" }
+          - { id: b, text: "über |5", why: "`ü` takes 2 bytes, so `über` is already bytes 0 to 4. The space is byte 5." }
+          - { id: c, text: "über|4", why: "`.len()` counts bytes, and `über` is 5 bytes." }
+        answer: a
+        explanation: "`ü` is 2 bytes and `b`, `e`, `r` are 1 each, so `..5` is exactly `über`."
+        concepts: [slice.utf8, slice.str]
+
+      - type: decode-error
+        id: decode-push-while-sliced
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut log = String::from("start");
+                let head = &log[..3];
+                log.push_str(" end");
+                println!("{head}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Move the `println!` above `log.push_str(\" end\");`" }
+          - { id: b, text: "Change line 3 to `let head = &mut log[..3];`", why: "A mutable borrow still alive at line 5 clashes with `push_str` in the same way." }
+          - { id: c, text: "Remove `mut` from line 2", why: "Then `push_str` can't change `log` at all." }
+        answer: a
+        explanation: "`push_str` needs to change `log` while `head` still borrows it. Once `head` has been used for the last time, `log` can change."
+        concepts: [slice.str, err.E0502, borrow.nll]
+
+      - type: spot-bug
+        id: spot-initial
+        prompt: "This prints `A`, then panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn initial(name: &str) -> &str {
+                &name[..1]
+            }
+
+            fn main() {
+                println!("{}", initial("Ana"));
+                println!("{}", initial("Émile"));
+            }
+          verify: run
+          expectPanic: "is not a char boundary"
+        answer: 2
+        explanation: "Line 2 assumes the first character is 1 byte. `É` is 2 bytes, so `..1` cuts it in half."
+        concepts: [slice.utf8, slice.str-param]
+
+      - type: fill-tokens
+        id: fill-spaces
+        prompt: "Fill the blanks so the program prints `2`"
+        code:
+          rust: |
+            fn spaces(text: ___1___) -> usize {
+                let mut n = 0;
+                for c in text.___2___() {
+                    if c == ' ' {
+                        n += 1;
+                    }
+                }
+                n
+            }
+
+            fn main() {
+                let s = String::from("a b c");
+                println!("{}", spaces(&s[1..]));
+            }
+          verify: run
+          expectStdout: "2\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["chars"] }
+        bank: ["&str", "chars", "&String", "String", "bytes", "len"]
+        explanation: "The argument is a slice, so the parameter is `&str`. `.chars()` gives `char`s to compare with `' '`."
+        concepts: [slice.str-param, slice.utf8]
+
+      - type: mcq
+        id: mcq-flexible-sig
+        prompt: "A function only reads a list of scores. Which parameter lets callers pass a whole array or part of one?"
+        options:
+          - { id: a, code: "scores: &[i32]" }
+          - { id: b, code: "scores: [i32; 5]", why: "That only accepts arrays of exactly 5, and copies them in." }
+          - { id: c, code: "scores: &[i32; 5]", why: "That only accepts a borrowed array of exactly 5, not a part of one." }
+          - { id: d, code: "scores: [i32]", why: "`[i32]` without `&` has no size known at compile time." }
+        answer: a
+        explanation: "`&[i32]` is a slice: any length, borrowed, from an array or part of one."
+        concepts: [slice.array]
+
+      - type: predict-output
+        id: predict-tiles-temps
+        prompt: Build the output
+        code:
+          rust: |
+            let temps = [12, 15, 9, 20];
+            for t in &temps[2..] {
+                print!("{t} ");
+            }
+            println!();
+          verify: run
+        tiles: ["9", "20", "12", "15"]
+        answer: "9 20"
+        explanation: "`2..` starts at element 2, which is `9`, and runs to the end."
+        concepts: [slice.array, ctrl.for]
+
+      - type: true-false
+        id: tf-clear-keep-r
+        prompt: "Rust lets you call `s.clear()` at this point and keep using `r` afterwards."
+        diagram:
+          caption: "After let r = &s[1..4]; (r covers bytes 1 to 3)"
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: r, points: h1 }
+          heap:
+            - { id: h1, value: '"hello"' }
+        answer: false
+        explanation: "`r` borrows the text. Clearing `s` while `r` is still used would leave `r` pointing at removed text, so it's error E0502."
+        concepts: [slice.str, err.E0502]
+
+      - type: match-pairs
+        id: pairs-problems
+        prompt: Match each problem to its cause
+        pairs:
+          - ["E0502", "changing a `String` while a slice of it is in use"]
+          - ["E0277: size of `str` not known", "slicing without `&`"]
+          - ["not a char boundary", "a range inside a multi-byte character"]
+          - ["out of bounds", "a range past the end"]
+          - ["E0308: expected `&str`, found `String`", "passing a `String` without `&`"]
+        concepts: [slice.str, slice.utf8, slice.str-param]
+
+      - type: compiles
+        id: compiles-show
+        code:
+          rust: |
+            fn show(label: &str, data: &[i32]) {
+                println!("{label}: {data:?}");
+            }
+
+            fn main() {
+                let name = String::from("ranks");
+                let ranks = [3, 1, 2];
+                show(&name, &ranks[1..]);
+            }
+          verify: run
+          expectStdout: "ranks: [1, 2]\n"
+        answer: true
+        explanation: "`&name` becomes a `&str` through deref coercion, and `&ranks[1..]` is a `&[i32]`. It prints `ranks: [1, 2]`."
+        concepts: [slice.str-param, slice.array]
+
+      - type: predict-output
+        id: predict-breakfast
+        code:
+          rust: |
+            let s = "breakfast";
+            let s = &s[5..];
+            let s = &s[..2];
+            println!("{s}");
+          verify: run
+        options:
+          - { id: a, text: "fa" }
+          - { id: b, text: "br", why: "The second slice is taken from `fast`, not from the original text." }
+          - { id: c, text: "fast", why: "The last line slices `fast` down to its first two bytes." }
+        answer: a
+        explanation: "Each shadowing `s` is a slice of the one before: `breakfast`, then `fast`, then `fa`."
+        concepts: [slice.str]
+
+      - type: parsons
+        id: parsons-average
+        prompt: "Arrange the lines to write `average`, which works on any slice of `i32`s"
+        lines:
+          - { id: l1, text: "fn average(xs: &[i32]) -> i32 {" }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    for x in xs {" }
+          - { id: l4, text: "        total += x;" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: "    total / xs.len() as i32" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "fn average(xs: [i32]) -> i32 {" }
+          - { id: d2, text: "    total / xs.len()" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() { let a = [4, 6, 8, 2]; println!("{} {}", average(&a), average(&a[..3])); }
+          mode: run
+          expectStdout: "5 6\n"
+        explanation: "The parameter is a borrowed slice. `.len()` is a `usize`, so it's cast to `i32` before dividing."
+        concepts: [slice.array, types.as-cast]
+
+      - type: decode-error
+        id: decode-one-element
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn total(xs: &[i32]) -> i32 {
+                let mut sum = 0;
+                for x in xs {
+                    sum += x;
+                }
+                sum
+            }
+
+            fn main() {
+                let nums = [5, 7, 9];
+                println!("{}", total(&nums[0]));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`&nums[0]` borrows one number, not a slice. Use a range like `&nums[0..1]`." }
+          - { id: b, text: "`nums` must be `mut` to be borrowed", why: "Shared borrows never need `mut`." }
+          - { id: c, text: "Index 0 is out of bounds", why: "`nums` has 3 elements, so index 0 is fine. The type is the problem." }
+        answer: a
+        explanation: "E0308: expected `&[i32]`, found `&{integer}`. Indexing with one number gives one element, and only a range gives a slice."
+        concepts: [slice.array, err.E0308]
+
+      - type: predict-output
+        id: predict-after-space
+        code:
+          rust: |
+            fn after_space(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return &s[i + 1..];
+                    }
+                }
+                ""
+            }
+
+            fn main() {
+                let a = after_space("José Díaz");
+                let b = after_space("Kim");
+                println!("[{a}] [{b}]");
+            }
+          verify: run
+        options:
+          - { id: a, text: "[Díaz] []" }
+          - { id: b, text: "[ Díaz] []", why: "`i + 1` starts after the space." }
+          - { id: c, text: "[Díaz] [Kim]", why: "With no space, the loop ends and the function returns `\"\"`, an empty text." }
+        answer: a
+        explanation: "`char_indices` gives the space's byte position even after `é`, so `i + 1` lands on `D`. `Kim` has no space, so the result is empty."
+        concepts: [practice.first-word, slice.utf8]
+
+      - type: compiles
+        id: compiles-string-ref-slice
+        code:
+          rust: |
+            fn first_word(s: &String) -> &str {
+                &s[..1]
+            }
+
+            fn main() {
+                let s = String::from("hi there");
+                println!("{}", first_word(&s[3..]));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`&s[3..]` is a `&str`, and `first_word` asks for a `&String`" }
+            - { id: b, text: "`&s[..1]` can't be returned from a function", why: "Returning a slice of a parameter is fine. The call has the wrong type." }
+            - { id: c, text: "`3..` is out of range", why: "`hi there` has 8 bytes, so `3..` is fine." }
+          answer: a
+        explanation: "A slice isn't a `String`, so it can't become a `&String`. With `s: &str`, the call compiles."
+        concepts: [slice.str-param, practice.first-word]

@@ -1,0 +1,25 @@
+id: ownership.borrowing
+title: References & Borrowing
+description: Use a value without taking ownership, and learn the rules that keep every reference valid.
+colour: blue
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html
+sources:
+  - name: The Rust Programming Language, ch. 4.2
+    url: https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+  - name: Rust Book, Brown University edition (ownership chapter)
+    url: https://rust-book.cs.brown.edu/ch04-01-what-is-ownership.html
+    licence: MIT OR Apache-2.0
+    adapted: true
+    changes: "Permissions model described in our own words, with new exercises."
+path:
+  - level: level-01-shared
+  - level: level-02-mut
+  - level: level-03-exclusive
+  - chest
+  - level: level-04-nll
+  - level: level-05-dangling
+  - level: level-06-permissions
+  - checkpoint: checkpoint-borrowing

@@ -1,0 +1,455 @@
+id: ownership.moves.clone
+title: Cloning
+icon: layers
+concepts: [own.clone]
+reviewConcepts: [own.move, own.copy, err.E0382, string.string-vs-literal, mem.stack-heap]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-clone
+        title: Clone makes a second String
+        markdown: |
+          **`.clone()` copies the heap text as well.** `let s2 = s1.clone();` gives `s2` its own text, so both variables own a `String` and both stay valid.
+        code:
+          rust: |
+            let s1 = String::from("hello");
+            let s2 = s1.clone();
+            println!("{s1} {s2}");
+          verify: run
+          expectStdout: "hello hello\n"
+        diagram:
+          caption: "After let s2 = s1.clone();"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, points: h1 }
+                - { name: s2, points: h2 }
+          heap:
+            - { id: h1, value: '"hello"' }
+            - { id: h2, value: '"hello"' }
+        concepts: [own.clone]
+
+      - type: compiles
+        id: compiles-clone-use
+        code:
+          rust: |
+            let city = String::from("Perth");
+            let home = city.clone();
+            println!("{city} {home}");
+          verify: run
+          expectStdout: "Perth Perth\n"
+        answer: true
+        explanation: "`.clone()` doesn't move `city`. It makes a new `String` for `home`, so both can be printed."
+        concepts: [own.clone]
+
+      - type: true-false
+        id: tf-clone-heap
+        prompt: "`.clone()` on a `String` copies the text on the heap, not only the pointer."
+        answer: true
+        explanation: "A clone allocates new heap memory and copies the text into it. That's why each `String` can be changed and freed separately."
+        concepts: [own.clone, mem.stack-heap]
+
+      - type: predict-output
+        id: predict-independent
+        code:
+          rust: |
+            let mut name = String::from("Sam");
+            let original = name.clone();
+            name.push_str("my");
+            println!("{original} {name}");
+          verify: run
+        options:
+          - { id: a, text: "Sam Sammy" }
+          - { id: b, text: "Sammy Sammy", why: "`original` has its own copy of the text, made before `push_str`." }
+          - { id: c, text: "Sam Sam", why: "`push_str` changes `name`, which is a separate `String`." }
+        answer: a
+        explanation: "After the clone there are two separate `String`s. Changing `name` leaves `original` as it was."
+        concepts: [own.clone, string.string-vs-literal]
+
+      - type: fill-tokens
+        id: fill-clone
+        prompt: Fill the blank so the program compiles and prints `Ada Ada`
+        code:
+          rust: |
+            let player = String::from("Ada");
+            let winner = player.___1___();
+            println!("{player} {winner}");
+          verify: run
+          expectStdout: "Ada Ada\n"
+        blanks:
+          "1": { answer: ["clone"] }
+        bank: ["clone", "copy", "move", "push_str"]
+        explanation: "`clone` is the method that copies a `String`. There's no `copy()` or `move()` method on `String`."
+        concepts: [own.clone]
+
+      - type: mcq
+        id: mcq-diagram-clone
+        prompt: "Which line produces this diagram?"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: draft, points: h1 }
+                - { name: copy, points: h2 }
+          heap:
+            - { id: h1, value: '"memo"' }
+            - { id: h2, value: '"memo"' }
+        options:
+          - { id: a, code: "let copy = draft.clone();" }
+          - { id: b, code: "let copy = draft;", why: "A move leaves one heap box and greys out `draft`." }
+          - { id: c, code: "let copy = String::from(draft);", why: "`String::from` takes text, but here it would also move `draft`, so `draft` couldn't be used." }
+        answer: a
+        explanation: "Two heap boxes with the same text and two valid owners: that's a clone."
+        concepts: [own.clone, own.move]
+
+      - type: compiles
+        id: compiles-move-then-clone
+        code:
+          rust: |
+            let note = String::from("hi");
+            let a = note;
+            let b = note.clone();
+            println!("{a} {b}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `note`" }
+            - { id: b, text: "None: `.clone()` brings the text back", why: "`.clone()` needs the original. After the move, `note` has nothing to clone." }
+            - { id: c, text: "E0384: cannot assign twice", why: "Nothing is reassigned. `note` is used after it moved." }
+          answer: a
+        explanation: "The clone has to happen before the move. Line 3 tries to clone `note` after it moved to `a`."
+        concepts: [own.clone, err.E0382]
+
+      - type: match-pairs
+        id: pairs-three-ways
+        pairs:
+          - ["let b = a; (String)", "moves: a is invalid"]
+          - ["let b = a.clone();", "new heap text: both valid"]
+          - ["let b = a; (i32)", "copies: both valid"]
+          - ["E0382", "a moved value was used"]
+        concepts: [own.clone, own.move, own.copy]
+
+      - type: spot-bug
+        id: spot-missing-clone
+        prompt: "This should print `jazz jazz`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let genre = String::from("jazz");
+                let radio = genre;
+                println!("{genre} {radio}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 3
+        explanation: "The error is reported on line 4, but the mistake is the move on line 3. `let radio = genre.clone();` keeps `genre` valid."
+        concepts: [own.clone, err.E0382]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-clone-cost
+        title: Clone only when you need two
+        markdown: |
+          **A clone takes time and memory.** It asks for new heap space and copies every byte, which adds up for long text or inside loops.
+
+          If you don't need the original any more, move it instead. You'll see a better way to share a value in the next unit.
+        code:
+          rust: |
+            let report = String::from("Q3");
+            let sent = report; // no clone needed
+            println!("{sent}");
+          verify: run
+          expectStdout: "Q3\n"
+        diagram:
+          caption: "A move: one heap box, no copying"
+          frames:
+            - name: main
+              vars:
+                - { name: report, moved: true }
+                - { name: sent, points: h1 }
+          heap:
+            - { id: h1, value: '"Q3"' }
+        concepts: [own.clone]
+
+      - type: mcq
+        id: mcq-needless
+        prompt: "Which clone is unnecessary?"
+        code:
+          rust: |
+            let a = String::from("x");
+            let b = a.clone();
+            println!("{a} {b}");
+            let c = b.clone();
+            println!("{c}");
+          verify: run
+          expectStdout: "x x\nx\n"
+        options:
+          - { id: a, text: "The one on line 4" }
+          - { id: b, text: "The one on line 2", why: "Line 3 prints both `a` and `b`, so you need two `String`s there." }
+          - { id: c, text: "Both are needed", why: "`b` isn't used after line 4, so it could move into `c`." }
+        answer: a
+        explanation: "After line 4 only `c` is used, so `let c = b;` would do. The clone on line 2 is needed because both `a` and `b` are printed."
+        concepts: [own.clone]
+
+      - type: true-false
+        id: tf-clone-free
+        prompt: "Cloning a `String` costs about the same as moving it, whatever its length."
+        answer: false
+        explanation: "A move copies only the small stack part. A clone also copies all of the text, so it gets slower as the text gets longer."
+        concepts: [own.clone, own.move]
+
+      - type: decode-error
+        id: decode-best-fix
+        prompt: "Which change makes this compile and print `Hi Hi`?"
+        code:
+          rust: |
+            fn main() {
+                let greeting = String::from("Hi");
+                let reply = greeting;
+                println!("{greeting} {reply}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "let reply = greeting.clone();" }
+          - { id: b, code: "let reply = greeting.copy();", why: "`String` has no `copy()` method. That's E0599." }
+          - { id: c, code: "let mut reply = greeting;", why: "`mut` doesn't stop the move. `greeting` would still be invalid." }
+        answer: a
+        explanation: "The compiler's help suggests this clone too. It gives `reply` its own text, so `greeting` stays valid."
+        concepts: [own.clone, err.E0382]
+
+      - type: predict-output
+        id: predict-clone-then-change
+        code:
+          rust: |
+            let mut list = String::from("eggs");
+            let backup = list.clone();
+            list.push_str(", milk");
+            let mut extra = backup.clone();
+            extra.push_str(", jam");
+            println!("{list}|{backup}|{extra}");
+          verify: run
+        options:
+          - { id: a, text: "eggs, milk|eggs|eggs, jam" }
+          - { id: b, text: "eggs, milk|eggs, milk|eggs, milk, jam", why: "`backup` was cloned before `milk` was added, so it's still `eggs`." }
+          - { id: c, text: "eggs, milk|eggs|eggs, milk, jam", why: "`extra` is cloned from `backup`, which never had `milk`." }
+        answer: a
+        explanation: "Each clone captures the text at that moment. Later changes to one `String` don't reach the others."
+        concepts: [own.clone]
+
+      - type: compiles
+        id: compiles-clone-int
+        code:
+          rust: |
+            let total = 42;
+            let copy = total.clone();
+            println!("{total} {copy}");
+          verify: run
+          expectStdout: "42 42\n"
+        answer: true
+        explanation: "It compiles, because Copy types can be cloned too. It's pointless, though: `let copy = total;` already copies an integer."
+        concepts: [own.clone, own.copy]
+
+      - type: mcq
+        id: mcq-when-clone
+        prompt: "When is `.clone()` the right choice?"
+        options:
+          - { id: a, text: "When you need two separate `String`s that can each change or be kept" }
+          - { id: b, text: "Every time the compiler reports E0382", why: "Often the better fix is to use the new owner, or reorder the lines. Clone only when you need two." }
+          - { id: c, text: "For integers, so they don't move", why: "Integers are Copy and never move." }
+        answer: a
+        explanation: "Clone when the program needs two independent values. Otherwise a move, or a reorder, avoids the extra work."
+        concepts: [own.clone]
+
+      - type: spot-bug
+        id: spot-needless-clone
+        prompt: "This works, but one line does needless work. Tap it."
+        code:
+          rust: |
+            fn main() {
+                let title = String::from("Map");
+                let label = title.clone();
+                println!("{label}");
+            }
+          verify: run
+          expectStdout: "Map\n"
+        answer: 3
+        explanation: "`title` is never used after line 3, so `let label = title;` would move it instead of copying the text."
+        concepts: [own.clone]
+
+      - type: true-false
+        id: tf-clone-diagram
+        prompt: "This diagram shows the memory after `let b = a.clone();` with `a` a `String`."
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: a, moved: true }
+                - { name: b, points: h1 }
+          heap:
+            - { id: h1, value: '"text"' }
+        answer: false
+        explanation: "That's a move. After a clone, `a` is still valid and there are two heap boxes, one for each `String`."
+        concepts: [own.clone, own.move]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-clone-order
+        prompt: "Arrange the lines so the program prints `Hi` then `Hi, Lin`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let mut message = String::from("Hi");' }
+          - { id: l3, text: "    let plain = message.clone();" }
+          - { id: l4, text: '    message.push_str(", Lin");' }
+          - { id: l5, text: '    println!("{plain}");' }
+          - { id: l6, text: '    println!("{message}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    let plain = message;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "Hi\nHi, Lin\n"
+        explanation: "The clone must come before `push_str`, so `plain` keeps `Hi`. A move would leave `message` unusable."
+        concepts: [own.clone]
+
+      - type: fill-tokens
+        id: fill-clone-or-move
+        prompt: Fill the blanks so the program compiles and prints `red red blue`
+        code:
+          rust: |
+            let first = String::from("red");
+            let second = first.___1___();
+            let third = String::from("blue");
+            let last = ___2___;
+            println!("{first} {second} {last}");
+          verify: run
+          expectStdout: "red red blue\n"
+        blanks:
+          "1": { answer: ["clone"] }
+          "2": { answer: ["third"] }
+        bank: ["clone", "third", "first", "copy", "second"]
+        explanation: "`first` is printed later, so `second` needs a clone. `third` isn't used again, so it can move into `last`."
+        concepts: [own.clone, own.move]
+
+      - type: decode-error
+        id: decode-clone-late
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let song = String::from("Reel");
+                let queue = song;
+                let spare = song.clone();
+                println!("{queue} {spare}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "`song` moved on line 3, so line 4 can't clone it" }
+          - { id: b, text: "`String` can't be cloned", why: "It can. The clone comes too late: `song` already moved." }
+          - { id: c, text: "`spare` and `queue` can't hold the same text", why: "Two `String`s can hold equal text. The problem is the order." }
+        answer: a
+        explanation: "Cloning reads `song`, which counts as a use after the move. Swapping lines 3 and 4 fixes it."
+        concepts: [own.clone, err.E0382]
+
+      - type: predict-output
+        id: predict-clone-move
+        code:
+          rust: |
+            let word = String::from("ab");
+            let mut longer = word.clone();
+            longer.push_str("cd");
+            let shown = longer;
+            println!("{word} {shown}");
+          verify: run
+        options:
+          - { id: a, text: "ab abcd" }
+          - { id: b, text: "abcd abcd", why: "Only `longer` gets `cd` added. `word` is a separate `String`." }
+          - { id: c, text: "ab ab", why: "`cd` is added before `longer` moves, so `shown` owns `abcd`." }
+        answer: a
+        explanation: "`longer` starts as a clone of `ab`, gets `cd` added, then moves to `shown`. `word` is unchanged."
+        concepts: [own.clone, own.move]
+
+      - type: compiles
+        id: compiles-clone-chain
+        code:
+          rust: |
+            let a = String::from("x");
+            let b = a.clone();
+            let c = a;
+            println!("{b} {c}");
+          verify: run
+          expectStdout: "x x\n"
+        answer: true
+        explanation: "Line 2 clones while `a` is still valid. Line 3 then moves `a` into `c`, and `a` isn't used again."
+        concepts: [own.clone, own.move]
+
+      - type: mcq
+        id: mcq-count-heap
+        prompt: "How many separate heap texts exist after these lines?"
+        code:
+          rust: |
+            let a = String::from("x");
+            let b = a.clone();
+            let c = b;
+            let d = c.clone();
+          verify: compile
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "Line 4 clones `c`, making a third text. Only line 3 is a move." }
+          - { id: c, text: "4", why: "Line 3 moves `b` into `c` without making a new text." }
+        answer: a
+        explanation: "`String::from` makes one text and each clone makes another. The move on line 3 adds none."
+        concepts: [own.clone, own.move]
+
+      - type: true-false
+        id: tf-clone-after-move-mut
+        prompt: "This compiles and prints `old new`."
+        code:
+          rust: |
+            let mut label = String::from("old");
+            let kept = label.clone();
+            label = String::from("new");
+            println!("{kept} {label}");
+          verify: run
+          expectStdout: "old new\n"
+        answer: true
+        explanation: "`kept` has its own copy of `old`. Giving `label` a new `String` doesn't affect it."
+        concepts: [own.clone, var.mut]
+
+      - type: spot-bug
+        id: spot-clone-wrong-var
+        prompt: "This should print `A B A`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let a = String::from("A");
+                let b = String::from("B");
+                let first = a;
+                let second = b;
+                println!("{first} {second} {a}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 4
+        explanation: "`a` is printed again on line 6, so line 4 should clone it: `let first = a.clone();`. `b` isn't used again, so its move is fine."
+        concepts: [own.clone, err.E0382]
+
+      - type: match-pairs
+        id: pairs-clone-cost
+        prompt: Match each line to what it does to memory
+        pairs:
+          - ["let b = a.clone();", "new heap space, text copied"]
+          - ["let b = a;", "stack part copied, heap untouched"]
+          - ["String::from(\"hi\")", "new heap space for the text"]
+          - ["the }", "owners drop their text"]
+        concepts: [own.clone, own.move, own.scope-drop]

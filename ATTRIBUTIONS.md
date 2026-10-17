@@ -13,3 +13,9 @@ draw on these sources, under the licences shown:
 - [The Rust Programming Language, ch. 3.3](https://doc.rust-lang.org/book/ch03-03-how-functions-work.html), MIT OR Apache-2.0. Used in: Functions.
 - [The Rust Programming Language, ch. 3.5](https://doc.rust-lang.org/book/ch03-05-control-flow.html), MIT OR Apache-2.0. Used in: Conditionals.
 - [The Rust Programming Language, ch. 3.5](https://doc.rust-lang.org/book/ch03-05-control-flow.html#repetition-with-loops), MIT OR Apache-2.0. Used in: Loops.
+- [The Rust Programming Language, ch. 4.1](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html), MIT OR Apache-2.0. Used in: Memory Basics.
+- [The Rust Programming Language, ch. 4.1](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#variables-and-data-interacting-with-move), MIT OR Apache-2.0. Used in: Moves, Copies & Clones.
+- [The Rust Programming Language, ch. 4.2](https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html), MIT OR Apache-2.0. Used in: References & Borrowing.
+- [Rust Book, Brown University edition (ownership chapter)](https://rust-book.cs.brown.edu/ch04-01-what-is-ownership.html), MIT OR Apache-2.0, adapted (Permissions model described in our own words, with new exercises.). Used in: References & Borrowing.
+- [The Rust Programming Language, ch. 4.3](https://doc.rust-lang.org/book/ch04-03-slices.html), MIT OR Apache-2.0. Used in: Slices.
+- [The Rust Programming Language, ch. 4](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html), MIT OR Apache-2.0. Used in: Ownership in Practice.

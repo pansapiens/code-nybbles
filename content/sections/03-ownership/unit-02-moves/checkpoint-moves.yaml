@@ -1,0 +1,264 @@
+id: ownership.moves.checkpoint
+title: "Checkpoint: Moves, Copies & Clones"
+icon: flag
+concepts: []
+reviewConcepts:
+  - own.move
+  - err.E0382
+  - own.copy
+  - own.clone
+  - own.fn-move
+  - own.fn-return
+  - own.mixed
+  - own.scope-drop
+  - string.string-vs-literal
+lessons:
+  - id: l1
+    exercises:
+      - type: compiles
+        id: compiles-mixed-start
+        code:
+          rust: |
+            let level = 7;
+            let hero = String::from("Rin");
+            let old = level;
+            let copy = hero.clone();
+            let party = (hero, level);
+            println!("{level} {old} {copy}");
+            println!("{:?}", party);
+          verify: run
+          expectStdout: "7 7 Rin\n(\"Rin\", 7)\n"
+        answer: true
+        explanation: "`level` is copied every time. `hero` is cloned before it moves into `party`, and it isn't used after the move."
+        concepts: [own.mixed, own.copy, own.clone]
+
+      - type: decode-error
+        id: decode-fn-then-use
+        prompt: Which change makes this compile and print `Hi, Jo` then `Jo`?
+        code:
+          rust: |
+            fn greet(name: String) {
+                println!("Hi, {name}");
+            }
+
+            fn main() {
+                let guest = String::from("Jo");
+                greet(guest);
+                println!("{guest}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 7 to `greet(guest.clone());`" }
+          - { id: b, text: "Change line 1 to `fn greet(mut name: String) {`", why: "`mut` lets `greet` change `name`. `guest` still moves in." }
+          - { id: c, text: "Swap lines 7 and 8", why: "That compiles, but prints `Jo` first, then `Hi, Jo`." }
+        answer: a
+        explanation: "The clone moves into `greet`, and `guest` keeps the original. Next unit shows a way without the clone."
+        concepts: [own.fn-move, own.clone, err.E0382]
+
+      - type: predict-output
+        id: predict-checkpoint
+        code:
+          rust: |
+            fn add(mut s: String, n: u8) -> String {
+                s.push_str("+");
+                println!("{n}");
+                s
+            }
+
+            fn main() {
+                let n = 1;
+                let a = String::from("a");
+                let b = add(a, n);
+                let c = add(b.clone(), n + 1);
+                println!("{b} {c} {n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "1\n2\na+ a++ 1" }
+          - { id: b, text: "1\n2\na+ a+ 1", why: "`c` comes from a clone of `a+`, which gets another `+`." }
+          - { id: c, text: "1\n2\na++ a++ 1", why: "`b` keeps its own text. Only the clone gets the second `+`." }
+          - { id: d, text: "1\n2\na+ a++ 2", why: "`n + 1` is a new value passed in. `n` itself is still 1." }
+        answer: a
+        explanation: "`b` is `a+`. Its clone goes through `add` again and comes back as `a++`. `n` is copied and stays 1."
+        concepts: [own.fn-return, own.clone, own.copy]
+
+      - type: spot-bug
+        id: spot-checkpoint
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let a = String::from("x");
+                let b = a.clone();
+                let c = b;
+                let d = a;
+                println!("{a}{c}{d}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 6
+        explanation: "Line 3 clones while `a` is valid, and line 5 moves `a` to `d`. Printing `a` on line 6 uses a moved value."
+        concepts: [own.move, own.clone, err.E0382]
+
+      - type: mcq
+        id: mcq-diagram-checkpoint
+        prompt: "Which code leaves memory like this?"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: x, value: "4" }
+                - { name: y, value: "4" }
+                - { name: s, moved: true }
+                - { name: t, points: h1 }
+          heap:
+            - { id: h1, value: '"hey"' }
+        options:
+          - { id: a, code: "let y = x;\nlet t = s;" }
+          - { id: b, code: "let y = x;\nlet t = s.clone();", why: "A clone would leave `s` valid and make a second heap box." }
+          - { id: c, code: "let y = x.clone();\nlet t = s.clone();", why: "Cloning `s` keeps it valid, but here `s` is greyed out." }
+        answer: a
+        explanation: "The integer `x` was copied into `y`. The `String` moved from `s` to `t`, leaving one heap box."
+        concepts: [own.copy, own.move]
+
+      - type: compiles
+        id: compiles-literal-string
+        code:
+          rust: |
+            fn label(text: String) -> String {
+                text
+            }
+
+            fn main() {
+                let a = label(String::from("ok"));
+                let b = a;
+                let c = label(b);
+                println!("{c}");
+            }
+          verify: run
+          expectStdout: "ok\n"
+        answer: true
+        explanation: "The `String` moves into `label`, out to `a`, on to `b`, into `label` again and out to `c`. Only `c` is used at the end."
+        concepts: [own.fn-move, own.fn-return]
+
+      - type: compiles
+        id: compiles-loop-checkpoint
+        code:
+          rust: |
+            let names = (String::from("Al"), 2);
+            let mut count = 0;
+            while count < 2 {
+                let taken = names;
+                count += 1;
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: use of moved value: `names`" }
+            - { id: b, text: "None: `names.1` is an integer", why: "The tuple holds a `String`, so the whole tuple moves." }
+            - { id: c, text: "E0384: cannot assign twice", why: "`count` is `mut`, so `count += 1` is fine." }
+          answer: a
+        explanation: "The tuple moves into `taken` on the first pass. On the second pass there's nothing left to move."
+        concepts: [own.mixed, own.copy, err.E0382]
+
+      - type: true-false
+        id: tf-freed-once
+        prompt: "In `let s2 = s1;` with `String`s, the heap text is freed once, when `s2` goes out of scope."
+        answer: true
+        explanation: "Only the owner frees the text. After the move that's `s2`, so there's no double free."
+        concepts: [own.move, own.scope-drop]
+
+      - type: fill-tokens
+        id: fill-checkpoint
+        prompt: Fill the blanks so the program compiles and prints `pen pen 2`
+        code:
+          rust: |
+            fn tag(item: String) ___1___ {
+                item
+            }
+
+            fn main() {
+                let qty = 2;
+                let item = String::from("pen");
+                let label = tag(item.___2___());
+                println!("{item} {label} {qty}");
+            }
+          verify: run
+          expectStdout: "pen pen 2\n"
+        blanks:
+          "1": { answer: ["-> String"] }
+          "2": { answer: ["clone"] }
+        bank: ["-> String", "clone", "-> i32", "len", "copy"]
+        explanation: "`tag` must return the `String` (`-> String`), and `item` is printed later, so a clone goes into `tag`."
+        concepts: [own.fn-return, own.clone]
+
+      - type: decode-error
+        id: decode-move-in-if
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let msg = String::from("ok");
+                let urgent = true;
+                if urgent {
+                    let sent = msg;
+                }
+                println!("{msg}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "`msg` may have moved inside the `if`, so line 7 can't use it" }
+          - { id: b, text: "`sent` is used outside its block", why: "Line 7 prints `msg`, not `sent`." }
+          - { id: c, text: "`if` blocks can't contain `let`", why: "They can. The problem is moving `msg` inside one." }
+        answer: a
+        explanation: "On the path where the `if` body runs, `msg` moves to `sent`. The compiler must be sure every path is valid."
+        concepts: [own.mixed, err.E0382]
+
+      - type: match-pairs
+        id: pairs-checkpoint
+        pairs:
+          - ["Copy", "duplicated; original still valid"]
+          - ["move", "ownership changes hands"]
+          - ["clone()", "explicit copy of heap data"]
+          - ["E0382", "a moved value was used"]
+          - ["-> String", "gives ownership to the caller"]
+        concepts: [own.copy, own.move, own.clone, err.E0382, own.fn-return]
+
+      - type: parsons
+        id: parsons-checkpoint
+        prompt: "Arrange the lines so the program prints `log: start` then `log: start!`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let entry = String::from("log: start");' }
+          - { id: l3, text: "    let mut loud = entry.clone();" }
+          - { id: l4, text: '    loud.push_str("!");' }
+          - { id: l5, text: '    println!("{entry}");' }
+          - { id: l6, text: '    println!("{loud}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    let mut loud = entry;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l1, l2, l5, l3, l4, l6, l7]
+          - [l1, l2, l3, l5, l4, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "log: start\nlog: start!\n"
+        explanation: "`entry` is printed, so `loud` must be a clone. The `!` goes on `loud` before `loud` is printed."
+        concepts: [own.clone]
+
+      - type: mcq
+        id: mcq-fix-strategy
+        prompt: "You get E0382 because you print a `String` after moving it. Which fix is usually best to try first?"
+        options:
+          - { id: a, text: "Print it before the move, or print the new owner instead" }
+          - { id: b, text: "Add `.clone()` everywhere the value is used", why: "Each clone copies the text. Clone only where you really need two `String`s." }
+          - { id: c, text: "Make the variable `mut`", why: "`mut` doesn't stop a move." }
+        answer: a
+        explanation: "Reordering or using the new owner costs nothing. Reach for `.clone()` when you truly need two separate values."
+        concepts: [own.move, own.clone, err.E0382]

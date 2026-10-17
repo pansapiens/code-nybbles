@@ -1,0 +1,453 @@
+id: ownership.borrowing.nll
+title: A borrow ends at its last use
+icon: clock
+concepts: [borrow.nll]
+reviewConcepts: [borrow.exclusive, err.E0499, err.E0502, borrow.mut, ctrl.for]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-last-use
+        title: Borrows end early
+        markdown: |
+          **A borrow lasts until the reference's last use**, not until the end of the block.
+
+          After `r` is printed for the last time, `s` is free to change again, even though `r` is still in scope.
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;
+            println!("{r}"); // last use of r
+            s.push_str("!");
+            println!("{s}");
+          verify: run
+          expectStdout: "hi\nhi!\n"
+        diagram:
+          caption: "At line 3, the last use of r"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r, points: s }
+          heap:
+            - { id: h1, value: '"hi"' }
+        concepts: [borrow.nll]
+
+      - type: compiles
+        id: compiles-write-then-read
+        code:
+          rust: |
+            let mut s = String::from("ok");
+            let w = &mut s;
+            w.push_str("!");
+            let r = &s;
+            println!("{r}");
+          verify: run
+          expectStdout: "ok!\n"
+        answer: true
+        explanation: "`w` is last used on line 3, so its borrow is over before `r` borrows `s` on line 4."
+        concepts: [borrow.nll, borrow.exclusive]
+
+      - type: true-false
+        id: tf-until-brace
+        prompt: "A reference keeps its value borrowed until the `}` at the end of its block."
+        answer: false
+        explanation: "The borrow ends at the reference's last use. The compiler works this out from your code."
+        concepts: [borrow.nll]
+
+      - type: compiles
+        id: compiles-read-after-push
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;
+            s.push_str("!");
+            println!("{r}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `s` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "`r` is a `&` reference, so only one `&mut` borrow is involved." }
+            - { id: c, text: "E0596: cannot borrow `s` as mutable", why: "`s` is `mut`, so `push_str` would be fine on its own." }
+          answer: a
+        explanation: "`r` is used on line 4, after `push_str`, so its borrow is still alive when `s` changes."
+        concepts: [borrow.nll, err.E0502]
+
+      - type: concept
+        id: concept-reorder
+        title: Fix it by reordering
+        markdown: |
+          **Many E0502 and E0499 errors go away if you finish with one reference before you start the next.** Move the last use of the old reference above the conflicting line.
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;
+            println!("{r}"); // moved up
+            s.push_str("!");
+          verify: run
+          expectStdout: "hi\n"
+        concepts: [borrow.nll, err.E0502]
+
+      - type: mcq
+        id: mcq-which-order
+        prompt: Which order compiles?
+        options:
+          - id: a
+            code: "let r = &s;\nprintln!(\"{r}\");\ns.push_str(\"!\");"
+          - id: b
+            code: "let r = &s;\ns.push_str(\"!\");\nprintln!(\"{r}\");"
+            why: "`r` is still used after `push_str`, so a reader and a writer overlap (E0502)."
+          - id: c
+            code: "let r = &s;\ns.push_str(\"!\");\nprintln!(\"{r}{s}\");"
+            why: "`r` is still used on the last line, after `push_str` (E0502)."
+        answer: a
+        explanation: "In the first order, `r`'s borrow is over before `push_str` borrows `s` as `&mut`."
+        concepts: [borrow.nll]
+
+      - type: predict-output
+        id: predict-n-after
+        code:
+          rust: |
+            let mut n = 1;
+            let r = &n;
+            println!("{r}");
+            n += 1;
+            println!("{n}");
+          verify: run
+        options:
+          - { id: a, text: "1\n2" }
+          - { id: b, text: "2\n2", why: "`r` is printed before `n += 1` runs." }
+          - { id: c, text: "1\n1", why: "`n += 1` runs after `r`'s last use, so it's allowed and `n` becomes 2." }
+        answer: a
+        explanation: "`r`'s borrow ends on line 3, so `n += 1` on line 4 is allowed."
+        concepts: [borrow.nll]
+
+      - type: predict-output
+        id: predict-two-writers-in-turn
+        code:
+          rust: |
+            let mut s = String::from("a");
+            let r1 = &mut s;
+            r1.push_str("b");
+            let r2 = &mut s;
+            r2.push_str("c");
+            println!("{s}");
+          verify: run
+        options:
+          - { id: a, text: "abc" }
+          - { id: b, text: "ac", why: "`r1` and `r2` both change the same `String`, so both additions stay." }
+          - { id: c, text: "ab", why: "`r2` is a fresh `&mut` borrow after `r1` is done, and it adds `c`." }
+        answer: a
+        explanation: "Two `&mut` borrows in one block are fine when they take turns: `r1` is finished before `r2` starts."
+        concepts: [borrow.nll, borrow.exclusive]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-tally
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut tally = String::from("I");
+                let view = &tally;
+                tally.push_str("I");
+                println!("{view}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Move line 5 above line 4" }
+          - { id: b, text: "Change line 3 to `let view = &mut tally;`", why: "Then `view` and `push_str` are two writers at once (E0499)." }
+          - { id: c, text: "Remove `mut` from line 2", why: "Then `push_str` can't change `tally` at all (E0596)." }
+        answer: a
+        explanation: "Printing `view` first ends its borrow, so `push_str` can borrow `tally` afterwards."
+        concepts: [borrow.nll, err.E0502]
+
+      - type: spot-bug
+        id: spot-last-use
+        prompt: "Tap the line where the borrow `r` is last used"
+        code:
+          rust: |
+            fn main() {
+                let mut s = String::from("x");
+                let r = &s;
+                let n = r.len();
+                println!("{n}");
+                s.push_str("y");
+                println!("{s}");
+            }
+          verify: run
+          expectStdout: "1\nxy\n"
+        answer: 4
+        explanation: "`r` is only used on line 4. `n` is a plain number copied out, so the borrow ends there and line 6 can change `s`."
+        concepts: [borrow.nll]
+
+      - type: compiles
+        id: compiles-fn-then-push
+        code:
+          rust: |
+            fn show(s: &String) {
+                println!("{s}");
+            }
+
+            fn main() {
+                let mut s = String::from("hi");
+                let r = &s;
+                show(r);
+                s.push_str("!");
+                show(&s);
+            }
+          verify: run
+          expectStdout: "hi\nhi!\n"
+        answer: true
+        explanation: "`show(r)` is `r`'s last use, so `push_str` on line 9 doesn't overlap with it."
+        concepts: [borrow.nll]
+
+      - type: compiles
+        id: compiles-print-total
+        code:
+          rust: |
+            fn main() {
+                let mut total = 0;
+                let r = &mut total;
+                println!("{total}");
+                *r += 1;
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which change fixes it?
+          options:
+            - { id: a, text: "Move line 4 below line 5" }
+            - { id: b, text: "Change line 3 to `let r = &total;`", why: "Then `*r += 1` can't write through a `&` reference." }
+            - { id: c, text: "Remove `mut` from line 2", why: "Then `&mut total` isn't allowed at all." }
+          answer: a
+        explanation: "`r` is used on line 5, so reading `total` on line 4 overlaps with the writer. Printing after the last use of `r` fixes it."
+        concepts: [borrow.nll, err.E0502]
+
+      - type: mcq
+        id: mcq-where-ends
+        prompt: "After which line does the borrow `r` end?"
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;
+            println!("{r}");
+            println!("{s}");
+            s.push_str("!");
+          verify: run
+          expectStdout: "hi\nhi\n"
+        options:
+          - { id: a, text: "Line 3" }
+          - { id: b, text: "Line 5, the end of the code", why: "Borrows end at the last use, not at the end of the block." }
+          - { id: c, text: "Line 4", why: "Line 4 reads `s` directly, not through `r`." }
+        answer: a
+        explanation: "Line 3 is the last line that uses `r`, so the borrow ends there."
+        concepts: [borrow.nll]
+
+      - type: predict-output
+        id: predict-cats
+        code:
+          rust: |
+            let mut word = String::from("cat");
+            let len = word.len();
+            let r = &mut word;
+            r.push_str("s");
+            println!("{word} {len}");
+          verify: run
+        options:
+          - { id: a, text: "cats 3" }
+          - { id: b, text: "cats 4", why: "`len` was worked out on line 2, before the `s` was added. It's a plain number and doesn't update." }
+          - { id: c, text: "cat 3", why: "`r` changes `word` itself, so printing `word` shows `cats`." }
+        answer: a
+        explanation: "`len` is a number copied out on line 2, so it isn't a borrow. `r`'s last use is line 4, so line 5 can read `word`."
+        concepts: [borrow.nll, borrow.mut]
+
+      - type: true-false
+        id: tf-copy-out
+        prompt: "This compiles: `n` is a copy of the number, so the borrow `r` ends on line 3."
+        code:
+          rust: |
+            let mut x = 5;
+            let r = &x;
+            let n = *r;
+            x += 1;
+            println!("{n} {x}");
+          verify: run
+          expectStdout: "5 6\n"
+        answer: true
+        explanation: "`let n = *r;` copies the `i32` out. `n` doesn't point at `x`, so changing `x` on line 4 is fine."
+        concepts: [borrow.nll]
+
+      - type: true-false
+        id: tf-compile-time
+        prompt: "Rust works out where each borrow ends when it compiles the program, not while it runs."
+        answer: true
+        explanation: "The compiler reads your code to find each reference's last use. Nothing extra happens at run time."
+        concepts: [borrow.nll]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-reorder
+        prompt: Arrange the lines so the program compiles and prints `ab`, then `abc`
+        lines:
+          - { id: l1, text: '    let mut s = String::from("ab");' }
+          - { id: l2, text: "    let r = &s;" }
+          - { id: l3, text: '    println!("{r}");' }
+          - { id: l4, text: '    s.push_str("c");' }
+          - { id: l5, text: '    println!("{s}");' }
+        distractors:
+          - { id: d1, text: "    let r = &mut s;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "ab\nabc\n"
+        explanation: "`r` has to be printed before `push_str`, so its borrow is over when `s` changes."
+        concepts: [borrow.nll]
+
+      - type: fill-tokens
+        id: fill-r-or-s
+        prompt: "Fill the blanks so the program compiles and prints `hi`, then `hi!`"
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;
+            println!("{___1___}");
+            s.push_str("!");
+            println!("{___2___}");
+          verify: run
+          expectStdout: "hi\nhi!\n"
+        blanks:
+          "1": { answer: ["r"] }
+          "2": { answer: ["s"] }
+        bank: ["r", "s", "&s", "*r"]
+        explanation: "`r` can only be used before `push_str`. After the change, print `s` itself; using `r` there would be E0502."
+        concepts: [borrow.nll]
+
+      - type: decode-error
+        id: decode-log
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut log = String::from("");
+                let a = &mut log;
+                let b = &mut log;
+                a.push_str("start ");
+                b.push_str("end");
+                println!("{log}");
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "Move line 5 up, between lines 3 and 4" }
+          - { id: b, text: "Change line 4 to `let b = &log;`", why: "`b` can't write through a `&` reference, and it would still overlap with `a` (E0502)." }
+          - { id: c, text: "Move line 7 to just after line 2", why: "That doesn't change the overlap between `a` and `b`." }
+        answer: a
+        explanation: "With `a.push_str` before `let b`, `a` is finished when `b` starts. The two writers take turns."
+        concepts: [borrow.nll, err.E0499]
+
+      - type: predict-output
+        id: predict-log
+        code:
+          rust: |
+            let mut log = String::from("");
+            let a = &mut log;
+            a.push_str("start ");
+            let b = &mut log;
+            b.push_str("end");
+            println!("{log}");
+          verify: run
+        options:
+          - { id: a, text: "start end" }
+          - { id: b, text: "end", why: "`b` adds to the same `String` that `a` already changed." }
+          - { id: c, text: "start", why: "`b` is a fresh borrow after `a`'s last use, and it adds `end`." }
+        answer: a
+        explanation: "`a` adds `start `, then `b` adds `end`, to the same `String`."
+        concepts: [borrow.nll]
+
+      - type: compiles
+        id: compiles-loop
+        code:
+          rust: |
+            let mut total = 0;
+            let r = &mut total;
+            for i in 1..=3 {
+                *r += i;
+            }
+            println!("{total}");
+          verify: run
+          expectStdout: "6\n"
+        answer: true
+        explanation: "`r`'s last use is inside the loop. Once the loop ends, so does the borrow, and `total` can be printed: 6."
+        concepts: [borrow.nll, ctrl.for]
+
+      - type: mcq
+        id: mcq-why-compiles
+        prompt: Why does this compile?
+        code:
+          rust: |
+            let mut s = String::from("a");
+            let r1 = &mut s;
+            r1.push_str("b");
+            let r2 = &mut s;
+            r2.push_str("c");
+          verify: compile
+        options:
+          - { id: a, text: "`r1` is last used before `r2` is created" }
+          - { id: b, text: "Two `&mut` references are fine inside one block", why: "Two writers in use at once is still E0499. Here they don't overlap." }
+          - { id: c, text: "`r2` copies the `String`, so it doesn't borrow `s`", why: "`&mut s` borrows; nothing is copied." }
+        answer: a
+        explanation: "The borrows take turns: `r1` ends on line 3, and `r2` starts on line 4."
+        concepts: [borrow.nll, err.E0499]
+
+      - type: true-false
+        id: tf-diagram-both
+        prompt: "`r1` and `r2` are both `&mut s`, and `r1` is used again later. The compiler accepts this."
+        diagram:
+          caption: "After let r2 = &mut s;"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r1, points: s }
+                - { name: r2, points: s }
+          heap:
+            - { id: h1, value: '"ab"' }
+        answer: false
+        explanation: "Because `r1` is used again, its borrow is still alive when `r2` is created: two writers at once (E0499)."
+        concepts: [borrow.nll, err.E0499]
+
+      - type: spot-bug
+        id: spot-late-use
+        prompt: "The compiler rejects line 4. Tap the later line that keeps the borrow `first` alive."
+        code:
+          rust: |
+            fn main() {
+                let mut names = String::from("Ann");
+                let first = &names;
+                names.push_str(", Bo");
+                println!("{names}");
+                println!("{first}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 6
+        explanation: "Line 6 uses `first`, so its borrow covers line 4. Printing `first` before line 4 would fix it."
+        concepts: [borrow.nll, err.E0502]
+
+      - type: true-false
+        id: tf-move-print-up
+        prompt: "Moving the last use of a reference to an earlier line can fix an E0502."
+        answer: true
+        explanation: "If the old reference's last use comes before the conflicting borrow, the two no longer overlap."
+        concepts: [borrow.nll, err.E0502]

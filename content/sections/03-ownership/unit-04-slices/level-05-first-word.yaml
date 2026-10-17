@@ -1,0 +1,664 @@
+id: ownership.slices.first-word
+title: "Exercise: first_word"
+icon: search
+concepts: [practice.first-word]
+reviewConcepts: [slice.str, slice.str-param, slice.utf8, borrow.exclusive, err.E0502, borrow.nll, fn.early-return, ctrl.for]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-book-version
+        title: Find the end of the first word
+        markdown: |
+          **Goal: find the first word in some text.** The Book starts by returning where the first space is.
+
+          Treat these as a recipe: `.as_bytes()` views the text as bytes, `.iter().enumerate()` gives each byte with its position, and `b' '` is the byte for a space.
+        code:
+          rust: |
+            fn first_word(s: &String) -> usize {
+                let bytes = s.as_bytes();
+                let each = bytes.iter().enumerate();
+                for (i, &item) in each {
+                    if item == b' ' {
+                        return i;
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let s = String::from("hello world");
+                println!("{}", first_word(&s));
+            }
+          verify: run
+          expectStdout: "5\n"
+        concepts: [practice.first-word]
+
+      - type: predict-output
+        id: predict-good-day
+        code:
+          rust: |
+            fn first_word(s: &String) -> usize {
+                let bytes = s.as_bytes();
+                let each = bytes.iter().enumerate();
+                for (i, &item) in each {
+                    if item == b' ' {
+                        return i;
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let s = String::from("good day");
+                println!("{}", first_word(&s));
+            }
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "5", why: "Positions start at 0. The space is byte 4." }
+          - { id: c, text: "good", why: "This version returns a number: the position of the space." }
+        answer: a
+        explanation: "`good` is bytes 0 to 3, so the first space is at position 4. That's also where the word ends."
+        concepts: [practice.first-word]
+
+      - type: mcq
+        id: mcq-byte-literal
+        prompt: "In the recipe, what is `b' '`?"
+        options:
+          - { id: a, text: "The byte value of a space character" }
+          - { id: b, text: "A `char` holding a space", why: "That's `' '` without the `b`. The bytes from `.as_bytes()` are `u8`s, not `char`s." }
+          - { id: c, text: "A string containing a space", why: "That would be `\" \"`, in double quotes." }
+        answer: a
+        explanation: "`b' '` is a byte literal: the number that stores a space (32). It can be compared with the bytes of the text."
+        concepts: [practice.first-word]
+
+      - type: true-false
+        id: tf-no-space
+        prompt: "If the text has no space, this `first_word` returns `s.len()`, because the whole text is one word."
+        answer: true
+        explanation: "The loop finishes without finding a space, so the function falls through to `s.len()`: the word ends at the end of the text."
+        concepts: [practice.first-word, fn.early-return]
+
+      - type: concept
+        id: concept-char-indices
+        title: A shorter recipe
+        markdown: |
+          **`.char_indices()` gives each character with its byte position.** It's shorter than the byte recipe, and `c` is a `char`, so you compare it with `' '`.
+
+          The positions are bytes, so they're always safe to slice at.
+        code:
+          rust: |
+            fn first_word(s: &str) -> usize {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return i;
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let n = first_word("hi there");
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "2\n"
+        concepts: [practice.first-word]
+
+      - type: predict-output
+        id: predict-dia-indices
+        code:
+          rust: |
+            for (i, c) in "día".char_indices() {
+                println!("{i} {c}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "0 d\n1 í\n3 a" }
+          - { id: b, text: "0 d\n1 í\n2 a", why: "The positions are bytes, and `í` takes 2 of them: bytes 1 and 2." }
+          - { id: c, text: "1 d\n2 í\n3 a", why: "Positions start at 0." }
+        answer: a
+        explanation: "`í` covers bytes 1 and 2, so `a` starts at byte 3."
+        concepts: [practice.first-word, slice.utf8]
+
+      - type: predict-output
+        id: predict-one-word
+        code:
+          rust: |
+            fn first_word(s: &str) -> usize {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return i;
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let n = first_word("Ferris");
+                println!("{n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "0", why: "No space is found, so the loop ends and `s.len()` is returned." }
+          - { id: c, text: "5", why: "`s.len()` is the length, 6, not the last position." }
+        answer: a
+        explanation: "There's no space, so the whole text is the first word and the function returns its length."
+        concepts: [practice.first-word]
+
+      - type: fill-tokens
+        id: fill-space-index
+        prompt: "Fill the blanks so `first_word` returns the position of the first space"
+        code:
+          rust: |
+            fn first_word(s: &str) -> usize {
+                for (i, c) in s.char_indices() {
+                    if c == ___1___ {
+                        return ___2___;
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let n = first_word("hot tea");
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "3\n"
+        blanks:
+          "1": { answer: ["' '"] }
+          "2": { answer: ["i"] }
+        bank: ["' '", "i", "\" \"", "c", "0"]
+        explanation: "`c` is a `char`, so it's compared with the `char` `' '`. The function returns the position `i`."
+        concepts: [practice.first-word]
+
+      - type: match-pairs
+        id: pairs-recipe
+        prompt: Match each piece of the recipes to what it gives you
+        pairs:
+          - ["s.as_bytes()", "the text as bytes"]
+          - [".iter().enumerate()", "each item with its position"]
+          - ["b' '", "the byte for a space"]
+          - ["s.char_indices()", "each char with its byte position"]
+        concepts: [practice.first-word]
+
+      - type: compiles
+        id: compiles-byte-vs-char
+        code:
+          rust: |
+            fn first_word(s: &str) -> usize {
+                let bytes = s.as_bytes();
+                let each = bytes.iter().enumerate();
+                for (i, &item) in each {
+                    if item == ' ' {
+                        return i;
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let n = first_word("hi you");
+                println!("{n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`item` is a byte, so it must be compared with `b' '`, not the `char` `' '`" }
+            - { id: b, text: "`return i;` can't be used inside a loop", why: "`return` leaves the whole function, even from inside a loop." }
+            - { id: c, text: "`s` must be a `&String` for `.as_bytes()`", why: "`.as_bytes()` works on any `&str`." }
+          answer: a
+        explanation: "E0308: expected `u8`, found `char`. Bytes and characters are different types."
+        concepts: [practice.first-word, err.E0308]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-return-slice
+        title: Return a slice instead
+        markdown: |
+          **A position on its own isn't tied to the text.** If the `String` changes, `5` is still `5` and now means nothing.
+
+          Return the word as a `&str` instead. It borrows the text, so Rust keeps the two in step.
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return &s[..i];
+                    }
+                }
+                s
+            }
+
+            fn main() {
+                let s = String::from("hello world");
+                let word = first_word(&s);
+                println!("{word}");
+            }
+          verify: run
+          expectStdout: "hello\n"
+        diagram:
+          caption: "`word` covers bytes 0 to 4 of `s`'s text."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: word, points: h1 }
+          heap:
+            - { id: h1, value: '"hello world"' }
+        concepts: [practice.first-word]
+
+      - type: predict-output
+        id: predict-rust-is-fun
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return &s[..i];
+                    }
+                }
+                s
+            }
+
+            fn main() {
+                let s = String::from("Rust is fun");
+                println!("{}", first_word(&s));
+            }
+          verify: run
+        options:
+          - { id: a, text: "Rust" }
+          - { id: b, text: "Rust ", why: "`..i` stops before the space at position 4." }
+          - { id: c, text: "4", why: "This version returns a slice of the text, not a position." }
+        answer: a
+        explanation: "The first space is at byte 4, so the function returns `&s[..4]`."
+        concepts: [practice.first-word]
+
+      - type: true-false
+        id: tf-stale-index
+        prompt: "`s.clear()` empties a `String`. True or false: this compiles and prints `3`, even though `s` is now empty."
+        code:
+          rust: |
+            fn first_word(s: &str) -> usize {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return i; }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let mut s = String::from("hey you");
+                let end = first_word(&s);
+                s.clear();
+                println!("{end}");
+            }
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "`end` is a plain number, not a borrow, so nothing stops `s.clear()` from emptying the text. Using `end` to slice `s` now would panic."
+        concepts: [practice.first-word]
+
+      - type: compiles
+        id: compiles-clear-e0502
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let mut s = String::from("hey you");
+                let word = first_word(&s);
+                s.clear();
+                println!("{word}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `s` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once", why: "There's only one mutable borrow, from `clear`. `word` is a shared borrow." }
+            - { id: c, text: "E0382: borrow of moved value", why: "`first_word(&s)` borrows `s`. Nothing is moved." }
+          answer: a
+        explanation: "`s.clear()` empties the text, which needs a mutable borrow. `word` is a shared borrow still used on line 12."
+        concepts: [practice.first-word, err.E0502]
+
+      - type: mcq
+        id: mcq-why-error-good
+        prompt: "In the program above, why is it good that Rust rejects `s.clear()`?"
+        options:
+          - { id: a, text: "`word` would point at text that `clear` removed" }
+          - { id: b, text: "`clear` would also clear `word`'s own copy of the text", why: "`word` has no copy. It points into `s`'s text." }
+          - { id: c, text: "A `String` can never be emptied once it's been sliced", why: "It can, once the slice is no longer used." }
+        answer: a
+        explanation: "The borrow rules turn a bug that would show up at run time into a compile error."
+        concepts: [practice.first-word, borrow.exclusive]
+
+      - type: decode-error
+        id: decode-move-clear
+        prompt: Which change makes this compile and print `hey`?
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let mut s = String::from("hey you");
+                let word = first_word(&s);
+                s.clear();
+                println!("{word}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Swap lines 11 and 12, so `s.clear()` runs after the last use of `word`" }
+          - { id: b, text: "Change line 10 to `let word = first_word(&mut s);`", why: "A mutable borrow kept alive through `word` would still clash with `clear`." }
+          - { id: c, text: "Remove `mut` from line 9", why: "Then `s.clear()` can't change `s` at all." }
+        answer: a
+        explanation: "A borrow ends at its last use. Once `word` has been printed, `s` is free to change."
+        concepts: [practice.first-word, err.E0502, borrow.nll]
+
+      - type: compiles
+        id: compiles-clear-after
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let mut s = String::from("hi all");
+                let word = first_word(&s);
+                println!("{word}");
+                s.clear();
+                println!("[{s}]");
+            }
+          verify: run
+          expectStdout: "hi\n[]\n"
+        answer: true
+        explanation: "`word` is last used on line 11, so its borrow has ended when `s.clear()` runs."
+        concepts: [practice.first-word, borrow.nll]
+
+      - type: spot-bug
+        id: spot-clear-line
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let mut who = String::from("Mo Li");
+                let given = first_word(&who);
+                who.clear();
+                println!("Hi, {given}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 11
+        explanation: "Line 11 empties `who` while `given` still borrows it for line 12. Clear it after the `println!`."
+        concepts: [practice.first-word, err.E0502]
+
+      - type: predict-output
+        id: predict-middle-word
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let s = String::from("a big dog");
+                println!("{}", first_word(&s[2..]));
+            }
+          verify: run
+        options:
+          - { id: a, text: "big" }
+          - { id: b, text: "a", why: "The function gets `&s[2..]`, which starts at `big`." }
+          - { id: c, text: "big dog", why: "The function stops at the first space in the slice it gets." }
+        answer: a
+        explanation: "`&s[2..]` is `big dog`, and its first word is `big`. Taking `&str` lets `first_word` work on slices."
+        concepts: [practice.first-word, slice.str-param]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-first-word
+        prompt: "Arrange the lines to write `first_word`, returning a slice"
+        lines:
+          - { id: l1, text: "fn first_word(s: &str) -> &str {" }
+          - { id: l2, text: "    for (i, c) in s.char_indices() {" }
+          - { id: l3, text: "        if c == ' ' {" }
+          - { id: l4, text: "            return &s[..i];" }
+          - { id: l5, text: "        }" }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: "    s" }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "            return i;" }
+          - { id: d2, text: "    s;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() { println!("{}|{}", first_word("hi there"), first_word("solo")); }
+          mode: run
+          expectStdout: "hi|solo\n"
+        explanation: "Return the slice up to the first space. If there's none, the whole text `s` is the word, returned without `;`."
+        concepts: [practice.first-word, fn.early-return]
+
+      - type: fill-tokens
+        id: fill-return-slice
+        prompt: "Fill the blanks so `first_word` returns the first word as a slice"
+        code:
+          rust: |
+            fn first_word(s: &str) -> ___1___ {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return ___2___;
+                    }
+                }
+                s
+            }
+
+            fn main() {
+                let n = first_word("big cat");
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "big\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["&s[..i]"] }
+        bank: ["&str", "&s[..i]", "usize", "i", "&s[i..]", "String"]
+        explanation: "The function returns a `&str`, and the word is the slice before position `i`."
+        concepts: [practice.first-word]
+
+      - type: predict-output
+        id: predict-tiles-rest
+        prompt: Build the output
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let s = String::from("tea for two");
+                let w = first_word(&s);
+                let rest = &s[w.len() + 1..];
+                println!("{rest} {w}");
+            }
+          verify: run
+        tiles: ["for", "two", "tea", "4", "3"]
+        answer: "for two tea"
+        explanation: "`w` is `tea`, 3 bytes. `rest` starts at byte 4, after the space: `for two`."
+        concepts: [practice.first-word, slice.str]
+
+      - type: decode-error
+        id: decode-wrong-return
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn first_word(s: &str) -> usize {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return &s[..i];
+                    }
+                }
+                s.len()
+            }
+
+            fn main() {
+                let n = first_word("hi you");
+                println!("{n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "The function says it returns a `usize`, but line 4 returns a `&str`" }
+          - { id: b, text: "`&s[..i]` might cut a character in half", why: "That's a run-time check, and `i` comes from `char_indices`, so it's always a boundary." }
+          - { id: c, text: "`return` can't be used inside `if`", why: "`return` works anywhere in a function body." }
+        answer: a
+        explanation: "E0308: expected `usize`, found `&str`. Change the return type to `&str` and the last line to `s`."
+        concepts: [practice.first-word, err.E0308]
+
+      - type: spot-bug
+        id: spot-trailing-space
+        prompt: "This should print `[hello]` but prints `[hello ]`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' {
+                        return &s[..=i];
+                    }
+                }
+                s
+            }
+
+            fn main() {
+                let w = first_word("hello world");
+                println!("[{w}]");
+            }
+          verify: run
+          expectStdout: "[hello ]\n"
+        answer: 4
+        explanation: "`..=i` includes position `i`, which is the space. Use `..i` to stop before it."
+        concepts: [practice.first-word, slice.str]
+
+      - type: predict-output
+        id: predict-leading-space
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                println!("[{}]", first_word(" hi"));
+            }
+          verify: run
+        options:
+          - { id: a, text: "[]" }
+          - { id: b, text: "[hi]", why: "The function doesn't skip spaces. It stops at the first one, at position 0." }
+          - { id: c, text: "[ hi]", why: "A space is found at position 0, so the loop returns early." }
+        answer: a
+        explanation: "The first character is a space, so the function returns `&s[..0]`, an empty slice."
+        concepts: [practice.first-word, fn.early-return]
+
+      - type: compiles
+        id: compiles-literal-first-word
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let word = first_word("good day");
+                println!("{word}");
+            }
+          verify: run
+          expectStdout: "good\n"
+        answer: true
+        explanation: "A literal is a `&str`, so it can be passed straight in. This is why `&str` beats `&String` as the parameter type."
+        concepts: [practice.first-word, slice.str-param]
+
+      - type: mcq
+        id: mcq-char-indices-skip
+        prompt: "`\"día\".char_indices()` gives positions 0, 1 and 3. Why is 2 skipped?"
+        options:
+          - { id: a, text: "`í` takes 2 bytes, and the positions are byte positions" }
+          - { id: b, text: "Position 2 is reserved for the length", why: "Nothing is reserved. Each position is where a character starts." }
+          - { id: c, text: "`char_indices` skips every second character", why: "It gives every character: `d`, `í` and `a`." }
+        answer: a
+        explanation: "Because the positions are where characters start, slicing at them never cuts a character in half."
+        concepts: [practice.first-word, slice.utf8]
+
+      - type: true-false
+        id: tf-book-str-param
+        prompt: "The Book's byte version of `first_word` could take `s: &str` instead of `s: &String`, and then it would also accept string literals."
+        answer: true
+        explanation: "`.as_bytes()` and `.len()` work on any `&str`. A `&str` parameter still accepts `&String` through deref coercion."
+        concepts: [practice.first-word, slice.str-param]
+
+      - type: predict-output
+        id: predict-naive-plan
+        code:
+          rust: |
+            fn first_word(s: &str) -> &str {
+                for (i, c) in s.char_indices() {
+                    if c == ' ' { return &s[..i]; }
+                }
+                s
+            }
+
+            fn main() {
+                let s = String::from("naïve plan");
+                let w = first_word(&s);
+                println!("{w} {}", w.len());
+            }
+          verify: run
+        options:
+          - { id: a, text: "naïve 6" }
+          - { id: b, text: "naïve 5", why: "`.len()` counts bytes, and `ï` takes 2." }
+          - { id: c, text: "naïv 5", why: "The space is at byte 6, so the slice keeps all of `naïve`." }
+        answer: a
+        explanation: "`char_indices` reports the space at byte 6, so the slice is `naïve`, 6 bytes long."
+        concepts: [practice.first-word, slice.utf8]

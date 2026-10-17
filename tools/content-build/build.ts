@@ -305,6 +305,7 @@ const block = (s: string) => md.render(s)
 
 /** Markdown fields become HTML in place. Code, predict-output option text and match tiles stay plain. */
 export function renderMarkdown(ex: CompiledExercise) {
+  if ('diagram' in ex && ex.diagram?.caption) ex.diagram.caption = inline(ex.diagram.caption)
   if (ex.type === 'concept') {
     ex.markdown = block(ex.markdown)
     return

@@ -1,0 +1,284 @@
+id: ownership.borrowing.checkpoint
+title: "Checkpoint: Borrowing"
+icon: flag
+concepts: []
+reviewConcepts:
+  - borrow.shared
+  - borrow.mut
+  - borrow.exclusive
+  - err.E0499
+  - err.E0502
+  - borrow.nll
+  - borrow.dangling
+  - err.E0106
+  - borrow.permissions
+  - own.move
+  - own.clone
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-bump-read
+        code:
+          rust: |
+            fn bump(n: &mut i32) {
+                *n += 2;
+            }
+
+            fn read(n: &i32) -> i32 {
+                *n * 10
+            }
+
+            fn main() {
+                let mut x = 1;
+                bump(&mut x);
+                let y = read(&x);
+                bump(&mut x);
+                println!("{x} {y}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "5 30" }
+          - { id: b, text: "5 50", why: "`y` is a number worked out when `x` was 3. It doesn't change when `x` does." }
+          - { id: c, text: "3 30", why: "The second `bump` adds 2 more to `x`." }
+          - { id: d, text: "1 10", why: "`bump` changes `x` in `main` through the `&mut` reference." }
+        answer: a
+        explanation: "`x` goes 1, 3, 5. `y` is `3 * 10`, computed in between."
+        concepts: [borrow.mut, borrow.shared]
+
+      - type: compiles
+        id: compiles-loop-print
+        code:
+          rust: |
+            fn main() {
+                let mut total = 0;
+                let r = &mut total;
+                for i in 1..=3 {
+                    *r += i;
+                    println!("{total}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `total` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "E0499: cannot borrow `total` as mutable more than once at a time", why: "There's only one `&mut` borrow. `println!` reads." }
+            - { id: c, text: "E0596: cannot borrow `total` as mutable", why: "`total` is `mut`, so `&mut total` is fine on its own." }
+          answer: a
+        explanation: "`r` is used again on the next pass of the loop, so its borrow is alive when `println!` reads `total`."
+        concepts: [err.E0502, borrow.nll]
+
+      - type: decode-error
+        id: decode-single-change
+        prompt: Which single change makes the program compile?
+        code:
+          rust: |
+            fn main() {
+                let mut a = String::from("ab");
+                let r = &a;
+                a.push_str("c");
+                let w = &mut a;
+                w.push_str("d");
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Move line 7 up, between lines 3 and 4" }
+          - { id: b, text: "Delete line 4", why: "`r` is still used on line 7, so `&mut a` on line 5 clashes with it as well." }
+          - { id: c, text: "Change line 3 to `let r = &mut a;`", why: "Then `r` clashes with `push_str` and `w` as two writers (E0499)." }
+        answer: a
+        explanation: "Once `r` is printed first, its borrow ends before anything changes `a`."
+        concepts: [borrow.nll, err.E0502]
+
+      - type: spot-bug
+        id: spot-reset
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn reset(n: &mut i32) {
+                n = 0;
+            }
+
+            fn main() {
+                let mut lives = 3;
+                reset(&mut lives);
+                println!("{lives}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 2
+        explanation: "`n` is a reference, so `n = 0` tries to store a number in it (E0308). Write `*n = 0;` to change the value it points at."
+        concepts: [borrow.mut]
+
+      - type: true-false
+        id: tf-no-params
+        prompt: "`fn latest() -> &String`, with no parameters and no lifetime added, can't compile, because there is nothing for the reference to borrow from."
+        answer: true
+        explanation: "That's E0106. Any `String` made inside would be a local, dropped on return. Return `String` instead."
+        concepts: [err.E0106, borrow.dangling]
+
+      - type: mcq
+        id: mcq-during-mut
+        prompt: "After `let w = &mut s;` and before `w`'s last use, which is true?"
+        options:
+          - { id: a, text: "You can read and change `s` only through `w`" }
+          - { id: b, text: "You can still print `s` directly", why: "`s` has no Read while `w` is in use (E0502)." }
+          - { id: c, text: "You can make a second `&mut s` as long as you only read through it", why: "Two `&mut` in use at once is E0499, whatever you do with them." }
+        answer: a
+        explanation: "A `&mut` borrow is exclusive. All access goes through `w` until its last use."
+        concepts: [borrow.exclusive, borrow.permissions]
+
+      - type: predict-output
+        id: predict-good-good
+        prompt: Build the output
+        code:
+          rust: |
+            let mut word = String::from("go");
+            let r = &mut word;
+            r.push_str("od");
+            let a = &word;
+            let b = &word;
+            println!("{a} {b} {}", word.len());
+          verify: run
+        tiles: ["good", "good", "4", "go", "2", "od"]
+        answer: "good good 4"
+        explanation: "`r` finishes on line 3, then two readers and `word` itself all read `good`, which has 4 letters."
+        concepts: [borrow.nll, borrow.exclusive]
+
+      - type: fill-tokens
+        id: fill-quickly
+        prompt: "Fill the blanks so the program prints `quickly 7`"
+        code:
+          rust: |
+            fn add_ly(s: ___1___) {
+                s.push_str("ly");
+            }
+
+            fn size(s: ___2___) -> usize {
+                s.len()
+            }
+
+            fn main() {
+                let ___3___ w = String::from("quick");
+                add_ly(&mut w);
+                println!("{} {}", w, size(&w));
+            }
+          verify: run
+          expectStdout: "quickly 7\n"
+        blanks:
+          "1": { answer: ["&mut String"] }
+          "2": { answer: ["&String"] }
+          "3": { answer: ["mut"] }
+        bank: ["&mut String", "&String", "mut", "String", "&mut"]
+        explanation: "`add_ly` changes the text, so it takes `&mut String`, and `w` must be `mut` to lend it. `size` only reads, and the call passes `&w`."
+        concepts: [borrow.mut, borrow.shared]
+
+      - type: compiles
+        id: compiles-inner-drop
+        code:
+          rust: |
+            fn main() {
+                let r;
+                {
+                    let note = String::from("hi");
+                    r = &note;
+                }
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0597]
+        answer: false
+        followUp:
+          prompt: Why?
+          options:
+            - { id: a, text: "`note` is dropped at the inner `}`, but `r` is used after that" }
+            - { id: b, text: "`r` has no type", why: "The compiler works out that `r` is a `&String` from line 5." }
+            - { id: c, text: "`r` must be `mut` to be given a value later", why: "`let r;` can get its value once without `mut`." }
+          answer: a
+        explanation: "`r` would dangle on line 7, so Rust rejects it (E0597: `note` does not live long enough)."
+        concepts: [borrow.dangling]
+
+      - type: parsons
+        id: parsons-tide
+        prompt: "Arrange the body of `main` so it prints `tide! 5`. It can use `make() -> String`, `add_bang(s: &mut String)` and `count(s: &String) -> usize`."
+        lines:
+          - { id: l1, text: "    let mut s = make();" }
+          - { id: l2, text: "    add_bang(&mut s);" }
+          - { id: l3, text: "    let n = count(&s);" }
+          - { id: l4, text: '    println!("{s} {n}");' }
+        distractors:
+          - { id: d1, text: "    let s = make();" }
+          - { id: d2, text: "    add_bang(&s);" }
+        answer: [l1, l2, l3, l4]
+        verify:
+          harness: |
+            fn make() -> String {
+                String::from("tide")
+            }
+            fn add_bang(s: &mut String) {
+                s.push_str("!");
+            }
+            fn count(s: &String) -> usize {
+                s.len()
+            }
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "tide! 5\n"
+        explanation: "`s` must be `mut` to lend `&mut s`. The `!` is added before counting, so the length is 5."
+        concepts: [borrow.mut, borrow.shared, borrow.dangling]
+
+      - type: match-pairs
+        id: pairs-all-errors
+        prompt: Match each error code to its cause
+        pairs:
+          - ["E0499", "two writers at once"]
+          - ["E0502", "a reader and a writer at once"]
+          - ["E0106", "returned reference with nothing to borrow"]
+          - ["E0596", "changing through `&`"]
+          - ["E0382", "using a moved value"]
+        concepts: [err.E0499, err.E0502, err.E0106, borrow.shared, own.move]
+
+      - type: compiles
+        id: compiles-turns
+        code:
+          rust: |
+            let mut s = String::from("x");
+            let r1 = &mut s;
+            r1.push_str("y");
+            let r2 = &s;
+            let r3 = &s;
+            println!("{r2}{r3}");
+          verify: run
+          expectStdout: "xyxy\n"
+        answer: true
+        explanation: "The writer `r1` finishes on line 3. After that, two readers are fine."
+        concepts: [borrow.nll, borrow.exclusive]
+
+      - type: decode-error
+        id: decode-take
+        prompt: Which change makes it compile and still return an owned `String`?
+        code:
+          rust: |
+            fn take(s: &String) -> String {
+                *s
+            }
+
+            fn main() {
+                let a = String::from("pen");
+                let b = take(&a);
+                println!("{a} {b}");
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        options:
+          - { id: a, text: "Change line 2 to `s.clone()`" }
+          - { id: b, text: "Change line 2 to `&s`", why: "`&s` is a reference, but the function promises a `String`: a type mismatch." }
+          - { id: c, text: "Change line 1 to `fn take(mut s: &String) -> String`", why: "`mut s` lets `s` point elsewhere. `*s` still has no Own, so it can't be moved out." }
+        answer: a
+        explanation: "Through `&String` you have R but not O, so you can't move the `String` out (E0507). `clone` makes a new one to return."
+        concepts: [borrow.permissions, own.clone]

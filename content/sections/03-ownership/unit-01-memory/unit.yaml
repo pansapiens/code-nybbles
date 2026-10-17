@@ -1,0 +1,18 @@
+id: ownership.memory
+title: Memory Basics
+description: See where values live, how a String differs from a literal, and when Rust frees memory.
+colour: purple
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html
+sources:
+  - name: The Rust Programming Language, ch. 4.1
+    url: https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-stack-heap
+  - level: level-02-string
+  - chest
+  - level: level-03-scope-drop
+  - level: level-04-rules
+  - checkpoint: checkpoint-memory

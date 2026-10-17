@@ -1,0 +1,595 @@
+id: ownership.moves.marathon
+title: Does it compile? Marathon
+icon: stopwatch
+concepts: [own.mixed]
+reviewConcepts: [own.move, err.E0382, own.copy, own.clone, own.fn-move, own.fn-return, ctrl.if-expr, ctrl.loop, ctrl.for, types.tuple]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-checklist
+        title: Three questions
+        markdown: |
+          **For every use of a variable, ask:**
+          1. Is its type Copy? Then it's always fine.
+          2. If not, did it move earlier, by `let`, a function call, or into a tuple?
+          3. Did a clone happen before the move?
+
+          Here `count` is copied and `name` moves.
+        code:
+          rust: |
+            let count = 2;
+            let name = String::from("Bo");
+            let pair = (name, count);
+            println!("{count} {:?}", pair);
+          verify: run
+          expectStdout: "2 (\"Bo\", 2)\n"
+        diagram:
+          caption: "After let pair = (name, count);"
+          frames:
+            - name: main
+              vars:
+                - { name: count, value: "2" }
+                - { name: name, moved: true }
+                - { name: pair.0, points: h1 }
+                - { name: pair.1, value: "2" }
+          heap:
+            - { id: h1, value: '"Bo"' }
+        concepts: [own.mixed]
+
+      - type: compiles
+        id: compiles-into-tuple
+        code:
+          rust: |
+            let name = String::from("Bo");
+            let pair = (name, 2);
+            println!("{name}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `name`" }
+            - { id: b, text: "None: the tuple holds a copy of `name`", why: "A `String` is never copied implicitly. Putting it in a tuple moves it." }
+            - { id: c, text: "E0308: mismatched types", why: "The types are fine. `name` moved into `pair`." }
+          answer: a
+        explanation: "Building the tuple moves `name` into `pair.0`, so `name` is invalid on line 3."
+        concepts: [own.mixed, err.E0382]
+
+      - type: compiles
+        id: compiles-print-twice
+        code:
+          rust: |
+            let city = String::from("Darwin");
+            println!("{city}");
+            println!("{city}");
+            let home = city;
+            println!("{home}");
+          verify: run
+          expectStdout: "Darwin\nDarwin\nDarwin\n"
+        answer: true
+        explanation: "`println!` only reads `city`; it doesn't move it. The move on line 4 comes after the last use of `city`."
+        concepts: [own.mixed]
+
+      - type: compiles
+        id: compiles-if-move
+        code:
+          rust: |
+            let note = String::from("hi");
+            let send = false;
+            if send {
+                let sent = note;
+            }
+            println!("{note}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `note`" }
+            - { id: b, text: "None: `send` is false, so the move never happens", why: "The compiler checks every path the program might take, not the values of variables." }
+            - { id: c, text: "E0308: mismatched types", why: "`send` is a `bool`, so the condition is fine." }
+          answer: a
+        explanation: "On the path where the `if` body runs, `note` moves. The compiler rejects the program because that path exists."
+        concepts: [own.mixed, err.E0382, ctrl.if]
+
+      - type: compiles
+        id: compiles-shadow-move
+        code:
+          rust: |
+            let word = String::from("hi");
+            let word = word;
+            println!("{word}");
+          verify: run
+          expectStdout: "hi\n"
+        answer: true
+        explanation: "The `String` moves from the old `word` to a new `word` that shadows it. Line 3 uses the new one, which is valid."
+        concepts: [own.mixed, var.shadowing]
+
+      - type: compiles
+        id: compiles-clone-loop
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let cheer = String::from("Go");
+                for _ in 0..2 {
+                    shout(cheer.clone());
+                }
+                println!("{cheer}");
+            }
+          verify: run
+          expectStdout: "Go!\nGo!\nGo\n"
+        answer: true
+        explanation: "Each pass gives `shout` a fresh clone, so `cheer` itself never moves and can be printed at the end."
+        concepts: [own.mixed, own.clone, own.fn-move]
+
+      - type: decode-error
+        id: decode-second-move
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let key = String::from("k1");
+                let a = key;
+                let b = key;
+                println!("{a} {b}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "`key` moved to `a` on line 3, so it can't move again on line 4" }
+          - { id: b, text: "`a` and `b` can't both be `String`s", why: "Two variables can each own a `String`. Here there's only one `String` to give." }
+          - { id: c, text: "`key` needs `mut` to be moved twice", why: "`mut` doesn't help. A value can only move once." }
+        answer: a
+        explanation: "Moving counts as a use. The label says `use of moved value` because line 4 tries to move `key` a second time."
+        concepts: [own.mixed, err.E0382]
+
+      - type: compiles
+        id: compiles-reassign-moved
+        code:
+          rust: |
+            let mut tune = String::from("one");
+            let first = tune;
+            tune = String::from("two");
+            let second = tune;
+            println!("{first} {second}");
+          verify: run
+          expectStdout: "one two\n"
+        answer: true
+        explanation: "After the first move, `tune` gets a brand new `String` on line 3, which then moves to `second`."
+        concepts: [own.mixed, var.mut]
+
+      - type: true-false
+        id: tf-tuple-copy-mixed
+        prompt: "This compiles."
+        code:
+          rust: |
+            let size = (3, 4);
+            let tag = (String::from("box"), 1);
+            let a = size;
+            let b = tag;
+            println!("{:?} {:?}", size, b);
+          verify: run
+          expectStdout: "(3, 4) (\"box\", 1)\n"
+        answer: true
+        explanation: "`size` is `(i32, i32)`, which is Copy. `tag` moved, but the program uses `b`, its new owner."
+        concepts: [own.mixed, own.copy]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-length-tuple
+        code:
+          rust: |
+            fn size(s: String) -> (String, usize) {
+                let n = s.len();
+                (s, n)
+            }
+
+            fn main() {
+                let s1 = String::from("hello");
+                let (s2, len) = size(s1);
+                println!("{s2} {len}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "hello 5" }
+          - { id: b, text: "5 hello", why: "The tuple is `(s, n)`, so `s2` gets the text and `len` the number." }
+          - { id: c, text: "hello 0", why: "`n` is worked out from `s.len()` before the tuple is built." }
+        answer: a
+        explanation: "`size` takes ownership, then returns the `String` and its length together in a tuple."
+        concepts: [own.mixed, own.fn-return, types.tuple]
+
+      - type: compiles
+        id: compiles-length-tuple-old
+        code:
+          rust: |
+            fn size(s: String) -> (String, usize) {
+                let n = s.len();
+                (s, n)
+            }
+
+            fn main() {
+                let s1 = String::from("hello");
+                let (s2, len) = size(s1);
+                println!("{s1} {len}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `s1`" }
+            - { id: b, text: "None: `size` gave the `String` back", why: "It gave it back to `s2`, not `s1`." }
+            - { id: c, text: "E0308: mismatched types", why: "The types line up. `s1` moved into `size`." }
+          answer: a
+        explanation: "The returned `String` belongs to `s2`. `s1` moved into the call and stays invalid."
+        concepts: [own.mixed, own.fn-return, err.E0382]
+
+      - type: compiles
+        id: compiles-array-to-fn
+        code:
+          rust: |
+            fn total(nums: [i32; 3]) -> i32 {
+                nums[0] + nums[1] + nums[2]
+            }
+
+            fn main() {
+                let scores = [4, 5, 6];
+                let sum = total(scores);
+                println!("{sum} {:?}", scores);
+            }
+          verify: run
+          expectStdout: "15 [4, 5, 6]\n"
+        answer: true
+        explanation: "`[i32; 3]` is Copy, so `total` gets its own copy of the array and `scores` is still valid."
+        concepts: [own.mixed, own.copy, own.fn-move]
+
+      - type: compiles
+        id: compiles-literal-param
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                shout("hello");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0382: use of moved value", why: "Nothing has moved yet. The argument is the wrong type." }
+            - { id: c, text: "None: a literal is turned into a `String` for you", why: "Rust doesn't convert it. Write `String::from(\"hello\")`." }
+          answer: a
+        explanation: "`\"hello\"` is a string literal, not a `String`. Passing `String::from(\"hello\")` would compile."
+        concepts: [own.mixed, string.string-vs-literal, err.E0308]
+
+      - type: compiles
+        id: compiles-into-array
+        code:
+          rust: |
+            let first = String::from("Al");
+            let second = String::from("Bo");
+            let team = [first, second];
+            println!("{first}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `first`" }
+            - { id: b, text: "None: the array copies its items", why: "Only Copy items are copied. `String`s move into the array." }
+            - { id: c, text: "E0382: borrow of moved value: `team`", why: "`team` is the new owner and is valid." }
+          answer: a
+        explanation: "Both `String`s moved into `team`, so `first` can't be printed."
+        concepts: [own.mixed, err.E0382]
+
+      - type: decode-error
+        id: decode-loop-fix
+        prompt: "Which change makes this compile and print `Go!` twice, then `Go`?"
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let cheer = String::from("Go");
+                for _ in 0..2 {
+                    shout(cheer);
+                }
+                println!("{cheer}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "shout(cheer.clone());" }
+          - { id: b, code: "let cheer = cheer;", why: "Shadowing inside the loop still moves `cheer` on the first pass." }
+          - { id: c, code: "shout(String::from(cheer));", why: "`String::from(cheer)` takes `cheer` by value, so it still moves." }
+        answer: a
+        explanation: "Replacing line 8 with a clone gives each call its own `String`. `cheer` never moves, so line 10 works too."
+        concepts: [own.mixed, own.clone, own.fn-move]
+
+      - type: mcq
+        id: mcq-diagram-loop
+        prompt: "Inside the second pass of the loop in the fixed program, which diagram is right?"
+        diagram:
+          caption: "Option A"
+          frames:
+            - name: main
+              vars:
+                - { name: cheer, points: h1 }
+            - name: shout
+              vars:
+                - { name: text, points: h2 }
+          heap:
+            - { id: h1, value: '"Go"' }
+            - { id: h2, value: '"Go"' }
+            - { id: h3, value: '"Go"', freed: true }
+        options:
+          - { id: a, text: "Option A, shown: one clone already freed, a second clone in use" }
+          - { id: b, text: "`cheer` is greyed out and `text` points at its text", why: "With the clone, `cheer` never moves. Each call gets a new copy." }
+          - { id: c, text: "`text` points at the same heap box as `cheer`", why: "A clone makes new heap text, so `text` has its own box." }
+        answer: a
+        explanation: "The first clone was dropped when the first call ended. The second call owns a fresh clone, and `cheer` still owns the original."
+        concepts: [own.mixed, own.clone, own.scope-drop]
+
+      - type: compiles
+        id: compiles-clone-swap
+        code:
+          rust: |
+            let a = String::from("x");
+            let b = a.clone();
+            let a = b;
+            println!("{a}");
+          verify: run
+          expectStdout: "x\n"
+        answer: true
+        explanation: "`b` is a clone, then moves into a new `a` that shadows the old one. Every use is valid."
+        concepts: [own.mixed, own.clone, var.shadowing]
+
+      - type: spot-bug
+        id: spot-tuple-fn
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn first(pair: (String, i32)) -> i32 {
+                pair.1
+            }
+
+            fn main() {
+                let p = (String::from("a"), 7);
+                let n = first(p);
+                println!("{n}");
+                println!("{}", p.1);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 9
+        explanation: "The whole tuple moved into `first` on line 7, because it contains a `String`. Reading `p.1` on line 9 is too late."
+        concepts: [own.mixed, own.fn-move, own.copy]
+
+      - type: true-false
+        id: tf-char-tuple-fn
+        prompt: "This compiles."
+        code:
+          rust: |
+            fn show(t: (char, bool)) {
+                println!("{:?}", t);
+            }
+
+            fn main() {
+                let flag = ('y', true);
+                show(flag);
+                show(flag);
+            }
+          verify: run
+          expectStdout: "('y', true)\n('y', true)\n"
+        answer: true
+        explanation: "`(char, bool)` is Copy, so each call gets its own copy and `flag` can be passed again."
+        concepts: [own.mixed, own.copy]
+
+  - id: l3
+    exercises:
+      - type: compiles
+        id: compiles-loop-break
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let name = String::from("Mo");
+                loop {
+                    shout(name);
+                    break;
+                }
+            }
+          verify: run
+          expectStdout: "Mo!\n"
+        answer: true
+        explanation: "The `break` straight after the move means the loop body never runs a second time, so `name` only moves once."
+        concepts: [own.mixed, ctrl.loop, own.fn-move]
+
+      - type: compiles
+        id: compiles-if-expr-move
+        code:
+          rust: |
+            let saved = String::from("old");
+            let fresh = true;
+            let shown = if fresh {
+                String::from("new")
+            } else {
+                saved
+            };
+            println!("{shown} {saved}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `saved`" }
+            - { id: b, text: "None: `fresh` is true, so `saved` doesn't move", why: "The compiler checks both branches. In the `else` branch, `saved` moves." }
+            - { id: c, text: "E0308: `if` and `else` have different types", why: "Both branches give a `String`." }
+          answer: a
+        explanation: "`saved` might move in the `else` branch, so the compiler treats it as possibly moved on line 8."
+        concepts: [own.mixed, ctrl.if-expr, err.E0382]
+
+      - type: fill-tokens
+        id: fill-marathon
+        prompt: Fill the blanks so the program compiles and prints `3 Al Al`
+        code:
+          rust: |
+            fn keep(name: String) -> String {
+                name
+            }
+
+            fn main() {
+                let wins = 3;
+                let player = String::from("Al");
+                let copy = player.___1___();
+                let back = keep(___2___);
+                println!("{wins} {copy} {back}");
+            }
+          verify: run
+          expectStdout: "3 Al Al\n"
+        blanks:
+          "1": { answer: ["clone"] }
+          "2": { answer: ["player"] }
+        bank: ["clone", "player", "copy", "wins", "len"]
+        explanation: "`copy` needs its own `String`, so clone `player` first. Then `player` moves into `keep` and comes back as `back`."
+        concepts: [own.mixed, own.clone, own.fn-return]
+
+      - type: decode-error
+        id: decode-for-move-label
+        prompt: "Which line does `value moved here, in previous iteration of loop` point at?"
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("la");
+                for _ in 0..3 {
+                    let part = word;
+                    println!("{part}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Line 4" }
+          - { id: b, text: "Line 3", why: "Line 3 is labelled `inside of this loop`. The move itself is on line 4." }
+          - { id: c, text: "Line 2", why: "Line 2 creates `word`. It's labelled with the type, which isn't Copy." }
+        answer: a
+        explanation: "On the first pass, line 4 moves `word` into `part`. On the second pass, line 4 tries to move it again."
+        concepts: [own.mixed, err.E0382, compiler.read-error]
+
+      - type: predict-output
+        id: predict-marathon
+        code:
+          rust: |
+            fn twice(s: String) -> String {
+                format!("{s}{s}")
+            }
+
+            fn main() {
+                let n = 2;
+                let m = n;
+                let s = twice(String::from("ab"));
+                println!("{n}{m} {s}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "22 abab" }
+          - { id: b, text: "2 abab", why: "`m` is a copy of `n`, so both print 2." }
+          - { id: c, text: "22 ab", why: "`twice` returns new text made from `s` written twice." }
+        answer: a
+        explanation: "Integers copy, so `n` and `m` are both 2. `twice` owns `s`, builds a new `String` from it with `format!`, and gives that back."
+        concepts: [own.mixed, own.fn-return]
+
+      - type: parsons
+        id: parsons-marathon
+        prompt: "Arrange the lines so the program compiles and prints `Kim Kim!`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let name = String::from("Kim");' }
+          - { id: l3, text: "    let mut loud = name.clone();" }
+          - { id: l4, text: '    loud.push_str("!");' }
+          - { id: l5, text: '    println!("{name} {loud}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let mut loud = name;" }
+          - { id: d2, text: '    name.push_str("!");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Kim Kim!\n"
+        explanation: "`name` is printed at the end, so `loud` must be a clone. Only `loud` is `mut`, so it gets the `!`."
+        concepts: [own.mixed, own.clone]
+
+      - type: compiles
+        id: compiles-destructure-copy
+        code:
+          rust: |
+            let point = (1, 'a');
+            let (n, c) = point;
+            println!("{n} {c} {:?}", point);
+          verify: run
+          expectStdout: "1 a (1, 'a')\n"
+        answer: true
+        explanation: "`(i32, char)` is Copy, so taking it apart copies the parts and `point` is still valid."
+        concepts: [own.mixed, own.copy, types.tuple]
+
+      - type: compiles
+        id: compiles-chain-fns
+        code:
+          rust: |
+            fn make() -> String {
+                String::from("job")
+            }
+
+            fn run(task: String) {
+                println!("{task}");
+            }
+
+            fn main() {
+                let task = make();
+                run(task);
+                run(task);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: use of moved value: `task`" }
+            - { id: b, text: "None: `make` can be called again", why: "It could, but the code passes `task` twice instead of calling `make()` again." }
+            - { id: c, text: "E0308: mismatched types", why: "`make` returns a `String` and `run` takes one, so the types match." }
+          answer: a
+        explanation: "`make` hands its `String` to `task`. The first `run(task)` moves it, so the second has nothing to pass."
+        concepts: [own.mixed, own.fn-move, own.fn-return]
+
+      - type: match-pairs
+        id: pairs-marathon
+        prompt: Match each line to what happens to `s`, a `String`
+        pairs:
+          - ["println!(\"{s}\");", "read; still valid"]
+          - ["let t = s;", "moved to t"]
+          - ["let t = s.clone();", "copied to new heap text"]
+          - ["takes(s);", "moved into a function"]
+          - ["let p = (s, 1);", "moved into a tuple"]
+        concepts: [own.mixed]

@@ -95,6 +95,7 @@ export const DiagramVar = z
 
 export const Diagram = z
   .object({
+    /** Inline Markdown (rendered to HTML at build time). */
     caption: z.string().optional(),
     frames: z.array(z.object({ name: z.string(), vars: z.array(DiagramVar).min(1) }).strict()).min(1),
     heap: z

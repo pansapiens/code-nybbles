@@ -1,0 +1,153 @@
+id: ownership.moves.code-read-who-owns
+title: Who owns the String?
+concepts: []
+reviewConcepts: [own.move, own.copy, own.clone, own.fn-move, own.fn-return, own.scope-drop, err.E0382]
+program:
+  rust: |
+    fn create() -> String {
+        String::from("tea")
+    }
+
+    fn add_milk(mut drink: String) -> String {
+        drink.push_str(" with milk");
+        drink
+    }
+
+    fn finish(drink: String) {
+        println!("Finished {drink}");
+    }
+
+    fn main() {
+        let order = create();
+        let order = add_milk(order);
+        let spare = order.clone();
+        finish(order);
+        println!("Spare: {spare}");
+    }
+  verify: run
+  expectStdout: |
+    Finished tea with milk
+    Spare: tea with milk
+chunks:
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: create-owner
+        prompt: "When `create` returns, what happens to the new `String`?"
+        options:
+          - { id: a, text: "It moves out to whoever called `create`" }
+          - { id: b, text: "It's dropped at the `}` on line 3", why: "It's the return value, so it moves out instead of being dropped." }
+          - { id: c, text: "It's copied, and the original is dropped", why: "`String` isn't Copy. Returning moves it, with no copy of the text." }
+        answer: a
+        explanation: "`-> String` with the `String` as the last expression hands ownership to the caller."
+        concepts: [own.fn-return]
+  - lines: 5
+    exercises:
+      - type: mcq
+        id: add-milk-signature
+        prompt: "What does the signature on line 5 tell you about ownership?"
+        options:
+          - { id: a, text: "`add_milk` takes ownership of a `String` and gives one back" }
+          - { id: b, text: "`add_milk` gets a copy, so the caller keeps its `String`", why: "A `String` parameter takes ownership. Only Copy types are copied in." }
+          - { id: c, text: "`mut` means the caller's variable must be `mut`", why: "`mut drink` only lets `add_milk` change its own parameter." }
+        answer: a
+        explanation: "`drink: String` takes ownership; `-> String` returns it. `mut` lets the function call `push_str` on it."
+        concepts: [own.fn-move, own.fn-return]
+      - type: true-false
+        id: add-milk-semicolon
+        prompt: "If line 7 were `drink;`, the text would be dropped at the end of `add_milk`, and the program would not compile."
+        answer: true
+        explanation: "With `;` the body returns `()`, which doesn't match `-> String` (E0308). The `String` would be dropped at the `}`."
+        concepts: [own.fn-return, err.E0308]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: finish-drop
+        prompt: "When is the `String` passed to `finish` freed?"
+        options:
+          - { id: a, text: "At the `}` on line 12, when `drink` goes out of scope" }
+          - { id: b, text: "Back in `main`, at the end of the program", why: "`finish` doesn't return it, so ownership never goes back to `main`." }
+          - { id: c, text: "Never: `println!` takes it", why: "`println!` only reads the value. `drink` still owns it." }
+        answer: a
+        explanation: "`finish` owns `drink` and returns nothing, so the text is dropped when `finish` ends."
+        concepts: [own.fn-move, own.scope-drop]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: after-line-16
+        prompt: "Which diagram matches the memory after line 16?"
+        diagram:
+          caption: "Option A"
+          frames:
+            - name: main
+              vars:
+                - { name: order, points: h1 }
+          heap:
+            - { id: h1, value: '"tea with milk"' }
+        options:
+          - { id: a, text: "Option A, shown: the second `order` owns `tea with milk`" }
+          - { id: b, text: "Two heap boxes: `tea` and `tea with milk`", why: "`add_milk` changed the same `String`. No second text was made." }
+          - { id: c, text: "`order` greyed out as moved", why: "The first `order` moved, but line 16 shadows it with a new `order` that owns the returned `String`." }
+        answer: a
+        explanation: "The `String` went into `add_milk`, got ` with milk`, and came back out to the new `order`."
+        concepts: [own.fn-return, own.move]
+      - type: true-false
+        id: same-heap
+        prompt: "Through lines 15 and 16 there is only ever one heap text."
+        answer: true
+        explanation: "`create` makes it, and `add_milk` takes it, changes it and gives it back. Moves never copy the text."
+        concepts: [own.move, own.fn-return]
+  - lines: 2
+    exercises:
+      - type: mcq
+        id: after-clone
+        prompt: "After line 17, how many `String`s exist and who owns them?"
+        diagram:
+          caption: "After line 17?"
+          frames:
+            - name: main
+              vars:
+                - { name: order, points: h1 }
+                - { name: spare, points: h2 }
+          heap:
+            - { id: h1, value: '"tea with milk"' }
+            - { id: h2, value: '"tea with milk"' }
+        options:
+          - { id: a, text: "Two: `order` owns one and `spare` owns a clone, as shown" }
+          - { id: b, text: "One, owned by `spare`; `order` has moved", why: "`.clone()` doesn't move `order`. It makes a second `String`." }
+          - { id: c, text: "One, shared by `order` and `spare`", why: "A `String` has one owner. A clone copies the text to new heap space." }
+        answer: a
+        explanation: "`.clone()` makes a separate heap text, so both variables own a `String`."
+        concepts: [own.clone]
+      - type: mcq
+        id: after-finish
+        prompt: "After line 18, who owns a `String`?"
+        options:
+          - { id: a, text: "Only `spare`" }
+          - { id: b, text: "`order` and `spare`", why: "`finish(order)` moved `order`'s `String` in, and `finish` dropped it." }
+          - { id: c, text: "Nobody", why: "The clone is separate, so `spare` still owns its text." }
+        answer: a
+        explanation: "`order`'s `String` moved into `finish` and was dropped there. `spare` owns the clone."
+        concepts: [own.fn-move, own.clone]
+  - lines: 2
+    exercises:
+      - type: mcq
+        id: swap-lines
+        prompt: "What if lines 17 and 18 were swapped?"
+        options:
+          - { id: a, text: "Error E0382: `order` would be cloned after it moved into `finish`" }
+          - { id: b, text: "It would work the same", why: "After `finish(order)`, `order` is invalid, so `order.clone()` can't run." }
+          - { id: c, text: "`spare` would print an empty string", why: "Rust doesn't leave moved variables empty. It refuses to compile." }
+        answer: a
+        explanation: "The clone must happen while `order` still owns the text, before the move into `finish`."
+        concepts: [err.E0382, own.clone]
+      - type: mcq
+        id: output
+        prompt: "What does line 19 print?"
+        options:
+          - { id: a, text: "`Spare: tea with milk`" }
+          - { id: b, text: "`Spare: tea`", why: "The clone was made on line 17, after the milk was added." }
+          - { id: c, text: "Nothing: the text was dropped in `finish`", why: "`finish` dropped `order`'s text. `spare` has its own." }
+        answer: a
+        explanation: "`spare` is a clone of `tea with milk`, made before `order` moved into `finish`."
+        concepts: [own.clone]

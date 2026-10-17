@@ -1,0 +1,18 @@
+id: ownership.in-practice
+title: Ownership in Practice
+description: Choose parameter types, fix common borrow-checker errors and loop over arrays without losing them.
+colour: pink
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html
+sources:
+  - name: The Rust Programming Language, ch. 4
+    url: https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-param-choice
+  - level: level-02-fixes
+  - chest
+  - level: level-03-iter-ref
+  - code-read: code-read-swap-and-sum
+  - checkpoint: checkpoint-ownership

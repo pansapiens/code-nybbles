@@ -1,0 +1,19 @@
+id: ownership.slices
+title: Slices
+description: Borrow part of a string or array as a slice, without copying it.
+colour: orange
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch04-03-slices.html
+sources:
+  - name: The Rust Programming Language, ch. 4.3
+    url: https://doc.rust-lang.org/book/ch04-03-slices.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-str-slices
+  - level: level-02-str-params
+  - level: level-03-array-slices
+  - chest
+  - level: level-04-utf8
+  - level: level-05-first-word
+  - checkpoint: checkpoint-slices

@@ -1,0 +1,613 @@
+id: ownership.in-practice.param-choice
+title: "Choosing T, &T or &mut T"
+icon: key
+concepts: [own.param-choice]
+reviewConcepts: [own.fn-move, own.fn-return, own.copy, own.clone, borrow.shared, borrow.mut, borrow.exclusive, slice.str-param, err.E0382, err.E0502]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-three-ways
+        title: Ask what the function does
+        markdown: |
+          **Pick the parameter type by what the function does with the value.**
+
+          - Only reads it: take a shared reference, `&T` (for text, `&str`).
+          - Changes it for the caller: take `&mut T`.
+          - Keeps it or uses it up: take `T`. Ownership moves into the function.
+        code:
+          rust: |
+            fn show(name: &str) {
+                println!("Hi, {name}");
+            }
+
+            fn shout(name: &mut String) {
+                name.push_str("!");
+            }
+
+            fn main() {
+                let mut name = String::from("Ann");
+                shout(&mut name);
+                show(&name);
+            }
+          verify: run
+          expectStdout: "Hi, Ann!\n"
+        diagram:
+          caption: "During shout(&mut name)"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+            - name: shout
+              vars:
+                - { name: name, points: name }
+          heap:
+            - { id: h1, value: '"Ann"' }
+        concepts: [own.param-choice]
+
+      - type: mcq
+        id: mcq-only-prints
+        prompt: "A function only prints the text it's given. Which parameter type fits best?"
+        options:
+          - { id: a, code: "fn print_title(title: &str)" }
+          - { id: b, code: "fn print_title(title: String)", why: "This takes ownership, so the caller can't use its `String` after the call. Printing doesn't need ownership." }
+          - { id: c, code: "fn print_title(title: &mut String)", why: "The function doesn't change the text, so it doesn't need write access. The caller would also need a `mut` variable." }
+        answer: a
+        explanation: "Reading only needs a shared borrow. `&str` accepts both `&String` and string literals."
+        concepts: [own.param-choice, slice.str-param]
+
+      - type: true-false
+        id: tf-moved-into-fn
+        prompt: "The diagram shows memory during `register(name)`, where `register` takes `name: String`. After the call, `main` can still print `name`."
+        diagram:
+          caption: "During register(name)"
+          frames:
+            - name: main
+              vars:
+                - { name: name, moved: true }
+            - name: register
+              vars:
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ferris"' }
+        answer: false
+        explanation: "A `String` parameter takes ownership, so `main`'s `name` is moved. When `register` ends, its `name` goes out of scope and the text is freed."
+        concepts: [own.param-choice, own.fn-move]
+
+      - type: predict-output
+        id: predict-add-point
+        code:
+          rust: |
+            fn add_point(score: &mut i32) {
+                *score += 1;
+            }
+
+            fn main() {
+                let mut score = 0;
+                add_point(&mut score);
+                add_point(&mut score);
+                println!("{score}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "0", why: "`&mut score` lets `add_point` change `main`'s `score` through the reference." }
+          - { id: c, text: "1", why: "Both calls run, and each adds 1 to the same variable." }
+        answer: a
+        explanation: "Each call gets a mutable reference to `main`'s `score`, and `*score += 1` changes the value it points at."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: concept
+        id: concept-read-the-body
+        title: Read the body
+        markdown: |
+          **The body tells you what the parameter needs.**
+
+          - Calls something that changes it, like `push_str`, or assigns through `*`: `&mut T`.
+          - Returns it, stores it, or passes it on to a function that takes `T`: `T`.
+          - Anything else: `&T`.
+
+          Here `finish` returns the text it's given, so it takes `String`.
+        code:
+          rust: |
+            fn finish(text: String) -> String {
+                let mut done = text;
+                done.push_str(".");
+                done
+            }
+
+            fn main() {
+                let note = String::from("Done");
+                let note = finish(note);
+                println!("{note}");
+            }
+          verify: run
+          expectStdout: "Done.\n"
+        concepts: [own.param-choice]
+
+      - type: mcq
+        id: mcq-push-str-body
+        prompt: "A function's whole body is `list.push_str(\", milk\");` and it returns nothing. The caller wants to keep using its list. Which type should `list` have?"
+        options:
+          - { id: a, code: "&mut String" }
+          - { id: b, code: "&String", why: "A shared reference only lets the function read. `push_str` needs to change the text." }
+          - { id: c, code: "String", why: "The function would own the list, and the caller would lose it. Changing the caller's list only needs a mutable borrow." }
+          - { id: d, code: "&str", why: "A `&str` is a read-only view. It can't grow." }
+        answer: a
+        explanation: "`push_str` changes the `String`, so the function needs write access without taking ownership: `&mut String`."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: compiles
+        id: compiles-assign-through-shared
+        code:
+          rust: |
+            fn add_bonus(score: &i32) {
+                *score += 10;
+            }
+
+            fn main() {
+                let mut score = 5;
+                add_bonus(&score);
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: false
+        followUp:
+          prompt: Which change makes it work and print `15`?
+          options:
+            - { id: a, text: "Take `score: &mut i32` and call `add_bonus(&mut score)`" }
+            - { id: b, text: "Take `score: i32` and call `add_bonus(score)`", why: "Then `add_bonus` gets its own copy of the number. Changing it wouldn't change `main`'s `score`." }
+            - { id: c, text: "Write `let mut score = 5;`", why: "`main` already has that. The parameter type `&i32` is what's read-only." }
+          answer: a
+        explanation: "You can't assign through a shared reference `&i32`. To change the caller's value, both the parameter and the call need `&mut`."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: predict-output
+        id: predict-copy-arg
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                let level = 4;
+                let next = double(level);
+                println!("{level} {next}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "4 8" }
+          - { id: b, text: "8 8", why: "`double` gets a copy of `level` and returns a new number. `level` itself doesn't change." }
+          - { id: c, text: "4 4", why: "`next` holds what `double` returned, which is `4 * 2`." }
+        answer: a
+        explanation: "`i32` is `Copy`, so passing it by value gives the function a copy. `level` stays 4 and is still usable."
+        concepts: [own.param-choice, own.copy]
+
+      - type: match-pairs
+        id: pairs-param-types
+        pairs:
+          - ["&T", "read the value"]
+          - ["&mut T", "change the caller's value"]
+          - ["T", "take ownership"]
+          - [".clone()", "make a second owner"]
+        concepts: [own.param-choice, own.clone]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-copy-by-value
+        title: Small Copy values
+        markdown: |
+          **For small `Copy` values like `i32`, `bool` and `char`, take `T` to read them.** Copying a number is as cheap as making a reference, and the caller keeps its own value.
+
+          Use `&mut i32` only when the function should change the caller's variable.
+        code:
+          rust: |
+            fn is_adult(age: u32) -> bool {
+                age >= 18
+            }
+
+            fn main() {
+                let age = 20;
+                println!("{}", is_adult(age));
+                println!("{age}");
+            }
+          verify: run
+          expectStdout: "true\n20\n"
+        concepts: [own.param-choice, own.copy]
+
+      - type: decode-error
+        id: decode-print-name-moves
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn print_name(name: String) {
+                println!("Name: {name}");
+            }
+
+            fn main() {
+                let name = String::from("Ferris");
+                print_name(name);
+                println!("{}", name.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Take `name: &str` and call `print_name(&name)`" }
+          - { id: b, text: "Call `print_name(name.clone())`", why: "This compiles, but it copies the text for a function that only reads it. A borrow does the job without the copy." }
+          - { id: c, text: "Write `let mut name`", why: "`mut` lets a variable change. It doesn't stop the `String` moving into the function." }
+        answer: a
+        explanation: "`print_name` only reads its argument, so it should borrow. Then `main` still owns `name` on line 8."
+        concepts: [own.param-choice, err.E0382, slice.str-param]
+
+      - type: compiles
+        id: compiles-shared-for-mut
+        code:
+          rust: |
+            fn shout(name: &mut String) {
+                name.push_str("!");
+            }
+
+            fn main() {
+                let mut name = String::from("Bo");
+                shout(&name);
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0499: cannot borrow as mutable more than once", why: "There's only one borrow here, and it's a shared one." }
+            - { id: c, text: "E0382: borrow of moved value", why: "`&name` borrows. Nothing is moved." }
+          answer: a
+        explanation: "`shout` expects `&mut String` but gets `&String`. The two reference types differ, so the call must say `&mut name`."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: fill-tokens
+        id: fill-add-item
+        prompt: Fill the blanks so the program prints `eggs, milk`
+        code:
+          rust: |
+            fn add(list: ___1___, item: &str) {
+                list.push_str(item);
+            }
+
+            fn main() {
+                let mut list = String::from("eggs");
+                add(___2___, ", milk");
+                println!("{list}");
+            }
+          verify: run
+          expectStdout: "eggs, milk\n"
+        blanks:
+          "1": { answer: ["&mut String"] }
+          "2": { answer: ["&mut list"] }
+        bank: ["&mut String", "&String", "String", "&mut list", "&list", "list"]
+        explanation: "`push_str` changes the list, so the parameter is `&mut String` and the call passes `&mut list`. `main` still owns `list` afterwards."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: spot-bug
+        id: spot-reset-not-mut
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn reset(score: &mut i32) {
+                *score = 0;
+            }
+
+            fn main() {
+                let score = 42;
+                reset(&mut score);
+                println!("{score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: 6
+        explanation: "The compiler reports line 7, but the fix is on line 6: `let mut score = 42;`. You can only take `&mut` of a mutable variable."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: mcq
+        id: mcq-which-signature-diagram
+        prompt: "This diagram shows memory during a call to `save(report)`. Which signature does `save` have?"
+        diagram:
+          caption: "During save(report)"
+          frames:
+            - name: main
+              vars:
+                - { name: report, moved: true }
+            - name: save
+              vars:
+                - { name: report, points: h1 }
+          heap:
+            - { id: h1, value: '"Q3 sales"' }
+        options:
+          - { id: a, code: "fn save(report: String)" }
+          - { id: b, code: "fn save(report: &String)", why: "With a reference, `save`'s variable would point at `main`'s `report`, and `main`'s `report` wouldn't be moved." }
+          - { id: c, code: "fn save(report: &mut String)", why: "A mutable reference also borrows. `main` would keep ownership." }
+        answer: a
+        explanation: "`main`'s `report` is greyed out as moved, and `save`'s variable points straight at the heap text. That's ownership passing in, so the parameter is `String`."
+        concepts: [own.param-choice, own.fn-move]
+
+      - type: true-false
+        id: tf-mut-needs-let-mut
+        prompt: "To pass `&mut total` to a function, the caller's `total` must be declared with `let mut`."
+        answer: true
+        explanation: "A mutable reference allows changes, and Rust only allows changes to a `mut` variable. Without `let mut`, `&mut total` is error E0596."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: predict-output
+        id: predict-grow-show
+        code:
+          rust: |
+            fn grow(n: &mut i32) {
+                *n *= 2;
+            }
+
+            fn show(n: i32) {
+                println!("{n}");
+            }
+
+            fn main() {
+                let mut size = 3;
+                grow(&mut size);
+                show(size);
+                grow(&mut size);
+                show(size);
+            }
+          verify: run
+        options:
+          - { id: a, text: "6\n12" }
+          - { id: b, text: "6\n6", why: "The second `grow` doubles `size` again, from 6 to 12." }
+          - { id: c, text: "3\n3", why: "`grow` gets `&mut size`, so it changes `main`'s variable." }
+        answer: a
+        explanation: "`grow` changes `size` through the reference each time. `show` gets a copy of the current value and prints it."
+        concepts: [own.param-choice, borrow.mut, own.copy]
+
+      - type: mcq
+        id: mcq-why-not-all-mut
+        prompt: "Why not make every parameter `&mut T`, to be safe?"
+        options:
+          - { id: a, text: "A `&mut` borrow is exclusive. The caller couldn't hold any other reference during the call, and would need `let mut` even when nothing changes." }
+          - { id: b, text: "`&mut` references are slower than `&`", why: "Both are plain references at run time. The difference is what the borrow checker allows." }
+          - { id: c, text: "A function can't read through a `&mut`", why: "It can read and write through a `&mut`." }
+        answer: a
+        explanation: "Ask for the least access the function needs. A shared `&T` lets the caller keep other shared references alive and doesn't need `mut`."
+        concepts: [own.param-choice, borrow.exclusive]
+
+      - type: compiles
+        id: compiles-str-param-string
+        code:
+          rust: |
+            fn letters(name: &str) -> usize {
+                name.len()
+            }
+
+            fn main() {
+                let name = String::from("Ferris");
+                let n = letters(&name);
+                println!("{name} has {n}");
+            }
+          verify: run
+          expectStdout: "Ferris has 6\n"
+        answer: true
+        explanation: "`&name` is a `&String`, which Rust converts to `&str` for you. The function only borrows, so `name` is still usable on line 8."
+        concepts: [own.param-choice, slice.str-param]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-running-total
+        prompt: "`add_to(total: &mut u32, amount: u32)` adds `amount` to `total`. Arrange the lines so `main` prints `5`, then `12`."
+        lines:
+          - { id: l1, text: "    let mut total = 0;" }
+          - { id: l2, text: "    add_to(&mut total, 5);" }
+          - { id: l3, text: '    println!("{total}");' }
+          - { id: l4, text: "    add_to(&mut total, 7);" }
+          - { id: l5, text: '    println!("{total}");' }
+        distractors:
+          - { id: d1, text: "    let total = 0;" }
+          - { id: d2, text: "    add_to(total, 5);" }
+        answer: [l1, l2, l3, l4, l5]
+        alternatives:
+          - [l1, l2, l5, l4, l3]
+        verify:
+          harness: |
+            fn add_to(total: &mut u32, amount: u32) {
+                *total += amount;
+            }
+
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "5\n12\n"
+        explanation: "`total` needs `let mut` so you can pass `&mut total`. Passing `total` by value would give `add_to` a `u32`, not the reference it asks for."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: decode-error
+        id: decode-add-title
+        prompt: "Which fix lets `add_title` change `main`'s `name`?"
+        code:
+          rust: |
+            fn add_title(name: &String) {
+                name.push_str(" PhD");
+            }
+
+            fn main() {
+                let mut name = String::from("Ada");
+                add_title(&name);
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - { id: a, text: "Take `name: &mut String` and call `add_title(&mut name)`" }
+          - { id: b, text: "Take `name: String` and call `add_title(name)`", why: "The function could then change its own `String`, but `main`'s `name` would be moved and line 8 would fail." }
+          - { id: c, text: "Only change the call to `add_title(&mut name)`", why: "Rust accepts a `&mut String` where `&String` is expected, but inside the function `name` is still a `&String`. `push_str` fails the same way." }
+        answer: a
+        explanation: "The message says `name` is behind a `&` reference, so it can't be changed. The function needs `&mut String`, and the call needs `&mut name`."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: spot-bug
+        id: spot-log-twice
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn log(message: String) {
+                println!("[log] {message}");
+            }
+
+            fn main() {
+                let message = String::from("saved");
+                log(message);
+                log(message);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 8
+        explanation: "The first call moves `message` into `log`, so the second call uses a moved value (E0382). The compiler points at line 8."
+        concepts: [own.param-choice, err.E0382, own.fn-move]
+
+      - type: mcq
+        id: mcq-log-fix
+        prompt: "Which change lets both `log(...)` calls work without cloning?"
+        code:
+          rust: |
+            fn log(message: String) {
+                println!("[log] {message}");
+            }
+
+            fn main() {
+                let message = String::from("saved");
+                log(message);
+                log(message);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Take `message: &str` and call `log(&message)` twice" }
+          - { id: b, text: "Take `message: &mut String` and call `log(&mut message)` twice", why: "`log` doesn't change the text, and `message` isn't `mut`, so `&mut message` is an error." }
+          - { id: c, text: "Return `message` from `log` and ignore the result", why: "Returning gives ownership back only if you store it: `let message = log(message);`. Ignoring it drops the text." }
+        answer: a
+        explanation: "`log` only reads its text, so a shared borrow is enough. Borrowing twice is fine because neither borrow changes anything."
+        concepts: [own.param-choice, slice.str-param]
+
+      - type: fill-tokens
+        id: fill-show-shout
+        prompt: Fill the blanks so the program compiles and prints `Bo!`
+        code:
+          rust: |
+            fn show(name: ___1___) {
+                println!("{name}");
+            }
+
+            fn shout(name: ___2___) {
+                name.push_str("!");
+            }
+
+            fn main() {
+                let mut name = String::from("Bo");
+                shout(&mut name);
+                show(&name);
+            }
+          verify: run
+          expectStdout: "Bo!\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["&mut String"] }
+        bank: ["&str", "&mut String", "String", "mut String"]
+        explanation: "`show` only reads, so `&str` fits the `&name` call. `shout` changes the text, so it takes `&mut String` to match `&mut name`."
+        concepts: [own.param-choice, slice.str-param, borrow.mut]
+
+      - type: compiles
+        id: compiles-append-self
+        code:
+          rust: |
+            fn append(to: &mut String, from: &str) {
+                to.push_str(from);
+            }
+
+            fn main() {
+                let mut word = String::from("ha");
+                append(&mut word, &word);
+                println!("{word}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `word` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "E0499: cannot borrow `word` as mutable more than once", why: "Only one of the two borrows is `&mut`. The other is shared." }
+            - { id: c, text: "E0382: borrow of moved value", why: "Both arguments are borrows, so nothing moves." }
+          answer: a
+        explanation: "Both arguments are alive for the whole call, so `word` would be borrowed as `&mut` and `&` at once. To append a copy of itself, clone first: `let copy = word.clone();`."
+        concepts: [own.param-choice, err.E0502, borrow.exclusive]
+
+      - type: predict-output
+        id: predict-star-clone
+        code:
+          rust: |
+            fn add_star(text: &mut String) {
+                text.push_str("*");
+            }
+
+            fn main() {
+                let mut rating = String::from("*");
+                add_star(&mut rating);
+                let before = rating.clone();
+                add_star(&mut rating);
+                println!("{before} {rating}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "** ***" }
+          - { id: b, text: "*** ***", why: "`before` is a separate `String`, cloned before the second call. Changing `rating` doesn't change it." }
+          - { id: c, text: "** **", why: "The second `add_star` changes `rating` again, after the clone." }
+        answer: a
+        explanation: "`rating` becomes `**`, `before` gets its own copy, then `rating` becomes `***`."
+        concepts: [own.param-choice, own.clone, borrow.mut]
+
+      - type: true-false
+        id: tf-param-owns-heap
+        prompt: "The diagram shows memory during `shout(&mut name)`. Here, `shout`'s parameter owns the heap text."
+        diagram:
+          caption: "During shout(&mut name)"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: main-name, points: h1 }
+            - name: shout
+              vars:
+                - { name: name, points: main-name }
+          heap:
+            - { id: h1, value: '"Bo"' }
+        answer: false
+        explanation: "`shout`'s `name` points at `main`'s variable, not at the heap. It's a reference: `main` still owns the text, and nothing is freed when `shout` returns."
+        concepts: [own.param-choice, borrow.mut]
+
+      - type: match-pairs
+        id: pairs-body-to-type
+        prompt: Match each body line to the parameter type it needs
+        pairs:
+          - ['list.push_str("x");', "list: &mut String"]
+          - ['println!("{list}");', "list: &str"]
+          - ["*count += 1;", "count: &mut i32"]
+          - ["return list;", "list: String"]
+        concepts: [own.param-choice]
+
+      - type: mcq
+        id: mcq-u32-by-value
+        prompt: "Why is `fn is_adult(age: u32) -> bool` a better signature than `fn is_adult(age: &u32) -> bool`?"
+        options:
+          - { id: a, text: "`u32` is a small `Copy` type, so passing a copy is cheap and the caller keeps its value" }
+          - { id: b, text: "`&u32` wouldn't compile", why: "It compiles, but callers have to write `is_adult(&age)` for no benefit." }
+          - { id: c, text: "Passing `age` by value moves it, so the caller can't use it again", why: "`u32` is `Copy`. Passing it copies the number, and the caller's `age` is still usable." }
+        answer: a
+        explanation: "Borrowing exists to avoid moving or copying larger data. A `u32` is copied as cheaply as a reference, so take it by value."
+        concepts: [own.param-choice, own.copy]

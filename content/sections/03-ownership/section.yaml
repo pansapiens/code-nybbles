@@ -1,0 +1,10 @@
+id: ownership
+title: Ownership & Borrowing
+description: Build an accurate picture of who owns each value, when it moves, and how references let you borrow it.
+colour: rust
+units:
+  - unit-01-memory
+  - unit-02-moves
+  - unit-03-borrowing
+  - unit-04-slices
+  - unit-05-in-practice

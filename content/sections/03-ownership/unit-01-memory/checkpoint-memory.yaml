@@ -1,0 +1,269 @@
+id: ownership.memory.checkpoint
+title: "Checkpoint: Memory Basics"
+icon: flag
+concepts: []
+reviewConcepts: [mem.stack-heap, string.string-vs-literal, own.scope-drop, own.rules, var.mut, var.shadowing, err.E0308, err.E0384, expr.block, fn.define, ctrl.for, types.tuple]
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-scopes-grow
+        code:
+          rust: |
+            let mut log = String::from("a");
+            for _ in 0..3 {
+                log.push_str("b");
+            }
+            {
+                let log = log.len();
+                println!("{log}");
+            }
+            println!("{log}");
+          verify: run
+        options:
+          - { id: a, text: "4\nabbb" }
+          - { id: b, text: "4\n4", why: "The inner `log` is a shadow that ends at its `}`. The outer `log` is still the `String`." }
+          - { id: c, text: "1\na", why: "`log` is created outside the loop, so each `push_str` adds to it." }
+        answer: a
+        explanation: "The loop adds `b` to `log` three times. Inside the block, a shadow holds its length, 4; after the `}`, `log` is the `String` again."
+        concepts: [own.scope-drop, string.string-vs-literal, var.shadowing]
+
+      - type: compiles
+        id: compiles-literal-annotation
+        code:
+          rust: |
+            fn main() {
+                let mut motto: String = "go";
+                motto.push_str(" fast");
+                println!("{motto}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0599: no method named `push_str` found", why: "`motto` is declared as a `String`, which has `push_str`. The problem is the value on line 2." }
+            - { id: c, text: "E0596: cannot borrow as mutable", why: "`motto` is `mut`, so `push_str` is allowed." }
+          answer: a
+        explanation: "`\"go\"` is a `&str`, but `motto` is declared as a `String`. Write `String::from(\"go\")`."
+        concepts: [string.string-vs-literal, err.E0308]
+
+      - type: mcq
+        id: mcq-diagram-moment
+        prompt: Which line was the last to run, giving this picture?
+        code:
+          rust: |
+            fn main() {
+                let mut tag = String::from("v1");
+                {
+                    let note = String::from("tmp");
+                    tag = String::from("v2");
+                }
+                println!("{tag}");
+            }
+          verify: run
+          expectStdout: "v2\n"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: tag, points: h3 }
+          heap:
+            - { id: h1, value: '"v1"', freed: true }
+            - { id: h2, value: '"tmp"', freed: true }
+            - { id: h3, value: '"v2"' }
+        options:
+          - { id: a, text: "Line 6, the inner `}`" }
+          - { id: b, text: "Line 5", why: "After line 5, `note` is still in scope, so `\"tmp\"` wouldn't be freed yet." }
+          - { id: c, text: "Line 8, the end of `main`", why: "At the end of `main`, `tag` is dropped too, so `\"v2\"` would be freed." }
+        answer: a
+        explanation: "Line 5 dropped `\"v1\"` by replacing it, and the inner `}` dropped `note`'s `\"tmp\"`. `tag` still owns `\"v2\"`."
+        concepts: [own.rules, own.scope-drop]
+
+      - type: spot-bug
+        id: spot-push-literal
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut name = "Ada";
+                let count = 3;
+                for _ in 0..count {
+                    name.push_str("!");
+                }
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        answer: 2
+        explanation: "The error is reported on line 5, but the mistake is line 2: `name` is a `&str`. `String::from(\"Ada\")` makes text that can grow."
+        concepts: [string.string-vs-literal]
+
+      - type: true-false
+        id: tf-string-stack-size
+        prompt: "`String::from(\"a\")` and `String::from(\"a much longer piece of text\")` take the same amount of stack space."
+        answer: true
+        explanation: "Both are a pointer, a length and a capacity on the stack. Only their heap blocks differ in size."
+        concepts: [mem.stack-heap]
+
+      - type: decode-error
+        id: decode-block-value
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let size = {
+                    let word = String::from("tree");
+                    word.len()
+                };
+                println!("{word} has {size}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, text: "`word` was created inside the block, so it doesn't exist on line 6" }
+          - { id: b, text: "`size` can't hold the length of a `String`", why: "`size` is fine. It holds a number, which the block returned." }
+          - { id: c, text: "The block must end with `word`, not `word.len()`", why: "`word.len()` is a valid last expression. The problem is using `word` outside its block." }
+        answer: a
+        explanation: "`word` was dropped at the `}` on line 5. Only its length was kept, in `size`."
+        concepts: [own.scope-drop, expr.block, compiler.read-error]
+
+      - type: mcq
+        id: mcq-count-frees
+        prompt: "How many times is heap memory freed while this program runs?"
+        code:
+          rust: |
+            fn label(n: i32) {
+                let text = format!("#{n}");
+                println!("{text}");
+            }
+
+            fn main() {
+                let mut title = String::from("A");
+                title = String::from("B");
+                label(1);
+                label(2);
+                println!("{title}");
+            }
+          verify: run
+          expectStdout: "#1\n#2\nB\n"
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "Count `\"A\"` (replaced on line 8), each call's `text`, and `title` at the end of `main`." }
+          - { id: c, text: "2", why: "Each call to `label` makes and drops its own `String`, and there are two `String`s in `main` as well." }
+        answer: a
+        explanation: "`\"A\"` is dropped on line 8, `text` once per call to `label`, and `\"B\"` when `main` ends: 4 in total."
+        concepts: [own.rules, own.scope-drop, fn.define]
+
+      - type: fill-tokens
+        id: fill-scope-owner
+        prompt: "Fill the blanks so the program prints `hi there`"
+        code:
+          rust: |
+            fn main() {
+                let ___1___ msg = String::from("hi");
+                {
+                    let extra = " there";
+                    msg.___2___(extra);
+                }
+                println!("{___3___}");
+            }
+          verify: run
+          expectStdout: "hi there\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["push_str"] }
+          "3": { answer: ["msg"] }
+        bank: ["mut", "push_str", "msg", "extra", "len", "from"]
+        explanation: "`msg` must be `mut` to grow. `extra` is gone after the inner `}`, but its text was already copied into `msg`."
+        concepts: [own.scope-drop, string.string-vs-literal]
+
+      - type: true-false
+        id: tf-last-use
+        prompt: "`banner` is dropped on line 3, straight after its last use."
+        code:
+          rust: |
+            fn main() {
+                let banner = String::from("Hi");
+                println!("{banner}");
+                let total = 2 + 3;
+                println!("{total}");
+            }
+          verify: run
+          expectStdout: "Hi\n5\n"
+        answer: false
+        explanation: "`banner` is dropped when it goes out of scope, at the `}` on line 6, not after its last use."
+        concepts: [own.scope-drop, own.rules]
+
+      - type: compiles
+        id: compiles-tuple-mut
+        code:
+          rust: |
+            fn main() {
+                let pet = (String::from("Rex"), 0);
+                pet.0.push_str("!");
+                println!("{:?}", pet);
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`pet` needs `mut` to change the `String` it owns" }
+            - { id: b, text: "A tuple can't contain a `String`", why: "It can. The tuple owns the `String` and drops it when `pet` goes out of scope." }
+            - { id: c, text: "`pet.0` is a `&str`", why: "It's a `String`, made with `String::from`. The problem is the missing `mut`." }
+          answer: a
+        explanation: "Changing anything a variable owns, even a part of a tuple, needs `let mut pet`."
+        concepts: [own.rules, types.tuple, var.mut]
+
+      - type: match-pairs
+        id: pairs-unit-review
+        prompt: Match each idea to its description
+        pairs:
+          - ["stack", "fixed-size values in frames"]
+          - ["heap", "memory for data that can grow"]
+          - ["scope", "from let to the closing }"]
+          - ["drop", "freeing a value when its owner leaves scope"]
+          - ["owner", "the one variable responsible for a value"]
+        explanation: "Values live on the stack or heap, each has one owner, and it's dropped when the owner's scope ends."
+        concepts: [mem.stack-heap, own.scope-drop, own.rules]
+
+      - type: predict-output
+        id: predict-tiles-reassign
+        prompt: Build the output
+        code:
+          rust: |
+            let mut word = String::from("cat");
+            let first = word.len();
+            word = String::from("horse");
+            word.push_str("s");
+            let n = word.len();
+            println!("{first} {n} {word}");
+          verify: run
+        tiles: ["3", "6", "horses", "5", "cat", "horse"]
+        answer: "3 6 horses"
+        explanation: "`first` kept the number 3. `word` then got a new `String`, `horse`, and grew to `horses`, 6 bytes."
+        concepts: [own.rules, string.string-vs-literal]
+
+      - type: mcq
+        id: mcq-shadow-alive
+        prompt: "Right before the `}` on line 5, how many `String`s are on the heap?"
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Perth");
+                let city = String::from("Hobart");
+                println!("{city}");
+            }
+          verify: run
+          expectStdout: "Hobart\n"
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "1", why: "Shadowing hides the first `city`, but doesn't drop it. It's dropped at the end of `main`." }
+          - { id: c, text: "0", why: "Both are still in scope until the `}`." }
+        answer: a
+        explanation: "The second `let` makes a new variable. The first `String` is hidden but still alive until `main`'s `}`."
+        concepts: [own.scope-drop, var.shadowing]

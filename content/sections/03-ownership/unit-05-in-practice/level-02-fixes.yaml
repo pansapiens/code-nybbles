@@ -1,0 +1,548 @@
+id: ownership.in-practice.fixes
+title: Fixing borrow errors
+icon: wrench
+concepts: [borrow.fixes]
+reviewConcepts: [own.param-choice, own.move, err.E0382, own.clone, own.copy, own.fn-move, own.fn-return, borrow.shared, borrow.mut, borrow.exclusive, err.E0499, err.E0502, borrow.nll, slice.str-param]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-three-fixes
+        title: Three fixes
+        markdown: |
+          **Most borrow-checker errors have one of three fixes.**
+
+          1. **Borrow instead of move:** pass or store `&name`, not `name`.
+          2. **Restructure:** finish with one reference before you start a conflicting one.
+          3. **Clone** when you really need two separate owners.
+
+          Try them in that order. A clone copies the heap data.
+        code:
+          rust: |
+            let name = String::from("Ann");
+            let view = &name; // borrow, no move
+            println!("{view} {name}");
+          verify: run
+          expectStdout: "Ann Ann\n"
+        concepts: [borrow.fixes]
+
+      - type: decode-error
+        id: decode-e0382-city
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Hobart");
+                let home = city;
+                println!("{city} {home}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "`city` moved into `home` on line 3, so line 4 can't use `city`" }
+          - { id: b, text: "The text was freed on line 3", why: "Nothing is freed. The text is still alive, owned by `home` now." }
+          - { id: c, text: "`home` needs `mut`", why: "Nothing changes `home`. The problem is that `city` no longer owns anything." }
+        answer: a
+        explanation: "`let home = city;` moves the `String`, because `String` isn't `Copy`. Using `city` afterwards is E0382: borrow of moved value."
+        concepts: [borrow.fixes, err.E0382, own.move]
+
+      - type: mcq
+        id: mcq-fix-e0382-city
+        prompt: "`home` only needs to read the text. Which change to line 3 fixes it best?"
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Hobart");
+                let home = city;
+                println!("{city} {home}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "let home = &city;" }
+          - { id: b, code: "let home = city.clone();", why: "This compiles, but it copies the heap text when a borrow would do." }
+          - { id: c, code: "let mut home = city;", why: "Still a move. `mut` only lets `home` change." }
+        answer: a
+        explanation: "A shared borrow lets `home` read the text while `city` keeps ownership, so both can be printed."
+        concepts: [borrow.fixes, borrow.shared]
+
+      - type: concept
+        id: concept-e0505
+        title: No moving while borrowed
+        markdown: |
+          **You can't move a value while a reference to it is still in use.** That's error **E0505**. If `name` moved, `view` would point at a variable that no longer owns anything.
+
+          Fix it by finishing with `view` before the move.
+        code:
+          rust: |
+            let name = String::from("Ann");
+            let view = &name;
+            let owner = name; // error[E0505]
+            println!("{view} {owner}");
+          verify: compile-fail
+          expectErrors: [E0505]
+        diagram:
+          caption: "Before line 3: view still borrows name"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+                - { name: view, points: name }
+          heap:
+            - { id: h1, value: '"Ann"' }
+        concepts: [borrow.fixes]
+
+      - type: compiles
+        id: compiles-e0505-restructured
+        code:
+          rust: |
+            let name = String::from("Ann");
+            let view = &name;
+            println!("{view}");
+            let owner = name;
+            println!("{owner}");
+          verify: run
+          expectStdout: "Ann\nAnn\n"
+        answer: true
+        explanation: "`view` is last used on line 3, so its borrow has ended before `name` moves on line 4."
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: true-false
+        id: tf-clone-always
+        prompt: "`.clone()` is always the best fix for E0382."
+        answer: false
+        explanation: "A clone makes a second, separate copy of the data. If you only need to read the value, borrowing avoids the copy."
+        concepts: [borrow.fixes, own.clone]
+
+      - type: predict-output
+        id: predict-clone-separate
+        code:
+          rust: |
+            let mut first = String::from("tea");
+            let second = first.clone();
+            first.push_str("pot");
+            println!("{first} {second}");
+          verify: run
+        options:
+          - { id: a, text: "teapot tea" }
+          - { id: b, text: "teapot teapot", why: "The clone is a separate `String` with its own heap text. Changing `first` doesn't change it." }
+          - { id: c, text: "tea tea", why: "`push_str` changes `first`, after the clone was made." }
+        answer: a
+        explanation: "`second` gets its own copy of `tea`. Then only `first` grows."
+        concepts: [borrow.fixes, own.clone]
+
+      - type: decode-error
+        id: decode-e0506-score
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut score = 10;
+                let best = &score;
+                score = 20;
+                println!("{best}");
+            }
+          verify: compile-fail
+          expectErrors: [E0506]
+        options:
+          - { id: a, text: "`score` can't be changed while `best` still borrows it" }
+          - { id: b, text: "`score` isn't `mut`", why: "Line 2 says `let mut score`. The problem is the borrow." }
+          - { id: c, text: "`best` should be a `&mut` reference", why: "A mutable borrow would conflict with the assignment too." }
+        answer: a
+        explanation: "E0506 means assigning to a value that's borrowed. `best` is used on line 5, so its borrow covers line 4. To keep the old number, copy it: `let best = score;`."
+        concepts: [borrow.fixes]
+
+      - type: match-pairs
+        id: pairs-error-codes
+        pairs:
+          - ["E0382", "used after a move"]
+          - ["E0499", "two &mut at once"]
+          - ["E0502", "& and &mut overlap"]
+          - ["E0505", "moved while borrowed"]
+          - ["E0506", "assigned while borrowed"]
+        concepts: [borrow.fixes, err.E0382, err.E0499, err.E0502]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-restructure
+        title: Restructure
+        markdown: |
+          **A borrow lasts until its last use.** If two borrows clash, move the last use of the first one above the start of the second.
+
+          Here `r` is finished on line 3, so the `&mut` on line 4 is fine.
+        code:
+          rust: |
+            let mut total = 1;
+            let r = &total;
+            println!("{r}");
+            let w = &mut total;
+            *w += 5;
+            println!("{total}");
+          verify: run
+          expectStdout: "1\n6\n"
+        diagram:
+          caption: "After line 4: r's borrow has ended"
+          frames:
+            - name: main
+              vars:
+                - { name: total, id: total, value: "1" }
+                - { name: w, points: total }
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: decode-error
+        id: decode-e0499-name
+        prompt: Which fix keeps both changes?
+        code:
+          rust: |
+            fn main() {
+                let mut name = String::from("Ann");
+                let a = &mut name;
+                let b = &mut name;
+                a.push_str("ie");
+                b.push_str("!");
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "Swap lines 4 and 5, so `a` is finished before `b` starts" }
+          - { id: b, text: "Make `b` a shared borrow: `let b = &name;`", why: "That's still a borrow overlapping `a` (E0502), and you can't `push_str` through a `&`." }
+          - { id: c, text: "Write `let b = &mut name.clone();`", why: "It compiles, but `b` changes a copy. The `!` never reaches `name`." }
+        answer: a
+        explanation: "After the swap, `a`'s last use comes before `b` is created, so only one `&mut` is alive at a time. The program prints `Annie!`."
+        concepts: [borrow.fixes, err.E0499]
+
+      - type: compiles
+        id: compiles-e0502-cats
+        code:
+          rust: |
+            let mut word = String::from("cat");
+            let r = &word;
+            word.push_str("s");
+            println!("{r}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `word` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0499: cannot borrow `word` as mutable more than once", why: "`r` is a shared borrow, so there's only one mutable borrow, from `push_str`." }
+            - { id: c, text: "E0506: cannot assign to `word` because it is borrowed", why: "There's no `=` here. `push_str` borrows `word` mutably, which is E0502." }
+          answer: a
+        explanation: "`push_str` needs `&mut word` while `r` is still in use on line 4. Printing `r` before the `push_str` fixes it."
+        concepts: [borrow.fixes, err.E0502]
+
+      - type: spot-bug
+        id: spot-archive
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn archive(note: String) {
+                println!("archived {note}");
+            }
+
+            fn main() {
+                let note = String::from("todo");
+                let preview = &note;
+                archive(note);
+                println!("{preview}");
+            }
+          verify: compile-fail
+          expectErrors: [E0505]
+        answer: 8
+        explanation: "Line 8 moves `note` while `preview` still borrows it, because `preview` is used on line 9. That's E0505."
+        concepts: [borrow.fixes, own.fn-move]
+
+      - type: decode-error
+        id: decode-e0505-ticket
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn submit(ticket: String) {
+                println!("sent {ticket}");
+            }
+
+            fn main() {
+                let ticket = String::from("A1");
+                let label = &ticket;
+                submit(ticket);
+                println!("{label}");
+            }
+          verify: compile-fail
+          expectErrors: [E0505]
+        options:
+          - { id: a, text: "Move `println!(\"{label}\");` above `submit(ticket);`" }
+          - { id: b, text: "Write `let label = ticket;`", why: "Then `ticket` moves into `label`, and `submit(ticket)` is E0382." }
+          - { id: c, text: "Call `submit(&ticket)`", why: "`submit` takes a `String`, so passing `&String` is a type mismatch (E0308)." }
+        answer: a
+        explanation: "Once `label` is finished, nothing borrows `ticket`, so moving it into `submit` is allowed."
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: predict-output
+        id: predict-nll-count
+        code:
+          rust: |
+            let mut count = 1;
+            let r = &count;
+            println!("{r}");
+            count += 1;
+            println!("{count}");
+          verify: run
+        options:
+          - { id: a, text: "1\n2" }
+          - { id: b, text: "1\n1", why: "`count += 1` runs after the first print, so the second print shows 2." }
+          - { id: c, text: "2\n2", why: "`r` is printed before `count` changes." }
+        answer: a
+        explanation: "`r` is last used on line 3, so `count` can change on line 4. It compiles and prints 1, then 2."
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: mcq
+        id: mcq-diagram-after-move
+        prompt: "The diagram shows memory after `let b = a;`. Which line fails to compile next?"
+        diagram:
+          caption: "After let b = a;"
+          frames:
+            - name: main
+              vars:
+                - { name: a, moved: true }
+                - { name: b, id: b, points: h1 }
+          heap:
+            - { id: h1, value: '"Ann"' }
+        options:
+          - { id: a, code: 'println!("{a}");' }
+          - { id: b, code: 'println!("{b}");', why: "`b` owns the text now, so it can be printed." }
+          - { id: c, code: "let c = &b;", why: "Borrowing the current owner is fine." }
+        answer: a
+        explanation: "`a` is greyed out because its `String` moved to `b`. Using `a` again is E0382."
+        concepts: [borrow.fixes, err.E0382]
+
+      - type: true-false
+        id: tf-reorder-fixes-e0502
+        prompt: "Moving a reference's last use earlier can fix E0502 without any `.clone()`."
+        answer: true
+        explanation: "A borrow ends at its last use. If the shared borrow is finished before the mutable one starts, they no longer overlap."
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: fill-tokens
+        id: fill-backup-view
+        prompt: "Fill the blanks so the program prints `Perth Perth Perth`"
+        code:
+          rust: |
+            let city = String::from("Perth");
+            let backup = city.___1___();
+            let view = ___2___city;
+            println!("{backup} {view} {city}");
+          verify: run
+          expectStdout: "Perth Perth Perth\n"
+        blanks:
+          "1": { answer: ["clone"] }
+          "2": { answer: ["&"] }
+        bank: ["clone", "copy", "&", "&mut", "*"]
+        explanation: "`backup` gets its own copy through `clone()`, and `view` borrows with `&`. `city` still owns its text, so all three print."
+        concepts: [borrow.fixes, own.clone, borrow.shared]
+
+      - type: compiles
+        id: compiles-e0499-restructured
+        code:
+          rust: |
+            let mut code = String::from("1");
+            let a = &mut code;
+            a.push_str("2");
+            let b = &mut code;
+            b.push_str("3");
+            println!("{code}");
+          verify: run
+          expectStdout: "123\n"
+        answer: true
+        explanation: "`a` is last used on line 3, before `b` is created. Two `&mut` borrows one after the other are fine."
+        concepts: [borrow.fixes, borrow.nll, err.E0499]
+
+  - id: l3
+    exercises:
+      - type: decode-error
+        id: decode-e0506-first-score
+        prompt: Which fix makes it compile and print `3`?
+        code:
+          rust: |
+            fn main() {
+                let mut scores = [3, 5, 8];
+                let first = &scores[0];
+                scores[0] = 10;
+                println!("{first}");
+            }
+          verify: compile-fail
+          expectErrors: [E0506]
+        options:
+          - { id: a, code: "let first = scores[0];" }
+          - { id: b, code: "let first = &mut scores[0];", why: "That's still a borrow alive on line 4, so the assignment fails the same way." }
+          - { id: c, code: "let mut first = &scores[0];", why: "`mut` on `first` lets it point somewhere else later. It's still a borrow of `scores[0]`." }
+        answer: a
+        explanation: "`i32` is `Copy`, so `scores[0]` copies the number and nothing stays borrowed. `first` keeps 3 after `scores[0]` changes."
+        concepts: [borrow.fixes, own.copy]
+
+      - type: compiles
+        id: compiles-swap-same
+        code:
+          rust: |
+            fn swap(a: &mut i32, b: &mut i32) {
+                let temp = *a;
+                *a = *b;
+                *b = temp;
+            }
+
+            fn main() {
+                let mut x = 1;
+                swap(&mut x, &mut x);
+                println!("{x}");
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0499: cannot borrow `x` as mutable more than once at a time" }
+            - { id: b, text: "E0502: cannot borrow `x` as immutable because it is also borrowed as mutable", why: "Both borrows on line 9 are `&mut`." }
+            - { id: c, text: "E0382: use of moved value", why: "`x` is an `i32`, and the call only borrows it." }
+          answer: a
+        explanation: "Both arguments are alive for the whole call, so `x` would have two `&mut` borrows at once."
+        concepts: [borrow.fixes, err.E0499]
+
+      - type: parsons
+        id: parsons-cat-cats
+        prompt: Arrange the lines so the program compiles and prints `cat`, then `cats`
+        lines:
+          - { id: l1, text: '    let mut word = String::from("cat");' }
+          - { id: l2, text: "    let r = &word;" }
+          - { id: l3, text: '    println!("{r}");' }
+          - { id: l4, text: '    word.push_str("s");' }
+          - { id: l5, text: '    println!("{word}");' }
+        distractors:
+          - { id: d1, text: "    let r = word;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "cat\ncats\n"
+        explanation: "`r` has to be printed before `push_str`, so the shared borrow is over when the mutable one starts. `let r = word;` would move the text out of `word`."
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: spot-bug
+        id: spot-level-shown
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let mut level = 1;
+                let shown = &level;
+                level += 1;
+                println!("was {shown}");
+                println!("now {level}");
+            }
+          verify: compile-fail
+          expectErrors: [E0506]
+        answer: 4
+        explanation: "`+=` assigns to `level` while `shown` still borrows it (E0506). Printing `shown` before line 4, or writing `let shown = level;`, fixes it."
+        concepts: [borrow.fixes]
+
+      - type: mcq
+        id: mcq-when-clone
+        prompt: "You need the original `draft` and an edited version, and you print both at the end. Which fix fits?"
+        options:
+          - { id: a, text: "Clone `draft` and edit the clone" }
+          - { id: b, text: "Edit `draft` through `&mut draft`", why: "There's only one `String` then, so the original text is gone after the edit." }
+          - { id: c, text: "Reorder the lines so the borrows don't overlap", why: "Reordering can't give you two different texts. You need two separate `String`s." }
+        answer: a
+        explanation: "When you really need two independent values, a clone is the right fix. Each `String` has its own heap text."
+        concepts: [borrow.fixes, own.clone]
+
+      - type: decode-error
+        id: decode-add-dot
+        prompt: Which fix keeps the program's design and prints `Done.`?
+        code:
+          rust: |
+            fn add_dot(text: String) -> String {
+                let mut out = text;
+                out.push_str(".");
+                out
+            }
+
+            fn main() {
+                let text = String::from("Done");
+                add_dot(text);
+                println!("{text}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "let text = add_dot(text);" }
+          - { id: b, code: "add_dot(&text);", why: "`add_dot` takes a `String`, so `&text` is a type mismatch (E0308)." }
+          - { id: c, code: "let mut text = String::from(\"Done\");", why: "`mut` doesn't stop the move into `add_dot`, and the returned `String` is still thrown away." }
+        answer: a
+        explanation: "`add_dot` takes ownership and hands back the new `String`. Storing the result in a new `text` gives `main` an owner again."
+        concepts: [borrow.fixes, own.fn-return, err.E0382]
+
+      - type: fill-tokens
+        id: fill-len-keep
+        prompt: Fill the blanks so the program compiles
+        code:
+          rust: |
+            fn print_len(text: &str) {
+                println!("{}", text.len());
+            }
+
+            fn keep(text: String) {
+                println!("kept {text}");
+            }
+
+            fn main() {
+                let note = String::from("abc");
+                print_len(___1___);
+                keep(___2___);
+            }
+          verify: run
+          expectStdout: "3\nkept abc\n"
+        blanks:
+          "1": { answer: ["&note"] }
+          "2": { answer: ["note"] }
+        bank: ["&note", "note", "&mut note", "*note"]
+        explanation: "`print_len` borrows, so it gets `&note`. `keep` takes ownership, so `note` moves into it as the last use."
+        concepts: [borrow.fixes, own.param-choice]
+
+      - type: true-false
+        id: tf-move-after-last-use
+        prompt: "In the state shown, `let owner = name;` is allowed, as long as `view` is never used again."
+        diagram:
+          caption: "view borrows name"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+                - { name: view, points: name }
+          heap:
+            - { id: h1, value: '"Ann"' }
+        answer: true
+        explanation: "A borrow ends at its last use. If `view` isn't used after the move, nothing is borrowing `name`, so there's no E0505."
+        concepts: [borrow.fixes, borrow.nll]
+
+      - type: predict-output
+        id: predict-half-mut
+        code:
+          rust: |
+            let mut total = 10;
+            let half = total / 2;
+            let r = &mut total;
+            *r += half;
+            println!("{total} {half}");
+          verify: run
+        options:
+          - { id: a, text: "15 5" }
+          - { id: b, text: "10 5", why: "`*r += half` changes `total` through the mutable reference." }
+          - { id: c, text: "15 7", why: "`half` was copied out when `total` was 10, so it stays 5." }
+        answer: a
+        explanation: "`half` copies 5 out first, so there's no borrow to clash with. Then `r` adds 5 to `total`, and `r` is finished before the print."
+        concepts: [borrow.fixes, borrow.mut, own.copy]

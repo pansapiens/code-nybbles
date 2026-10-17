@@ -1,0 +1,584 @@
+id: ownership.in-practice.iter-ref
+title: Looping without losing the array
+icon: loop
+concepts: [own.iter-ref]
+reviewConcepts: [own.param-choice, borrow.fixes, ctrl.for, types.array, own.move, err.E0382, own.copy, own.clone, own.scope-drop, borrow.shared, borrow.exclusive, err.E0502, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-for-borrow
+        title: Loop over a reference
+        markdown: |
+          **`for name in &names` borrows the array.** Each pass, `name` is a `&String` pointing at one element. The array still owns its `String`s, so you can use `names` after the loop.
+        code:
+          rust: |
+            let names = [
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            for name in &names {
+                println!("Hi {name}");
+            }
+            println!("{} names", names.len());
+          verify: run
+          expectStdout: "Hi Ann\nHi Bo\n2 names\n"
+        diagram:
+          caption: "First pass of for name in &names"
+          frames:
+            - name: main
+              vars:
+                - { name: "names[0]", id: n0, points: h1 }
+                - { name: "names[1]", id: n1, points: h2 }
+                - { name: name, points: n0 }
+          heap:
+            - { id: h1, value: '"Ann"' }
+            - { id: h2, value: '"Bo"' }
+        concepts: [own.iter-ref]
+
+      - type: predict-output
+        id: predict-pets-borrow
+        code:
+          rust: |
+            let pets = [
+                String::from("cat"),
+                String::from("dog"),
+            ];
+            for pet in &pets {
+                println!("{pet}");
+            }
+            println!("{}", pets[0]);
+          verify: run
+        options:
+          - { id: a, text: "cat\ndog\ncat" }
+          - { id: b, text: "cat\ndog", why: "The last line prints `pets[0]` too. The loop only borrowed `pets`, so it's still there." }
+          - { id: c, text: "cat\ndog\ndog", why: "`pets[0]` is the first element, `cat`." }
+        answer: a
+        explanation: "The loop borrows each element in turn. Afterwards `pets` still owns both `String`s, so `pets[0]` prints `cat`."
+        concepts: [own.iter-ref]
+
+      - type: concept
+        id: concept-for-move
+        title: Loop over the array itself
+        markdown: |
+          **`for name in names` moves the `String`s out of the array.** Each pass, `name` owns one `String`, which is dropped at the end of that pass.
+
+          The array has moved into the loop, so using `names` afterwards is error **E0382**.
+        code:
+          rust: |
+            let names = [
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            for name in names {
+                println!("Hi {name}");
+            }
+            println!("{}", names.len()); // E0382
+          verify: compile-fail
+          expectErrors: [E0382]
+        diagram:
+          caption: "Second pass of for name in names"
+          frames:
+            - name: main
+              vars:
+                - { name: names, moved: true }
+                - { name: name, points: h2 }
+          heap:
+            - { id: h1, value: '"Ann"', freed: true }
+            - { id: h2, value: '"Bo"' }
+        concepts: [own.iter-ref, err.E0382]
+
+      - type: compiles
+        id: compiles-loop-moves-array
+        code:
+          rust: |
+            let cities = [
+                String::from("Perth"),
+                String::from("Hobart"),
+            ];
+            for city in cities {
+                println!("{city}");
+            }
+            println!("{}", cities.len());
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `cities`" }
+            - { id: b, text: "E0505: cannot move out of `cities` because it is borrowed", why: "Nothing borrows `cities` before the loop. The loop moves it, and line 8 uses it afterwards." }
+            - { id: c, text: "E0499: cannot borrow `cities` as mutable more than once", why: "There are no `&mut` borrows here." }
+          answer: a
+        explanation: "`for city in cities` moves the array into the loop. The compiler's help suggests `for city in &cities`."
+        concepts: [own.iter-ref, err.E0382]
+
+      - type: mcq
+        id: mcq-type-of-name
+        prompt: "`names` is a `[String; 2]`. Inside `for name in &names`, what type is `name`?"
+        options:
+          - { id: a, code: "&String" }
+          - { id: b, code: "String", why: "That's what you get from `for name in names`, which moves the `String`s out." }
+          - { id: c, code: "&[String; 2]", why: "That's the type of `&names`, the whole array. The loop gives you one element at a time." }
+        answer: a
+        explanation: "Looping over `&names` gives a shared reference to each element in turn."
+        concepts: [own.iter-ref, borrow.shared]
+
+      - type: compiles
+        id: compiles-copy-array-loop
+        code:
+          rust: |
+            let nums = [1, 2, 3];
+            for n in nums {
+                println!("{n}");
+            }
+            println!("{}", nums.len());
+          verify: run
+          expectStdout: "1\n2\n3\n3\n"
+        answer: true
+        explanation: "An array of `i32` is `Copy`, so the loop works on a copy and `nums` is still usable. Only arrays of non-`Copy` values like `String` are moved."
+        concepts: [own.iter-ref, own.copy]
+
+      - type: true-false
+        id: tf-borrow-keeps-array
+        prompt: "After `for x in &arr { }`, you can still use `arr`."
+        answer: true
+        explanation: "The loop only borrows `arr`, and the borrow ends when the loop does."
+        concepts: [own.iter-ref]
+
+      - type: fill-tokens
+        id: fill-loop-cities
+        prompt: "Fill the blank so the program prints `Perth`, `Hobart`, then `Hobart`"
+        code:
+          rust: |
+            let cities = [
+                String::from("Perth"),
+                String::from("Hobart"),
+            ];
+            for city in ___1___ {
+                println!("{city}");
+            }
+            println!("{}", cities[1]);
+          verify: run
+          expectStdout: "Perth\nHobart\nHobart\n"
+        blanks:
+          "1": { answer: ["&cities"] }
+        bank: ["&cities", "cities", "&mut cities", "*cities"]
+        explanation: "`&cities` borrows the array, so `cities[1]` still works after the loop. Plain `cities` would move it, and `&mut cities` needs `let mut`."
+        concepts: [own.iter-ref]
+
+      - type: mcq
+        id: mcq-which-header
+        prompt: "Which loop header gives this diagram?"
+        diagram:
+          caption: "First pass of the loop"
+          frames:
+            - name: main
+              vars:
+                - { name: "teams[0]", id: t0, points: h1 }
+                - { name: "teams[1]", id: t1, points: h2 }
+                - { name: team, points: t0 }
+          heap:
+            - { id: h1, value: '"Reds"' }
+            - { id: h2, value: '"Blues"' }
+        options:
+          - { id: a, code: "for team in &teams {" }
+          - { id: b, code: "for team in teams {", why: "Then `teams` would be moved, and `team` would point at the heap text itself, owning it." }
+        answer: a
+        explanation: "`team` points at the array element `teams[0]`, not at the heap. It's a reference, and the array still owns both `String`s."
+        concepts: [own.iter-ref]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-loop-move-fix
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let names = [
+                    String::from("Ann"),
+                    String::from("Bo"),
+                ];
+                for name in names {
+                    println!("{name}");
+                }
+                println!("{} names", names.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "for name in &names {" }
+          - { id: b, code: "for name in names.clone() {", why: "This compiles, but it copies every `String` when the loop only reads them." }
+          - { id: c, code: "let mut names = [", why: "`mut` lets the array change. The loop still moves it." }
+        answer: a
+        explanation: "The loop only prints, so borrowing the array is enough. Then `names` is still available on line 9."
+        concepts: [own.iter-ref, borrow.fixes]
+
+      - type: predict-output
+        id: predict-total-len
+        code:
+          rust: |
+            let words = [
+                String::from("hi"),
+                String::from("there"),
+            ];
+            let mut total = 0;
+            for word in &words {
+                total += word.len();
+            }
+            println!("{total} {}", words.len());
+          verify: run
+        options:
+          - { id: a, text: "7 2" }
+          - { id: b, text: "2 2", why: "`total` adds up the length of each word: 2 + 5." }
+          - { id: c, text: "7 7", why: "`words.len()` is the number of elements in the array, 2." }
+        answer: a
+        explanation: "The loop borrows each word to read its length, 2 then 5. The array is still usable, and it has 2 elements."
+        concepts: [own.iter-ref]
+
+      - type: compiles
+        id: compiles-borrow-then-move
+        code:
+          rust: |
+            let names = [
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            for name in &names {
+                println!("{name}");
+            }
+            let moved = names;
+            println!("{}", moved.len());
+          verify: run
+          expectStdout: "Ann\nBo\n2\n"
+        answer: true
+        explanation: "The loop's borrow ends with the loop, so `names` can move into `moved` afterwards."
+        concepts: [own.iter-ref, borrow.nll]
+
+      - type: spot-bug
+        id: spot-greet-loop
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn greet(name: String) {
+                println!("Hi {name}");
+            }
+
+            fn main() {
+                let names = [
+                    String::from("Ann"),
+                    String::from("Bo"),
+                ];
+                for name in names {
+                    greet(name);
+                }
+                println!("{}", names.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 13
+        explanation: "The loop on line 10 moves `names`, so line 13 uses a moved value. `greet(name)` itself is fine."
+        concepts: [own.iter-ref, err.E0382]
+
+      - type: mcq
+        id: mcq-why-greet-ok
+        prompt: "Why is `greet(name)` inside `for name in names` allowed?"
+        code:
+          rust: |
+            fn greet(name: String) {
+                println!("Hi {name}");
+            }
+
+            fn main() {
+                let names = [
+                    String::from("Ann"),
+                    String::from("Bo"),
+                ];
+                for name in names {
+                    greet(name);
+                }
+            }
+          verify: run
+          expectStdout: "Hi Ann\nHi Bo\n"
+        diagram:
+          caption: "During greet(name), first pass"
+          frames:
+            - name: main
+              vars:
+                - { name: names, moved: true }
+                - { name: name, moved: true }
+            - name: greet
+              vars:
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ann"' }
+        options:
+          - { id: a, text: "Each `name` owns its `String`, so it can move into `greet`" }
+          - { id: b, text: "`greet` only borrows `name`", why: "`greet` takes `name: String`, so it takes ownership." }
+          - { id: c, text: "`String` is `Copy`", why: "`String` isn't `Copy`. It moves." }
+        answer: a
+        explanation: "Looping over the array itself gives owned `String`s. Each one moves into `greet` and is freed when `greet` returns."
+        concepts: [own.iter-ref, own.fn-move]
+
+      - type: true-false
+        id: tf-all-dropped
+        prompt: "After this loop finishes, both `String`s from `names` have been freed."
+        code:
+          rust: |
+            let names = [
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            for name in names {
+                println!("{name}");
+            }
+          verify: run
+          expectStdout: "Ann\nBo\n"
+        answer: true
+        explanation: "Each pass, `name` owns one `String`, and it goes out of scope at the end of the pass. So each `String` is freed after it's printed."
+        concepts: [own.iter-ref, own.scope-drop]
+
+      - type: match-pairs
+        id: pairs-loop-kinds
+        pairs:
+          - ["for x in &names", "x is a &String"]
+          - ["for x in names", "x owns a String"]
+          - ["for x in nums (i32s)", "x is a copied i32"]
+          - ["names after the & loop", "still usable"]
+        concepts: [own.iter-ref, own.copy]
+
+      - type: predict-output
+        id: predict-tiles-pets
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let pets = [
+                String::from("cat"),
+                String::from("dog"),
+            ];
+            for pet in &pets {
+                print!("{pet}s ");
+            }
+            println!("{}", pets.len());
+          verify: run
+        tiles: ["cats", "dogs", "2", "cat", "dog", "0"]
+        answer: "cats dogs 2"
+        explanation: "Each pass prints the borrowed word with an `s` and a space. `pets` still has its 2 elements after the loop."
+        concepts: [own.iter-ref]
+
+      - type: decode-error
+        id: decode-change-while-looping
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut scores = [1, 2, 3];
+                for s in &scores {
+                    scores[0] += s;
+                }
+                println!("{scores:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "The loop borrows `scores` for its whole run, so you can't change `scores` inside it" }
+          - { id: b, text: "`scores` isn't `mut`", why: "Line 2 says `let mut scores`. The problem is the borrow held by the loop." }
+          - { id: c, text: "`s` is a reference, so it can't be added to a number", why: "Adding a `&i32` to an `i32` works. The error is about borrowing `scores`." }
+        answer: a
+        explanation: "`for s in &scores` keeps a shared borrow until the loop ends. Changing `scores[0]` needs a mutable borrow, which overlaps it (E0502)."
+        concepts: [own.iter-ref, err.E0502, borrow.exclusive]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-count-letters
+        prompt: "Arrange the lines so the program prints `5 letters in 2 names`"
+        lines:
+          - { id: l1, text: '    let names = [String::from("Ann"), String::from("Bo")];' }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    for name in &names {" }
+          - { id: l4, text: "        total += name.len();" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: '    println!("{total} letters in {} names", names.len());' }
+        distractors:
+          - { id: d1, text: "    for name in names {" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l2, l1, l3, l4, l5, l6]
+        verify:
+          harness: |
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "5 letters in 2 names\n"
+        explanation: "The loop has to borrow with `&names`, because `names.len()` is used after it. `for name in names` would move the array."
+        concepts: [own.iter-ref]
+
+      - type: compiles
+        id: compiles-last-ref
+        code:
+          rust: |
+            let names = [
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            let mut last = String::from("none");
+            for name in &names {
+                last = name;
+            }
+            println!("{last}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0382: use of moved value", why: "Nothing moves: the loop only borrows." }
+            - { id: c, text: "E0505: cannot move out of `names` because it is borrowed", why: "`last = name` copies a reference. It doesn't try to move the `String`." }
+          answer: a
+        explanation: "`last` is a `String`, but `name` is a `&String`. To keep your own copy, write `last = name.clone();`."
+        concepts: [own.iter-ref, err.E0308, own.clone]
+
+      - type: predict-output
+        id: predict-hottest
+        code:
+          rust: |
+            let temps = [20, 25, 30];
+            let mut hottest = 0;
+            for t in temps {
+                if t > hottest {
+                    hottest = t;
+                }
+            }
+            println!("{hottest} {}", temps[0]);
+          verify: run
+        options:
+          - { id: a, text: "30 20" }
+          - { id: b, text: "30 30", why: "`temps[0]` is the first element, 20. The loop didn't change the array." }
+          - { id: c, text: "20 20", why: "`hottest` is replaced each time a bigger value comes along, ending at 30." }
+        answer: a
+        explanation: "The loop gets a copy of the `i32` array, so `temps` is still usable. `hottest` ends at 30."
+        concepts: [own.iter-ref, own.copy]
+
+      - type: decode-error
+        id: decode-save-in-loop
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn save(note: String) {
+                println!("saved {note}");
+            }
+
+            fn main() {
+                let note = String::from("draft");
+                for i in 0..2 {
+                    println!("try {i}");
+                    save(note);
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Take `note: &str` and call `save(&note)`" }
+          - { id: b, text: "Call `save(note.clone())`", why: "This compiles, but it copies the text on every pass when `save` only reads it." }
+          - { id: c, text: "Write `let mut note`", why: "`mut` doesn't stop the first pass moving `note` into `save`." }
+        answer: a
+        explanation: "The first pass moves `note`, so the second pass has nothing to pass (\"value moved here, in previous iteration of loop\"). `save` only reads, so it should borrow."
+        concepts: [own.iter-ref, own.param-choice, err.E0382]
+
+      - type: fill-tokens
+        id: fill-two-loops
+        prompt: Fill the blanks so the program compiles
+        code:
+          rust: |
+            let names = [
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            for name in ___1___ {
+                println!("check {name}");
+            }
+            for name in ___2___ {
+                let kept: String = name;
+                println!("bye {kept}");
+            }
+          verify: run
+          expectStdout: "check Ann\ncheck Bo\nbye Ann\nbye Bo\n"
+        blanks:
+          "1": { answer: ["&names"] }
+          "2": { answer: ["names"] }
+        bank: ["&names", "names", "&mut names", "names.len()"]
+        explanation: "The first loop must borrow, because `names` is used again. The second loop needs owned `String`s for `kept`, so it moves the array."
+        concepts: [own.iter-ref]
+
+      - type: mcq
+        id: mcq-why-freed
+        prompt: "The diagram shows `for name in names` during its second pass. Why is the `\"Ann\"` box freed?"
+        diagram:
+          caption: "Second pass of for name in names"
+          frames:
+            - name: main
+              vars:
+                - { name: names, moved: true }
+                - { name: name, points: h2 }
+          heap:
+            - { id: h1, value: '"Ann"', freed: true }
+            - { id: h2, value: '"Bo"' }
+        options:
+          - { id: a, text: "`name` owned it on the first pass and went out of scope at the end of that pass" }
+          - { id: b, text: "Moving `names` into the loop freed it", why: "A move hands over ownership. It doesn't free anything." }
+          - { id: c, text: "Rust frees every `String` in the array when the loop starts", why: "Each `String` lives until its owner, `name` for that pass, goes out of scope." }
+        answer: a
+        explanation: "Looping over the array itself gives `name` ownership of one `String` per pass. At the end of each pass `name` is dropped, and its text is freed."
+        concepts: [own.iter-ref, own.scope-drop]
+
+      - type: true-false
+        id: tf-ref-loop-copies
+        prompt: "`for name in &names` makes a copy of each `String`."
+        answer: false
+        explanation: "No copies are made. Each `name` is a reference to the element in the array."
+        concepts: [own.iter-ref, borrow.shared]
+
+      - type: spot-bug
+        id: spot-joined
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let words = [
+                    String::from("a"),
+                    String::from("b"),
+                ];
+                let mut all = String::from("");
+                for word in words {
+                    all.push_str(&word);
+                }
+                println!("{all} {}", words.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 7
+        explanation: "The compiler reports line 10, but the mistake is on line 7: the loop moves `words`. `for word in &words` only borrows it."
+        concepts: [own.iter-ref, err.E0382]
+
+      - type: compiles
+        id: compiles-nested-borrows
+        code:
+          rust: |
+            let sides = [
+                String::from("x"),
+                String::from("o"),
+            ];
+            for a in &sides {
+                for b in &sides {
+                    print!("{a}{b} ");
+                }
+            }
+            println!();
+          verify: run
+          expectStdout: "xx xo ox oo \n"
+        answer: true
+        explanation: "Both loops take shared borrows of `sides`. Any number of shared borrows can be alive at once."
+        concepts: [own.iter-ref, borrow.exclusive]

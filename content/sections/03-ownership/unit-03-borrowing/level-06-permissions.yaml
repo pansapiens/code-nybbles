@@ -1,0 +1,475 @@
+id: ownership.borrowing.permissions
+title: Read, write and own
+icon: key
+concepts: [borrow.permissions]
+reviewConcepts: [borrow.shared, borrow.mut, borrow.exclusive, borrow.nll, own.move, own.clone]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-three-permissions
+        title: Three permissions
+        markdown: |
+          A handy way to predict the borrow checker: every variable carries up to three **permissions**.
+
+          - **R**ead: copy it, print it, borrow it with `&`
+          - **W**rite: change it
+          - **O**wn: move it, or drop it at the end of scope
+
+          `let` gives **R O**. `let mut` gives **R W O**.
+        code:
+          rust: |
+            let name = String::from("Ayr"); // R O
+            let mut score = 0;              // R W O
+            score += 1;
+            println!("{name} {score}");
+          verify: run
+          expectStdout: "Ayr 1\n"
+        diagram:
+          caption: "name: R O, score: R W O"
+          frames:
+            - name: main
+              vars:
+                - { name: name, points: h1 }
+                - { name: score, value: "1" }
+          heap:
+            - { id: h1, value: '"Ayr"' }
+        concepts: [borrow.permissions]
+
+      - type: mcq
+        id: mcq-let-permissions
+        prompt: "Which permissions does `city` have after `let city = String::from(\"Bega\");`?"
+        options:
+          - { id: a, text: "R O" }
+          - { id: b, text: "R W O", why: "Write comes only with `let mut`." }
+          - { id: c, text: "R", why: "The variable that holds a value owns it, so it has O as well." }
+        answer: a
+        explanation: "Every owner can read and own. Without `mut` there's no Write."
+        concepts: [borrow.permissions]
+
+      - type: true-false
+        id: tf-print-read
+        prompt: "Printing a variable needs only the Read permission."
+        answer: true
+        explanation: "`println!` only looks at the value, so Read is enough."
+        concepts: [borrow.permissions]
+
+      - type: concept
+        id: concept-borrow-removes
+        title: Borrowing takes permissions away
+        markdown: |
+          **While a borrow is in use, the owner temporarily loses permissions.**
+
+          - `let r = &s;`: `s` keeps **R** but loses W and O. Through `r` you get **R**.
+          - `let w = &mut s;`: `s` loses **all three**. Through `w` you get **R W**.
+
+          At the borrow's last use, `s` gets them back.
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;         // s: R
+            println!("{s} {r}");
+            s.push_str("!");    // s: R W O again
+          verify: run
+          expectStdout: "hi hi\n"
+        diagram:
+          caption: "After let r = &s;  s: R,  through r: R"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r, points: s }
+          heap:
+            - { id: h1, value: '"hi"' }
+        concepts: [borrow.permissions]
+
+      - type: mcq
+        id: mcq-mut-borrow-left
+        prompt: "While `let w = &mut s;` is still in use, which permissions does `s` have?"
+        options:
+          - { id: a, text: "None" }
+          - { id: b, text: "R", why: "Reading `s` while `w` could change it is E0502, so `s` loses Read too." }
+          - { id: c, text: "R W", why: "`w` is the only writer, so `s` can't write either." }
+        answer: a
+        explanation: "A `&mut` borrow is exclusive: until its last use, `s` can't be read, changed or moved."
+        concepts: [borrow.permissions, borrow.exclusive]
+
+      - type: compiles
+        id: compiles-move-while-borrowed
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("hi");
+                let r = &s;
+                let t = s;
+                println!("{r} {t}");
+            }
+          verify: compile-fail
+          expectErrors: [E0505]
+        answer: false
+        followUp:
+          prompt: Which permission is `s` missing on line 4?
+          options:
+            - { id: a, text: "Own: moving needs O, and the borrow `r` took it away" }
+            - { id: b, text: "Write: moving changes the text", why: "Moving doesn't change the text. It needs Own." }
+            - { id: c, text: "Read: `s` can't be read while borrowed", why: "A `&` borrow leaves `s` with Read." }
+          answer: a
+        explanation: "`r` is still used on line 5, so `s` has only R on line 4. Moving needs O (error E0505)."
+        concepts: [borrow.permissions, own.move]
+
+      - type: predict-output
+        id: predict-ok-bang
+        code:
+          rust: |
+            let mut msg = String::from("ok");
+            let w = &mut msg;
+            w.push_str("!");
+            println!("{msg}");
+          verify: run
+        options:
+          - { id: a, text: "ok!" }
+          - { id: b, text: "ok", why: "`w` changes `msg` itself before the print." }
+        answer: a
+        explanation: "`w`'s last use is line 3. On line 4 `msg` has its permissions back, so it can be read."
+        concepts: [borrow.permissions, borrow.nll]
+
+      - type: match-pairs
+        id: pairs-action-permission
+        prompt: Match each action to the permission it needs
+        pairs:
+          - ["println!(\"{s}\")", "Read"]
+          - ["s.push_str(\"!\")", "Write"]
+          - ["let t = s;", "Own"]
+        concepts: [borrow.permissions]
+
+      - type: true-false
+        id: tf-no-mut-no-write
+        prompt: "A variable declared without `mut` never has the Write permission."
+        answer: true
+        explanation: "Write comes only from `let mut`. That's why changing a non-`mut` variable is an error."
+        concepts: [borrow.permissions]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-missing-errors
+        title: Missing permission, error code
+        markdown: |
+          Most borrow errors are a missing permission:
+
+          | You try to... | while... | Error |
+          |---|---|---|
+          | change `s` | `&s` is in use | E0502 / E0506 |
+          | move `s` | `s` is borrowed | E0505 |
+          | move out of `*r` | always | E0507 |
+          | change through `&` | always | E0596 |
+
+          A reference never has O on the value it points at.
+        code:
+          rust: |
+            let mut score = 3;
+            let r = &score;
+            println!("{r}");
+            score = 10; // fine: r is finished
+            println!("{score}");
+          verify: run
+          expectStdout: "3\n10\n"
+        concepts: [borrow.permissions]
+
+      - type: compiles
+        id: compiles-assign-borrowed
+        code:
+          rust: |
+            fn main() {
+                let mut score = 3;
+                let r = &score;
+                score = 10;
+                println!("{r} {score}");
+            }
+          verify: compile-fail
+          expectErrors: [E0506]
+        answer: false
+        followUp:
+          prompt: Why?
+          options:
+            - { id: a, text: "`score` has lost Write while `r` is in use" }
+            - { id: b, text: "`score` isn't `mut`", why: "It is. Normally it has Write, but the borrow takes it away for a while." }
+            - { id: c, text: "`r` has no Read permission", why: "`r` can read. The problem is changing `score` under it." }
+          answer: a
+        explanation: "`r` is used on line 5, so on line 4 `score` has only R. Assigning needs W (error E0506)."
+        concepts: [borrow.permissions]
+
+      - type: decode-error
+        id: decode-move-out-of-ref
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let name = String::from("Eve");
+                let r = &name;
+                let owned = *r;
+                println!("{owned}");
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        options:
+          - { id: a, code: "let owned = r.clone();" }
+          - { id: b, code: "let mut owned = *r;", why: "`mut` gives `owned` Write. `*r` still has no Own, so it can't be moved out." }
+          - { id: c, code: "let owned = r;", why: "That compiles, but it copies the reference: `owned` is a `&String`, not a `String` it owns." }
+        answer: a
+        explanation: "Through `r` you have R, not O, so you can't move the `String` out. `clone` only needs R and makes a new `String` that `owned` owns."
+        concepts: [borrow.permissions, own.clone]
+
+      - type: true-false
+        id: tf-ref-own
+        prompt: "Through a `&String` reference, you have the Own permission on the `String`."
+        answer: false
+        explanation: "A reference gives R (or R W for `&mut`). Only the owner has O."
+        concepts: [borrow.permissions]
+
+      - type: predict-output
+        id: predict-copy-total
+        code:
+          rust: |
+            let mut total = 1;
+            let r = &mut total;
+            *r *= 10;
+            let copy = total;
+            total += 1;
+            println!("{copy} {total}");
+          verify: run
+        options:
+          - { id: a, text: "10 11" }
+          - { id: b, text: "11 11", why: "`copy` is a copy taken on line 4. Changing `total` later doesn't change it." }
+          - { id: c, text: "1 2", why: "`*r *= 10` changes `total` to 10 first." }
+        answer: a
+        explanation: "After `r`'s last use on line 3, `total` has R W O again, so it can be copied and changed."
+        concepts: [borrow.permissions, borrow.nll]
+
+      - type: mcq
+        id: mcq-diagram-allowed
+        prompt: "`w` is `&mut s` and is used again later. Which line is allowed here?"
+        diagram:
+          caption: "s: no permissions,  through w: R W"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: w, points: s }
+          heap:
+            - { id: h1, value: '"hey"' }
+        options:
+          - { id: a, code: "w.push_str(\"!\");" }
+          - { id: b, code: "println!(\"{s}\");", why: "`s` has no Read while `w` is in use (E0502)." }
+          - { id: c, code: "let t = s;", why: "`s` has no Own while it's borrowed (E0505)." }
+        answer: a
+        explanation: "All the permissions are with `w` for now, and `w` can read and write."
+        concepts: [borrow.permissions, borrow.exclusive]
+
+      - type: spot-bug
+        id: spot-needs-permission
+        prompt: "Tap the line that needs a permission `s` doesn't have at that point"
+        code:
+          rust: |
+            fn main() {
+                let mut s = String::from("ab");
+                let r = &s;
+                println!("{r}");
+                let w = &mut s;
+                w.push_str("c");
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 5
+        explanation: "`r` is used again on line 7, so on line 5 `s` has only R. A `&mut` borrow needs R and W."
+        concepts: [borrow.permissions]
+
+      - type: compiles
+        id: compiles-clone-read
+        code:
+          rust: |
+            let s = String::from("x");
+            let r1 = &s;
+            let r2 = &s;
+            let t = s.clone();
+            println!("{r1} {r2} {t}");
+          verify: run
+          expectStdout: "x x x\n"
+        answer: true
+        explanation: "`clone` only reads `s`, and `s` keeps R during the borrows. `t` owns a new copy."
+        concepts: [borrow.permissions, own.clone]
+
+      - type: match-pairs
+        id: pairs-missing
+        prompt: Match each mistake to its error code
+        pairs:
+          - ["move `s` while `&s` is in use", "E0505"]
+          - ["move out of `*r`", "E0507"]
+          - ["change through `&`", "E0596"]
+          - ["two `&mut s` in use", "E0499"]
+        concepts: [borrow.permissions, err.E0499]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-permissions
+        prompt: "Arrange the lines so the program compiles and prints `hi! hi!`"
+        lines:
+          - { id: l1, text: '    let mut s = String::from("hi");' }
+          - { id: l2, text: "    let w = &mut s;" }
+          - { id: l3, text: '    w.push_str("!");' }
+          - { id: l4, text: "    let r = &s;" }
+          - { id: l5, text: '    println!("{r} {s}");' }
+        distractors:
+          - { id: d1, text: "    let w = &s;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "hi! hi!\n"
+        explanation: "`w` must finish before `r` borrows. Then `s` and `r` both have R, so the last line can read both."
+        concepts: [borrow.permissions, borrow.nll]
+
+      - type: fill-tokens
+        id: fill-clone-mut
+        prompt: "Fill the blanks so the program prints `Mr. Mr`"
+        code:
+          rust: |
+            let title = String::from("Mr");
+            let r = &title;
+            let ___1___ mine = r.___2___();
+            mine.push_str(".");
+            println!("{mine} {title}");
+          verify: run
+          expectStdout: "Mr. Mr\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["clone"] }
+        bank: ["mut", "clone", "len", "&", "&mut"]
+        explanation: "`clone` needs only R, which `r` has. `mine` owns the new `String`, and `mut` gives it W for `push_str`."
+        concepts: [borrow.permissions, own.clone]
+
+      - type: decode-error
+        id: decode-e0505
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let song = String::from("la");
+                let r = &song;
+                let moved = song;
+                println!("{r}");
+                println!("{moved}");
+            }
+          verify: compile-fail
+          expectErrors: [E0505]
+        options:
+          - { id: a, text: "`song` can't move while `r` still borrows it: the borrow took its Own permission" }
+          - { id: b, text: "`song` must be `mut` to be moved", why: "Moving needs Own, not Write." }
+          - { id: c, text: "`r` was moved into `moved`", why: "Line 4 moves `song`, not `r`." }
+        answer: a
+        explanation: "`r` is used on line 5, so `song` has only R on line 4. Printing `r` before the move would fix it."
+        concepts: [borrow.permissions, own.move]
+
+      - type: predict-output
+        id: predict-abcd
+        code:
+          rust: |
+            let mut s = String::from("a");
+            let r = &s;
+            let n = r.len();
+            s.push_str("bc");
+            let w = &mut s;
+            w.push_str("d");
+            println!("{n} {s}");
+          verify: run
+        options:
+          - { id: a, text: "1 abcd" }
+          - { id: b, text: "4 abcd", why: "`n` was copied out on line 3, when `s` had one letter." }
+          - { id: c, text: "1 abc", why: "`w` changes `s` itself, adding `d`." }
+        answer: a
+        explanation: "Each borrow ends at its last use, and `s` gets its permissions back each time."
+        concepts: [borrow.permissions, borrow.nll]
+
+      - type: compiles
+        id: compiles-len-during-write
+        code:
+          rust: |
+            fn main() {
+                let mut name = String::from("Jo");
+                let w = &mut name;
+                let len = name.len();
+                w.push_str("e");
+                println!("{len}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which permission does `name` lack on line 4?
+          options:
+            - { id: a, text: "Read" }
+            - { id: b, text: "Write", why: "`len` only reads, but even Read is gone while `w` is in use." }
+            - { id: c, text: "Own", why: "It has lost Own too, but `len` doesn't need it. The missing one that matters is Read." }
+          answer: a
+        explanation: "`w` is used on line 5, so `name` has no permissions on line 4. Reading its length needs R (E0502)."
+        concepts: [borrow.permissions]
+
+      - type: true-false
+        id: tf-diagram-readers-done
+        prompt: "If `r1` and `r2` are never used again, `s.push_str(\"!\")` is allowed here."
+        diagram:
+          caption: "s: R,  through r1: R,  through r2: R"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r1, points: s }
+                - { name: r2, points: s }
+          heap:
+            - { id: h1, value: '"hi"' }
+        answer: true
+        explanation: "Once the borrows are past their last use, `s` gets W and O back, so a `let mut s` can change."
+        concepts: [borrow.permissions, borrow.nll]
+
+      - type: mcq
+        id: mcq-star-w-permissions
+        prompt: "For `let w = &mut s;`, which permissions do you get through `w`?"
+        options:
+          - { id: a, text: "R W" }
+          - { id: b, text: "R W O", why: "A reference never owns the value; `s` is still the owner." }
+          - { id: c, text: "W", why: "A `&mut` reference can read too." }
+        answer: a
+        explanation: "`&mut` lends Read and Write. Own stays with `s`, which gets its permissions back when `w` is finished."
+        concepts: [borrow.permissions]
+
+      - type: spot-bug
+        id: spot-needs-own
+        prompt: Tap the line that needs the Own permission on `a`
+        code:
+          rust: |
+            fn main() {
+                let a = String::from("x");
+                let r = &a;
+                println!("{r}");
+                let b = a;
+                println!("{b}");
+            }
+          verify: run
+          expectStdout: "x\nx\n"
+        answer: 5
+        explanation: "`let b = a;` moves `a`, which needs O. `r` is finished by then, so `a` has O back and the program compiles."
+        concepts: [borrow.permissions, own.move]
+
+      - type: match-pairs
+        id: pairs-states
+        prompt: "Match each moment to the permissions `s` has"
+        pairs:
+          - ["after `let s = ...`", "R O"]
+          - ["after `let mut s = ...`", "R W O"]
+          - ["while `&s` is in use", "R"]
+          - ["while `&mut s` is in use", "none"]
+        concepts: [borrow.permissions]

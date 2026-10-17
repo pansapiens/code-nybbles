@@ -1,0 +1,511 @@
+id: ownership.borrowing.exclusive
+title: One writer or many readers
+icon: lock
+concepts: [borrow.exclusive, err.E0499, err.E0502]
+reviewConcepts: [borrow.shared, borrow.mut, err.E0382]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-rule
+        title: The borrowing rule
+        markdown: |
+          **One writer or many readers.** While references to a value are in use, you can have **either**:
+
+          - any number of `&` references, **or**
+          - exactly one `&mut` reference.
+
+          Many readers at once is safe, because none of them can change the value.
+        code:
+          rust: |
+            let s = String::from("hi");
+            let a = &s;
+            let b = &s;
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "hi hi\n"
+        diagram:
+          caption: "Two readers: a and b both borrow s"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: a, points: s }
+                - { name: b, points: s }
+          heap:
+            - { id: h1, value: '"hi"' }
+        concepts: [borrow.exclusive]
+
+      - type: compiles
+        id: compiles-two-mut
+        code:
+          rust: |
+            fn main() {
+                let mut s = String::from("hi");
+                let r1 = &mut s;
+                let r2 = &mut s;
+                r1.push_str("!");
+                r2.push_str("?");
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0499: cannot borrow `s` as mutable more than once at a time" }
+            - { id: b, text: "E0596: cannot borrow `s` as mutable", why: "`s` is `mut`, so one `&mut` borrow is fine. The problem is the second one." }
+            - { id: c, text: "E0382: borrow of moved value", why: "Nothing moved. Both lines borrow `s`." }
+          answer: a
+        explanation: "`r1` and `r2` are both `&mut s`, and both are used afterwards, so two writers exist at once."
+        concepts: [borrow.exclusive, err.E0499]
+
+      - type: true-false
+        id: tf-three-readers
+        prompt: "You can have three `&` references to the same `String` in use at the same time."
+        answer: true
+        explanation: "Any number of `&` references is fine, because none of them can change the value."
+        concepts: [borrow.exclusive]
+
+      - type: concept
+        id: concept-no-read-while-write
+        title: No reading during a change
+        markdown: |
+          **A `&` and a `&mut` can't overlap either.** If `r` is still going to read `s`, nothing may change `s` in the meantime. Breaking this rule is error **E0502**.
+
+          Calling `s.push_str` borrows `s` as `&mut` for the call.
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &s;
+            s.push_str("!");
+            println!("{r}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        diagram:
+          caption: "r still reads s later, so s can't change"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r, points: s }
+          heap:
+            - { id: h1, value: '"hi"' }
+        concepts: [borrow.exclusive, err.E0502]
+
+      - type: compiles
+        id: compiles-mut-then-shared
+        code:
+          rust: |
+            fn main() {
+                let mut s = String::from("ok");
+                let w = &mut s;
+                let r = &s;
+                w.push_str("!");
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `s` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "There's only one `&mut` here. The clash is between `w` and the `&` reference `r`." }
+            - { id: c, text: "E0596: cannot borrow `*r` as mutable", why: "Nothing changes the text through `r`. It only reads." }
+          answer: a
+        explanation: "`w` writes on line 5 and `r` reads on line 6, so a writer and a reader are in use at the same time."
+        concepts: [borrow.exclusive, err.E0502]
+
+      - type: mcq
+        id: mcq-which-pair
+        prompt: Which pair of references to the same `String` can be in use at the same time?
+        options:
+          - { id: a, text: "Two `&` references" }
+          - { id: b, text: "A `&` and a `&mut`", why: "The reader could see the text change under it. That's E0502." }
+          - { id: c, text: "Two `&mut` references", why: "Two writers at once is E0499." }
+        answer: a
+        explanation: "Readers can share. A writer must be the only reference in use."
+        concepts: [borrow.exclusive]
+
+      - type: predict-output
+        id: predict-two-lens
+        code:
+          rust: |
+            let city = String::from("Cairns");
+            let r1 = &city;
+            let r2 = &city;
+            println!("{} {}", r1.len(), r2.len());
+          verify: run
+        options:
+          - { id: a, text: "6 6" }
+          - { id: b, text: "6", why: "Both references are used, so both lengths are printed." }
+          - { id: c, text: "6 0", why: "Borrowing doesn't use up the text. `r2` sees the same `String` as `r1`." }
+        answer: a
+        explanation: "`r1` and `r2` are two readers of the same `String`, which has 6 letters."
+        concepts: [borrow.exclusive, borrow.shared]
+
+      - type: true-false
+        id: tf-diagram-writer
+        prompt: "`w` is `&mut s` and is used again later. While `w` is still in use, you can add `let r = &s;` and print `r`."
+        diagram:
+          caption: "After let w = &mut s;"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: w, points: s }
+          heap:
+            - { id: h1, value: '"tea"' }
+        answer: false
+        explanation: "While a `&mut` borrow is in use it must be the only reference. A reader next to it is E0502."
+        concepts: [borrow.exclusive, err.E0502]
+
+      - type: match-pairs
+        id: pairs-error-codes
+        prompt: Match each error code to its cause
+        pairs:
+          - ["E0499", "two `&mut` in use at once"]
+          - ["E0502", "`&` and `&mut` in use at once"]
+          - ["E0596", "changing through `&`"]
+          - ["E0382", "using a moved value"]
+        concepts: [err.E0499, err.E0502, err.E0382]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-two-counters
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut total = 0;
+                let a = &mut total;
+                let b = &mut total;
+                *a += 1;
+                *b += 1;
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "Delete line 4 and change line 6 to `*a += 1;`" }
+          - { id: b, text: "Change line 4 to `let b = &total;`", why: "`b` can't write through a `&` reference, and a reader next to `a` is E0502." }
+          - { id: c, text: "Change line 3 to `let a = &total;`", why: "Then line 5 can't write through `a`, and `b` still overlaps with it." }
+        answer: a
+        explanation: "One `&mut` reference can make both changes. Two writers in use at once is E0499."
+        concepts: [err.E0499, borrow.exclusive]
+
+      - type: spot-bug
+        id: spot-shopping
+        prompt: Tap the line the compiler reports as the error
+        code:
+          rust: |
+            fn main() {
+                let mut list = String::from("eggs");
+                let first = &list;
+                list.push_str(", milk");
+                println!("{first}");
+                println!("{list}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 4
+        explanation: "`push_str` needs a `&mut` borrow of `list`, but `first` still reads `list` on line 5 (E0502)."
+        concepts: [err.E0502, borrow.exclusive]
+
+      - type: predict-output
+        id: predict-same-len
+        code:
+          rust: |
+            fn eq(a: &String, b: &String) -> bool {
+                a.len() == b.len()
+            }
+
+            fn main() {
+                let s = String::from("echo");
+                println!("{}", eq(&s, &s));
+            }
+          verify: run
+        options:
+          - { id: a, text: "true" }
+          - { id: b, text: "false", why: "Both references point at the same `String`, so the lengths are equal." }
+        answer: a
+        explanation: "Lending `&s` twice in one call is fine: two readers can share."
+        concepts: [borrow.exclusive, borrow.shared]
+
+      - type: compiles
+        id: compiles-append-self
+        code:
+          rust: |
+            fn add(to: &mut String, from: &String) {
+                if from.len() > 2 {
+                    to.push_str("+");
+                }
+            }
+
+            fn main() {
+                let mut s = String::from("abc");
+                add(&mut s, &s);
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `s` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "Only one argument is `&mut`. The other is a `&` reader." }
+            - { id: c, text: "E0308: mismatched types", why: "Each argument has the type its parameter asks for." }
+          answer: a
+        explanation: "Both borrows of `s` are alive for the whole call: a writer and a reader at once."
+        concepts: [err.E0502, borrow.exclusive]
+
+      - type: mcq
+        id: mcq-why-rule
+        prompt: Why does Rust stop you reading through `&` while a `&mut` to the same value is in use?
+        options:
+          - { id: a, text: "The value could change while the reader is still relying on it" }
+          - { id: b, text: "`&` references are slower to read", why: "Speed isn't the reason. The rule prevents surprises from changes the reader didn't expect." }
+          - { id: c, text: "A `&mut` reference copies the value", why: "A `&mut` reference points at the original value; it copies nothing." }
+        answer: a
+        explanation: "If a writer and a reader could overlap, the reader could see the value change under it. Rust rules that out at compile time."
+        concepts: [borrow.exclusive]
+
+      - type: true-false
+        id: tf-e0499-meaning
+        prompt: "E0499 means two `&mut` borrows of the same value are in use at the same time."
+        answer: true
+        explanation: "The message is: cannot borrow as mutable more than once at a time."
+        concepts: [err.E0499]
+
+      - type: predict-output
+        id: predict-n-three
+        code:
+          rust: |
+            let mut n = 1;
+            let r = &mut n;
+            *r += 1;
+            *r += 1;
+            println!("{n}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "Each `*r += 1` adds 1 to `n`, and there are two of them." }
+          - { id: c, text: "1", why: "`r` points at `n`, so the changes happen to `n`." }
+        answer: a
+        explanation: "One writer can change the value as often as it likes. `n` goes from 1 to 3."
+        concepts: [borrow.mut, borrow.exclusive]
+
+      - type: compiles
+        id: compiles-owner-reads
+        code:
+          rust: |
+            let s = String::from("hi");
+            let a = &s;
+            println!("{s} {a}");
+          verify: run
+          expectStdout: "hi hi\n"
+        answer: true
+        explanation: "Reading `s` itself is another read. Readers can overlap, so this is fine."
+        concepts: [borrow.exclusive]
+
+      - type: decode-error
+        id: decode-print-during-write
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut name = String::from("Al");
+                let r = &mut name;
+                println!("{name}");
+                r.push_str("ex");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "`println!` reads `name` while `r`, a `&mut` borrow, is still in use" }
+          - { id: b, text: "`name` isn't declared `mut`", why: "It is, on line 2. The problem is the read on line 4." }
+          - { id: c, text: "`println!` can't print a `String`", why: "It can. It just can't read `name` while `r` might still change it." }
+        answer: a
+        explanation: "`r` is used again on line 5, so its `&mut` borrow is alive on line 4, and reading `name` there is E0502."
+        concepts: [err.E0502, borrow.exclusive]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-two-writers
+        prompt: "Fill the blank so the program compiles and prints `x1y2`"
+        code:
+          rust: |
+            let mut a = String::from("x");
+            let mut b = String::from("y");
+            let r1 = &mut a;
+            let r2 = &mut ___1___;
+            r1.push_str("1");
+            r2.push_str("2");
+            println!("{r1}{r2}");
+          verify: run
+          expectStdout: "x1y2\n"
+        blanks:
+          "1": { answer: ["b"] }
+        bank: ["a", "b", "r1", "&a"]
+        explanation: "The rule is about one value. Two `&mut` references to two different variables are fine; `&mut a` twice is E0499."
+        concepts: [borrow.exclusive, err.E0499]
+
+      - type: parsons
+        id: parsons-add-to
+        prompt: "Arrange the body of `main` to call `fn add_to(total: &mut i32, n: &i32)` and print `15`"
+        lines:
+          - { id: l1, text: "    let mut total = 10;" }
+          - { id: l2, text: "    let bonus = 5;" }
+          - { id: l3, text: "    add_to(&mut total, &bonus);" }
+          - { id: l4, text: '    println!("{total}");' }
+        distractors:
+          - { id: d1, text: "    add_to(&total, &bonus);" }
+          - { id: d2, text: "    let total = 10;" }
+        answer: [l1, l2, l3, l4]
+        alternatives:
+          - [l2, l1, l3, l4]
+        verify:
+          harness: |
+            fn add_to(total: &mut i32, n: &i32) {
+                *total += *n;
+            }
+            fn main() {
+            {{solution}}}
+          mode: run
+          expectStdout: "15\n"
+        explanation: "`total` must be `let mut` to lend `&mut total`. `bonus` is a different variable, so its `&` borrow doesn't clash."
+        concepts: [borrow.exclusive, borrow.mut]
+
+      - type: decode-error
+        id: decode-transfer-same
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn give(from: &mut i32, to: &mut i32) {
+                *to += *from;
+                *from = 0;
+            }
+
+            fn main() {
+                let mut a = 5;
+                give(&mut a, &mut a);
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "Both arguments are `&mut` borrows of `a`, in use at the same time" }
+          - { id: b, text: "`a` isn't declared `mut`", why: "It is, on line 7. The problem is borrowing it mutably twice." }
+          - { id: c, text: "A function can't have two `&mut` parameters", why: "It can, as long as they point at different values." }
+        answer: a
+        explanation: "Both `&mut a` borrows last for the whole call, so there are two writers at once (E0499)."
+        concepts: [err.E0499, borrow.exclusive]
+
+      - type: predict-output
+        id: predict-transfer
+        code:
+          rust: |
+            fn give(from: &mut i32, to: &mut i32) {
+                *to += *from;
+                *from = 0;
+            }
+
+            fn main() {
+                let mut a = 5;
+                let mut b = 2;
+                give(&mut a, &mut b);
+                println!("{a} {b}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "0 7" }
+          - { id: b, text: "5 7", why: "`*from = 0` sets `a` to 0 after its value is added to `b`." }
+          - { id: c, text: "0 2", why: "`*to += *from` runs first and adds 5 to `b`." }
+        answer: a
+        explanation: "`b` becomes 2 + 5 = 7, then `a` becomes 0. Two `&mut` borrows of different variables are fine."
+        concepts: [borrow.exclusive, borrow.mut]
+
+      - type: compiles
+        id: compiles-move-mut-ref
+        code:
+          rust: |
+            fn main() {
+                let mut s = String::from("x");
+                let a = &mut s;
+                let b = a;
+                b.push_str("!");
+                println!("{a}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `a`" }
+            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "There's only one `&mut` borrow of `s`. It was moved from `a` into `b`." }
+            - { id: c, text: "E0502: cannot borrow `s` as immutable", why: "Nothing borrows `s` with `&` here." }
+          answer: a
+        explanation: "A `&` reference is copied on assignment, but a `&mut` reference is moved, so there's still only one writer. `a` can't be used after the move."
+        concepts: [borrow.exclusive, err.E0382]
+
+      - type: true-false
+        id: tf-copy-mut-ref
+        prompt: "A `&mut` reference can be copied, like a `&` reference."
+        answer: false
+        explanation: "Copying a `&mut` would make two writers. Assigning it moves it instead."
+        concepts: [borrow.exclusive]
+
+      - type: mcq
+        id: mcq-diagram-readers
+        prompt: "`r1` and `r2` are `&s` and both are used again later. Which line is allowed here?"
+        diagram:
+          caption: "r1 and r2 are both still in use"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r1, points: s }
+                - { name: r2, points: s }
+          heap:
+            - { id: h1, value: '"hi"' }
+        options:
+          - { id: a, code: "let r3 = &s;" }
+          - { id: b, code: "let w = &mut s;", why: "A writer can't join readers that are still in use (E0502)." }
+          - { id: c, code: "s.push_str(\"!\");", why: "`push_str` borrows `s` as `&mut`, which clashes with the readers (E0502)." }
+        answer: a
+        explanation: "A third reader is fine. Anything that changes `s` has to wait until `r1` and `r2` are finished."
+        concepts: [borrow.exclusive, err.E0502]
+
+      - type: spot-bug
+        id: spot-cream
+        prompt: Tap the line the compiler reports as the error
+        code:
+          rust: |
+            fn add_cream(s: &mut String) {
+                s.push_str(" cream");
+            }
+
+            fn main() {
+                let mut word = String::from("ice");
+                let r = &word;
+                add_cream(&mut word);
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 8
+        explanation: "Line 8 lends `&mut word` while `r` still reads `word` on line 9 (E0502)."
+        concepts: [err.E0502, borrow.exclusive]
+
+      - type: match-pairs
+        id: pairs-rule
+        prompt: Match each situation to what the compiler says
+        pairs:
+          - ["many `&s` in use", "fine: many readers"]
+          - ["one `&mut s` in use", "fine: one writer"]
+          - ["two `&mut s` in use", "E0499"]
+          - ["`&s` and `&mut s` in use", "E0502"]
+        concepts: [borrow.exclusive, err.E0499, err.E0502]

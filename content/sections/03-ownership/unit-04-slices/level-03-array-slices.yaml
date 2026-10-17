@@ -1,0 +1,532 @@
+id: ownership.slices.array-slices
+title: Array slices
+icon: grid
+concepts: [slice.array]
+reviewConcepts: [slice.str, slice.str-param, types.array, ctrl.for, fmt.debug, panic.index, err.E0308, borrow.shared]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-array-slice
+        title: Slices of arrays
+        markdown: |
+          **Slices work on arrays too.** `&scores[1..3]` borrows elements 1 and 2. Its type is `&[i32]`: a slice of `i32`s.
+
+          For arrays, the indexes count elements, not bytes. Print a slice with `{:?}`.
+        code:
+          rust: |
+            let scores = [3, 5, 8, 2];
+            let middle = &scores[1..3];
+            println!("{middle:?}");
+          verify: run
+          expectStdout: "[5, 8]\n"
+        diagram:
+          caption: "`middle` covers elements 1 and 2 of `scores`, which is on the stack."
+          frames:
+            - name: main
+              vars:
+                - { name: scores, id: scores, value: "[3, 5, 8, 2]" }
+                - { name: middle, points: scores }
+        concepts: [slice.array]
+
+      - type: predict-output
+        id: predict-temps
+        code:
+          rust: |
+            let temps = [18, 21, 25, 19, 16];
+            let warm = &temps[1..4];
+            println!("{warm:?}");
+          verify: run
+        options:
+          - { id: a, text: "[21, 25, 19]" }
+          - { id: b, text: "[21, 25, 19, 16]", why: "The end of the range is left out, so element 4 isn't included." }
+          - { id: c, text: "[18, 21, 25]", why: "Element 0 is `18`, so `1..4` starts at `21`." }
+        answer: a
+        explanation: "`1..4` covers elements 1, 2 and 3."
+        concepts: [slice.array, fmt.debug]
+
+      - type: mcq
+        id: mcq-array-slice-type
+        prompt: "`let nums: [i32; 4] = [1, 2, 3, 4];` What is the type of `&nums[..2]`?"
+        options:
+          - { id: a, code: "&[i32]" }
+          - { id: b, code: "[i32; 2]", why: "A slice is a borrow, so it starts with `&`, and its type doesn't include a length." }
+          - { id: c, code: "&str", why: "`&str` is a slice of text. A slice of `i32`s is `&[i32]`." }
+          - { id: d, code: "i32", why: "That's the type of one element, like `nums[0]`." }
+        answer: a
+        explanation: "A slice of `i32`s is `&[i32]`. The length is stored in the slice at run time, not written in the type."
+        concepts: [slice.array]
+
+      - type: true-false
+        id: tf-array-slice-copies
+        prompt: "`let middle = &scores[1..3];` makes a new, shorter array with two elements."
+        diagram:
+          caption: "After let middle = &scores[1..3]; (middle covers elements 1 and 2)"
+          frames:
+            - name: main
+              vars:
+                - { name: scores, id: scores, value: "[3, 5, 8, 2]" }
+                - { name: middle, points: scores }
+        answer: false
+        explanation: "Like a string slice, an array slice is a pointer plus a length. It borrows the elements of `scores` where they are."
+        concepts: [slice.array]
+
+      - type: concept
+        id: concept-sum
+        title: "Take &[i32] in a function"
+        markdown: |
+          **A `&[i32]` parameter accepts any run of `i32`s:** a whole array or part of one. `&prices` turns into a `&[i32]` automatically.
+
+          `for price in prices` visits each element of the slice.
+        code:
+          rust: |
+            fn sum(prices: &[i32]) -> i32 {
+                let mut total = 0;
+                for price in prices {
+                    total += price;
+                }
+                total
+            }
+
+            fn main() {
+                let prices = [4, 6, 10];
+                println!("{}", sum(&prices));
+                println!("{}", sum(&prices[1..]));
+            }
+          verify: run
+          expectStdout: "20\n16\n"
+        concepts: [slice.array]
+
+      - type: predict-output
+        id: predict-sum-part
+        code:
+          rust: |
+            fn sum(xs: &[i32]) -> i32 {
+                let mut total = 0;
+                for x in xs {
+                    total += x;
+                }
+                total
+            }
+
+            fn main() {
+                let points = [1, 2, 3, 4];
+                println!("{}", sum(&points[..2]));
+            }
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "10", why: "Only the slice is passed: `..2` is the first two elements." }
+          - { id: c, text: "6", why: "`..2` stops before element 2, so it's `1` and `2`." }
+        answer: a
+        explanation: "`&points[..2]` is `[1, 2]`, and `sum` adds them."
+        concepts: [slice.array, ctrl.for]
+
+      - type: compiles
+        id: compiles-pass-array
+        code:
+          rust: |
+            fn count(xs: &[i32]) -> usize {
+                xs.len()
+            }
+
+            fn main() {
+                let goals = [2, 0, 1];
+                println!("{}", count(goals));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`count` wants a slice, so the call needs `&goals`" }
+            - { id: b, text: "`count` can only take arrays of length 3", why: "A `&[i32]` can be any length. That's why it's useful." }
+            - { id: c, text: "`.len()` only works on text", why: "Arrays and slices have `.len()` too." }
+          answer: a
+        explanation: "E0308: expected `&[i32]`, found an array. `&goals` borrows the array, and Rust turns that into a slice."
+        concepts: [slice.array, err.E0308]
+
+      - type: fill-tokens
+        id: fill-param-type
+        prompt: "Fill the blank so the program prints `3`"
+        code:
+          rust: |
+            fn count(xs: ___1___) -> usize {
+                xs.len()
+            }
+
+            fn main() {
+                let laps = [52, 49, 50, 51];
+                println!("{}", count(&laps[1..]));
+            }
+          verify: run
+          expectStdout: "3\n"
+        blanks:
+          "1": { answer: ["&[i32]"] }
+        bank: ["&[i32]", "[i32]", "&i32", "i32", "&str"]
+        explanation: "A slice of `i32`s is `&[i32]`. Without `&`, `[i32]` has no size known at compile time."
+        concepts: [slice.array]
+
+      - type: match-pairs
+        id: pairs-types
+        prompt: Match each value to its type
+        pairs:
+          - ["[1, 2, 3]", "[i32; 3]"]
+          - ["&arr[0..2]", "&[i32]"]
+          - ["\"hi\"", "&str"]
+          - ["arr[0]", "i32"]
+        concepts: [slice.array, slice.str, types.array]
+
+      - type: predict-output
+        id: predict-len
+        code:
+          rust: |
+            let days = [8, 7, 9, 6, 10, 5, 7];
+            let weekend = &days[5..];
+            println!("{}", days.len());
+            println!("{}", weekend.len());
+          verify: run
+        options:
+          - { id: a, text: "7\n2" }
+          - { id: b, text: "7\n5", why: "`5..` starts at element 5 and runs to the end: elements 5 and 6." }
+          - { id: c, text: "7\n7", why: "`weekend.len()` counts only what the slice covers." }
+        answer: a
+        explanation: "`days` has 7 elements. The slice covers elements 5 and 6, so its length is 2."
+        concepts: [slice.array]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-vec-preview
+        title: Other places slices come from
+        markdown: |
+          **A `vec!` also gives you a `&[i32]`.** A `Vec` is a growable array that you'll meet in Section 5. Because `sum` takes a slice, it already works with one.
+        code:
+          rust: |
+            fn sum(xs: &[i32]) -> i32 {
+                let mut total = 0;
+                for x in xs {
+                    total += x;
+                }
+                total
+            }
+
+            fn main() {
+                let v = vec![1, 2, 3];
+                println!("{}", sum(&v));
+            }
+          verify: run
+          expectStdout: "6\n"
+        concepts: [slice.array]
+
+      - type: predict-output
+        id: predict-slice-index
+        code:
+          rust: |
+            let ages = [31, 25, 40, 18];
+            let tail = &ages[2..];
+            println!("{} {}", tail[0], tail[1]);
+          verify: run
+        options:
+          - { id: a, text: "40 18" }
+          - { id: b, text: "31 25", why: "`tail[0]` is the first element of the slice, not of `ages`." }
+          - { id: c, text: "25 40", why: "The slice starts at element 2 of `ages`, which is `40`." }
+        answer: a
+        explanation: "Indexes into a slice count from the start of the slice. `tail` is `[40, 18]`."
+        concepts: [slice.array, types.array]
+
+      - type: spot-bug
+        id: spot-slice-panic
+        prompt: "This prints one line, then panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let marks = [9, 7, 8];
+                let first = &marks[..1];
+                println!("{first:?}");
+                let rest = &marks[1..4];
+                println!("{rest:?}");
+            }
+          verify: run
+          expectPanic: "out of range for slice of length 3"
+        answer: 5
+        explanation: "`marks` has 3 elements, so a range can end at 3 at most. `1..4` panics with `range end index 4 out of range`."
+        concepts: [slice.array, panic.index]
+
+      - type: compiles
+        id: compiles-display-slice
+        code:
+          rust: |
+            let coins = [5, 10, 20];
+            let small = &coins[..2];
+            println!("{small}");
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: How do you print the slice?
+          options:
+            - { id: a, text: "Use `{small:?}`" }
+            - { id: b, text: "Use `{*small}`", why: "Inline arguments only take a name. And `{}` still can't print a list of numbers." }
+            - { id: c, text: "Slices can't be printed", why: "They can, with the Debug format." }
+          answer: a
+        explanation: "`{}` doesn't know how to show a list of numbers (E0277). The Debug format `{:?}` prints `[5, 10]`."
+        concepts: [slice.array, fmt.debug]
+
+      - type: decode-error
+        id: decode-pass-array
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn sum(xs: &[i32]) -> i32 {
+                let mut total = 0;
+                for x in xs {
+                    total += x;
+                }
+                total
+            }
+
+            fn main() {
+                let points = [3, 4];
+                println!("{}", sum(points));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "println!(\"{}\", sum(&points));", why: "Correct: borrow the array, and Rust treats it as a slice." }
+          - { id: b, code: "fn sum(xs: [i32]) -> i32 {", why: "`[i32]` without `&` has no size known at compile time (E0277)." }
+          - { id: c, code: "println!(\"{}\", sum(points[..]));", why: "`points[..]` without `&` isn't a borrow, so it's still the wrong type." }
+        answer: a
+        explanation: "`sum` asks for a `&[i32]` and got an array. Passing `&points` borrows it."
+        concepts: [slice.array, err.E0308]
+
+      - type: mcq
+        id: mcq-diagram-array
+        prompt: "Which line makes the `top` in this diagram?"
+        diagram:
+          caption: "`top` covers elements 0, 1 and 2 of `ranks`."
+          frames:
+            - name: main
+              vars:
+                - { name: ranks, id: ranks, value: "[4, 1, 3, 2]" }
+                - { name: top, points: ranks }
+        options:
+          - { id: a, code: "let top = &ranks[..3];" }
+          - { id: b, code: "let top = &ranks[..2];", why: "That covers elements 0 and 1 only." }
+          - { id: c, code: "let top = &ranks[1..3];", why: "That starts at element 1, leaving out element 0." }
+          - { id: d, code: "let top = ranks[..3];", why: "A slice needs `&`. Without it, this doesn't compile." }
+        answer: a
+        explanation: "`..3` means elements 0 up to (not including) 3."
+        concepts: [slice.array]
+
+      - type: true-false
+        id: tf-elements-not-bytes
+        prompt: "In `&nums[1..3]`, where `nums` is an array of `i32`, the numbers 1 and 3 count bytes."
+        answer: false
+        explanation: "For arrays they count elements. Only string slices use byte positions, because text is stored as bytes."
+        concepts: [slice.array, slice.str]
+
+      - type: compiles
+        id: compiles-assign-while-sliced
+        code:
+          rust: |
+            fn main() {
+                let mut seats = [1, 2, 3, 4];
+                let front = &seats[..2];
+                seats[0] = 9;
+                println!("{front:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0506]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`seats` is changed while `front` still borrows it" }
+            - { id: b, text: "`seats` needs to be declared without `mut`", why: "`mut` is needed to change `seats[0]`. The timing is the problem." }
+            - { id: c, text: "`front` is a copy, so it would print the old values", why: "A slice isn't a copy. That's why Rust stops the change." }
+          answer: a
+        explanation: "`front` borrows the elements and is used on line 5. Rust won't let you change them in the meantime. Moving line 4 below the `println!` fixes it."
+        concepts: [slice.array, borrow.shared]
+
+      - type: predict-output
+        id: predict-loop-slice
+        code:
+          rust: |
+            let names = ["Ana", "Ben", "Cai", "Di"];
+            for name in &names[1..3] {
+                println!("{name}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Ben\nCai" }
+          - { id: b, text: "Ana\nBen\nCai", why: "Element 0 is `Ana`, and the range starts at 1." }
+          - { id: c, text: "Ben\nCai\nDi", why: "The end of `1..3` is left out." }
+        answer: a
+        explanation: "A slice can hold any element type, here `&str`s. The loop visits elements 1 and 2."
+        concepts: [slice.array, ctrl.for]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-sum
+        prompt: "Arrange the lines to finish `sum`, which adds up a slice"
+        lines:
+          - { id: l1, text: "fn sum(xs: &[i32]) -> i32 {" }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    for x in xs {" }
+          - { id: l4, text: "        total += x;" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: "    total" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "fn sum(xs: [i32]) -> i32 {" }
+          - { id: d2, text: "    total;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() { let a = [1, 2, 3, 4]; println!("{} {}", sum(&a), sum(&a[2..])); }
+          mode: run
+          expectStdout: "10 7\n"
+        explanation: "The parameter must be a borrowed slice, `&[i32]`. The last line, `total` with no `;`, is the return value."
+        concepts: [slice.array, fn.return]
+
+      - type: fill-tokens
+        id: fill-call-sum
+        prompt: "Fill the blanks so the program prints `15`"
+        code:
+          rust: |
+            fn sum(xs: &[i32]) -> i32 {
+                let mut total = 0;
+                for x in xs {
+                    total += x;
+                }
+                total
+            }
+
+            fn main() {
+                let steps = [2, 5, 10];
+                println!("{}", sum(___1___steps[___2___]));
+            }
+          verify: run
+          expectStdout: "15\n"
+        blanks:
+          "1": { answer: ["&"] }
+          "2": { answer: ["1.."] }
+        bank: ["&", "1..", "*", "..1", "..2", "2.."]
+        explanation: "`5 + 10` is 15, which is the slice from element 1 to the end. The slice needs `&`."
+        concepts: [slice.array]
+
+      - type: predict-output
+        id: predict-tiles-split
+        prompt: Build the output
+        code:
+          rust: |
+            let data = [6, 1, 4, 9];
+            let left = &data[..2];
+            let right = &data[2..];
+            println!("{} {:?}", left.len(), right);
+          verify: run
+        tiles: ["2", "[4, 9]", "[6, 1]", "4", "[4]"]
+        answer: "2 [4, 9]"
+        explanation: "`left` is `[6, 1]`, so its length is 2. `right` is the rest, `[4, 9]`."
+        concepts: [slice.array, fmt.debug]
+
+      - type: spot-bug
+        id: spot-skip-first
+        prompt: "This should average every lap except the first and print `50`. It prints `51`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn total(laps: &[i32]) -> i32 {
+                let mut sum = 0;
+                for lap in laps {
+                    sum += lap;
+                }
+                sum
+            }
+
+            fn main() {
+                let laps = [54, 49, 51, 50];
+                let rest = &laps[..3];
+                println!("{}", total(rest) / 3);
+            }
+          verify: run
+          expectStdout: "51\n"
+        answer: 11
+        explanation: "`..3` keeps the first lap and drops the last. To skip the first lap, use `&laps[1..]`."
+        concepts: [slice.array]
+
+      - type: decode-error
+        id: decode-array-to-str
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn show(text: &str) {
+                println!("{text}");
+            }
+
+            fn main() {
+                let codes = [7, 3, 1];
+                show(&codes[..2]);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`&codes[..2]` is a `&[i32]`, but `show` wants a `&str`" }
+          - { id: b, text: "`..2` is out of range for `codes`", why: "`codes` has 3 elements, so `..2` is fine." }
+          - { id: c, text: "`codes` needs to be a `String` to be sliced", why: "Arrays can be sliced too. The problem is that the slice isn't text." }
+        answer: a
+        explanation: "A slice of numbers isn't text. `&str` and `&[i32]` are different slice types."
+        concepts: [slice.array, slice.str-param, err.E0308]
+
+      - type: mcq
+        id: mcq-why-slice-param
+        prompt: "Why write `fn sum(xs: &[i32])` instead of `fn sum(xs: [i32; 4])`?"
+        options:
+          - { id: a, text: "It works for any number of elements, and borrows them instead of copying the array" }
+          - { id: b, text: "Arrays can't be passed to functions", why: "They can, but `[i32; 4]` only accepts arrays of exactly four." }
+          - { id: c, text: "`&[i32]` lets `sum` change the elements", why: "A `&` slice is read-only, the same as any shared borrow." }
+        answer: a
+        explanation: "A slice's length isn't part of its type, so one function handles whole arrays, parts of arrays, and more."
+        concepts: [slice.array, slice.str-param]
+
+      - type: compiles
+        id: compiles-two-slices
+        code:
+          rust: |
+            let scores = [8, 6, 9, 7];
+            let a = &scores[..2];
+            let b = &scores[1..];
+            println!("{a:?} {b:?}");
+          verify: run
+          expectStdout: "[8, 6] [6, 9, 7]\n"
+        answer: true
+        explanation: "Both slices are shared borrows, so they may overlap. Element 1 is in both."
+        concepts: [slice.array, borrow.shared]
+
+      - type: true-false
+        id: tf-str-is-slice
+        prompt: "`&str` and `&[i32]` are both slices: each is a pointer plus a length."
+        answer: true
+        explanation: "`&str` is a slice of text bytes and `&[i32]` is a slice of `i32`s. Both borrow data that something else owns."
+        concepts: [slice.array, slice.str]
+
+      - type: predict-output
+        id: predict-mixed-review
+        code:
+          rust: |
+            let word = String::from("orbit");
+            let nums = [10, 20, 30];
+            let a = &word[1..3];
+            let b = &nums[1..3];
+            println!("{a} {b:?}");
+          verify: run
+        options:
+          - { id: a, text: "rb [20, 30]" }
+          - { id: b, text: "rbi [20, 30]", why: "`1..3` covers two items: indexes 1 and 2." }
+          - { id: c, text: "or [10, 20]", why: "Both ranges start at index 1, not 0." }
+        answer: a
+        explanation: "The same range picks bytes 1 and 2 of the text and elements 1 and 2 of the array."
+        concepts: [slice.array, slice.str]

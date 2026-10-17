@@ -1,0 +1,129 @@
+id: ownership.in-practice.code-read-swap-and-sum
+title: Swap and sum
+concepts: []
+reviewConcepts: [own.param-choice, borrow.mut, borrow.exclusive, err.E0499, own.copy, fn.params]
+program:
+  rust: |
+    fn swap(a: &mut i32, b: &mut i32) {
+        let temp = *a;
+        *a = *b;
+        *b = temp;
+    }
+
+    fn add_to(total: &mut i32, amount: i32) {
+        *total += amount;
+    }
+
+    fn main() {
+        let mut left = 3;
+        let mut right = 8;
+        let mut total = 0;
+
+        swap(&mut left, &mut right);
+        println!("left {left}, right {right}");
+
+        add_to(&mut total, left);
+        add_to(&mut total, left);
+        println!("total {total}");
+    }
+  verify: run
+  expectStdout: |
+    left 8, right 3
+    total 16
+chunks:
+  - lines: 5
+    exercises:
+      - type: mcq
+        id: why-star
+        prompt: "Why does line 2 write `*a` rather than `a`?"
+        options:
+          - { id: a, text: "`a` is a reference. `*a` is the `i32` it points at." }
+          - { id: b, text: "`*` multiplies `a` by something", why: "Here `*` comes before a single value, so it dereferences. Multiplying needs two values: `x * y`." }
+          - { id: c, text: "`*a` makes `a` mutable", why: "`a` is already a `&mut i32`. The `*` follows the reference to the number." }
+        answer: a
+        explanation: "`temp = *a` copies the number `a` points at. Without `*`, `temp` would be another reference, not the old value."
+        concepts: [borrow.mut]
+      - type: true-false
+        id: temp-copy
+        prompt: "Line 2 moves the number out of `*a`, so line 3 can't use `*a` any more."
+        answer: false
+        explanation: "`i32` is `Copy`, so `let temp = *a;` copies the number. Line 3 then overwrites `*a` with `*b`."
+        concepts: [own.copy, borrow.mut]
+  - lines: 5
+    exercises:
+      - type: mcq
+        id: why-two-types
+        prompt: "Why is `total` a `&mut i32` but `amount` a plain `i32`?"
+        options:
+          - { id: a, text: "`add_to` changes the caller's `total`, but only reads `amount`" }
+          - { id: b, text: "The first parameter of a function must be a reference", why: "Parameters can be any type, in any order. Each one is chosen by what the function does with it." }
+          - { id: c, text: "`amount` can't be borrowed because it's an `i32`", why: "You can borrow an `i32`. It's just not needed: a copy is cheaper and the caller keeps its value." }
+        answer: a
+        explanation: "Changing a caller's variable needs `&mut`. A small `Copy` value that's only read is best taken by value."
+        concepts: [own.param-choice]
+  - lines: 5
+    exercises:
+      - type: true-false
+        id: all-mut
+        prompt: "`left`, `right` and `total` all need `let mut`, because the program takes `&mut` references to them."
+        answer: true
+        explanation: "You can only take `&mut` of a mutable variable. Without `mut`, line 16 or line 19 would fail with E0596."
+        concepts: [borrow.mut]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: after-swap
+        prompt: "The diagram shows the start of the `swap` call on line 16. What does line 17 print?"
+        diagram:
+          caption: "Start of swap(&mut left, &mut right)"
+          frames:
+            - name: main
+              vars:
+                - { name: left, id: left, value: "3" }
+                - { name: right, id: right, value: "8" }
+                - { name: total, value: "0" }
+            - name: swap
+              vars:
+                - { name: a, points: left }
+                - { name: b, points: right }
+          heap: []
+        options:
+          - { id: a, text: "`left 8, right 3`" }
+          - { id: b, text: "`left 3, right 8`", why: "`a` and `b` point at `main`'s variables, so `swap` changes them." }
+          - { id: c, text: "`left 8, right 8`", why: "`temp` saved the old 3 before line 3 overwrote it, and line 4 puts it in `right`." }
+        answer: a
+        explanation: "`swap` writes through the references, so `main`'s `left` becomes 8 and `right` becomes 3."
+        concepts: [borrow.mut]
+      - type: mcq
+        id: swap-same
+        prompt: "What happens if line 16 is changed to `swap(&mut left, &mut left);`?"
+        options:
+          - { id: a, text: "It doesn't compile: error E0499" }
+          - { id: b, text: "It compiles and `left` stays 3", why: "The borrow checker rejects it before it can run." }
+          - { id: c, text: "It doesn't compile: error E0502", why: "Both borrows are `&mut`, so it's E0499, not the shared-and-mutable error." }
+        answer: a
+        explanation: "Both arguments are alive for the whole call, so `left` would have two `&mut` borrows at once."
+        concepts: [borrow.exclusive, err.E0499]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: amount-value
+        prompt: "What value does line 19 add to `total`?"
+        options:
+          - { id: a, text: "8" }
+          - { id: b, text: "3", why: "The swap on line 16 already ran, so `left` is 8 now." }
+          - { id: c, text: "0", why: "`left` is passed by value, and it holds 8 after the swap." }
+        answer: a
+        explanation: "After the swap, `left` is 8, and `add_to` gets a copy of that number."
+        concepts: [own.copy, borrow.mut]
+      - type: mcq
+        id: final-total
+        prompt: "What does line 21 print?"
+        options:
+          - { id: a, text: "`total 16`" }
+          - { id: b, text: "`total 0`", why: "`add_to` changes `main`'s `total` through the `&mut` reference." }
+          - { id: c, text: "`total 11`", why: "Both calls pass `left`, which is 8. Neither adds `right`." }
+          - { id: d, text: "`total 8`", why: "Both calls run, and each adds 8." }
+        answer: a
+        explanation: "`total` starts at 0, and each `add_to` call adds 8 through the reference: 16."
+        concepts: [borrow.mut, own.param-choice]

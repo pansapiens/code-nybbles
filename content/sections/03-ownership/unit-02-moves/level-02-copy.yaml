@@ -1,0 +1,450 @@
+id: ownership.moves.copy
+title: Copy types
+icon: copy
+concepts: [own.copy]
+reviewConcepts: [own.move, err.E0382, types.int, types.float, types.bool, types.char, types.tuple, types.array, mem.stack-heap]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-copy-int
+        title: Numbers are copied
+        markdown: |
+          **Simple values that live entirely on the stack are copied, not moved.** `let b = a;` with an `i32` makes a second `5`, and `a` stays valid.
+
+          Copying a few bytes is cheap, and there's no heap data to free twice. These types are called **Copy** types.
+        code:
+          rust: |
+            let a = 5;
+            let b = a;
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "5 5\n"
+        diagram:
+          caption: "After let b = a;"
+          frames:
+            - name: main
+              vars:
+                - { name: a, value: "5" }
+                - { name: b, value: "5" }
+        concepts: [own.copy]
+
+      - type: predict-output
+        id: predict-score-copy
+        code:
+          rust: |
+            let score = 10;
+            let saved = score;
+            println!("{score} {saved}");
+          verify: run
+        options:
+          - { id: a, text: "10 10" }
+          - { id: b, text: "10", why: "Both variables are printed, and both hold 10." }
+          - { id: c, text: "0 10", why: "A copy leaves the original alone. Rust doesn't empty `score`." }
+        answer: a
+        explanation: "`i32` is a Copy type, so `saved` gets its own 10 and `score` keeps its value."
+        concepts: [own.copy]
+
+      - type: compiles
+        id: compiles-int-copy
+        code:
+          rust: |
+            let lives = 3;
+            let backup = lives;
+            println!("{lives}");
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "`lives` is an integer, so line 2 copies it. Using `lives` afterwards is fine."
+        concepts: [own.copy]
+
+      - type: compiles
+        id: compiles-string-contrast
+        code:
+          rust: |
+            let lives = String::from("3");
+            let backup = lives;
+            println!("{lives}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value" }
+            - { id: b, text: "E0308: mismatched types", why: "Both variables are `String`s. The problem is that `lives` moved." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is reassigned. `lives` is read after its value moved." }
+          answer: a
+        explanation: "A `String` owns heap data, so it moves instead of copying. `lives` is invalid after line 2."
+        concepts: [own.copy, own.move, err.E0382]
+
+      - type: concept
+        id: concept-copy-list
+        title: Which types are Copy?
+        markdown: |
+          **Copy:** all integer types, `f32` and `f64`, `bool`, `char`, and tuples and arrays made only of Copy types.
+
+          **Not Copy:** `String`, and anything containing a `String`.
+        code:
+          rust: |
+            let point = (3, 4.5, true, 'x');
+            let other = point;
+            println!("{:?}", point);
+          verify: run
+          expectStdout: "(3, 4.5, true, 'x')\n"
+        concepts: [own.copy]
+
+      - type: mcq
+        id: mcq-not-copy
+        prompt: "`let b = a;`. For which type of `a` does this move instead of copy?"
+        options:
+          - { id: a, code: "String" }
+          - { id: b, code: "f64", why: "Floats are fixed-size stack values, so they are Copy." }
+          - { id: c, code: "char", why: "A `char` is always 4 bytes on the stack. It's Copy." }
+          - { id: d, code: "(i32, bool)", why: "A tuple of Copy types is Copy too." }
+        answer: a
+        explanation: "`String` owns text on the heap, so it moves. The others are small stack values and are copied."
+        concepts: [own.copy]
+
+      - type: true-false
+        id: tf-float-copy
+        prompt: "After `let b = a;` where `a` is an `f64`, `a` can still be used."
+        answer: true
+        explanation: "`f64` is a Copy type, so `b` gets its own copy and `a` stays valid."
+        concepts: [own.copy, types.float]
+
+      - type: predict-output
+        id: predict-copy-change
+        code:
+          rust: |
+            let mut steps = 1;
+            let start = steps;
+            steps += 4;
+            println!("{start} {steps}");
+          verify: run
+        options:
+          - { id: a, text: "1 5" }
+          - { id: b, text: "5 5", why: "`start` got its own copy of 1. Changing `steps` later doesn't touch it." }
+          - { id: c, text: "1 1", why: "`steps += 4` changes `steps` to 5." }
+        answer: a
+        explanation: "The copy and the original are separate values, so changing one leaves the other alone."
+        concepts: [own.copy, var.mut]
+
+      - type: match-pairs
+        id: pairs-copy-move
+        prompt: Match each type to what `let b = a;` does
+        pairs:
+          - ["i32", "copies a whole number"]
+          - ["bool", "copies true or false"]
+          - ["char", "copies one character"]
+          - ["String", "moves; a is invalid"]
+        concepts: [own.copy, own.move]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-tuple-string
+        title: A String inside moves the whole tuple
+        markdown: |
+          **A tuple or array is Copy only if every part is Copy.** `(String, i32)` contains a `String`, so assigning it moves the whole tuple.
+        code:
+          rust: |
+            let entry = (String::from("Kim"), 7);
+            let winner = entry;
+            println!("{:?}", winner);
+          verify: run
+          expectStdout: "(\"Kim\", 7)\n"
+        diagram:
+          caption: "After let winner = entry;"
+          frames:
+            - name: main
+              vars:
+                - { name: entry, moved: true }
+                - { name: winner.0, points: h1 }
+                - { name: winner.1, value: "7" }
+          heap:
+            - { id: h1, value: '"Kim"' }
+        concepts: [own.copy, own.move]
+
+      - type: compiles
+        id: compiles-tuple-string
+        code:
+          rust: |
+            let entry = (String::from("Kim"), 7);
+            let winner = entry;
+            println!("{}", entry.1);
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `entry`" }
+            - { id: b, text: "None: `entry.1` is an `i32`, which is Copy", why: "The whole tuple moved on line 2, so none of `entry` can be used." }
+            - { id: c, text: "E0308: mismatched types", why: "`entry.1` is an integer and `{}` can print it. The problem is the move." }
+          answer: a
+        explanation: "`(String, i32)` isn't Copy, so line 2 moves the whole tuple to `winner`. Reading `entry.1` uses the moved value."
+        concepts: [own.copy, err.E0382]
+
+      - type: predict-output
+        id: predict-array-copy
+        code:
+          rust: |
+            let start = [1, 2, 3];
+            let mut moved = start;
+            moved[0] = 9;
+            println!("{:?} {:?}", start, moved);
+          verify: run
+        options:
+          - { id: a, text: "[1, 2, 3] [9, 2, 3]" }
+          - { id: b, text: "[9, 2, 3] [9, 2, 3]", why: "`[i32; 3]` is Copy, so `moved` is a separate array. Changing it leaves `start` alone." }
+          - { id: c, text: "[1, 2, 3] [1, 2, 3]", why: "`moved[0] = 9;` changes the first item of `moved`." }
+        answer: a
+        explanation: "An array of integers is Copy. The name `moved` doesn't change that: line 2 copies the whole array."
+        concepts: [own.copy, types.array]
+
+      - type: mcq
+        id: mcq-why-string-not-copy
+        prompt: "Why isn't `String` a Copy type?"
+        options:
+          - { id: a, text: "Copying only its stack part would leave two owners of one heap text" }
+          - { id: b, text: "Because text can't be copied in Rust", why: "Text can be copied, as you'll see in the next level, but Rust won't do it for you on `=`." }
+          - { id: c, text: "Because a `String` is bigger than 100 bytes", why: "The stack part of a `String` is always small. The issue is the heap data it owns." }
+        answer: a
+        explanation: "Two owners of one heap text would both free it. Copying the heap text on every `=` would be slow and hidden, so `String` moves."
+        concepts: [own.copy, mem.stack-heap]
+
+      - type: compiles
+        id: compiles-char-bool
+        code:
+          rust: |
+            let grade = 'A';
+            let passed = true;
+            let g = grade;
+            let p = passed;
+            println!("{grade} {passed} {g} {p}");
+          verify: run
+          expectStdout: "A true A true\n"
+        answer: true
+        explanation: "`char` and `bool` are Copy, so `grade` and `passed` are still valid after being assigned."
+        concepts: [own.copy, types.char, types.bool]
+
+      - type: decode-error
+        id: decode-tuple
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let pair = (String::from("tea"), 2);
+                let order = pair;
+                println!("{:?}", pair);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "`(String, i32)` isn't Copy, so `pair` moved to `order` on line 3" }
+          - { id: b, text: "Tuples can never be assigned to another variable", why: "They can. A tuple of Copy types is even copied." }
+          - { id: c, text: "`{:?}` can't print a tuple", why: "It can. The problem is that `pair` is used after it moved." }
+        answer: a
+        explanation: "The note says the type `(String, i32)` does not implement Copy. One non-Copy part is enough to make the tuple move."
+        concepts: [own.copy, err.E0382, compiler.read-error]
+
+      - type: true-false
+        id: tf-array-strings
+        prompt: "An array of `String`s, like `[String::from(\"a\"), String::from(\"b\")]`, is copied by `let b = a;`."
+        answer: false
+        explanation: "An array is Copy only if its items are. `String` isn't, so the array moves."
+        concepts: [own.copy]
+
+      - type: spot-bug
+        id: spot-tuple-name
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let size = (2, 3);
+                let team = (String::from("Jo"), 1);
+                let copy_size = size;
+                let copy_team = team;
+                println!("{:?}", size);
+                println!("{:?}", team);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 7
+        explanation: "`size` is `(i32, i32)`, which is Copy, so line 6 is fine. `team` contains a `String`, so it moved on line 5."
+        concepts: [own.copy, err.E0382]
+
+      - type: predict-output
+        id: predict-float-tiles
+        prompt: Build the output
+        code:
+          rust: |
+            let price = 2.5;
+            let mut total = price;
+            total += price;
+            println!("{price} {total}");
+          verify: run
+        tiles: ["2.5", "5", "2.5", "0", "7.5"]
+        answer: "2.5 5"
+        explanation: "`total` starts as a copy of 2.5 and adds another 2.5. `price` keeps its own value."
+        concepts: [own.copy, types.float]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-copy-tuple
+        prompt: Fill the blank so the program compiles and prints `(1, 7)`
+        code:
+          rust: |
+            let first = (1, ___1___);
+            let second = first;
+            println!("{:?}", first);
+          verify: run
+          expectStdout: "(1, 7)\n"
+        blanks:
+          "1": { answer: ["7"] }
+        bank: ["7", "String::from(\"7\")", "\"7\"", "'7'"]
+        explanation: "`(i32, i32)` is Copy, so `first` stays valid. With a `String` inside, line 2 would move it. The other two would print with quotes."
+        concepts: [own.copy]
+
+      - type: compiles
+        id: compiles-shadow-copy
+        code:
+          rust: |
+            let distance = 12.0;
+            let half = distance / 2.0;
+            let distance = distance + half;
+            println!("{distance} {half}");
+          verify: run
+          expectStdout: "18 6\n"
+        answer: true
+        explanation: "`f64` values are copied each time they are used, so nothing moves. Line 3 shadows `distance` with a new value."
+        concepts: [own.copy, var.shadowing]
+
+      - type: mcq
+        id: mcq-diagram-copy
+        prompt: "Which line could produce this diagram?"
+        diagram:
+          caption: "After the line runs"
+          frames:
+            - name: main
+              vars:
+                - { name: a, moved: true }
+                - { name: b.0, points: h1 }
+                - { name: b.1, value: "true" }
+          heap:
+            - { id: h1, value: '"ok"' }
+        options:
+          - { id: a, code: "let b = a; // a: (String, bool)" }
+          - { id: b, code: "let b = a; // a: (i32, bool)", why: "That tuple is Copy, so `a` would still be valid, and nothing would be on the heap." }
+          - { id: c, code: "let b = a; // a: (char, bool)", why: "`(char, bool)` is Copy. `a` wouldn't be greyed out." }
+        answer: a
+        explanation: "`a` is greyed out, so it moved, and the heap holds text. Only the tuple containing a `String` fits."
+        concepts: [own.copy, own.move]
+
+      - type: decode-error
+        id: decode-fix-tuple
+        prompt: "Which change makes this compile and print `3`?"
+        code:
+          rust: |
+            fn main() {
+                let stats = (String::from("Li"), 3);
+                let saved = stats;
+                println!("{}", stats.1);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 4 to `println!(\"{}\", saved.1);`" }
+          - { id: b, text: "Change line 3 to `let mut saved = stats;`", why: "`mut` doesn't change whether the tuple moves." }
+          - { id: c, text: "Change line 4 to `println!(\"{:?}\", stats.1);`", why: "Debug format doesn't help. `stats` has still moved." }
+        answer: a
+        explanation: "`saved` owns the tuple after the move, so read the number through `saved`."
+        concepts: [own.copy, err.E0382]
+
+      - type: predict-output
+        id: predict-two-kinds
+        code:
+          rust: |
+            let mut count = 1;
+            let mut label = String::from("n");
+            let c = count;
+            count += 1;
+            label.push_str("=");
+            let l = label;
+            println!("{l}{c}{count}");
+          verify: run
+        options:
+          - { id: a, text: "n=12" }
+          - { id: b, text: "n=22", why: "`c` is a copy made before `count += 1`, so it's still 1." }
+          - { id: c, text: "n12", why: "`push_str(\"=\")` runs before the move, so `l` owns `n=`." }
+        answer: a
+        explanation: "`c` copies 1 before `count` becomes 2. `label` gets `=` added, then moves to `l`."
+        concepts: [own.copy, own.move]
+
+      - type: true-false
+        id: tf-copy-type-tuple
+        prompt: "This compiles."
+        code:
+          rust: |
+            let grid = [[0; 3]; 2];
+            let backup = grid;
+            println!("{}", grid[1][2]);
+          verify: run
+          expectStdout: "0\n"
+        answer: true
+        explanation: "An array of arrays of integers is still made only of Copy types, so `grid` is copied, not moved."
+        concepts: [own.copy, types.array]
+
+      - type: compiles
+        id: compiles-array-strings
+        code:
+          rust: |
+            let names = [
+                String::from("Al"),
+                String::from("Bo"),
+            ];
+            let team = names;
+            println!("{}", names.len());
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `names`" }
+            - { id: b, text: "None: arrays are always copied", why: "Only arrays of Copy types are copied. These items are `String`s." }
+            - { id: c, text: "E0382: borrow of moved value: `team`", why: "`team` is the new owner and is never used after a move." }
+          answer: a
+        explanation: "`[String; 2]` isn't Copy, so line 5 moves the array to `team`, and `names.len()` uses a moved value."
+        concepts: [own.copy, err.E0382]
+
+      - type: parsons
+        id: parsons-copy-print
+        prompt: "Arrange the lines so the program prints `3 4`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut level = 3;" }
+          - { id: l3, text: "    let old = level;" }
+          - { id: l4, text: "    level += 1;" }
+          - { id: l5, text: '    println!("{old} {level}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let old = String::from(level);" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "3 4\n"
+        explanation: "`old` has to copy `level` before it goes up to 4. Integers are Copy, so both can be printed."
+        concepts: [own.copy, var.mut]
+
+      - type: match-pairs
+        id: pairs-which-copy
+        prompt: Match each type to Copy or not
+        pairs:
+          - ["(i32, f64)", "Copy: every part is Copy"]
+          - ["(String, i32)", "moves: it contains a String"]
+          - ["[bool; 4]", "Copy: an array of bool"]
+          - ["[String; 2]", "moves: an array of String"]
+        concepts: [own.copy]

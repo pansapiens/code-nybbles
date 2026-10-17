@@ -57,3 +57,36 @@
 - { id: ctrl.continue, title: continue }
 - { id: ctrl.labels, title: Loop labels, prerequisites: [ctrl.loop] }
 - { id: practice.fizzbuzz, title: Classic loop problems, prerequisites: [ctrl.for, ctrl.if] }
+# Section 3, Unit 3.1: Memory Basics
+- { id: mem.stack-heap, title: The stack and the heap }
+- { id: string.string-vs-literal, title: "String vs string literals", prerequisites: [string.str-literal-intro] }
+- { id: own.scope-drop, title: Scope and drop }
+- { id: own.rules, title: The ownership rules, prerequisites: [own.scope-drop] }
+# Section 3, Unit 3.2: Moves, Copies & Clones
+- { id: own.move, title: Moves, prerequisites: [own.rules] }
+- { id: err.E0382, title: "E0382: use of moved value", prerequisites: [own.move] }
+- { id: own.copy, title: Copy types, prerequisites: [own.move] }
+- { id: own.clone, title: Cloning, prerequisites: [own.move] }
+- { id: own.fn-move, title: Moving into functions, prerequisites: [own.move, fn.params] }
+- { id: own.fn-return, title: Returning ownership, prerequisites: [own.fn-move] }
+- { id: own.mixed, title: Move and copy puzzles, prerequisites: [own.copy, own.clone] }
+# Section 3, Unit 3.3: References & Borrowing
+- { id: borrow.shared, title: Shared references, prerequisites: [own.move] }
+- { id: borrow.mut, title: Mutable references, prerequisites: [borrow.shared] }
+- { id: borrow.exclusive, title: One writer or many readers, prerequisites: [borrow.mut] }
+- { id: err.E0499, title: "E0499: two mutable borrows", prerequisites: [borrow.exclusive] }
+- { id: err.E0502, title: "E0502: mutable and shared borrow", prerequisites: [borrow.exclusive] }
+- { id: borrow.nll, title: A borrow ends at its last use, prerequisites: [borrow.exclusive] }
+- { id: borrow.dangling, title: Dangling references, prerequisites: [borrow.shared] }
+- { id: err.E0106, title: "E0106: missing lifetime specifier", prerequisites: [borrow.dangling] }
+- { id: borrow.permissions, title: "Read, write and own permissions", prerequisites: [borrow.exclusive] }
+# Section 3, Unit 3.4: Slices
+- { id: slice.str, title: String slices, prerequisites: [borrow.shared] }
+- { id: slice.str-param, title: "&str parameters", prerequisites: [slice.str] }
+- { id: slice.array, title: Array slices, prerequisites: [borrow.shared, types.array] }
+- { id: slice.utf8, title: Slicing on character boundaries, prerequisites: [slice.str] }
+- { id: practice.first-word, title: "Exercise: first_word", prerequisites: [slice.str] }
+# Section 3, Unit 3.5: Ownership in Practice
+- { id: own.param-choice, title: "Choosing T, &T or &mut T", prerequisites: [borrow.mut] }
+- { id: borrow.fixes, title: Fixing borrow-checker errors, prerequisites: [borrow.exclusive] }
+- { id: own.iter-ref, title: "Looping over a reference", prerequisites: [borrow.shared, ctrl.for] }

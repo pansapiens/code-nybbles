@@ -1,0 +1,487 @@
+id: ownership.moves.move
+title: Moving a String
+icon: arrow-right
+concepts: [own.move, err.E0382]
+reviewConcepts: [own.rules, own.scope-drop, string.string-vs-literal, mem.stack-heap]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-move
+        title: Ownership moves
+        markdown: |
+          **`let s2 = s1;` moves the `String` from `s1` to `s2`.** Rust copies the pointer, length and capacity on the stack, but not the text on the heap.
+
+          Now `s2` is the owner. `s1` is no longer valid, so there is still only one owner.
+        code:
+          rust: |
+            let s1 = String::from("hello");
+            let s2 = s1;
+            println!("{s2}");
+          verify: run
+          expectStdout: "hello\n"
+        diagram:
+          caption: "After let s2 = s1;"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, moved: true }
+                - { name: s2, points: h1 }
+          heap:
+            - { id: h1, value: '"hello"' }
+        concepts: [own.move]
+
+      - type: predict-output
+        id: predict-new-owner
+        code:
+          rust: |
+            let city = String::from("Hobart");
+            let home = city;
+            println!("{home}");
+          verify: run
+        options:
+          - { id: a, text: "Hobart" }
+          - { id: b, text: "city", why: "`{home}` prints the text `home` owns, not a variable name." }
+          - { id: c, text: "\"Hobart\"", why: "`{}` prints the text without quotes." }
+        answer: a
+        explanation: "The `String` moved from `city` to `home`, so `home` owns the text and prints it."
+        concepts: [own.move]
+
+      - type: true-false
+        id: tf-two-owners
+        prompt: "After `let s2 = s1;`, both `s1` and `s2` can be used, because they point at the same heap text like this."
+        diagram:
+          caption: "Is this right?"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, points: h1 }
+                - { name: s2, points: h1 }
+          heap:
+            - { id: h1, value: '"hello"' }
+        answer: false
+        explanation: "A `String` has one owner at a time. The move makes `s2` the owner and `s1` invalid, so only `s2` can be used."
+        concepts: [own.move, own.rules]
+
+      - type: concept
+        id: concept-e0382
+        title: Using a moved value
+        markdown: |
+          **Using `s1` after the move is error E0382**, "borrow of moved value". The compiler checks this before the program runs, so it can never read text it no longer owns.
+        code:
+          rust: |
+            let s1 = String::from("hello");
+            let s2 = s1;
+            println!("{s1}"); // error[E0382]
+          verify: compile-fail
+          expectErrors: [E0382]
+        concepts: [own.move, err.E0382]
+
+      - type: compiles
+        id: compiles-use-old
+        code:
+          rust: |
+            let player_name = String::from("Ada");
+            let winner = player_name;
+            println!("{player_name} wins");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `player_name` is read after its value moved away." }
+            - { id: c, text: "E0425: cannot find value in this scope", why: "`player_name` still exists as a name, but its value moved to `winner`." }
+          answer: a
+        explanation: "The `String` moved to `winner` on line 2, so `player_name` can't be used on line 3."
+        concepts: [own.move, err.E0382]
+
+      - type: compiles
+        id: compiles-use-new
+        code:
+          rust: |
+            let player_name = String::from("Ada");
+            let winner = player_name;
+            println!("{winner} wins");
+          verify: run
+          expectStdout: "Ada wins\n"
+        answer: true
+        explanation: "A move by itself is fine. Only using the old name afterwards is an error, and this program uses `winner`."
+        concepts: [own.move]
+
+      - type: mcq
+        id: mcq-what-copied
+        prompt: "What does `let s2 = s1;` copy for a `String`?"
+        options:
+          - { id: a, text: "The pointer, length and capacity on the stack" }
+          - { id: b, text: "The text on the heap as well", why: "Copying the heap text could be slow for long strings. A move leaves the heap text where it is." }
+          - { id: c, text: "Nothing: `s2` is another name for `s1`", why: "`s2` is a new variable with its own stack data. `s1` stops being valid." }
+        answer: a
+        explanation: "A move copies the small stack part and leaves the heap text in place. Then `s1` is marked as moved."
+        concepts: [own.move, mem.stack-heap]
+
+      - type: mcq
+        id: mcq-why-invalid
+        prompt: "Why does Rust stop you using `s1` after `let s2 = s1;`?"
+        options:
+          - { id: a, text: "If both stayed valid, both would free the same heap text when they go out of scope" }
+          - { id: b, text: "Because `s1` was not declared with `mut`", why: "`mut` is about changing a value. A move invalidates `s1` either way." }
+          - { id: c, text: "Because the heap text was deleted by the move", why: "The text is still there. It belongs to `s2` now." }
+        answer: a
+        explanation: "Freeing the same memory twice is a serious bug. With one owner, the text is dropped exactly once, when `s2` goes out of scope."
+        concepts: [own.move, own.scope-drop]
+
+      - type: spot-bug
+        id: spot-reported
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn main() {
+                let song = String::from("Waltz");
+                let playing = song;
+                println!("{playing}");
+                println!("{song}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 5
+        explanation: "Line 5 uses `song`, whose `String` moved to `playing` on line 3. Line 4 is fine."
+        concepts: [own.move, err.E0382]
+
+      - type: match-pairs
+        id: pairs-move
+        pairs:
+          - ["let s2 = s1;", "moves the String to s2"]
+          - ["s2", "the new owner"]
+          - ["s1", "no longer valid"]
+          - ["E0382", "use of a moved value"]
+        concepts: [own.move, err.E0382]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-labels
+        title: Reading E0382
+        markdown: |
+          **E0382 points at three places:**
+          - `move occurs because ...` on the `let` that created the `String`
+          - `value moved here` where it moved
+          - `value borrowed here after move` where you used it too late
+
+          `println!` reads a value. The compiler calls that a *borrow*, which you'll meet next unit.
+        code:
+          rust: |
+            let title = String::from("Dune");
+            let book = title;
+            println!("{title}"); // error[E0382]
+          verify: compile-fail
+          expectErrors: [E0382]
+        concepts: [err.E0382]
+
+      - type: decode-error
+        id: decode-where-moved
+        prompt: Which line moved the value?
+        code:
+          rust: |
+            fn main() {
+                let colour = String::from("teal");
+                let paint = colour;
+                println!("{colour} {paint}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Line 3" }
+          - { id: b, text: "Line 2", why: "Line 2 creates the `String`. The compiler labels it with `move occurs because ...` to explain the type." }
+          - { id: c, text: "Line 4", why: "Line 4 is where `colour` is used after the move: `value borrowed here after move`." }
+        answer: a
+        explanation: "`value moved here` sits under `colour` on line 3, where the `String` moves to `paint`."
+        concepts: [err.E0382, compiler.read-error]
+
+      - type: decode-error
+        id: decode-fix-print
+        prompt: Which change fixes the error and prints `teal teal`?
+        code:
+          rust: |
+            fn main() {
+                let colour = String::from("teal");
+                let paint = colour;
+                println!("{colour} {paint}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 4 to `println!(\"{paint} {paint}\");`" }
+          - { id: b, text: "Change line 3 to `let mut paint = colour;`", why: "`mut` doesn't stop the move. `colour` is still invalid on line 4." }
+          - { id: c, text: "Swap lines 2 and 3", why: "Then line 2 uses `colour` before it exists, which is error E0425." }
+        answer: a
+        explanation: "After the move, `paint` owns the text, so print it through `paint`. You'll see other fixes later in this unit."
+        concepts: [err.E0382, own.move]
+
+      - type: predict-output
+        id: predict-chain
+        code:
+          rust: |
+            let first = String::from("baton");
+            let second = first;
+            let third = second;
+            println!("{third}");
+          verify: run
+        options:
+          - { id: a, text: "baton" }
+          - { id: b, text: "third", why: "`{third}` prints the text `third` owns." }
+          - { id: c, text: "baton baton baton", why: "There's one `String` and one `println!`. Moving doesn't make copies." }
+        answer: a
+        explanation: "The one `String` moves from `first` to `second` to `third`, like a relay baton."
+        concepts: [own.move]
+
+      - type: mcq
+        id: mcq-chain-owner
+        prompt: "After `let b = a;` and then `let c = b;`, which diagram is right?"
+        diagram:
+          caption: "Option A"
+          frames:
+            - name: main
+              vars:
+                - { name: a, moved: true }
+                - { name: b, moved: true }
+                - { name: c, points: h1 }
+          heap:
+            - { id: h1, value: '"baton"' }
+        options:
+          - { id: a, text: "Option A, shown: only `c` owns the text" }
+          - { id: b, text: "`b` and `c` both own it, and only `a` is moved", why: "`let c = b;` moves the `String` out of `b` as well." }
+          - { id: c, text: "`a`, `b` and `c` each point at their own copy of the text", why: "Moves never copy the heap text, so there is still one copy." }
+        answer: a
+        explanation: "Each move hands ownership on and invalidates the variable it came from. Only the last one, `c`, is valid."
+        concepts: [own.move]
+
+      - type: compiles
+        id: compiles-chain-middle
+        code:
+          rust: |
+            let first = String::from("baton");
+            let second = first;
+            let third = second;
+            println!("{second}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `second`" }
+            - { id: b, text: "E0382: borrow of moved value: `first`", why: "`first` is never used after it moves, so it causes no error." }
+            - { id: c, text: "E0308: mismatched types", why: "Every variable here is a `String`. The problem is ownership." }
+          answer: a
+        explanation: "`second` gave its `String` to `third` on line 3, so printing `second` on line 4 is E0382."
+        concepts: [own.move, err.E0382]
+
+      - type: true-false
+        id: tf-heap-copied
+        prompt: "A move takes longer for a long `String` than for a short one, because the text is copied."
+        answer: false
+        explanation: "A move copies only the pointer, length and capacity, which are the same size for any `String`. The heap text stays where it is."
+        concepts: [own.move, mem.stack-heap]
+
+      - type: fill-tokens
+        id: fill-print-owner
+        prompt: Fill the blank so the program compiles and prints `Good morning`
+        code:
+          rust: |
+            let greeting = String::from("Good");
+            let mut message = greeting;
+            message.push_str(" morning");
+            println!("{___1___}");
+          verify: run
+          expectStdout: "Good morning\n"
+        blanks:
+          "1": { answer: ["message"] }
+        bank: ["message", "greeting", "Good", "morning"]
+        explanation: "The `String` moved to `message`, so `message` is the only name you can print it with. `greeting` would be E0382."
+        concepts: [own.move, string.string-vs-literal]
+
+      - type: spot-bug
+        id: spot-label
+        prompt: "Tap the line the compiler labels `value moved here`"
+        code:
+          rust: |
+            fn main() {
+                let ticket = String::from("A12");
+                println!("{ticket}");
+                let seat = ticket;
+                println!("{seat}");
+                println!("{ticket}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 4
+        explanation: "The move happens on line 4. Printing `ticket` on line 3 is fine because it comes before the move; line 6 is the late use."
+        concepts: [err.E0382, own.move]
+
+  - id: l3
+    exercises:
+      - type: predict-output
+        id: predict-print-before-move
+        code:
+          rust: |
+            let word = String::from("hi");
+            println!("{word}");
+            let saved = word;
+            println!("{saved}!");
+          verify: run
+        options:
+          - { id: a, text: "hi\nhi!" }
+          - { id: b, text: "hi!", why: "Line 2 prints `word` before it moves, and that's allowed." }
+          - { id: c, text: "hi\n!", why: "`saved` owns the text `hi` after the move, so it prints `hi!`." }
+        answer: a
+        explanation: "Using `word` before the move is fine. After line 3, the text is printed through `saved`."
+        concepts: [own.move]
+
+      - type: compiles
+        id: compiles-block-move
+        code:
+          rust: |
+            let tune = String::from("jig");
+            {
+                let playing = tune;
+                println!("{playing}");
+            }
+            println!("{tune}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `tune`" }
+            - { id: b, text: "E0425: cannot find value `playing` in this scope", why: "Line 6 uses `tune`, which is still in scope. Its value has moved, though." }
+            - { id: c, text: "None: `tune` gets its value back at the `}`", why: "A move doesn't undo itself. `playing` dropped the text at the `}`." }
+          answer: a
+        explanation: "The `String` moved into `playing`, which dropped it at the end of the block. `tune` never gets it back."
+        concepts: [own.move, own.scope-drop, err.E0382]
+
+      - type: mcq
+        id: mcq-block-drop
+        prompt: "In the last program (without line 6), when is the text `\"jig\"` freed?"
+        options:
+          - { id: a, text: "At the `}` on line 5, when `playing` goes out of scope" }
+          - { id: b, text: "At the end of `main`, when `tune` goes out of scope", why: "`tune` doesn't own the text any more, so nothing is freed for it." }
+          - { id: c, text: "Twice: once for each variable", why: "Only the owner frees heap data, and there is one owner at a time." }
+        answer: a
+        explanation: "The owner drops the value when it goes out of scope. After the move the owner is `playing`, whose scope ends at line 5."
+        concepts: [own.move, own.scope-drop]
+
+      - type: decode-error
+        id: decode-push-after-move
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut list = String::from("eggs");
+                let shopping = list;
+                list.push_str(", milk");
+                println!("{shopping}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "`list` can't be changed on line 4 because its `String` moved to `shopping` on line 3" }
+          - { id: b, text: "`list` needs `mut` to call `push_str`", why: "It already has `mut`. The problem is that `list` no longer owns anything." }
+          - { id: c, text: "`shopping` needs `mut`", why: "`shopping` is never changed. Line 4 changes `list`." }
+        answer: a
+        explanation: "Changing a value counts as using it. After the move, `list` is invalid, so `push_str` on it is E0382."
+        concepts: [err.E0382, own.move]
+
+      - type: compiles
+        id: compiles-reassign
+        code:
+          rust: |
+            let mut draft = String::from("v1");
+            let sent = draft;
+            draft = String::from("v2");
+            println!("{sent} {draft}");
+          verify: run
+          expectStdout: "v1 v2\n"
+        answer: true
+        explanation: "After the move `draft` is empty, but it is `mut`, so line 3 gives it a new `String`. Then both variables own something."
+        concepts: [own.move, var.mut]
+
+      - type: true-false
+        id: tf-unused-move
+        prompt: "This compiles."
+        code:
+          rust: |
+            let note = String::from("hi");
+            let copy = note;
+            println!("done");
+          verify: compile
+        answer: true
+        explanation: "Moving is allowed. The error only appears if you use `note` afterwards, and nothing does. (The compiler warns that `copy` is unused.)"
+        concepts: [own.move]
+
+      - type: parsons
+        id: parsons-move-after-push
+        prompt: "Arrange the lines so the program prints `Hi, Sam`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let mut note = String::from("Hi");' }
+          - { id: l3, text: '    note.push_str(", Sam");' }
+          - { id: l4, text: "    let saved = note;" }
+          - { id: l5, text: '    println!("{saved}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{note}");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Hi, Sam\n"
+        explanation: "`push_str` has to happen while `note` still owns the text, so before the move. After the move, print through `saved`."
+        concepts: [own.move, string.string-vs-literal]
+
+      - type: fill-tokens
+        id: fill-two-blanks
+        prompt: Fill the blanks so the program compiles and prints `red, green`
+        code:
+          rust: |
+            let mut colours = String::from("red");
+            colours.push_str(", green");
+            let palette = ___1___;
+            println!("{}", ___2___);
+          verify: run
+          expectStdout: "red, green\n"
+        blanks:
+          "1": { answer: ["colours"] }
+          "2": { answer: ["palette"] }
+        bank: ["colours", "palette", "\"red\"", "green"]
+        explanation: "`let palette = colours;` moves the `String`, so it must be printed through `palette`. Printing `colours` there would be E0382."
+        concepts: [own.move]
+
+      - type: spot-bug
+        id: spot-mistake-swap
+        prompt: "This program should print `Win` twice. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let result = String::from("Win");
+                let backup = result;
+                println!("{result}");
+                println!("{backup}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 4
+        explanation: "Line 4 prints `result` after its `String` moved to `backup`. Printing `{backup}` there instead fixes it."
+        concepts: [err.E0382, own.move]
+
+      - type: mcq
+        id: mcq-which-compiles
+        prompt: "Which program compiles?"
+        options:
+          - { id: a, code: "let a = String::from(\"x\");\nprintln!(\"{a}\");\nlet b = a;" }
+          - { id: b, code: "let a = String::from(\"x\");\nlet b = a;\nprintln!(\"{a}\");", why: "`a` is printed after it moved to `b`: E0382." }
+          - { id: c, code: "let a = String::from(\"x\");\nlet b = a;\nlet c = a;", why: "`a` can only move once. The second move uses a moved value: E0382." }
+        answer: a
+        explanation: "What matters is the order: you can use a variable up to the line it moves on, but not after."
+        concepts: [own.move, err.E0382]

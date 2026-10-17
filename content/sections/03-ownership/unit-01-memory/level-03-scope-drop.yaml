@@ -1,0 +1,576 @@
+id: ownership.memory.scope-drop
+title: Scope and drop
+icon: door
+concepts: [own.scope-drop]
+reviewConcepts: [mem.stack-heap, string.string-vs-literal, var.shadowing, expr.block, fn.define, ctrl.for, ctrl.if, compiler.read-error]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-scope
+        title: A variable lives in its block
+        markdown: |
+          **A variable's scope runs from its `let` to the `}` that closes its block.** Outside that, the name doesn't exist.
+
+          A pair of braces `{ }` on its own makes an inner block with its own scope.
+        code:
+          rust: |
+            let lives = 3;
+            {
+                let bonus = 2;
+                println!("{lives} {bonus}");
+            } // bonus ends here
+            println!("{lives}");
+          verify: run
+          expectStdout: "3 2\n3\n"
+        diagram:
+          caption: "Inside the inner block"
+          frames:
+            - name: main
+              vars:
+                - { name: lives, value: "3" }
+                - { name: bonus, value: "2" }
+        concepts: [own.scope-drop]
+
+      - type: true-false
+        id: tf-after-block
+        prompt: "A variable created inside `{ }` can still be used after the closing `}`."
+        answer: false
+        explanation: "The variable's scope ends at the `}` of the block it was created in. After that, the compiler can't find the name."
+        concepts: [own.scope-drop]
+
+      - type: compiles
+        id: compiles-after-block
+        code:
+          rust: |
+            fn main() {
+                {
+                    let word = String::from("hi");
+                    println!("{word}");
+                }
+                println!("{word}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0425: cannot find value `word` in this scope" }
+            - { id: b, text: "E0308: mismatched types", why: "`word` is printed both times, and printing a `String` is fine. The second use is outside its scope." }
+            - { id: c, text: "E0596: cannot borrow as mutable", why: "Nothing changes `word` here. The problem is where line 6 is." }
+          answer: a
+        explanation: "`word` only exists inside the inner block. On line 6 there's no `word` in scope, so the compiler reports E0425."
+        concepts: [own.scope-drop]
+
+      - type: concept
+        id: concept-drop
+        title: Dropped at the closing brace
+        markdown: |
+          **When a variable goes out of scope, Rust drops its value.** For a `String`, dropping frees its heap memory.
+
+          You don't write anything for this: Rust adds the clean-up at the `}` for you.
+        code:
+          rust: |
+            let count = 1;
+            {
+                let word = String::from("hi");
+                println!("{word} {count}");
+            } // word is dropped here
+            println!("{count}");
+          verify: run
+          expectStdout: "hi 1\n1\n"
+        diagram:
+          caption: "After the inner }"
+          frames:
+            - name: main
+              vars:
+                - { name: count, value: "1" }
+          heap:
+            - { id: h1, value: '"hi"', freed: true }
+        concepts: [own.scope-drop]
+
+      - type: mcq
+        id: mcq-when-freed
+        prompt: "When is the heap memory for `city` freed?"
+        code:
+          rust: |
+            let year = 2026;
+            {
+                let city = String::from("Perth");
+                println!("{city}");
+            }
+            println!("{year}");
+          verify: run
+          expectStdout: "Perth\n2026\n"
+        options:
+          - { id: a, text: "At the `}` on line 5" }
+          - { id: b, text: "Straight after the `println!` on line 4", why: "Rust frees it when its scope ends, not after its last use. The scope ends at the `}`." }
+          - { id: c, text: "When the whole program ends", why: "`city`'s scope is the inner block, so it's dropped as soon as that block closes." }
+        answer: a
+        explanation: "`city` goes out of scope at the `}` that closes its block, and Rust drops it there."
+        concepts: [own.scope-drop]
+
+      - type: predict-output
+        id: predict-shadow-block
+        code:
+          rust: |
+            let level = 1;
+            {
+                let level = 2;
+                println!("{level}");
+            }
+            println!("{level}");
+          verify: run
+        options:
+          - { id: a, text: "2\n1" }
+          - { id: b, text: "2\n2", why: "The inner `level` is a new variable whose scope ends at `}`. The outer one still holds 1." }
+          - { id: c, text: "1\n1", why: "Inside the block, the inner `level` hides the outer one." }
+        answer: a
+        explanation: "The inner `level` exists only inside the block. After the `}`, the name refers to the outer `level` again."
+        concepts: [own.scope-drop, var.shadowing]
+
+      - type: true-false
+        id: tf-manual-free
+        prompt: "In Rust you free a `String`'s heap memory yourself by calling a special function when you've finished with it."
+        answer: false
+        explanation: "Rust drops the `String` automatically when its variable goes out of scope. You don't write the clean-up yourself."
+        concepts: [own.scope-drop]
+
+      - type: concept
+        id: concept-fn-scope
+        title: A function body is a scope
+        markdown: |
+          **A function's body is a block too.** Its variables are dropped when the function returns, and its frame is removed from the stack.
+        code:
+          rust: |
+            fn greet() {
+                let msg = String::from("hi");
+                println!("{msg}");
+            } // msg is dropped here
+
+            fn main() {
+                let calls = 2;
+                greet();
+                greet();
+                println!("{calls} calls");
+            }
+          verify: run
+          expectStdout: "hi\nhi\n2 calls\n"
+        diagram:
+          caption: "After the first greet() returns"
+          frames:
+            - name: main
+              vars:
+                - { name: calls, value: "2" }
+          heap:
+            - { id: h1, value: '"hi"', freed: true }
+        concepts: [own.scope-drop]
+
+      - type: true-false
+        id: tf-two-calls
+        prompt: "In the last example, calling `greet()` twice creates and frees two separate `String`s."
+        answer: true
+        explanation: "Each call runs the body again: it makes a new `String` on the heap and drops it at the closing `}`."
+        concepts: [own.scope-drop, fn.define]
+
+      - type: predict-output
+        id: predict-loop-scope
+        code:
+          rust: |
+            for n in 1..=3 {
+                let mut row = String::from("#");
+                if n == 3 {
+                    row.push_str("#");
+                }
+                println!("{row}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "#\n#\n##" }
+          - { id: b, text: "#\n##\n###", why: "`row` is created fresh on every pass, so it starts as `#` each time." }
+          - { id: c, text: "#\n#\n#", why: "On the third pass `n == 3`, so `#` is pushed before printing." }
+        answer: a
+        explanation: "The loop body is a block. `row` is created at the start of each pass and dropped at its end, so the extra `#` only appears on pass 3."
+        concepts: [own.scope-drop, ctrl.for]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-out-of-block
+        prompt: Which change makes the program compile and print `Ada` twice?
+        code:
+          rust: |
+            fn main() {
+                {
+                    let name = String::from("Ada");
+                    println!("{name}");
+                }
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, text: "Remove the inner `{` and `}` on lines 2 and 5" }
+          - { id: b, text: "Change line 3 to `let mut name = String::from(\"Ada\");`", why: "`mut` lets the value change. It doesn't make the scope any longer." }
+          - { id: c, text: "Change line 6 to `println!(\"{}\", name.len());`", why: "That still uses `name` outside its scope." }
+        answer: a
+        explanation: "Without the inner braces, `name`'s scope is the whole of `main`, so line 6 can use it. The compiler's help note says the same thing: `name` is in a different scope."
+        concepts: [own.scope-drop, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-fn-var
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn make_title() {
+                let title = String::from("Boss");
+                println!("{title}");
+            }
+
+            fn main() {
+                make_title();
+                println!("{title}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 8
+        explanation: "`title` belongs to `make_title`'s body and is dropped when it returns. `main` has no variable called `title`."
+        concepts: [own.scope-drop, fn.define]
+
+      - type: mcq
+        id: mcq-loop-frees
+        prompt: "How many times does this loop free heap memory?"
+        code:
+          rust: |
+            for i in 0..3 {
+                let label = format!("item {i}");
+                println!("{label}");
+            }
+          verify: run
+          expectStdout: "item 0\nitem 1\nitem 2\n"
+        options:
+          - { id: a, text: "3: once at the end of each pass" }
+          - { id: b, text: "1: once, after the loop finishes", why: "Each pass makes a new `label`, and it's dropped at the end of that pass." }
+          - { id: c, text: "0: `format!` text isn't on the heap", why: "`format!` returns a `String`, and a `String`'s text is on the heap." }
+        answer: a
+        explanation: "The loop body is a block that runs 3 times. Each time, a new `String` is made and then dropped at the `}`."
+        concepts: [own.scope-drop, macro.print-family]
+
+      - type: true-false
+        id: tf-diagram-inner
+        prompt: "This picture shows the program right after the inner block's `}`."
+        code:
+          rust: |
+            let team = String::from("Kites");
+            {
+                let coach = String::from("Lee");
+                println!("{team} {coach}");
+            }
+            println!("{team}");
+          verify: run
+          expectStdout: "Kites Lee\nKites\n"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: team, points: h1 }
+          heap:
+            - { id: h1, value: '"Kites"' }
+            - { id: h2, value: '"Lee"', freed: true }
+        answer: true
+        explanation: "`coach` went out of scope at the `}`, so its text is freed. `team` is still in scope, so its text is still on the heap."
+        concepts: [own.scope-drop, mem.stack-heap]
+
+      - type: match-pairs
+        id: pairs-moments
+        prompt: Match each moment to what happens to memory
+        pairs:
+          - ["String::from(\"a\")", "heap memory is requested"]
+          - ["s.push_str(\"b\")", "the text grows"]
+          - ["the } closing s's block", "s is dropped"]
+          - ["a function returns", "its frame is removed"]
+        explanation: "Heap memory is requested when the `String` is made and freed when it's dropped at the end of its scope."
+        concepts: [own.scope-drop, mem.stack-heap]
+
+      - type: predict-output
+        id: predict-block-value
+        code:
+          rust: |
+            let size = {
+                let word = String::from("tree");
+                word.len()
+            };
+            println!("{size}");
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "tree", why: "The block's value is its last expression, `word.len()`, which is a number." }
+          - { id: c, text: "0", why: "`word.len()` is worked out before `word` is dropped, and the number is kept in `size`." }
+        answer: a
+        explanation: "The block returns `word.len()`, which is 4. Then `word` is dropped at the `}`, but `size` already has its own copy of the number."
+        concepts: [own.scope-drop, expr.block]
+
+      - type: compiles
+        id: compiles-outer-in-inner
+        code:
+          rust: |
+            let mut log = String::from("start");
+            {
+                log.push_str(" go");
+            }
+            println!("{log}");
+          verify: run
+          expectStdout: "start go\n"
+        answer: true
+        explanation: "`log` was created in the outer scope, so it's still alive inside the inner block and after it. It prints `start go`."
+        concepts: [own.scope-drop, string.string-vs-literal]
+
+      - type: mcq
+        id: mcq-where-dropped
+        prompt: "On which line is `banner` dropped?"
+        code:
+          rust: |
+            fn main() {
+                let banner = String::from("Hi");
+                for _ in 0..2 {
+                    let n = banner.len();
+                    println!("{n}");
+                }
+                println!("{banner}");
+            }
+          verify: run
+          expectStdout: "2\n2\nHi\n"
+        options:
+          - { id: a, text: "Line 8" }
+          - { id: b, text: "Line 6", why: "That `}` closes the loop body. `banner` was created outside the loop, in `main`'s block." }
+          - { id: c, text: "Line 7", why: "Its last use doesn't end its scope. It's dropped when `main`'s block closes." }
+        answer: a
+        explanation: "`banner`'s scope is all of `main`, so it's dropped at the `}` on line 8."
+        concepts: [own.scope-drop]
+
+      - type: true-false
+        id: tf-drop-both
+        prompt: "When a `String` is dropped, its heap text is freed, and its stack part goes away with its frame or block."
+        answer: true
+        explanation: "Dropping frees the heap block. The pointer, length and capacity on the stack stop being used when the scope ends."
+        concepts: [own.scope-drop, mem.stack-heap]
+
+      - type: predict-output
+        id: predict-if-scope
+        code:
+          rust: |
+            let score = 7;
+            let mut result = String::from("score");
+            if score > 5 {
+                let extra = "!";
+                result.push_str(extra);
+            }
+            println!("{result}");
+          verify: run
+        options:
+          - { id: a, text: "score!" }
+          - { id: b, text: "score", why: "`extra` is dropped at the `}`, but `push_str` already copied its text into `result`." }
+          - { id: c, text: "7!", why: "`result` holds the text `score`, not the variable's value." }
+        answer: a
+        explanation: "`extra` only lives inside the `if` block, but `result` was created outside it and keeps the added `!`."
+        concepts: [own.scope-drop, ctrl.if]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-scope
+        prompt: "Fill the blanks so the program prints `Ada!`"
+        code:
+          rust: |
+            fn main() {
+                let ___1___ name = String::from("Ada");
+                {
+                    let mark = "!";
+                    name.___2___(mark);
+                }
+                println!("{___3___}");
+            }
+          verify: run
+          expectStdout: "Ada!\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["push_str"] }
+          "3": { answer: ["name"] }
+        bank: ["mut", "push_str", "name", "mark", "len"]
+        explanation: "`name` needs `mut` for `push_str`. On the last line only `name` is in scope; `mark` was dropped at the inner `}`."
+        concepts: [own.scope-drop, string.string-vs-literal]
+
+      - type: parsons
+        id: parsons-block-len
+        prompt: "Arrange the lines so the program prints `6`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    {" }
+          - { id: l4, text: '        let word = String::from("ferris");' }
+          - { id: l5, text: "        total += word.len();" }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: '    println!("{total}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: '    println!("{word}");' }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l1, l2, l3, l4, l5, l7, l6, l8]
+        verify:
+          mode: run
+          expectStdout: "6\n"
+        explanation: "`total` is created outside the block so it survives the `}`. `word` can only be used inside the block."
+        concepts: [own.scope-drop]
+
+      - type: compiles
+        id: compiles-if-scope
+        code:
+          rust: |
+            fn main() {
+                let score = 7;
+                if score > 5 {
+                    let msg = String::from("high");
+                }
+                println!("{msg}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`msg` only exists inside the `if` block" }
+            - { id: b, text: "`msg` might not be set if `score` is small", why: "Even with a large `score`, `msg`'s scope ends at the `}` of the `if`. The name doesn't exist on line 6." }
+            - { id: c, text: "A `String` can't be created inside an `if`", why: "It can. It's dropped at the end of the `if` block." }
+          answer: a
+        explanation: "An `if` body is a block like any other. `msg` is dropped at its `}`, so line 6 can't find it (E0425)."
+        concepts: [own.scope-drop, ctrl.if]
+
+      - type: true-false
+        id: tf-shadow-not-freed
+        prompt: "When a second `let name = ...` shadows a `String` called `name`, the first `String` is freed straight away."
+        code:
+          rust: |
+            let name = String::from("Ada");
+            let name = name.len();
+            println!("{name}");
+          verify: run
+          expectStdout: "3\n"
+        answer: false
+        explanation: "Shadowing hides the old variable, but it stays in scope until the end of the block. Its `String` is dropped there, along with everything else in the block."
+        concepts: [own.scope-drop, var.shadowing]
+
+      - type: decode-error
+        id: decode-fn-scope
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn add_points() {
+                let points = 10;
+                println!("{points}");
+            }
+
+            fn main() {
+                add_points();
+                let total = points + 5;
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        options:
+          - { id: a, text: "`points` belongs to `add_points`, so `main` can't see it" }
+          - { id: b, text: "`points` was dropped, so it now holds 0", why: "A variable that's out of scope doesn't hold anything. The name doesn't exist in `main` at all." }
+          - { id: c, text: "`add_points` must be called after line 8", why: "The order of calls doesn't matter. `main` never has a `points` variable." }
+        answer: a
+        explanation: "Each function body is its own scope. `points` lives in `add_points`'s frame and is gone when it returns, so `main` gets E0425."
+        concepts: [own.scope-drop, fn.define, compiler.read-error]
+
+      - type: mcq
+        id: mcq-alive-count
+        prompt: "How many `String`s are on the heap right after line 6 runs?"
+        code:
+          rust: |
+            fn main() {
+                let a = String::from("one");
+                {
+                    let b = String::from("two");
+                }
+                let c = String::from("three");
+                println!("{a} {c}");
+            }
+          verify: run
+          expectStdout: "one three\n"
+        options:
+          - { id: a, text: "2: `a` and `c`" }
+          - { id: b, text: "3: `a`, `b` and `c`", why: "`b` was dropped at the `}` on line 5." }
+          - { id: c, text: "1: only `c`", why: "`a`'s scope is all of `main`, so it's still alive." }
+        answer: a
+        explanation: "By line 6, `b` has been dropped. `a` is still in scope, and line 6 creates `c`."
+        concepts: [own.scope-drop]
+
+      - type: mcq
+        id: mcq-which-code-freed
+        prompt: Which code ends in this picture?
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: city, points: h1 }
+          heap:
+            - { id: h1, value: '"Perth"' }
+            - { id: h2, value: '"WA"', freed: true }
+        options:
+          - { id: a, code: "let city = String::from(\"Perth\");\n{\n    let state = String::from(\"WA\");\n}" }
+          - { id: b, code: "{\n    let city = String::from(\"Perth\");\n}\nlet state = String::from(\"WA\");", why: "Here `city` is dropped and `state` is alive: the opposite of the picture." }
+          - { id: c, code: "let city = String::from(\"Perth\");\nlet state = String::from(\"WA\");", why: "Both are still in scope, so neither heap box would be freed." }
+        answer: a
+        explanation: "`state` was made in an inner block and dropped at its `}`. `city` is in the outer scope, so it's still alive."
+        concepts: [own.scope-drop, mem.stack-heap]
+
+      - type: predict-output
+        id: predict-tiles-nested
+        prompt: Build the output
+        code:
+          rust: |
+            let x = 1;
+            {
+                let x = x + 10;
+                {
+                    let x = x * 2;
+                    println!("{x}");
+                }
+                println!("{x}");
+            }
+            println!("{x}");
+          verify: run
+        tiles: ["22", "11", "1", "2", "12"]
+        answer: "22\n11\n1"
+        explanation: "Each block's `x` ends at its own `}`, so the printed values go back out step by step: 22, then 11, then 1."
+        concepts: [own.scope-drop, var.shadowing]
+
+      - type: spot-bug
+        id: spot-loop-var
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                for n in 1..=2 {
+                    let row = format!("row {n}");
+                    println!("{row}");
+                }
+                println!("last: {row}");
+            }
+          verify: compile-fail
+          expectErrors: [E0425]
+        answer: 6
+        explanation: "`row` is created inside the loop body and dropped at the end of each pass. After the loop there's no `row` to print."
+        concepts: [own.scope-drop, ctrl.for]
+
+      - type: true-false
+        id: tf-scope-not-last-use
+        prompt: "Rust drops a `String` straight after the last line that uses it."
+        answer: false
+        explanation: "A value is dropped when its variable goes out of scope, at the `}` of its block, even if it was last used several lines earlier."
+        concepts: [own.scope-drop]

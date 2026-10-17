@@ -1,0 +1,338 @@
+id: ownership.in-practice.checkpoint
+title: "Checkpoint: Ownership & Borrowing"
+icon: flag
+concepts: []
+reviewConcepts:
+  - mem.stack-heap
+  - string.string-vs-literal
+  - own.scope-drop
+  - own.rules
+  - own.move
+  - err.E0382
+  - own.copy
+  - own.clone
+  - own.fn-move
+  - own.fn-return
+  - borrow.shared
+  - borrow.mut
+  - borrow.exclusive
+  - err.E0499
+  - err.E0502
+  - borrow.nll
+  - borrow.dangling
+  - err.E0106
+  - slice.str
+  - slice.str-param
+  - slice.array
+  - slice.utf8
+  - own.param-choice
+  - borrow.fixes
+  - own.iter-ref
+lessons:
+  - id: l1
+    exercises:
+      - type: decode-error
+        id: decode-moved-into-fn
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn upload(file: String) {
+                println!("uploading {file}");
+            }
+
+            fn main() {
+                let file = String::from("a.txt");
+                upload(file);
+                upload(file);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "The first call moved `file` into `upload`, so the second call has nothing to pass" }
+          - { id: b, text: "`upload` can only be called once", why: "A function can be called any number of times. The problem is the argument." }
+          - { id: c, text: "`file` must be declared with `mut`", why: "Nothing changes `file`. It's moved, and `mut` doesn't prevent moves." }
+        answer: a
+        explanation: "Passing a `String` by value moves it. Taking `file: &str` and calling `upload(&file)` lets both calls work."
+        concepts: [err.E0382, own.fn-move]
+
+      - type: compiles
+        id: compiles-copy-tuple
+        code:
+          rust: |
+            let point = (3, true);
+            let other = point;
+            println!("{point:?} {other:?}");
+          verify: run
+          expectStdout: "(3, true) (3, true)\n"
+        answer: true
+        explanation: "A tuple of `Copy` values is `Copy` too, so `let other = point;` copies it and `point` stays usable."
+        concepts: [own.copy]
+
+      - type: compiles
+        id: compiles-string-tuple
+        code:
+          rust: |
+            let entry = (3, String::from("Ann"));
+            let other = entry;
+            println!("{entry:?} {other:?}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `entry`" }
+            - { id: b, text: "E0505: cannot move out of `entry` because it is borrowed", why: "Nothing borrows `entry` before the move." }
+            - { id: c, text: "E0308: mismatched types", why: "`other` takes whatever type `entry` has. The problem is the move." }
+          answer: a
+        explanation: "A tuple containing a `String` isn't `Copy`, so `let other = entry;` moves the whole tuple."
+        concepts: [own.copy, own.move, err.E0382]
+
+      - type: decode-error
+        id: decode-two-mut
+        prompt: Which fix makes it compile and print `ab`?
+        code:
+          rust: |
+            fn main() {
+                let mut text = String::from("");
+                let first = &mut text;
+                let second = &mut text;
+                first.push_str("a");
+                second.push_str("b");
+                println!("{text}");
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "Move `first.push_str(\"a\");` above `let second = &mut text;`" }
+          - { id: b, text: "Change line 4 to `let second = &text;`", why: "A shared borrow would still overlap `first` (E0502), and `push_str` needs `&mut`." }
+          - { id: c, text: "Change line 3 to `let first = &mut text.clone();`", why: "It compiles, but the `a` goes into a copy, so `text` ends up as `b`." }
+        answer: a
+        explanation: "Once `first` is finished, `second` is the only `&mut` alive. The borrows happen one after the other instead of overlapping."
+        concepts: [err.E0499, borrow.fixes, borrow.nll]
+
+      - type: predict-output
+        id: predict-clone-scope
+        code:
+          rust: |
+            let mut greeting = String::from("hi");
+            let copy = greeting.clone();
+            {
+                let r = &mut greeting;
+                r.push_str(" there");
+            }
+            println!("{greeting}|{copy}");
+          verify: run
+        options:
+          - { id: a, text: "hi there|hi" }
+          - { id: b, text: "hi there|hi there", why: "`copy` was cloned before the change and has its own text." }
+          - { id: c, text: "hi|hi", why: "`r` is a mutable reference to `greeting`, so `push_str` changes `greeting` itself. Only `r` ends at the `}`." }
+        answer: a
+        explanation: "The block's `&mut` changes `greeting`, then the borrow ends at `}`. `copy` is a separate `String` and keeps `hi`."
+        concepts: [own.clone, borrow.mut, own.scope-drop]
+
+      - type: decode-error
+        id: decode-dangling
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn make_name() -> &String {
+                let name = String::from("Ann");
+                &name
+            }
+
+            fn main() {
+                println!("{}", make_name());
+            }
+          verify: compile-fail
+          expectErrors: [E0106]
+        options:
+          - { id: a, text: "Return `String` and end with `name`, so ownership moves to the caller" }
+          - { id: b, text: "Return `&mut String` and end with `&mut name`", why: "That's still a reference to `name`, which is freed when the function ends." }
+          - { id: c, text: "End with `&name.clone()`", why: "The clone is also owned inside the function, so the reference would still dangle." }
+        answer: a
+        explanation: "`name` is dropped when `make_name` ends, so a reference to it would dangle. Returning the `String` itself hands ownership to the caller."
+        concepts: [borrow.dangling, err.E0106, own.fn-return]
+
+      - type: spot-bug
+        id: spot-utf8-slice
+        prompt: "This compiles but panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Zürich");
+                let start = &city[0..2];
+                println!("{start}");
+            }
+          verify: run
+          expectPanic: "is not a char boundary"
+        answer: 3
+        explanation: "`ü` takes 2 bytes, at positions 1 and 2. The range `0..2` ends inside it, so the slice panics. `0..3` would give `Zü`."
+        concepts: [slice.utf8, slice.str]
+
+      - type: compiles
+        id: compiles-slice-then-push
+        code:
+          rust: |
+            let mut line = String::from("hi there");
+            let word = &line[0..2];
+            line.push_str("!");
+            println!("{word}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `line` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0499: cannot borrow `line` as mutable more than once", why: "A slice is a shared borrow. Only `push_str` borrows mutably." }
+            - { id: c, text: "E0382: borrow of moved value", why: "Slicing borrows. Nothing moves." }
+          answer: a
+        explanation: "`word` is a slice that borrows `line` until line 4. `push_str` could move the text to a new heap location, so Rust doesn't allow it while `word` is alive."
+        concepts: [slice.str, err.E0502]
+
+      - type: mcq
+        id: mcq-vowels-signature
+        prompt: "A function counts the vowels in a name and returns the count. Callers pass both string literals and `String`s. Which signature fits best?"
+        options:
+          - { id: a, code: "fn vowels(name: &str) -> usize" }
+          - { id: b, code: "fn vowels(name: &String) -> usize", why: "This works for `String`s, but a literal like `\"Ann\"` is a `&str`, not a `&String`." }
+          - { id: c, code: "fn vowels(name: String) -> usize", why: "Counting only reads the text. Taking ownership would move the caller's `String` away." }
+          - { id: d, code: "fn vowels(name: &mut str) -> usize", why: "Counting doesn't change the text, so it doesn't need `&mut`." }
+        answer: a
+        explanation: "`&str` borrows read-only and accepts literals and `&String` alike."
+        concepts: [own.param-choice, slice.str-param]
+
+      - type: decode-error
+        id: decode-move-while-borrowed
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let report = String::from("draft");
+                let summary = &report[0..3];
+                let finished = report;
+                println!("{summary} {finished}");
+            }
+          verify: compile-fail
+          expectErrors: [E0505]
+        options:
+          - { id: a, text: "`report` can't move on line 4 while the slice `summary` still borrows it" }
+          - { id: b, text: "`report` was moved before line 3", why: "Line 4 is the move. Line 3 only borrows." }
+          - { id: c, text: "The slice `0..3` is out of range", why: "`draft` has 5 bytes, so `0..3` is fine. This is a compile-time borrow error, E0505." }
+        answer: a
+        explanation: "E0505 means moving a value while it's borrowed. Printing `summary` before the move, or slicing `finished` instead, fixes it."
+        concepts: [borrow.fixes, slice.str]
+
+      - type: compiles
+        id: compiles-str-param-both
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi {name}");
+            }
+
+            fn main() {
+                let owned = String::from("Ann");
+                greet("Bo");
+                greet(&owned);
+                greet(&owned[0..1]);
+            }
+          verify: run
+          expectStdout: "Hi Bo\nHi Ann\nHi A\n"
+        answer: true
+        explanation: "A `&str` parameter accepts a literal, a `&String` and a string slice."
+        concepts: [slice.str-param, slice.str]
+
+      - type: predict-output
+        id: predict-double-all
+        code:
+          rust: |
+            fn double_all(nums: &mut [i32; 3]) {
+                for i in 0..3 {
+                    nums[i] *= 2;
+                }
+            }
+
+            fn main() {
+                let mut nums = [1, 2, 3];
+                double_all(&mut nums);
+                println!("{nums:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "[2, 4, 6]" }
+          - { id: b, text: "[1, 2, 3]", why: "`double_all` gets `&mut nums`, so it changes `main`'s array, not a copy." }
+          - { id: c, text: "[2, 2, 3]", why: "The loop runs for `i` = 0, 1 and 2, doubling every element." }
+        answer: a
+        explanation: "The mutable reference lets `double_all` change each element of `main`'s array in place."
+        concepts: [own.param-choice, borrow.mut, slice.array]
+
+      - type: decode-error
+        id: decode-loop-moves
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let guests = [
+                    String::from("Ann"),
+                    String::from("Bo"),
+                ];
+                for guest in guests {
+                    println!("Welcome {guest}");
+                }
+                println!("{} guests", guests.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: "for guest in &guests {" }
+          - { id: b, code: "for guest in guests.clone() {", why: "This compiles, but it copies every `String` when the loop only prints them." }
+          - { id: c, code: "println!(\"{} guests\", guest.len());", why: "`guest` only exists inside the loop, and it's one name, not the array." }
+        answer: a
+        explanation: "Looping over `guests` moves the array. Looping over `&guests` borrows it, so line 9 can still use it."
+        concepts: [own.iter-ref, err.E0382]
+
+      - type: fill-tokens
+        id: fill-total-slice
+        prompt: Fill the blanks so the program prints `6 3`
+        code:
+          rust: |
+            fn total(nums: ___1___) -> i32 {
+                let mut sum = 0;
+                for n in nums {
+                    sum += n;
+                }
+                sum
+            }
+
+            fn main() {
+                let scores = [1, 2, 3];
+                let t = total(___2___);
+                println!("{t} {}", scores.len());
+            }
+          verify: run
+          expectStdout: "6 3\n"
+        blanks:
+          "1": { answer: ["&[i32]"] }
+          "2": { answer: ["&scores"] }
+        bank: ["&[i32]", "&mut [i32]", "i32", "&scores", "scores[0]", "&mut scores"]
+        explanation: "`total` only reads, so it borrows a slice, `&[i32]`. `&scores` borrows the whole array as that slice."
+        concepts: [slice.array, own.param-choice, own.iter-ref]
+
+      - type: true-false
+        id: tf-clone-independent
+        prompt: "In the state shown, `s2.push_str(\"!\")` would also change the text `s1` owns."
+        diagram:
+          caption: "After let s2 = s1.clone();"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, points: h1 }
+                - { name: s2, points: h2 }
+          heap:
+            - { id: h1, value: '"hi"' }
+            - { id: h2, value: '"hi"' }
+        answer: false
+        explanation: "`clone` made a second heap box. `s1` and `s2` each own their own text, so changing one leaves the other alone."
+        concepts: [own.clone, mem.stack-heap]

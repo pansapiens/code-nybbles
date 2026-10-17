@@ -1,0 +1,497 @@
+id: ownership.memory.string
+title: String vs string literals
+icon: text
+concepts: [string.string-vs-literal]
+reviewConcepts: [mem.stack-heap, string.str-literal-intro, string.literals, var.mut, err.E0308, macro.print-family, ctrl.for, ctrl.if]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-two-kinds
+        title: Two kinds of text
+        markdown: |
+          **A string literal like `"Ferris"` is fixed text**, built into your compiled program. Its type is `&str`.
+
+          **`String::from("Ferris")` makes a `String`**: it copies the text into heap memory that belongs to the variable, so the text can change later.
+        code:
+          rust: |
+            let literal = "Ferris";
+            let name = String::from("Ferris");
+            println!("{literal} {name}");
+          verify: run
+          expectStdout: "Ferris Ferris\n"
+        diagram:
+          caption: 'name holds a String; its text is on the heap'
+          frames:
+            - name: main
+              vars:
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ferris"' }
+        concepts: [string.string-vs-literal]
+
+      - type: mcq
+        id: mcq-literal-type
+        prompt: "What is the type of `\"Hobart\"` on its own?"
+        options:
+          - { id: a, text: "`&str`" }
+          - { id: b, text: "`String`", why: "Text in double quotes is a literal, a `&str`. You get a `String` by calling `String::from`." }
+          - { id: c, text: "`char`", why: "A `char` is one character in single quotes, like `'H'`." }
+        answer: a
+        explanation: "Every string literal is a `&str`: fixed text stored inside the program."
+        concepts: [string.string-vs-literal, string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-from
+        code:
+          rust: |
+            let city = String::from("Darwin");
+            let n = city.len();
+            println!("{city}: {n} letters");
+          verify: run
+        options:
+          - { id: a, text: "Darwin: 6 letters" }
+          - { id: b, text: "String::from(\"Darwin\"): 6 letters", why: "`String::from` runs when `city` is created. `city` holds the text, not the code." }
+          - { id: c, text: "Darwin: 8 letters", why: "`.len()` counts the bytes of the text. The quotes aren't part of it." }
+        answer: a
+        explanation: "A `String` prints like a literal, and `.len()` counts its bytes, the same as on a `&str`."
+        concepts: [string.string-vs-literal]
+
+      - type: concept
+        id: concept-push-str
+        title: A String can grow
+        markdown: |
+          **`.push_str(text)` adds text to the end of a `String`.** It changes the `String`, so the variable needs `mut`.
+        code:
+          rust: |
+            let mut word = String::from("sun");
+            word.push_str("set");
+            println!("{word}");
+          verify: run
+          expectStdout: "sunset\n"
+        diagram:
+          caption: 'After word.push_str("set");'
+          frames:
+            - name: main
+              vars:
+                - { name: word, points: h1 }
+          heap:
+            - { id: h1, value: '"sunset"' }
+        concepts: [string.string-vs-literal]
+
+      - type: predict-output
+        id: predict-push-space
+        code:
+          rust: |
+            let mut greeting = String::from("Good");
+            greeting.push_str(" morning");
+            println!("{greeting}");
+          verify: run
+        options:
+          - { id: a, text: "Good morning" }
+          - { id: b, text: "Goodmorning", why: "`push_str` adds exactly the text you give it, and `\" morning\"` starts with a space." }
+          - { id: c, text: "Good", why: "`push_str` changes `greeting` itself, so the added text is printed too." }
+        answer: a
+        explanation: "`push_str` appends `\" morning\"`, space included, to the end of the text."
+        concepts: [string.string-vs-literal]
+
+      - type: compiles
+        id: compiles-push-no-mut
+        code:
+          rust: |
+            fn main() {
+                let name = String::from("Ada");
+                name.push_str(" Lovelace");
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`name` needs `mut`, because `push_str` changes it" }
+            - { id: b, text: "`push_str` only works on `&str`", why: "It's the other way round: `push_str` is a `String` method. A `&str` can't grow." }
+            - { id: c, text: "`\" Lovelace\"` should be a `String` too", why: "`push_str` takes a `&str`, so a literal is the right thing to pass." }
+          answer: a
+        explanation: "Changing a `String` needs a `mut` variable, the same as changing a number. The compiler reports E0596 and suggests `let mut name`."
+        concepts: [string.string-vs-literal, var.mut]
+
+      - type: true-false
+        id: tf-len-bytes
+        prompt: "`.len()` on a `String` counts bytes, the same as `.len()` on a `&str`."
+        answer: true
+        explanation: "Both count bytes. For plain English letters that's the same as the number of characters."
+        concepts: [string.string-vs-literal, string.str-literal-intro]
+
+      - type: predict-output
+        id: predict-len-grow
+        code:
+          rust: |
+            let mut code = String::from("ab");
+            println!("{}", code.len());
+            code.push_str("cd");
+            println!("{}", code.len());
+          verify: run
+        options:
+          - { id: a, text: "2\n4" }
+          - { id: b, text: "2\n2", why: "`push_str` changes `code`, so the second `.len()` sees the longer text." }
+          - { id: c, text: "4\n4", why: "Lines run in order. The first `.len()` runs before `push_str`." }
+        answer: a
+        explanation: "The length is 2 before `push_str(\"cd\")` and 4 after it."
+        concepts: [string.string-vs-literal]
+
+      - type: compiles
+        id: compiles-literal-as-string
+        code:
+          rust: |
+            fn main() {
+                let city: String = "Hobart";
+                println!("{city}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`city` is only given a value once." }
+            - { id: c, text: "E0425: cannot find value", why: "`city` is created on line 2, so the compiler can find it." }
+          answer: a
+        explanation: "`\"Hobart\"` is a `&str`, but the annotation asks for a `String`. They're different types, so this is E0308."
+        concepts: [string.string-vs-literal, err.E0308]
+
+      - type: mcq
+        id: mcq-make-string
+        prompt: Which line makes a `String`?
+        options:
+          - { id: a, code: "let team = String::from(\"Swans\");" }
+          - { id: b, code: "let team = \"Swans\";", why: "That's a string literal, a `&str`." }
+          - { id: c, code: "let team = 'Swans';", why: "Single quotes are for one `char`. This doesn't compile." }
+        answer: a
+        explanation: "`String::from` takes a literal and copies its text into a new `String` on the heap."
+        concepts: [string.string-vs-literal]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-e0308-fix
+        prompt: Which change makes `city` a `String` and fixes the error?
+        code:
+          rust: |
+            fn main() {
+                let city: String = "Hobart";
+                println!("{city}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "let city: String = String::from(\"Hobart\");" }
+          - { id: b, code: "let mut city: String = \"Hobart\";", why: "`mut` lets a variable change, but doesn't change the type of `\"Hobart\"`." }
+          - { id: c, code: "let city: String = 'Hobart';", why: "Single quotes make a `char`, and a `char` holds only one character." }
+        answer: a
+        explanation: "`String::from` turns the literal into a `String`. The compiler's own suggestion, `.to_string()`, does the same job."
+        concepts: [string.string-vs-literal, err.E0308]
+
+      - type: compiles
+        id: compiles-push-literal
+        code:
+          rust: |
+            fn main() {
+                let mut title = "Dr";
+                title.push_str(" Who");
+                println!("{title}");
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`title` is a `&str`, and fixed text has no `push_str`" }
+            - { id: b, text: "`title` needs `mut`", why: "It already has `mut`. That lets you point `title` at a different literal, not change the text." }
+            - { id: c, text: "`push_str` needs a `char`, like `'W'`", why: "`push_str` takes text in double quotes." }
+          answer: a
+        explanation: "A literal's text is fixed, so `&str` has no `push_str` method (E0599). Start from `String::from(\"Dr\")` to get text that can grow."
+        concepts: [string.string-vs-literal]
+
+      - type: true-false
+        id: tf-diagram-realloc
+        prompt: "When a `String` outgrows its heap block, it can get a bigger block, copy the text across and free the old one."
+        diagram:
+          caption: 'After word.push_str("set");'
+          frames:
+            - name: main
+              vars:
+                - { name: word, points: h2 }
+          heap:
+            - { id: h1, value: '"sun"', freed: true }
+            - { id: h2, value: '"sunset"' }
+        answer: true
+        explanation: "If the capacity is too small, the `String` asks for a bigger block and moves its text there. The pointer, length and capacity on the stack are updated to match."
+        concepts: [string.string-vs-literal, mem.stack-heap]
+
+      - type: spot-bug
+        id: spot-missing-mut
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let list = String::from("eggs");
+                println!("{list}");
+                list.push_str(", milk");
+                println!("{list}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: 2
+        explanation: "The error points at line 4, but the fix belongs on line 2: `let mut list` so the `String` can be changed."
+        concepts: [string.string-vs-literal, var.mut]
+
+      - type: match-pairs
+        id: pairs-string-words
+        prompt: Match each piece of code to what it is
+        pairs:
+          - ["\"hi\"", "fixed text in the program"]
+          - ["String::from(\"hi\")", "new text on the heap"]
+          - [".push_str(\"!\")", "adds text to a String"]
+          - [".len()", "number of bytes"]
+        explanation: "A literal is fixed. `String::from` makes heap text that `push_str` can add to, and `.len()` measures either in bytes."
+        concepts: [string.string-vs-literal]
+
+      - type: predict-output
+        id: predict-format-push
+        code:
+          rust: |
+            let mut tag = format!("#{}", 7);
+            tag.push_str("!");
+            println!("{tag}");
+          verify: run
+        options:
+          - { id: a, text: "#7!" }
+          - { id: b, text: "#7", why: "`format!` returns a `String`, so `push_str` can add to it." }
+          - { id: c, text: "#{}!", why: "`format!` fills in the `{}` with `7`, the same way `println!` does." }
+        answer: a
+        explanation: "`format!` builds a `String`, `#7`, and `push_str` adds `!` to the end."
+        concepts: [string.string-vs-literal, macro.print-family]
+
+      - type: mcq
+        id: mcq-can-push
+        prompt: "After which line can you call `s.push_str(\"b\")`?"
+        options:
+          - { id: a, code: "let mut s = String::from(\"a\");" }
+          - { id: b, code: "let mut s = \"a\";", why: "`s` is a `&str`. A literal's text can't grow, even when the variable is `mut`." }
+          - { id: c, code: "let s = String::from(\"a\");", why: "`s` is a `String`, but without `mut` you can't change it." }
+        answer: a
+        explanation: "`push_str` needs two things: a `String`, and a `mut` variable holding it."
+        concepts: [string.string-vs-literal, var.mut]
+
+      - type: true-false
+        id: tf-from-copies
+        prompt: "`String::from(\"hi\")` copies the bytes of `\"hi\"` into new heap memory."
+        answer: true
+        explanation: "The literal stays in the program unchanged. The `String` gets its own copy on the heap, which it can grow."
+        concepts: [string.string-vs-literal, mem.stack-heap]
+
+      - type: mcq
+        id: mcq-stack-change
+        prompt: "In this code, what changes in the stack part of `s` on line 2?"
+        code:
+          rust: |
+            let mut s = String::from("ab");
+            s.push_str("cd");
+            println!("{s}");
+          verify: run
+          expectStdout: "abcd\n"
+        options:
+          - { id: a, text: "The length goes from 2 to 4" }
+          - { id: b, text: "Nothing: only the heap changes", why: "The length is one of the three numbers on the stack, so it's updated too." }
+          - { id: c, text: "The text `\"abcd\"` is copied onto the stack", why: "The text stays on the heap. The stack only holds pointer, length and capacity." }
+        answer: a
+        explanation: "The stack part tracks the length, so adding 2 bytes changes it from 2 to 4. The pointer and capacity change too if a bigger block is needed."
+        concepts: [string.string-vs-literal, mem.stack-heap]
+
+      - type: predict-output
+        id: predict-loop-build
+        code:
+          rust: |
+            let mut line = String::from("");
+            for _ in 0..3 {
+                line.push_str("ab");
+            }
+            println!("{line} {}", line.len());
+          verify: run
+        options:
+          - { id: a, text: "ababab 6" }
+          - { id: b, text: "ab 2", why: "`line` is created before the loop, so each `push_str` adds to the same `String`." }
+          - { id: c, text: "ababab 3", why: "`.len()` counts bytes: 3 lots of 2." }
+        answer: a
+        explanation: "The loop runs 3 times and adds `ab` each time, giving 6 bytes."
+        concepts: [string.string-vs-literal, ctrl.for]
+
+  - id: l3
+    exercises:
+      - type: fill-tokens
+        id: fill-greeting
+        prompt: "Fill the blanks so the program prints `Hello, world`"
+        code:
+          rust: |
+            let ___1___ msg = ___2___("Hello");
+            msg.___3___(", world");
+            println!("{msg}");
+          verify: run
+          expectStdout: "Hello, world\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["String::from"] }
+          "3": { answer: ["push_str"] }
+        bank: ["mut", "String::from", "push_str", "push", "len", "&str"]
+        explanation: "The `String` comes from `String::from`, `mut` lets it change, and `push_str` adds text to it."
+        concepts: [string.string-vs-literal, var.mut]
+
+      - type: parsons
+        id: parsons-shopping
+        prompt: "Arrange the lines so the program prints `eggs, milk, tea`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let mut list = String::from("eggs");' }
+          - { id: l3, text: '    list.push_str(", milk");' }
+          - { id: l4, text: '    list.push_str(", tea");' }
+          - { id: l5, text: '    println!("{list}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: '    let mut list = "eggs";' }
+          - { id: d2, text: '    let list = String::from("eggs");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "eggs, milk, tea\n"
+        explanation: "The list must be a `mut String` before anything is pushed onto it, and the two pushes go in the order they should appear."
+        concepts: [string.string-vs-literal]
+
+      - type: decode-error
+        id: decode-e0599
+        prompt: Which change makes the program compile and print `Dr Who`?
+        code:
+          rust: |
+            fn main() {
+                let mut title = "Dr";
+                title.push_str(" Who");
+                println!("{title}");
+            }
+          verify: compile-fail
+          expectErrors: [E0599]
+        options:
+          - { id: a, text: "Change line 2 to `let mut title = String::from(\"Dr\");`" }
+          - { id: b, text: "Change line 2 to `let title = \"Dr\";`", why: "Removing `mut` doesn't give a `&str` a `push_str` method." }
+          - { id: c, text: "Change line 3 to `title.push_str(' Who');`", why: "Single quotes make a `char`, and a `char` can only hold one character." }
+        answer: a
+        explanation: "The compiler says there's no `push_str` for `&str`. A `String` has one, so make `title` a `String`."
+        concepts: [string.string-vs-literal, compiler.read-error]
+
+      - type: predict-output
+        id: predict-tiles-path
+        prompt: Build the output
+        code:
+          rust: |
+            let mut path = String::from("home");
+            path.push_str("/ada");
+            println!("{path} {}", path.len());
+          verify: run
+        tiles: ["home/ada", "8", "home", "/ada", "4", "9"]
+        answer: "home/ada 8"
+        explanation: "`push_str` joins `/ada` straight onto `home`, making 8 bytes."
+        concepts: [string.string-vs-literal]
+
+      - type: compiles
+        id: compiles-assign-literal
+        code:
+          rust: |
+            fn main() {
+                let mut status = String::from("ok");
+                status = "done";
+                println!("{status}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`status` is `mut`, so assigning again is allowed if the type matches." }
+            - { id: c, text: "E0596: cannot borrow as mutable", why: "That's the error for changing a `String` without `mut`. Here the problem is the type." }
+          answer: a
+        explanation: "`status` is a `String`, and `\"done\"` is a `&str`. Use `status = String::from(\"done\");`."
+        concepts: [string.string-vs-literal, err.E0308]
+
+      - type: compiles
+        id: compiles-format-type
+        code:
+          rust: |
+            let points = 12;
+            let s: String = format!("{points} pts");
+            println!("{s}");
+          verify: run
+          expectStdout: "12 pts\n"
+        answer: true
+        explanation: "`format!` returns a new `String`, so the annotation is right."
+        concepts: [string.string-vs-literal, macro.print-family]
+
+      - type: spot-bug
+        id: spot-char-push
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut name = String::from("Ada");
+                name.push_str(" Lovelace");
+                name.push_str('!');
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 4
+        explanation: "`push_str` takes text in double quotes, a `&str`. `'!'` is a `char`, so it's the wrong type."
+        concepts: [string.string-vs-literal, err.E0308]
+
+      - type: mcq
+        id: mcq-when-string
+        prompt: "When do you need a `String` rather than a literal?"
+        options:
+          - { id: a, text: "When the text is built or changed while the program runs" }
+          - { id: b, text: "Whenever you want to print text", why: "`println!` prints literals and `String`s the same way." }
+          - { id: c, text: "When the text is longer than one word", why: "A literal can be as long as you like. The question is whether it needs to change." }
+        answer: a
+        explanation: "A literal is fixed when you compile. Text that grows, or that comes from the user or a calculation, needs a `String`."
+        concepts: [string.string-vs-literal]
+
+      - type: predict-output
+        id: predict-stars
+        code:
+          rust: |
+            let mut stars = String::from("");
+            for n in 1..=4 {
+                if n % 2 == 0 {
+                    stars.push_str("*");
+                } else {
+                    stars.push_str("-");
+                }
+            }
+            println!("{stars}");
+          verify: run
+        options:
+          - { id: a, text: "-*-*" }
+          - { id: b, text: "*-*-", why: "The loop starts at 1, which is odd, so the first push is `-`." }
+          - { id: c, text: "-", why: "`stars` is created before the loop, so every push adds to the same `String`." }
+        answer: a
+        explanation: "1 and 3 are odd and add `-`; 2 and 4 are even and add `*`."
+        concepts: [string.string-vs-literal, ctrl.if, ctrl.for]
+
+      - type: true-false
+        id: tf-print-same
+        prompt: "`String::from(\"hi\")` and `\"hi\"` both print `hi` with `println!(\"{}\", ...)`."
+        answer: true
+        explanation: "They're different types stored in different places, but they hold the same text and print the same way."
+        concepts: [string.string-vs-literal]

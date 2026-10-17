@@ -1,0 +1,537 @@
+id: ownership.slices.str-params
+title: "&str parameters"
+icon: arrow-right
+concepts: [slice.str-param]
+reviewConcepts: [slice.str, fn.params, fn.return, err.E0308, borrow.shared, own.fn-move, err.E0382]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-str-param
+        title: Take text as &str
+        markdown: |
+          **A function that only reads text can take `&str`.** Then it accepts string literals and slices of a `String`.
+
+          In the second call, `name` borrows `owner`'s text. Nothing is copied or moved.
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let owner = String::from("Ada");
+                greet("Ferris");
+                greet(&owner[..]);
+            }
+          verify: run
+          expectStdout: "Hi, Ferris!\nHi, Ada!\n"
+        diagram:
+          caption: "During greet(&owner[..]): `name` covers all of `owner`'s text."
+          frames:
+            - name: main
+              vars:
+                - { name: owner, points: h1 }
+            - name: greet
+              vars:
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ada"' }
+        concepts: [slice.str-param]
+
+      - type: predict-output
+        id: predict-two-greets
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let player = String::from("Mia");
+                greet(&player[..2]);
+                greet("Kai");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Hi, Mi!\nHi, Kai!" }
+          - { id: b, text: "Hi, Mia!\nHi, Kai!", why: "`..2` stops before byte 2, so the slice is `Mi`." }
+          - { id: c, text: "Hi, Kai!\nHi, Mi!", why: "The calls run in order, and `player`'s slice is passed first." }
+        answer: a
+        explanation: "The first call passes the slice `Mi`, the second passes the literal `Kai`. Both are `&str`."
+        concepts: [slice.str-param, slice.str]
+
+      - type: concept
+        id: concept-deref-coercion
+        title: "&String works too"
+        markdown: |
+          **You can also pass `&owner`.** When a function asks for `&str` and you give it a `&String`, Rust converts it for you. This is called **deref coercion**.
+
+          You'll see how it works later. For now: `&str` parameters accept `&String`.
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let owner = String::from("Ada");
+                greet(&owner);
+            }
+          verify: run
+          expectStdout: "Hi, Ada!\n"
+        concepts: [slice.str-param]
+
+      - type: true-false
+        id: tf-pass-ref-string
+        prompt: "A function with a `name: &str` parameter can be called as `greet(&player)`, where `player` is a `String`."
+        answer: true
+        explanation: "Deref coercion turns the `&String` into a `&str` that covers all of `player`'s text."
+        concepts: [slice.str-param]
+
+      - type: compiles
+        id: compiles-pass-string
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let name = String::from("Ada");
+                greet(name);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0382: use of moved value", why: "Nothing is used after the call. The call itself has the wrong type." }
+            - { id: c, text: "E0502: cannot borrow as mutable because it is also borrowed as immutable", why: "There's no `&mut` here." }
+          answer: a
+        explanation: "`greet` wants a `&str` and gets a `String`. Rust converts `&String`, but not a `String` itself: you need the `&`."
+        concepts: [slice.str-param, err.E0308]
+
+      - type: decode-error
+        id: decode-add-ampersand
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let name = String::from("Ada");
+                greet(name);
+                println!("Bye, {name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "greet(&name);", why: "Correct: `greet` borrows `name`, which is still usable on the next line." }
+          - { id: b, code: "fn greet(name: String) {", why: "That makes `greet` take ownership, so line 8 would then use a moved value (E0382)." }
+          - { id: c, code: "greet(*name);", why: "`*name` isn't a reference. Passing a reference needs `&`." }
+        answer: a
+        explanation: "The compiler's help says it: consider borrowing here. `&name` is a `&String`, which deref coercion turns into a `&str`."
+        concepts: [slice.str-param, err.E0308]
+
+      - type: mcq
+        id: mcq-which-param
+        prompt: "Which parameter type accepts all three: `\"hi\"`, `&s` and `&s[1..]`, where `s` is a `String`?"
+        options:
+          - { id: a, code: "text: &str" }
+          - { id: b, code: "text: &String", why: "A literal like `\"hi\"` is a `&str`, not a reference to a `String`." }
+          - { id: c, code: "text: String", why: "None of the three is a `String`. They're all references." }
+          - { id: d, code: "text: str", why: "`str` without `&` has no size known at compile time, so it can't be a parameter (E0277)." }
+        answer: a
+        explanation: "`&str` takes literals and slices directly, and `&String` through deref coercion."
+        concepts: [slice.str-param]
+
+      - type: compiles
+        id: compiles-literal-to-string-ref
+        code:
+          rust: |
+            fn greet(name: &String) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                greet("Ada");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`\"Ada\"` is a `&str`, and `greet` asks for a `&String`" }
+            - { id: b, text: "String literals can't be passed to functions", why: "They can, to a parameter of type `&str`." }
+            - { id: c, text: "`greet` doesn't return anything", why: "Functions don't have to return a value." }
+          answer: a
+        explanation: "The conversion only goes one way: `&String` to `&str`. Changing the parameter to `&str` fixes it."
+        concepts: [slice.str-param, err.E0308]
+
+      - type: fill-tokens
+        id: fill-shout-param
+        prompt: "Fill the blank so both calls compile"
+        code:
+          rust: |
+            fn shout(word: ___1___) {
+                println!("{word}!");
+            }
+
+            fn main() {
+                let s = String::from("go");
+                shout("hey");
+                shout(&s);
+            }
+          verify: run
+          expectStdout: "hey!\ngo!\n"
+        blanks:
+          "1": { answer: ["&str"] }
+        bank: ["&str", "&String", "String", "str"]
+        explanation: "Only `&str` takes both the literal and the `&String`."
+        concepts: [slice.str-param]
+
+  - id: l2
+    exercises:
+      - type: predict-output
+        id: predict-count
+        code:
+          rust: |
+            fn count(text: &str) -> usize {
+                text.len()
+            }
+
+            fn main() {
+                let s = String::from("hello world");
+                let a = count("tea");
+                let b = count(&s);
+                let c = count(&s[6..]);
+                println!("{a} {b} {c}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3 11 5" }
+          - { id: b, text: "3 11 11", why: "`&s[6..]` is only the part from byte 6: `world`, 5 bytes." }
+          - { id: c, text: "3 10 5", why: "`hello world` has 11 bytes: the space counts." }
+        answer: a
+        explanation: "`count` measures whichever text it's given: the literal, all of `s`, or the slice `world`."
+        concepts: [slice.str-param, slice.str]
+
+      - type: compiles
+        id: compiles-use-after-borrow
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let name = String::from("Kai");
+                greet(&name);
+                greet(&name);
+                println!("{name} is still here");
+            }
+          verify: run
+          expectStdout: "Hi, Kai!\nHi, Kai!\nKai is still here\n"
+        answer: true
+        explanation: "`greet` only borrows `name`, so `main` still owns it and can use it again."
+        concepts: [slice.str-param, borrow.shared]
+
+      - type: spot-bug
+        id: spot-missing-ref
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let name = String::from("Kai");
+                greet(&name);
+                greet(name);
+                greet("Mia");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 8
+        explanation: "Line 8 passes the `String` itself. `greet` needs a `&str`, so it should be `greet(&name)`."
+        concepts: [slice.str-param, err.E0308]
+
+      - type: decode-error
+        id: decode-string-ref-param
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn greet(name: &String) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let player = String::from("Ada");
+                greet(&player);
+                greet("Ferris");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Change line 1 to `fn greet(name: &str) {`", why: "Correct: `&str` accepts the literal, and `&player` through deref coercion." }
+          - { id: b, text: "Change line 8 to `greet(&\"Ferris\");`", why: "That's a `&&str`, a reference to a `&str`. It still isn't a `&String`." }
+          - { id: c, text: "Change line 7 to `greet(player);`", why: "Line 7 was fine. This adds a second mismatched type." }
+        answer: a
+        explanation: "A literal is a `&str`, and Rust won't turn a `&str` into a `&String`. Taking `&str` makes the function accept both."
+        concepts: [slice.str-param, err.E0308]
+
+      - type: match-pairs
+        id: pairs-arguments
+        prompt: "`name` is a `String`. Match each argument to what it passes."
+        pairs:
+          - ["\"Ada\"", "a string literal, a `&str`"]
+          - ["&name", "a `&String`, converted to `&str`"]
+          - ["&name[..2]", "a slice of part of `name`"]
+          - ["name", "the `String` itself, moving it"]
+        concepts: [slice.str-param, slice.str]
+
+      - type: mcq
+        id: mcq-why-str
+        prompt: "Why do Rust programmers usually write `&str` rather than `&String` for a parameter that only reads text?"
+        options:
+          - { id: a, text: "It accepts literals, slices and `&String`, so callers have more choices" }
+          - { id: b, text: "A `&String` parameter takes ownership of the text", why: "Any `&` is a borrow. `&String` doesn't take ownership either." }
+          - { id: c, text: "You can't read the text through a `&String`", why: "You can. It's less flexible about what callers can pass." }
+        answer: a
+        explanation: "`&str` covers every kind of text argument, and costs nothing extra: it's a pointer and a length."
+        concepts: [slice.str-param]
+
+      - type: predict-output
+        id: predict-short-day
+        code:
+          rust: |
+            fn short(day: &str) {
+                println!("{}", &day[..3]);
+            }
+
+            fn main() {
+                let today = String::from("Friday");
+                short("Monday");
+                short(&today);
+            }
+          verify: run
+        options:
+          - { id: a, text: "Mon\nFri" }
+          - { id: b, text: "Mond\nFrid", why: "`..3` is bytes 0, 1 and 2: three letters." }
+          - { id: c, text: "Monday\nFriday", why: "The function prints a slice of `day`, not all of it." }
+        answer: a
+        explanation: "Inside `short`, `day` is a `&str`, and you can slice it like any other."
+        concepts: [slice.str-param, slice.str]
+
+      - type: true-false
+        id: tf-coerce-backwards
+        prompt: "Deref coercion also turns a `&str` into a `&String` when a function asks for one."
+        answer: false
+        explanation: "It only goes from `&String` to `&str`. A `&str` might be a literal or part of a text, and there's no `String` for it to refer to."
+        concepts: [slice.str-param]
+
+      - type: fill-tokens
+        id: fill-calls
+        prompt: "Fill the blanks so the program prints `Hi, Zoe!` then `Hi, Zo!`"
+        code:
+          rust: |
+            fn greet(name: &str) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let player = String::from("Zoe");
+                greet(___1___);
+                greet(___2___);
+            }
+          verify: run
+          expectStdout: "Hi, Zoe!\nHi, Zo!\n"
+        blanks:
+          "1": { answer: ["&player", "&player[..]"] }
+          "2": { answer: ["&player[..2]"] }
+        bank: ["&player", "&player[..2]", "player", "&player[2..]", "player[..2]"]
+        explanation: "`&player` passes all of the text, and `&player[..2]` passes the first two bytes. Both need `&`."
+        concepts: [slice.str-param, slice.str]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-shout
+        prompt: "Arrange the lines so the program prints `go!`"
+        lines:
+          - { id: l1, text: "fn shout(word: &str) {" }
+          - { id: l2, text: '    println!("{word}!");' }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn main() {" }
+          - { id: l5, text: '    let cheer = String::from("go");' }
+          - { id: l6, text: "    shout(&cheer);" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "fn shout(word: str) {" }
+          - { id: d2, text: "    shout(cheer);" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l4, l5, l6, l7, l1, l2, l3]
+          - [l4, l5, l6, l3, l1, l2, l7]
+          - [l1, l2, l7, l4, l5, l6, l3]
+        verify:
+          mode: run
+          expectStdout: "go!\n"
+        explanation: "`shout` takes a `&str`, and `main` lends it the `String` with `&cheer`."
+        concepts: [slice.str-param]
+
+      - type: compiles
+        id: compiles-mixed-args
+        code:
+          rust: |
+            fn label(name: &str, unit: &str) {
+                println!("{name} ({unit})");
+            }
+
+            fn main() {
+                let rain = String::from("Rainfall");
+                label(&rain, "mm");
+                label(&rain[..4], "mm");
+            }
+          verify: run
+          expectStdout: "Rainfall (mm)\nRain (mm)\n"
+        answer: true
+        explanation: "Every argument is a `&str` or a `&String`, and each `&str` parameter accepts either."
+        concepts: [slice.str-param]
+
+      - type: predict-output
+        id: predict-tiles-label
+        prompt: Build the output
+        code:
+          rust: |
+            fn width(text: &str) -> usize {
+                text.len() + 2
+            }
+
+            fn main() {
+                let city = String::from("Hobart");
+                let n = width(&city[2..]);
+                println!("{} {n}", &city[..2]);
+            }
+          verify: run
+        tiles: ["Ho", "6", "bart", "4", "8", "Hobart"]
+        answer: "Ho 6"
+        explanation: "`width` gets the slice `bart`, which is 4 bytes, and adds 2. The `println!` prints the first two bytes, `Ho`."
+        concepts: [slice.str-param, slice.str]
+
+      - type: decode-error
+        id: decode-moved-into-fn
+        prompt: "Which change makes the program compile and keep `greet` borrowing?"
+        code:
+          rust: |
+            fn greet(name: String) {
+                println!("Hi, {name}!");
+            }
+
+            fn main() {
+                let name = String::from("Lu");
+                greet(name);
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Line 1: `name: &str`, and line 7: `greet(&name);`" }
+          - { id: b, text: "Only line 7: `greet(&name);`", why: "`greet` still asks for a `String`, so passing `&name` is a type mismatch (E0308)." }
+          - { id: c, text: "Only line 1: `name: &str`", why: "Line 7 would still pass the `String` itself, which isn't a `&str`." }
+        answer: a
+        explanation: "`greet` took ownership, so `name` moved and line 8 fails (E0382). Borrowing needs both a `&str` parameter and a `&` at the call."
+        concepts: [slice.str-param, own.fn-move, err.E0382]
+
+      - type: mcq
+        id: mcq-which-fails
+        prompt: "`fn greet(name: &str)` and `let s = String::from(\"Ada\");`. Which call does not compile?"
+        options:
+          - { id: a, code: "greet(s);" }
+          - { id: b, code: "greet(&s);", why: "Deref coercion turns `&s` into a `&str`." }
+          - { id: c, code: "greet(&s[1..]);", why: "A slice of `s` is a `&str` already." }
+          - { id: d, code: "greet(\"Ada\");", why: "A literal is a `&str`." }
+        answer: a
+        explanation: "`s` on its own is a `String`. Rust only converts references, so the call needs `&s`."
+        concepts: [slice.str-param]
+
+      - type: spot-bug
+        id: spot-str-param-type
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn shout(word: &String) {
+                println!("{word}!");
+            }
+
+            fn main() {
+                let cheer = String::from("go");
+                shout(&cheer);
+                shout(&cheer[..1]);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 1
+        explanation: "The compiler reports line 8, but the mistake is the parameter type on line 1. With `word: &str`, both calls compile."
+        concepts: [slice.str-param, err.E0308]
+
+      - type: true-false
+        id: tf-str-param-moves
+        prompt: "Calling `greet(&name)` with a `&str` parameter moves `name` into `greet`."
+        answer: false
+        explanation: "`&name` is a borrow. `name` stays with `main`, and `greet` only reads it while the call runs."
+        concepts: [slice.str-param, borrow.shared]
+
+      - type: predict-output
+        id: predict-loop-calls
+        code:
+          rust: |
+            fn show(text: &str) {
+                println!("{}", text.len());
+            }
+
+            fn main() {
+                let word = String::from("stone");
+                for i in 0..3 {
+                    show(&word[i..]);
+                }
+            }
+          verify: run
+        options:
+          - { id: a, text: "5\n4\n3" }
+          - { id: b, text: "5\n5\n5", why: "Each pass slices from a later byte, so the slices get shorter." }
+          - { id: c, text: "4\n3\n2", why: "On the first pass `i` is 0, and `&word[0..]` is all 5 bytes." }
+        answer: a
+        explanation: "The slices are `stone`, `tone` and `one`, with lengths 5, 4 and 3."
+        concepts: [slice.str-param, slice.str, ctrl.for]
+
+      - type: fill-tokens
+        id: fill-initials
+        prompt: "Fill the blanks so the program prints `A.L.`"
+        code:
+          rust: |
+            fn initial(name: ___1___) {
+                print!("{}.", &name[___2___]);
+            }
+
+            fn main() {
+                let first = String::from("Ada");
+                initial(&first);
+                initial("Lovelace");
+                println!();
+            }
+          verify: run
+          expectStdout: "A.L.\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["..1", "0..1"] }
+        bank: ["&str", "..1", "&String", "1..", "..2"]
+        explanation: "A `&str` parameter accepts `&first` and the literal. `..1` is the first byte of each name."
+        concepts: [slice.str-param, slice.str]

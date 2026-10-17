@@ -1,0 +1,481 @@
+id: ownership.memory.stack-heap
+title: The stack and the heap
+icon: layers
+concepts: [mem.stack-heap]
+reviewConcepts: [types.int, types.float, types.bool, types.char, types.array, types.tuple, fn.define, fn.params, fn.return, string.str-literal-intro, macro.print-family]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-stack
+        title: Values on the stack
+        markdown: |
+          **A running program keeps its variables on the stack.** Each function call gets a block of stack memory called a **frame**, with room for its variables.
+
+          An `i32` is always 4 bytes and a `bool` is 1, so the compiler knows exactly how big `main`'s frame needs to be.
+        code:
+          rust: |
+            let score = 10;
+            let alive = true;
+            println!("{score} {alive}");
+          verify: run
+          expectStdout: "10 true\n"
+        diagram:
+          caption: "main's frame on the stack"
+          frames:
+            - name: main
+              vars:
+                - { name: score, value: "10" }
+                - { name: alive, value: "true" }
+        concepts: [mem.stack-heap]
+
+      - type: true-false
+        id: tf-i32-size
+        prompt: "Every `i32` takes the same amount of memory, whatever number it holds."
+        answer: true
+        explanation: "An `i32` is always 4 bytes, whether it holds `0` or `2_000_000_000`. That fixed size is what lets it live on the stack."
+        concepts: [mem.stack-heap, types.int]
+
+      - type: mcq
+        id: mcq-float-where
+        prompt: "Where does `let temperature = 21.5;` keep its value?"
+        options:
+          - { id: a, text: "On the stack, in the current function's frame" }
+          - { id: b, text: "On the heap", why: "`21.5` is an `f64`, which is always 8 bytes. Fixed-size values go on the stack." }
+          - { id: c, text: "Nowhere: Rust only stores the text `21.5` from your code", why: "The variable holds a real number in memory while the program runs." }
+        answer: a
+        explanation: "An `f64` has a fixed size of 8 bytes, so it fits in the function's stack frame."
+        concepts: [mem.stack-heap, types.float]
+
+      - type: concept
+        id: concept-heap
+        title: Growable data on the heap
+        markdown: |
+          **Data that can grow goes on the heap.** A `String` is text that can get longer, so the compiler can't reserve a fixed amount of stack for it.
+
+          The program asks for heap memory while it runs. The variable on the stack holds a **pointer**: the address of the text on the heap. More on `String::from` in the next level.
+        code:
+          rust: |
+            let name = String::from("Ferris");
+            println!("{name}");
+          verify: run
+          expectStdout: "Ferris\n"
+        diagram:
+          caption: "The pointer is on the stack, the text on the heap"
+          frames:
+            - name: main
+              vars:
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ferris"' }
+        concepts: [mem.stack-heap]
+
+      - type: true-false
+        id: tf-diagram-text-stack
+        prompt: "In this picture, the letters of `\"Ferris\"` are stored in `main`'s stack frame."
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: lives, value: "3" }
+                - { name: player_name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ferris"' }
+        answer: false
+        explanation: "The arrow means `player_name` holds a pointer. The letters themselves are in the heap box on the right."
+        concepts: [mem.stack-heap]
+
+      - type: mcq
+        id: mcq-why-heap
+        prompt: "Why does a `String`'s text go on the heap?"
+        options:
+          - { id: a, text: "It can grow, so its size isn't fixed when the program is compiled" }
+          - { id: b, text: "Text is always too big for the stack", why: "A few letters would fit easily. The problem is that a `String` can change size." }
+          - { id: c, text: "The heap is faster than the stack", why: "It's the other way round: the stack is faster. The heap is for data whose size can change." }
+        answer: a
+        explanation: "A stack frame has a fixed layout worked out by the compiler. Text that can grow needs memory that can be requested and resized while the program runs."
+        concepts: [mem.stack-heap]
+
+      - type: match-pairs
+        id: pairs-sizes
+        prompt: Match each value to where it lives
+        pairs:
+          - ["an i32", "4 bytes on the stack"]
+          - ["a bool", "1 byte on the stack"]
+          - ["[i32; 3]", "12 bytes on the stack"]
+          - ["a String's text", "on the heap"]
+        explanation: "Numbers, `bool`s and arrays have a size fixed by their type, so they go on the stack. Growable text goes on the heap."
+        concepts: [mem.stack-heap, types.array]
+
+      - type: concept
+        id: concept-frames
+        title: One frame per call
+        markdown: |
+          **Calling a function puts a new frame on top of the stack** for its parameters and variables. When the function returns, its frame is removed.
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                let result = n * 2;
+                result
+            }
+
+            fn main() {
+                let lives = 3;
+                let more = double(lives);
+                println!("{more}");
+            }
+          verify: run
+          expectStdout: "6\n"
+        diagram:
+          caption: "Inside double, right before it returns"
+          frames:
+            - name: main
+              vars:
+                - { name: lives, value: "3" }
+            - name: double
+              vars:
+                - { name: n, value: "3" }
+                - { name: result, value: "6" }
+        concepts: [mem.stack-heap]
+
+      - type: true-false
+        id: tf-frame-removed
+        prompt: "When `double` returns, its frame, holding `n` and `result`, is removed from the stack."
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                let result = n * 2;
+                result
+            }
+
+            fn main() {
+                let more = double(3);
+                println!("{more}");
+            }
+          verify: run
+          expectStdout: "6\n"
+        answer: true
+        explanation: "A frame lasts only as long as its function call. The returned value, `6`, is stored in `main`'s variable `more`."
+        concepts: [mem.stack-heap, fn.return]
+
+      - type: mcq
+        id: mcq-frame-count
+        prompt: "While `double` is running, how many frames are on the stack for this program?"
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                let lives = 3;
+                println!("{}", double(lives));
+            }
+          verify: run
+          expectStdout: "6\n"
+        options:
+          - { id: a, text: "2: one for `main`, one for `double`" }
+          - { id: b, text: "1: `double` replaces `main`", why: "`main` hasn't finished, so its frame stays. `double`'s frame goes on top." }
+          - { id: c, text: "0: functions run on the heap", why: "Function calls use stack frames. The heap is for data like `String` text." }
+        answer: a
+        explanation: "`main` is still waiting for `double` to return, so both frames are on the stack, `double`'s on top."
+        concepts: [mem.stack-heap, fn.define]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-string-parts
+        title: A String has three parts
+        markdown: |
+          **On the stack, a `String` is three numbers:** a **pointer** to the text on the heap, its **length** (bytes in use) and its **capacity** (bytes the heap block can hold).
+
+          On a 64-bit computer that's 24 bytes, however long the text is.
+        code:
+          rust: |
+            let word = String::from("hello");
+            println!("{word}");
+          verify: run
+          expectStdout: "hello\n"
+        diagram:
+          caption: 'After let word = String::from("hello");'
+          frames:
+            - name: main
+              vars:
+                - { name: word.ptr, points: h1 }
+                - { name: word.len, value: "5" }
+                - { name: word.cap, value: "5" }
+          heap:
+            - { id: h1, value: '"hello"' }
+        concepts: [mem.stack-heap]
+
+      - type: mcq
+        id: mcq-not-on-stack
+        prompt: "Which part of a `String` is **not** stored on the stack?"
+        options:
+          - { id: a, text: "The bytes of the text" }
+          - { id: b, text: "The length", why: "The length is one of the three numbers in the stack part." }
+          - { id: c, text: "The capacity", why: "The capacity is stored on the stack next to the length." }
+          - { id: d, text: "The pointer", why: "The pointer is on the stack. It's what leads to the text on the heap." }
+        answer: a
+        explanation: "The stack part is pointer, length and capacity. The text itself is on the heap, where the pointer leads."
+        concepts: [mem.stack-heap]
+
+      - type: true-false
+        id: tf-long-string-stack
+        prompt: "A `String` holding 1000 characters takes up more stack space than one holding 5."
+        answer: false
+        explanation: "Both have the same three numbers on the stack. Only the heap block is bigger for the longer text."
+        concepts: [mem.stack-heap]
+
+      - type: mcq
+        id: mcq-which-code-diagram
+        prompt: Which code gives this picture?
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: count, value: "3" }
+                - { name: name, points: h1 }
+          heap:
+            - { id: h1, value: '"Ada"' }
+        options:
+          - { id: a, code: "let count = 3;\nlet name = String::from(\"Ada\");" }
+          - { id: b, code: "let count = 3;\nlet name = \"Ada\";", why: "A string literal's text is stored inside the compiled program, not on the heap. Only `String::from` copies it to the heap." }
+          - { id: c, code: "let name = String::from(\"Ada\");", why: "The picture also shows `count` in `main`'s frame." }
+        answer: a
+        explanation: "`count` is a plain number in the frame. `name` points at heap text, which is what a `String` looks like."
+        concepts: [mem.stack-heap, string.str-literal-intro]
+
+      - type: match-pairs
+        id: pairs-string-parts
+        prompt: Match each part of a String to what it means
+        pairs:
+          - ["pointer", "where the text starts on the heap"]
+          - ["length", "bytes in use"]
+          - ["capacity", "bytes the heap block can hold"]
+          - ["heap", "memory requested while running"]
+        explanation: "The pointer, length and capacity sit on the stack. The heap block they describe holds the text."
+        concepts: [mem.stack-heap]
+
+      - type: predict-output
+        id: predict-separate-frames
+        code:
+          rust: |
+            fn area(w: i32, h: i32) -> i32 {
+                let a = w * h;
+                a
+            }
+
+            fn main() {
+                let w = 2;
+                let a = area(w, 5);
+                println!("{w} {a}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "2 10" }
+          - { id: b, text: "10 10", why: "The `a` inside `area` lives in `area`'s frame. Only its value is returned into `main`'s `a`." }
+          - { id: c, text: "2 5", why: "`area` returns `w * h`, which is `2 * 5`." }
+        answer: a
+        explanation: "Each frame has its own variables, even when the names match. `main`'s `w` stays 2, and `main`'s `a` gets the returned 10."
+        concepts: [mem.stack-heap, fn.params, fn.return]
+
+      - type: true-false
+        id: tf-array-stack
+        prompt: "`let scores = [0; 100];` can live on the stack, because its size is fixed by its type."
+        answer: true
+        explanation: "`[i32; 100]` is always 100 numbers of 4 bytes, 400 bytes in total, so the compiler can make room for it in the frame."
+        concepts: [mem.stack-heap, types.array]
+
+      - type: mcq
+        id: mcq-needs-heap
+        prompt: Which of these uses heap memory?
+        options:
+          - { id: a, code: "let log = String::from(\"start\");" }
+          - { id: b, code: "let scores = [0; 100];", why: "An array's length is part of its type, so its size is fixed. It goes on the stack." }
+          - { id: c, code: "let point = (3, 4.5, 'x');", why: "A tuple of numbers and a `char` has a fixed size, so it goes on the stack." }
+          - { id: d, code: "let big: i128 = 1;", why: "An `i128` is always 16 bytes, so it goes on the stack." }
+        answer: a
+        explanation: "Only the `String` asks for heap memory, because its text can grow. The others have sizes the compiler knows."
+        concepts: [mem.stack-heap, types.tuple]
+
+      - type: true-false
+        id: tf-stack-faster
+        prompt: "Putting a value on the stack is faster than asking for heap memory."
+        answer: true
+        explanation: "The stack only has to move its top up or down. A heap request has to find a free block that's big enough."
+        concepts: [mem.stack-heap]
+
+      - type: predict-output
+        id: predict-format-string
+        prompt: "`format!` returns a `String`. What does this print?"
+        code:
+          rust: |
+            let level = 3;
+            let label = format!("L{level}");
+            println!("{label} {}", label.len());
+          verify: run
+        options:
+          - { id: a, text: "L3 2" }
+          - { id: b, text: "L3 1", why: "`label` holds two bytes, `L` and `3`." }
+          - { id: c, text: "L{level} 8", why: "`format!` fills in `{level}` the same way `println!` does." }
+        answer: a
+        explanation: "`format!` builds the text `L3` as a new `String` on the heap, and `.len()` counts its 2 bytes."
+        concepts: [mem.stack-heap, macro.print-family]
+
+  - id: l3
+    exercises:
+      - type: mcq
+        id: mcq-nested-frames
+        prompt: "While `bonus` is running, which frames are on the stack, from bottom to top?"
+        code:
+          rust: |
+            fn bonus() -> i32 {
+                5
+            }
+
+            fn total(score: i32) -> i32 {
+                score + bonus()
+            }
+
+            fn main() {
+                println!("{}", total(10));
+            }
+          verify: run
+          expectStdout: "15\n"
+        options:
+          - { id: a, text: "`main`, `total`, `bonus`" }
+          - { id: b, text: "`bonus` only", why: "`main` and `total` are both waiting for `bonus` to return, so their frames are still there." }
+          - { id: c, text: "`bonus`, `total`, `main`", why: "`main` is called first, so its frame is at the bottom. Each new call goes on top." }
+        answer: a
+        explanation: "Each call adds a frame on top: `main`, then `total`, then `bonus`. They come off in the reverse order as each function returns."
+        concepts: [mem.stack-heap, fn.define]
+
+      - type: true-false
+        id: tf-diagram-two-frames
+        prompt: "This picture shows two separate variables called `count`."
+        diagram:
+          caption: "Inside show"
+          frames:
+            - name: main
+              vars:
+                - { name: count, value: "7" }
+            - name: show
+              vars:
+                - { name: count, value: "7" }
+                - { name: label, points: h1 }
+          heap:
+            - { id: h1, value: '"#7"' }
+        answer: true
+        explanation: "`main` and `show` each have a frame, and each frame has its own `count`. They happen to hold the same value."
+        concepts: [mem.stack-heap, fn.params]
+
+      - type: fill-tokens
+        id: fill-stack-heap
+        prompt: Fill the blanks so each comment is right
+        code:
+          rust: |
+            let lives: ___1___ = 3; // 4 bytes
+            let name = ___2___("Ada"); // heap
+            println!("{name} {lives}");
+          verify: run
+          expectStdout: "Ada 3\n"
+        blanks:
+          "1": { answer: ["i32"] }
+          "2": { answer: ["String::from"] }
+        bank: ["i32", "int", "String::from", "String::new", "&str"]
+        explanation: "`i32` is the 4-byte integer type. `String::from` copies the text onto the heap and gives you a `String`."
+        concepts: [mem.stack-heap, types.int]
+
+      - type: predict-output
+        id: predict-tiles-frames
+        prompt: Build the output
+        code:
+          rust: |
+            fn shout(times: i32) -> i32 {
+                let times = times * 3;
+                times
+            }
+
+            fn main() {
+                let times = 2;
+                let loud = shout(times);
+                println!("{times} {loud}");
+            }
+          verify: run
+        tiles: ["2", "6", "3", "9"]
+        answer: "2 6"
+        explanation: "`shout` has its own frame and its own `times`, which shadows the parameter. `main`'s `times` is still 2."
+        concepts: [mem.stack-heap, var.shadowing]
+
+      - type: true-false
+        id: tf-grow-same-stack
+        prompt: "A `String`'s text can grow without its stack part changing size."
+        answer: true
+        explanation: "The stack part is always pointer, length and capacity. Growing changes the numbers in it and the heap block, not its size."
+        concepts: [mem.stack-heap]
+
+      - type: mcq
+        id: mcq-user-input
+        prompt: "A program stores a name the user types in. Why can't the compiler put the name's text in a stack frame?"
+        options:
+          - { id: a, text: "Its length isn't known until the program runs" }
+          - { id: b, text: "User input is private, so it has to be hidden on the heap", why: "The heap isn't about privacy. It's for data whose size isn't known in advance." }
+          - { id: c, text: "Only numbers can go on the stack", why: "`bool`s, `char`s, arrays and tuples go on the stack too. Their sizes are fixed." }
+        answer: a
+        explanation: "The compiler plans each frame's layout before the program runs. Text of unknown length has to go on the heap instead."
+        concepts: [mem.stack-heap]
+
+      - type: match-pairs
+        id: pairs-code-where
+        prompt: Match each line to where its data lives
+        pairs:
+          - ["let n = 7;", "stack only"]
+          - ["let s = String::from(\"hi\");", "stack and heap"]
+          - ["let t = \"hi\";", "stack, text in the program"]
+          - ["let a = [1, 2, 3];", "stack, 12 bytes"]
+        explanation: "A literal's text is built into the program and a `String`'s text is on the heap. Numbers and arrays sit in the frame."
+        concepts: [mem.stack-heap, string.str-literal-intro]
+
+      - type: compiles
+        id: compiles-format-string
+        prompt: "Does this compile?"
+        code:
+          rust: |
+            let count: i32 = 3;
+            let msg: String = format!("x{count}");
+            println!("{msg}");
+          verify: run
+          expectStdout: "x3\n"
+        answer: true
+        explanation: "`format!` returns a `String`, so the type annotation matches. It prints `x3`."
+        concepts: [mem.stack-heap, macro.print-family]
+
+      - type: true-false
+        id: tf-heap-stays
+        prompt: "Stack memory is reclaimed when a frame is removed, but heap memory stays in use until something frees it."
+        answer: true
+        explanation: "Removing a frame only tidies the stack. Freeing heap memory at the right moment is what Rust's ownership rules take care of, as the next levels show."
+        concepts: [mem.stack-heap]
+
+      - type: mcq
+        id: mcq-diagram-which-frame
+        prompt: "In this picture, which function's frame holds the pointer to `\"ok\"`?"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: tries, value: "2" }
+            - name: report
+              vars:
+                - { name: n, value: "2" }
+                - { name: status, points: h1 }
+          heap:
+            - { id: h1, value: '"ok"' }
+        options:
+          - { id: a, text: "`report`" }
+          - { id: b, text: "`main`", why: "`main`'s frame only has `tries`. The arrow starts at `status`." }
+          - { id: c, text: "Neither: heap values have no variable", why: "The arrow from `status` shows which variable points at the text." }
+        answer: a
+        explanation: "The arrow starts at `status`, which is a variable in `report`'s frame."
+        concepts: [mem.stack-heap]

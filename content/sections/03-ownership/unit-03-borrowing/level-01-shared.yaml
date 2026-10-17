@@ -1,0 +1,507 @@
+id: ownership.borrowing.shared
+title: Borrowing with &
+icon: eye
+concepts: [borrow.shared]
+reviewConcepts: [own.move, err.E0382, own.fn-move, own.clone, fn.params]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-borrow
+        title: Borrow instead of move
+        markdown: |
+          **`&s` borrows `s`.** It makes a **reference**: a value that points at `s` without taking ownership.
+
+          `s` still owns the text, so you can keep using `s` and the reference side by side. Printing a reference prints the value it points at.
+        code:
+          rust: |
+            let s = String::from("hello");
+            let r = &s;
+            println!("{s} and {r}");
+          verify: run
+          expectStdout: "hello and hello\n"
+        diagram:
+          caption: "After let r = &s;"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r, points: s }
+          heap:
+            - { id: h1, value: '"hello"' }
+        concepts: [borrow.shared]
+
+      - type: predict-output
+        id: predict-print-ref
+        code:
+          rust: |
+            let name = String::from("Ada");
+            let r = &name;
+            println!("{r}");
+          verify: run
+        options:
+          - { id: a, text: "Ada" }
+          - { id: b, text: "&Ada", why: "The `&` is part of the code, not the value. Printing `r` prints the text it points at." }
+          - { id: c, text: "name", why: "`r` points at `name`, but `{r}` prints the value, not the variable's name." }
+        answer: a
+        explanation: "`r` refers to `name`, and printing a reference prints the value behind it: `Ada`."
+        concepts: [borrow.shared]
+
+      - type: true-false
+        id: tf-borrow-moves
+        prompt: "`let r = &s;` moves the `String` from `s` into `r`."
+        answer: false
+        explanation: "`&s` borrows. `s` keeps ownership, and `r` only points at it. `let r = s;` would move."
+        concepts: [borrow.shared, own.move]
+
+      - type: compiles
+        id: compiles-borrow-then-use
+        code:
+          rust: |
+            let s = String::from("hi");
+            let t = &s;
+            println!("{s} {t}");
+          verify: run
+          expectStdout: "hi hi\n"
+        answer: true
+        explanation: "`t` borrows `s`, so nothing moves and `s` is still usable. With `let t = s;` this would be E0382."
+        concepts: [borrow.shared, err.E0382]
+
+      - type: concept
+        id: concept-borrow-fn
+        title: Lend it to a function
+        markdown: |
+          **A parameter of type `&String` borrows.** Call it with `&word`. The function can read the text, and when it returns, `main` still owns `word`.
+
+          Inside the function, `s.len()` works on the reference directly.
+        code:
+          rust: |
+            fn len(s: &String) -> usize {
+                s.len()
+            }
+
+            fn main() {
+                let word = String::from("crab");
+                let n = len(&word);
+                println!("{word} has {n} letters");
+            }
+          verify: run
+          expectStdout: "crab has 4 letters\n"
+        diagram:
+          caption: "Inside len(&word)"
+          frames:
+            - name: main
+              vars:
+                - { name: word, id: word, points: h1 }
+            - name: len
+              vars:
+                - { name: s, points: word }
+          heap:
+            - { id: h1, value: '"crab"' }
+        concepts: [borrow.shared]
+
+      - type: mcq
+        id: mcq-call-shout
+        prompt: "`fn shout(s: &String)` takes a reference. Which call keeps `msg` usable afterwards and compiles?"
+        options:
+          - { id: a, code: "shout(&msg);" }
+          - { id: b, code: "shout(msg);", why: "This passes the `String` itself. The function wants a `&String`, so it's a type error (E0308)." }
+          - { id: c, code: "&shout(msg);", why: "The `&` has to go on the argument, not on the call. This still passes the `String` itself." }
+        answer: a
+        explanation: "The parameter type is `&String`, so the argument is `&msg`: a reference to `msg`."
+        concepts: [borrow.shared, fn.params]
+
+      - type: mcq
+        id: mcq-diagram-points
+        prompt: In this diagram, what does `r` point at?
+        diagram:
+          caption: "After let r = &city;"
+          frames:
+            - name: main
+              vars:
+                - { name: city, id: city, points: h1 }
+                - { name: r, points: city }
+          heap:
+            - { id: h1, value: '"Perth"' }
+        options:
+          - { id: a, text: "The variable `city`, which owns the text" }
+          - { id: b, text: "Its own copy of `\"Perth\"`", why: "Borrowing copies nothing. There is still only one heap box." }
+          - { id: c, text: "Nothing yet; it gets a value when it's printed", why: "`&city` makes the reference straight away, on the `let` line." }
+        answer: a
+        explanation: "A reference points at the variable it borrows. `city` points at the heap text and owns it."
+        concepts: [borrow.shared]
+
+      - type: fill-tokens
+        id: fill-count
+        prompt: Fill the blanks so `city` is still usable after the call
+        code:
+          rust: |
+            fn count(s: ___1___) -> usize {
+                s.len()
+            }
+
+            fn main() {
+                let city = String::from("Hobart");
+                let n = count(___2___city);
+                println!("{city}: {n}");
+            }
+          verify: run
+          expectStdout: "Hobart: 6\n"
+        blanks:
+          "1": { answer: ["&String"] }
+          "2": { answer: ["&"] }
+        bank: ["&String", "String", "&", "*"]
+        explanation: "`count` borrows with `&String`, and the call lends `&city`. With `String` and `city`, the move would make line 8 an E0382."
+        concepts: [borrow.shared]
+
+      - type: match-pairs
+        id: pairs-shared
+        prompt: Match each piece of code to what it means
+        pairs:
+          - ["&s", "borrow s"]
+          - ["let t = s;", "move s into t"]
+          - ["&String", "type of a String reference"]
+          - ["s.clone()", "copy the heap text"]
+        concepts: [borrow.shared, own.move, own.clone]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-read-only
+        title: Look, don't touch
+        markdown: |
+          **A `&` reference is read-only.** You can read through it, but not change the value. Trying is error **E0596**.
+
+          Next level shows how to borrow with permission to change.
+        code:
+          rust: |
+            fn add_bang(s: &String) {
+                s.push_str("!");
+            }
+
+            fn main() {
+                let greeting = String::from("hi");
+                add_bang(&greeting);
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        concepts: [borrow.shared]
+
+      - type: compiles
+        id: compiles-change-through-ref
+        code:
+          rust: |
+            fn main() {
+                let mut s = String::from("hi");
+                let r = &s;
+                r.push_str("!");
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0596: cannot borrow `*r` as mutable, as it is behind a `&` reference" }
+            - { id: b, text: "E0382: borrow of moved value", why: "Nothing moved. `r` only borrows `s`." }
+            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "No variable is assigned twice. The problem is changing the text through `r`." }
+          answer: a
+        explanation: "`r` is a `&` reference, so `push_str` can't change the text through it, even though `s` is `mut`."
+        concepts: [borrow.shared]
+
+      - type: predict-output
+        id: predict-show-twice
+        code:
+          rust: |
+            fn show(s: &String) {
+                println!("[{s}]");
+            }
+
+            fn main() {
+                let tag = String::from("new");
+                show(&tag);
+                show(&tag);
+            }
+          verify: run
+        options:
+          - { id: a, text: "[new]\n[new]" }
+          - { id: b, text: "[new]", why: "The first call only borrows `tag`, so the second call can borrow it again." }
+          - { id: c, text: "[&new]\n[&new]", why: "Printing a reference prints the text it points at, without a `&`." }
+        answer: a
+        explanation: "Each call borrows `tag` and gives it back when it returns, so you can lend it as often as you like."
+        concepts: [borrow.shared]
+
+      - type: spot-bug
+        id: spot-missing-amp
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn print_len(s: &String) {
+                println!("{}", s.len());
+            }
+
+            fn main() {
+                let city = String::from("Hobart");
+                print_len(city);
+                println!("{city}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 7
+        explanation: "`print_len` wants a `&String`, but line 7 passes the `String` itself (E0308). Write `print_len(&city)`."
+        concepts: [borrow.shared, fn.params]
+
+      - type: decode-error
+        id: decode-moved-into-fn
+        prompt: "Which change makes the program compile and print `Ferris: 6`?"
+        code:
+          rust: |
+            fn count(s: String) -> usize {
+                s.len()
+            }
+
+            fn main() {
+                let name = String::from("Ferris");
+                let n = count(name);
+                println!("{name}: {n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Make the parameter `s: &String` and call `count(&name)`" }
+          - { id: b, text: "Change line 7 to `let n = count(&name);` only", why: "`count` still wants a `String`, so passing `&name` is a type error (E0308)." }
+          - { id: c, text: "Change line 8 to `println!(\"{n}\");`", why: "That compiles, but it no longer prints the name." }
+        answer: a
+        explanation: "`count(name)` moves `name` into the function, so line 8 can't use it (E0382). Borrowing lets `main` keep it."
+        concepts: [borrow.shared, own.fn-move, err.E0382]
+
+      - type: true-false
+        id: tf-method-on-ref
+        prompt: "Inside `fn shout(s: &String)`, you can call `s.len()` without writing any extra symbol."
+        answer: true
+        explanation: "Method calls follow the reference for you, so `s.len()` reads the length of the `String` that `s` points at."
+        concepts: [borrow.shared]
+
+      - type: mcq
+        id: mcq-why-borrow
+        prompt: A function only reads a `String`. Why give it a `&String` parameter rather than `String`?
+        options:
+          - { id: a, text: "The caller keeps ownership and can use the `String` afterwards" }
+          - { id: b, text: "`&String` copies the text, which is safer", why: "Nothing is copied. A reference points at the caller's `String`." }
+          - { id: c, text: "`&String` lets the function change the text", why: "A `&` reference is read-only. Changing needs something else, coming next level." }
+        answer: a
+        explanation: "With `String`, the call moves the value into the function. With `&String`, the function borrows it and the caller still owns it."
+        concepts: [borrow.shared, own.fn-move]
+
+      - type: predict-output
+        id: predict-three-names
+        code:
+          rust: |
+            let drink = String::from("tea");
+            let r1 = &drink;
+            let r2 = &drink;
+            println!("{drink} {r1} {r2}");
+          verify: run
+        options:
+          - { id: a, text: "tea tea tea" }
+          - { id: b, text: "tea", why: "All three are printed. `r1` and `r2` both point at `drink`." }
+          - { id: c, text: "tea &tea &tea", why: "References print the value they point at, with no `&`." }
+        answer: a
+        explanation: "You can borrow the same value more than once. `r1` and `r2` both point at `drink`."
+        concepts: [borrow.shared]
+
+      - type: compiles
+        id: compiles-copy-ref
+        code:
+          rust: |
+            let s = String::from("hi");
+            let r = &s;
+            let r2 = r;
+            println!("{r} {r2}");
+          verify: run
+          expectStdout: "hi hi\n"
+        answer: true
+        explanation: "Assigning a `&` reference copies the reference, not the text. `r` and `r2` both point at `s`, and `r` stays usable."
+        concepts: [borrow.shared, own.copy]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-greet
+        prompt: Arrange the lines so the program prints `Hello, Mia!` then `Bye, Mia`
+        lines:
+          - { id: l1, text: "fn greet(name: &String) {" }
+          - { id: l2, text: '    println!("Hello, {name}!");' }
+          - { id: l3, text: "}" }
+          - { id: l4, text: "fn main() {" }
+          - { id: l5, text: '    let name = String::from("Mia");' }
+          - { id: l6, text: "    greet(&name);" }
+          - { id: l7, text: '    println!("Bye, {name}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    greet(name);" }
+          - { id: d2, text: "fn greet(name: String) {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l4, l5, l6, l7, l8, l1, l2, l3]
+          - [l1, l2, l8, l4, l5, l6, l7, l3]
+          - [l4, l5, l6, l7, l3, l1, l2, l8]
+        verify:
+          mode: run
+          expectStdout: "Hello, Mia!\nBye, Mia\n"
+        explanation: "`greet` takes a `&String`, so `main` lends `&name` and can still print `name` afterwards."
+        concepts: [borrow.shared, fn.params]
+
+      - type: fill-tokens
+        id: fill-total-len
+        prompt: "Fill the blanks so the program prints `sunrise: 7`"
+        code:
+          rust: |
+            fn sum(a: ___1___, b: usize) -> usize {
+                a.len() + b
+            }
+
+            fn main() {
+                let first = String::from("sun");
+                let second = String::from("rise");
+                let n = sum(___2___, second.len());
+                println!("{first}{second}: {n}");
+            }
+          verify: run
+          expectStdout: "sunrise: 7\n"
+        blanks:
+          "1": { answer: ["&String"] }
+          "2": { answer: ["&first"] }
+        bank: ["&String", "String", "&first", "first", "*first"]
+        explanation: "`sum` borrows its first argument, so the call passes `&first`. Passing `first` would move it, and line 9 couldn't print it (E0382)."
+        concepts: [borrow.shared]
+
+      - type: predict-output
+        id: predict-describe
+        code:
+          rust: |
+            fn describe(s: &String) -> usize {
+                println!("{s}");
+                s.len()
+            }
+
+            fn main() {
+                let word = String::from("borrow");
+                let n = describe(&word);
+                println!("{word} {n}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "borrow\nborrow 6" }
+          - { id: b, text: "borrow 6", why: "`describe` prints `s` first, before it returns the length." }
+          - { id: c, text: "borrow\n6", why: "`word` is only borrowed, so `main` can still print it on the last line." }
+        answer: a
+        explanation: "`describe` prints the text and returns 6. `main` still owns `word`, so it prints `borrow 6`."
+        concepts: [borrow.shared]
+
+      - type: true-false
+        id: tf-diagram-owner
+        prompt: "In this diagram, `print_it` owns the text `\"hi\"`."
+        diagram:
+          caption: "Inside print_it(&msg)"
+          frames:
+            - name: main
+              vars:
+                - { name: msg, id: msg, points: h1 }
+            - name: print_it
+              vars:
+                - { name: s, points: msg }
+          heap:
+            - { id: h1, value: '"hi"' }
+        answer: false
+        explanation: "`msg` in `main` owns the text. `s` only points at `msg`, so when `print_it` returns, nothing is freed."
+        concepts: [borrow.shared]
+
+      - type: compiles
+        id: compiles-ref-to-string-param
+        code:
+          rust: |
+            fn shout(s: String) {
+                println!("{s}!");
+            }
+
+            fn main() {
+                let word = String::from("hey");
+                shout(&word);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0382: borrow of moved value", why: "Nothing has moved. `&word` is only a borrow." }
+            - { id: c, text: "E0596: cannot borrow as mutable", why: "Nothing tries to change the text." }
+          answer: a
+        explanation: "`shout` wants an owned `String`, but `&word` is a `&String`. The two types don't match."
+        concepts: [borrow.shared, fn.params]
+
+      - type: decode-error
+        id: decode-e0596
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn add_tag(s: &String) {
+                s.push_str("#1");
+            }
+
+            fn main() {
+                let mut label = String::from("box");
+                add_tag(&label);
+                println!("{label}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - { id: a, text: "`s` is a `&` reference, so `add_tag` can't change the text through it" }
+          - { id: b, text: "`label` was moved into `add_tag`", why: "`&label` borrows. The error is about changing the text, not a move." }
+          - { id: c, text: "`push_str` can't add text that starts with `#`", why: "Any text is fine. The problem is what kind of reference `s` is." }
+        answer: a
+        explanation: "A `&String` lets the function read, not change. `mut` on `label` doesn't change what the reference allows."
+        concepts: [borrow.shared]
+
+      - type: mcq
+        id: mcq-borrow-vs-clone
+        prompt: "`report` only reads its argument, and `main` needs `log` afterwards. Which call does that without copying the text?"
+        options:
+          - { id: a, code: "report(&log);" }
+          - { id: b, code: "report(log.clone());", why: "That works if `report` takes a `String`, but it copies the whole heap text first." }
+          - { id: c, code: "report(log);", why: "That moves `log` into `report`, so `main` can't use it afterwards." }
+        answer: a
+        explanation: "Borrowing shares the existing text. `clone` makes a second copy, which is only worth it when the function needs to own one."
+        concepts: [borrow.shared, own.clone]
+
+      - type: spot-bug
+        id: spot-count-both
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn count(s: &String) -> usize {
+                s.len()
+            }
+
+            fn main() {
+                let a = String::from("ab");
+                let b = String::from("cde");
+                let total = count(&a) + count(b);
+                println!("{total}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 8
+        explanation: "`count(b)` passes a `String` where `count` wants a `&String`. It should be `count(&b)`."
+        concepts: [borrow.shared]
+
+      - type: true-false
+        id: tf-borrow-frees
+        prompt: "When a function with a `&String` parameter returns, the `String` it borrowed is freed."
+        answer: false
+        explanation: "Only the owner frees the value. The function had a reference, so the `String` lives on in the caller."
+        concepts: [borrow.shared, own.scope-drop]

@@ -1,0 +1,448 @@
+id: ownership.slices.utf8
+title: Characters and bytes
+icon: text
+concepts: [slice.utf8]
+reviewConcepts: [slice.str, slice.str-param, slice.array, types.char, ctrl.for, panic.index]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-bytes
+        title: Text is stored as bytes
+        markdown: |
+          **Rust stores text as UTF-8 bytes.** Plain English letters take 1 byte each. `é` takes 2, and an emoji like `🦀` takes 4.
+
+          `.len()` counts bytes, and slice ranges are byte positions.
+        code:
+          rust: |
+            let s = String::from("café");
+            let caf = &s[..3];
+            println!("{} {caf}", s.len());
+          verify: run
+          expectStdout: "5 caf\n"
+        diagram:
+          caption: "`caf` covers bytes 0 to 2. The `é` is bytes 3 and 4."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+                - { name: caf, points: h1 }
+          heap:
+            - { id: h1, value: '"café"' }
+        concepts: [slice.utf8]
+
+      - type: predict-output
+        id: predict-naive-len
+        code:
+          rust: |
+            let word = String::from("naïve");
+            println!("{}", word.len());
+          verify: run
+        options:
+          - { id: a, text: "6" }
+          - { id: b, text: "5", why: "There are 5 characters, but `ï` takes 2 bytes, and `.len()` counts bytes." }
+          - { id: c, text: "10", why: "Only `ï` takes 2 bytes. The plain letters take 1 each." }
+        answer: a
+        explanation: "`n`, `a`, `v`, `e` are 1 byte each and `ï` is 2: 6 bytes."
+        concepts: [slice.utf8]
+
+      - type: true-false
+        id: tf-len-chars
+        prompt: "`.len()` on a `String` counts its characters."
+        answer: false
+        explanation: "It counts bytes. For plain English text the two numbers match, which makes this easy to get wrong."
+        concepts: [slice.utf8]
+
+      - type: concept
+        id: concept-boundary-panic
+        title: Don't cut a character in half
+        markdown: |
+          **A slice must start and end on a character boundary.** `&s[..4]` would end in the middle of `é`, so the program panics:
+
+          `end byte index 4 is not a char boundary`
+
+          A `&str` must always hold whole characters.
+        code:
+          rust: |
+            let s = String::from("café");
+            let part = &s[..4];
+            println!("{part}");
+          verify: run
+          expectPanic: "is not a char boundary"
+        diagram:
+          caption: "`&s[..4]` would cover bytes 0 to 3, and byte 3 is only the first half of `é`."
+          frames:
+            - name: main
+              vars:
+                - { name: s, points: h1 }
+          heap:
+            - { id: h1, value: '"café"' }
+        concepts: [slice.utf8]
+
+      - type: predict-output
+        id: predict-caf
+        code:
+          rust: |
+            let s = String::from("café!");
+            println!("{}", &s[5..]);
+          verify: run
+        options:
+          - { id: a, text: "!" }
+          - { id: b, text: "é!", why: "`é` takes 2 bytes, 3 and 4, so byte 5 is the `!`." }
+          - { id: c, text: "é", why: "`é` is bytes 3 and 4, before byte 5." }
+        answer: a
+        explanation: "`c`, `a`, `f` are bytes 0 to 2, `é` is 3 and 4, and `!` is byte 5."
+        concepts: [slice.utf8]
+
+      - type: mcq
+        id: mcq-uber
+        prompt: "What happens when you run this?"
+        code:
+          rust: |
+            let s = String::from("über");
+            println!("{}", &s[1..]);
+          verify: run
+          expectPanic: "is not a char boundary"
+        options:
+          - { id: a, text: "It panics: byte 1 is in the middle of `ü`" }
+          - { id: b, text: "It prints `ber`", why: "`ü` takes bytes 0 and 1, so `ber` starts at byte 2." }
+          - { id: c, text: "It doesn't compile", why: "The compiler doesn't check where characters start. The check happens at run time." }
+        answer: a
+        explanation: "`ü` is 2 bytes. Starting a slice at byte 1 would cut it in half, so Rust panics. `&s[2..]` gives `ber`."
+        concepts: [slice.utf8]
+
+      - type: match-pairs
+        id: pairs-char-bytes
+        prompt: Match each character to the bytes it takes in UTF-8
+        pairs:
+          - ["a", "1 byte"]
+          - ["é", "2 bytes"]
+          - ["€", "3 bytes"]
+          - ["🦀", "4 bytes"]
+        concepts: [slice.utf8, types.char]
+
+      - type: compiles
+        id: compiles-mid-char
+        prompt: "Does this compile? (It may still fail when it runs.)"
+        code:
+          rust: |
+            let s = String::from("café");
+            let part = &s[..4];
+            println!("{part}");
+          verify: compile
+        answer: true
+        explanation: "It compiles. The character boundary is only checked when the program runs, and then it panics."
+        concepts: [slice.utf8]
+
+      - type: fill-tokens
+        id: fill-zoe
+        prompt: "Fill the blank so the program prints `Zoë`"
+        code:
+          rust: |
+            let s = String::from("Zoë!");
+            let name = &s[..___1___];
+            println!("{name}");
+          verify: run
+          expectStdout: "Zoë\n"
+        blanks:
+          "1": { answer: ["4"] }
+        bank: ["4", "3", "5", "2"]
+        explanation: "`Z` and `o` are 1 byte each and `ë` is 2, so the name ends before byte 4. `3` would cut `ë` in half and panic."
+        concepts: [slice.utf8]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-chars-count
+        title: Counting characters
+        markdown: |
+          **To count characters, use `.chars().count()`.** `.chars()` gives the characters one at a time, and `.count()` counts them.
+
+          `for c in s.chars()` loops over the characters.
+        code:
+          rust: |
+            let s = String::from("café");
+            let n = s.chars().count();
+            println!("{} {n}", s.len());
+            for c in s.chars() {
+                print!("{c} ");
+            }
+            println!();
+          verify: run
+          expectStdout: "5 4\nc a f é \n"
+        concepts: [slice.utf8]
+
+      - type: predict-output
+        id: predict-tiles-crab
+        prompt: Build the output
+        code:
+          rust: |
+            let s = String::from("🦀 rust");
+            let n = s.chars().count();
+            println!("{} {n}", s.len());
+          verify: run
+        tiles: ["9", "6", "7", "5"]
+        answer: "9 6"
+        explanation: "The crab is 4 bytes, plus 1 for the space and 4 for `rust`: 9 bytes. It's 6 characters."
+        concepts: [slice.utf8]
+
+      - type: mcq
+        id: mcq-count-cafe
+        prompt: "`s` holds `café`. Which expression gives `4`?"
+        options:
+          - { id: a, code: "s.chars().count()" }
+          - { id: b, code: "s.len()", why: "That counts bytes: 5, because `é` is 2 bytes." }
+          - { id: c, code: "s.chars()", why: "That gives the characters one at a time. `.count()` turns them into a number." }
+        answer: a
+        explanation: "`.chars().count()` counts characters, whatever their size in bytes."
+        concepts: [slice.utf8]
+
+      - type: spot-bug
+        id: spot-malmo
+        prompt: "This program panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Malmö");
+                let start = &city[..4];
+                let end = &city[5..];
+                println!("{start} {end}");
+            }
+          verify: run
+          expectPanic: "is not a char boundary"
+        answer: 4
+        explanation: "`ö` is bytes 4 and 5. Line 3 stops before it, which is fine; line 4 starts in the middle of it."
+        concepts: [slice.utf8]
+
+      - type: compiles
+        id: compiles-index-string
+        code:
+          rust: |
+            fn main() {
+                let s = String::from("Hello");
+                let first = s[0];
+                println!("{first}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "Rust won't index text with a single number, because a byte isn't always a character" }
+            - { id: b, text: "Indexes start at 1 for text", why: "Byte positions start at 0. Single-number indexing isn't allowed at all." }
+            - { id: c, text: "`s` must be `mut` to read from it", why: "Reading never needs `mut`." }
+          answer: a
+        explanation: "E0277: `str` cannot be indexed by an integer. Text can only be indexed with ranges, like `&s[0..1]`."
+        concepts: [slice.utf8]
+
+      - type: true-false
+        id: tf-s0-first-char
+        prompt: "`s[0]` gives the first character of a `String`."
+        answer: false
+        explanation: "It doesn't compile. Use a slice like `&s[..1]`, which works when the first character is 1 byte."
+        concepts: [slice.utf8]
+
+      - type: predict-output
+        id: predict-chars-loop
+        code:
+          rust: |
+            for c in "día".chars() {
+                print!("{c}-");
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "d-í-a-" }
+          - { id: b, text: "d-í-a", why: "`print!` adds `-` after every character, including the last." }
+          - { id: c, text: "día-", why: "`.chars()` gives one character per pass of the loop." }
+        answer: a
+        explanation: "The loop runs once per character. `í` is 2 bytes but one `char`."
+        concepts: [slice.utf8, ctrl.for, types.char]
+
+      - type: mcq
+        id: mcq-why-panic
+        prompt: "Why does Rust panic instead of giving you half of `é`?"
+        options:
+          - { id: a, text: "A `&str` must always be valid UTF-8, and half a character isn't" }
+          - { id: b, text: "`é` isn't allowed in Rust strings", why: "Any Unicode character is allowed. You can't cut one in half." }
+          - { id: c, text: "Slices can only cover plain English letters", why: "Slices can cover any text, as long as they start and end between characters." }
+        answer: a
+        explanation: "Every `&str` holds whole characters. A range that would break that rule panics instead."
+        concepts: [slice.utf8]
+
+      - type: predict-output
+        id: predict-array-chars-review
+        code:
+          rust: |
+            let letters = ['ä', 'b', 'c'];
+            let word = String::from("äbc");
+            let n = letters.len();
+            println!("{n} {}", word.len());
+          verify: run
+        options:
+          - { id: a, text: "3 4" }
+          - { id: b, text: "3 3", why: "`word` is text, so `.len()` counts bytes, and `ä` is 2." }
+          - { id: c, text: "4 4", why: "An array's `.len()` counts elements. Each `char` is one element." }
+        answer: a
+        explanation: "An array of `char`s has one element per character. A `String` stores bytes, and `ä` takes 2."
+        concepts: [slice.utf8, types.char, types.array]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-count
+        prompt: "Arrange the lines so the program prints `6 5`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let word = String::from("naïve");' }
+          - { id: l3, text: "    let bytes = word.len();" }
+          - { id: l4, text: "    let letters = word.chars().count();" }
+          - { id: l5, text: '    println!("{bytes} {letters}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let letters = word.len();" }
+          - { id: d2, text: "    let bytes = word.chars();" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "6 5\n"
+        explanation: "`.len()` counts the 6 bytes, and `.chars().count()` counts the 5 characters."
+        concepts: [slice.utf8]
+
+      - type: fill-tokens
+        id: fill-chars-count
+        prompt: "Fill the blanks so the program prints `5`"
+        code:
+          rust: |
+            let s = String::from("crème");
+            let n = s.___1___().___2___();
+            println!("{n}");
+          verify: run
+          expectStdout: "5\n"
+        blanks:
+          "1": { answer: ["chars"] }
+          "2": { answer: ["count"] }
+        bank: ["chars", "count", "len", "bytes"]
+        explanation: "`crème` is 5 characters but 6 bytes. `.chars().count()` gives the 5."
+        concepts: [slice.utf8]
+
+      - type: decode-error
+        id: decode-index-char
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let name = String::from("Ana");
+                let second: char = name[1];
+                println!("{second}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Text can't be indexed with one number; string indexes must be ranges" }
+          - { id: b, text: "`name` only has one character", why: "`Ana` has three. The problem is indexing with a single number." }
+          - { id: c, text: "`second` should be a `&str`, not a `char`", why: "Even as `&str`, `name[1]` isn't allowed. You'd need a range like `&name[1..2]`." }
+        answer: a
+        explanation: "Because characters can take several bytes, Rust doesn't offer `name[1]`. The compiler suggests `.chars()` instead."
+        concepts: [slice.utf8]
+
+      - type: predict-output
+        id: predict-hello-world-cn
+        code:
+          rust: |
+            let s = String::from("Hi 世界");
+            println!("{}", &s[3..6]);
+          verify: run
+        options:
+          - { id: a, text: "世" }
+          - { id: b, text: "世界", why: "`世` alone is 3 bytes: 3, 4 and 5. The range ends there." }
+          - { id: c, text: "界", why: "`界` comes after `世`: it's bytes 6 to 8." }
+        answer: a
+        explanation: "`Hi ` is bytes 0 to 2. Each of these characters takes 3 bytes, so `3..6` is exactly `世`."
+        concepts: [slice.utf8]
+
+      - type: mcq
+        id: mcq-euro
+        prompt: "`s` holds `€5`. Which slice gives `5`?"
+        options:
+          - { id: a, code: "&s[3..]" }
+          - { id: b, code: "&s[1..]", why: "`€` takes 3 bytes, so byte 1 is inside it. This panics." }
+          - { id: c, code: "&s[2..]", why: "Byte 2 is still inside `€`. This panics." }
+          - { id: d, code: "&s[..1]", why: "That would be the first byte only, which is inside `€`, so this panics too." }
+        answer: a
+        explanation: "`€` is bytes 0 to 2, so `5` is byte 3."
+        concepts: [slice.utf8]
+
+      - type: true-false
+        id: tf-ascii-safe
+        prompt: "In text made only of plain English letters, digits and spaces, every byte position is a character boundary."
+        answer: true
+        explanation: "Those characters take 1 byte each. The panics only happen with characters that take 2 or more bytes."
+        concepts: [slice.utf8]
+
+      - type: spot-bug
+        id: spot-creme
+        prompt: "This should print `5`, the number of letters in `crème`, but it prints `6`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn letters(word: &str) -> usize {
+                word.len()
+            }
+
+            fn main() {
+                let dessert = String::from("crème");
+                println!("{}", letters(&dessert));
+            }
+          verify: run
+          expectStdout: "6\n"
+        answer: 2
+        explanation: "`.len()` counts bytes, and `è` is 2. Use `word.chars().count()` on line 2."
+        concepts: [slice.utf8, slice.str-param]
+
+      - type: match-pairs
+        id: pairs-ano
+        prompt: "`s` holds `año`. Match each expression to its result."
+        pairs:
+          - ["s.len()", "4"]
+          - ["s.chars().count()", "3"]
+          - ["&s[..1]", "a"]
+          - ["&s[3..]", "o"]
+        concepts: [slice.utf8]
+
+      - type: compiles
+        id: compiles-chars-param
+        code:
+          rust: |
+            fn letters(word: &str) -> usize {
+                word.chars().count()
+            }
+
+            fn main() {
+                let n = letters("Zoë");
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "3\n"
+        answer: true
+        explanation: "`.chars().count()` works on any `&str`, and it prints 3."
+        concepts: [slice.utf8, slice.str-param]
+
+      - type: predict-output
+        id: predict-split-safe
+        code:
+          rust: |
+            let s = String::from("señor");
+            let a = &s[..2];
+            let b = &s[4..];
+            println!("{a}|{b}");
+          verify: run
+        options:
+          - { id: a, text: "se|or" }
+          - { id: b, text: "se|ñor", why: "`ñ` is bytes 2 and 3, so byte 4 is the `o`." }
+          - { id: c, text: "señ|or", why: "`..2` stops before byte 2, where `ñ` starts." }
+        answer: a
+        explanation: "Both ranges land on character boundaries: `..2` stops before `ñ` and `4..` starts after it."
+        concepts: [slice.utf8]

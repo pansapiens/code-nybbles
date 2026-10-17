@@ -1,0 +1,549 @@
+id: ownership.borrowing.mut
+title: Borrowing to change
+icon: pencil
+concepts: [borrow.mut]
+reviewConcepts: [borrow.shared, var.mut, err.E0384, fn.params]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-mut-ref
+        title: "Borrow to change: &mut"
+        markdown: |
+          **`&mut s` is a mutable reference.** You can read and change the value through it.
+
+          The variable itself must be `let mut`: you can't lend permission to change something that can't change.
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            let r = &mut s;
+            r.push_str("!");
+            println!("{s}");
+          verify: run
+          expectStdout: "hi!\n"
+        diagram:
+          caption: "After r.push_str(\"!\");"
+          frames:
+            - name: main
+              vars:
+                - { name: s, id: s, points: h1 }
+                - { name: r, points: s }
+          heap:
+            - { id: h1, value: '"hi!"' }
+        concepts: [borrow.mut]
+
+      - type: predict-output
+        id: predict-rusty
+        code:
+          rust: |
+            let mut word = String::from("rust");
+            let r = &mut word;
+            r.push_str("y");
+            println!("{word}");
+          verify: run
+        options:
+          - { id: a, text: "rusty" }
+          - { id: b, text: "rust", why: "`r` points at `word`, so the change made through `r` changes `word` itself." }
+          - { id: c, text: "y", why: "`push_str` adds to the end. It doesn't replace the text." }
+        answer: a
+        explanation: "There is only one `String`. `r` changes it, and printing `word` shows the change."
+        concepts: [borrow.mut]
+
+      - type: compiles
+        id: compiles-mut-ref-no-mut
+        code:
+          rust: |
+            let s = String::from("hi");
+            let r = &mut s;
+            r.push_str("!");
+            println!("{r}");
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's missing?
+          options:
+            - { id: a, text: "`mut` on the first line: `let mut s`" }
+            - { id: b, text: "`mut` on the second line: `let mut r`", why: "`r` itself never changes. It's `s` that must be `mut` to be borrowed as `&mut`." }
+            - { id: c, text: "Nothing; it's `push_str` that isn't allowed on references", why: "`push_str` works through a `&mut` reference. The problem is that `s` isn't `mut`." }
+          answer: a
+        explanation: "`&mut s` needs `s` to be declared `mut`. The compiler says: cannot borrow `s` as mutable, as it is not declared as mutable (E0596)."
+        concepts: [borrow.mut, var.mut]
+
+      - type: concept
+        id: concept-mut-fn
+        title: "&mut in functions"
+        markdown: |
+          **A `&mut String` parameter lets a function change the caller's `String`.** Write `&mut` in the parameter type and again at the call.
+
+          The caller still owns the value and sees the change afterwards.
+        code:
+          rust: |
+            fn add_bang(s: &mut String) {
+                s.push_str("!");
+            }
+
+            fn main() {
+                let mut msg = String::from("Hi");
+                add_bang(&mut msg);
+                println!("{msg}");
+            }
+          verify: run
+          expectStdout: "Hi!\n"
+        diagram:
+          caption: "Inside add_bang(&mut msg)"
+          frames:
+            - name: main
+              vars:
+                - { name: msg, id: msg, points: h1 }
+            - name: add_bang
+              vars:
+                - { name: s, points: msg }
+          heap:
+            - { id: h1, value: '"Hi"' }
+        concepts: [borrow.mut]
+
+      - type: fill-tokens
+        id: fill-add-world
+        prompt: "Fill the blanks so the program prints `hello world`"
+        code:
+          rust: |
+            fn add_world(s: ___1___) {
+                s.push_str(" world");
+            }
+
+            fn main() {
+                let mut g = String::from("hello");
+                add_world(___2___ g);
+                println!("{g}");
+            }
+          verify: run
+          expectStdout: "hello world\n"
+        blanks:
+          "1": { answer: ["&mut String"] }
+          "2": { answer: ["&mut"] }
+        bank: ["&mut String", "&String", "&mut", "&", "mut"]
+        explanation: "The function changes `s`, so it needs `&mut String`, and the call must lend `&mut g` to match."
+        concepts: [borrow.mut]
+
+      - type: mcq
+        id: mcq-call-reset
+        prompt: "Which call matches `fn reset(s: &mut String)`?"
+        options:
+          - { id: a, code: "reset(&mut name);" }
+          - { id: b, code: "reset(&name);", why: "`&name` is a read-only reference. The function asks for `&mut String`, so the types don't match." }
+          - { id: c, code: "reset(mut name);", why: "`mut` on its own isn't a way to pass a value. You need `&mut name`." }
+          - { id: d, code: "reset(name);", why: "That passes the `String` itself, not a reference." }
+        answer: a
+        explanation: "The argument must have the parameter's type, `&mut String`, so you lend `&mut name`."
+        concepts: [borrow.mut]
+
+      - type: true-false
+        id: tf-needs-let-mut
+        prompt: "To write `&mut score`, the variable `score` must be declared with `let mut`."
+        answer: true
+        explanation: "A mutable borrow lends the right to change the value, and only a `mut` variable has that right to lend."
+        concepts: [borrow.mut, var.mut]
+
+      - type: concept
+        id: concept-deref
+        title: "Numbers through &mut: *"
+        markdown: |
+          **`*n` means "the value `n` points at".** Methods like `push_str` follow a reference for you, but operators like `+=` and `=` don't: write `*n += 1`.
+        code:
+          rust: |
+            fn add_one(n: &mut i32) {
+                *n += 1;
+            }
+
+            fn main() {
+                let mut lives = 3;
+                add_one(&mut lives);
+                println!("{lives}");
+            }
+          verify: run
+          expectStdout: "4\n"
+        diagram:
+          caption: "Inside add_one, after *n += 1;"
+          frames:
+            - name: main
+              vars:
+                - { name: lives, id: lives, value: "4" }
+            - name: add_one
+              vars:
+                - { name: n, points: lives }
+        concepts: [borrow.mut]
+
+      - type: predict-output
+        id: predict-count-15
+        code:
+          rust: |
+            let mut count = 10;
+            let r = &mut count;
+            *r += 5;
+            println!("{count}");
+          verify: run
+        options:
+          - { id: a, text: "15" }
+          - { id: b, text: "10", why: "`r` points at `count`, so `*r += 5` changes `count` itself." }
+          - { id: c, text: "5", why: "`+=` adds 5 to the value. It doesn't replace it." }
+        answer: a
+        explanation: "`*r` is `count`, so `*r += 5` makes `count` 15."
+        concepts: [borrow.mut]
+
+      - type: match-pairs
+        id: pairs-mut
+        prompt: Match each piece of code to what it means
+        pairs:
+          - ["&s", "read-only borrow"]
+          - ["&mut s", "borrow that can change s"]
+          - ["*n", "the value n points at"]
+          - ["let mut s", "a variable that can change"]
+        concepts: [borrow.mut, borrow.shared, var.mut]
+
+  - id: l2
+    exercises:
+      - type: compiles
+        id: compiles-missing-star
+        code:
+          rust: |
+            fn main() {
+                let mut steps = 0;
+                let r = &mut steps;
+                r += 1;
+                println!("{steps}");
+            }
+          verify: compile-fail
+          expectErrors: [E0368]
+        answer: false
+        followUp:
+          prompt: How do you fix line 4?
+          options:
+            - { id: a, code: "*r += 1;" }
+            - { id: b, code: "r = r + 1;", why: "`r` is a reference, not a number. You still have to go through it with `*r`." }
+            - { id: c, code: "&r += 1;", why: "`&r` borrows `r` again. To reach the number, use `*r`." }
+          answer: a
+        explanation: "`+=` works on numbers, not on a `&mut i32`. `*r` reaches the number the reference points at."
+        concepts: [borrow.mut]
+
+      - type: decode-error
+        id: decode-shared-param
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn add(s: &String) {
+                s.push_str("!");
+            }
+
+            fn main() {
+                let mut s = String::from("hey");
+                add(&s);
+                println!("{s}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - { id: a, text: "Change line 1 to `fn add(s: &mut String)` and line 7 to `add(&mut s);`" }
+          - { id: b, text: "Change line 7 to `add(&mut s);` only", why: "Then the argument is `&mut String` but the parameter is still `&String`: a type mismatch." }
+          - { id: c, text: "Change line 1 to `fn add(mut s: &String)`", why: "That lets the function point `s` somewhere else. It still can't change the text through a `&` reference." }
+        answer: a
+        explanation: "The function needs a mutable reference, so both the parameter type and the call change to `&mut`."
+        concepts: [borrow.mut, borrow.shared]
+
+      - type: predict-output
+        id: predict-double
+        code:
+          rust: |
+            fn double(n: &mut i32) {
+                *n *= 2;
+            }
+
+            fn main() {
+                let mut x = 3;
+                double(&mut x);
+                double(&mut x);
+                println!("{x}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "12" }
+          - { id: b, text: "6", why: "Each call doubles the same `x`, so the second call doubles 6." }
+          - { id: c, text: "3", why: "`n` points at `x`, so `*n *= 2` changes `x` in `main`." }
+        answer: a
+        explanation: "The first call makes `x` 6, the second makes it 12."
+        concepts: [borrow.mut]
+
+      - type: spot-bug
+        id: spot-add-tax
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn add_tax(price: &mut i32) {
+                *price += 10;
+            }
+
+            fn main() {
+                let price = 100;
+                add_tax(&mut price);
+                println!("{price}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: 6
+        explanation: "The compiler reports line 7, but the fix is on line 6: `price` must be `let mut` to be lent as `&mut`."
+        concepts: [borrow.mut, var.mut]
+
+      - type: true-false
+        id: tf-diagram-copy
+        prompt: "In this diagram, `n` holds its own copy of `7`."
+        diagram:
+          caption: "Inside bump(&mut total)"
+          frames:
+            - name: main
+              vars:
+                - { name: total, id: total, value: "7" }
+            - name: bump
+              vars:
+                - { name: n, points: total }
+        answer: false
+        explanation: "`n` is a reference: it points at `total` in `main`. Changing `*n` changes `total`."
+        concepts: [borrow.mut]
+
+      - type: mcq
+        id: mcq-star-meaning
+        prompt: "What does the `*` do in `*n += 1`?"
+        options:
+          - { id: a, text: "It reaches the value that `n` points at" }
+          - { id: b, text: "It multiplies `n` by 1", why: "Multiplication needs a value on both sides. A `*` in front of a name follows a reference." }
+          - { id: c, text: "It makes `n` mutable", why: "Mutability comes from `&mut` in the type. `*` only follows the reference." }
+        answer: a
+        explanation: "`*n` is the number behind the reference, so `*n += 1` adds 1 to it."
+        concepts: [borrow.mut]
+
+      - type: predict-output
+        id: predict-tag-twice
+        code:
+          rust: |
+            fn tag(s: &mut String) {
+                s.push_str("#1");
+            }
+
+            fn main() {
+                let mut label = String::from("box");
+                tag(&mut label);
+                println!("{label}");
+                tag(&mut label);
+                println!("{label}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "box#1\nbox#1#1" }
+          - { id: b, text: "box#1\nbox#1", why: "The second call changes the same `String` again, so it gets a second `#1`." }
+          - { id: c, text: "box\nbox", why: "`tag` changes `label` through the reference, so the change is visible in `main`." }
+        answer: a
+        explanation: "Both calls change the one `String` owned by `label`, so `#1` is added twice."
+        concepts: [borrow.mut]
+
+      - type: compiles
+        id: compiles-assign-through
+        code:
+          rust: |
+            let mut n = 1;
+            let r = &mut n;
+            *r = 5;
+            println!("{n}");
+          verify: run
+          expectStdout: "5\n"
+        answer: true
+        explanation: "`*r = 5` replaces the value `r` points at, so `n` is 5. `n` is `mut`, so there's no E0384."
+        concepts: [borrow.mut, err.E0384]
+
+      - type: fill-tokens
+        id: fill-reset-score
+        prompt: Fill the blank so the program prints `0`
+        code:
+          rust: |
+            fn reset(score: &mut i32) {
+                ___1___ = 0;
+            }
+
+            fn main() {
+                let mut points = 42;
+                reset(&mut points);
+                println!("{points}");
+            }
+          verify: run
+          expectStdout: "0\n"
+        blanks:
+          "1": { answer: ["*score"] }
+        bank: ["*score", "score", "&score", "mut score"]
+        explanation: "`score` is a reference. To change the number it points at, assign to `*score`."
+        concepts: [borrow.mut]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-swap
+        prompt: Arrange the lines to swap two numbers through mutable references
+        lines:
+          - { id: l1, text: "fn swap(a: &mut i32, b: &mut i32) {" }
+          - { id: l2, text: "    let tmp = *a;" }
+          - { id: l3, text: "    *a = *b;" }
+          - { id: l4, text: "    *b = tmp;" }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: "    let tmp = a;" }
+          - { id: d2, text: "    a = b;" }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                let (mut x, mut y) = (1, 2);
+                swap(&mut x, &mut y);
+                println!("{x} {y}");
+            }
+          mode: run
+          expectStdout: "2 1\n"
+        explanation: "Save the first number, copy the second into it, then put the saved number into the second. Each step uses `*` to reach the numbers."
+        concepts: [borrow.mut]
+
+      - type: fill-tokens
+        id: fill-kim-lee
+        prompt: "Fill the blanks so the program prints `Kim Lee`"
+        code:
+          rust: |
+            let ___1___ name = String::from("Kim");
+            let r = ___2___ name;
+            r.push_str(" Lee");
+            println!("{name}");
+          verify: run
+          expectStdout: "Kim Lee\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["&mut"] }
+        bank: ["mut", "&mut", "&", "const"]
+        explanation: "`name` must be `mut` so it can be lent as `&mut name`, and `r` needs `&mut` to change the text."
+        concepts: [borrow.mut, var.mut]
+
+      - type: predict-output
+        id: predict-add-points
+        code:
+          rust: |
+            fn add_points(total: &mut i32, p: i32) {
+                *total += p;
+            }
+
+            fn main() {
+                let mut score = 0;
+                add_points(&mut score, 5);
+                add_points(&mut score, 7);
+                println!("{score}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "12" }
+          - { id: b, text: "7", why: "The first call already added 5 to `score`, and the second adds 7 more." }
+          - { id: c, text: "0", why: "`total` points at `score`, so each call changes `score` in `main`." }
+        answer: a
+        explanation: "Both calls add to the same `score`: 0 + 5 + 7 = 12. The plain `i32` argument `p` is copied in."
+        concepts: [borrow.mut]
+
+      - type: decode-error
+        id: decode-mismatch-mut
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn shout(s: &mut String) {
+                s.push_str("!");
+            }
+
+            fn main() {
+                let mut s = String::from("go");
+                shout(&s);
+                println!("{s}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`shout` wants a `&mut String`, but line 7 passes a `&String`" }
+          - { id: b, text: "`s` needs to be declared `mut`", why: "It already is, on line 6. The problem is the kind of reference passed." }
+          - { id: c, text: "`push_str` can't be used inside a function", why: "It can. The error is about the argument's type on line 7." }
+        answer: a
+        explanation: "`&s` and `&mut s` are different types. The call has to lend `&mut s` to match the parameter."
+        concepts: [borrow.mut]
+
+      - type: compiles
+        id: compiles-read-through-mut
+        code:
+          rust: |
+            fn grow(s: &mut String) {
+                let before = s.len();
+                s.push_str("!!");
+                println!("{before} {}", s.len());
+            }
+
+            fn main() {
+                let mut word = String::from("hey");
+                grow(&mut word);
+            }
+          verify: run
+          expectStdout: "3 5\n"
+        answer: true
+        explanation: "A `&mut` reference lets you read as well as change, so `s.len()` works before and after `push_str`."
+        concepts: [borrow.mut]
+
+      - type: true-false
+        id: tf-mut-reads
+        prompt: "A `&mut` reference can also be used to read the value it points at."
+        answer: true
+        explanation: "`&mut` gives read and write access. A `&` reference gives read access only."
+        concepts: [borrow.mut, borrow.shared]
+
+      - type: mcq
+        id: mcq-diagram-assign
+        prompt: "In this diagram, the program runs `*r = 10;`. What is `score` afterwards?"
+        diagram:
+          caption: "After let r = &mut score;"
+          frames:
+            - name: main
+              vars:
+                - { name: score, id: score, value: "9" }
+                - { name: r, points: score }
+        options:
+          - { id: a, text: "10" }
+          - { id: b, text: "9", why: "`r` points at `score`, so writing to `*r` writes to `score`." }
+          - { id: c, text: "It's an error: `r` isn't `mut`", why: "`r` itself doesn't change; the value it points at does. `&mut` already allows that." }
+        answer: a
+        explanation: "`*r` is `score`, so `*r = 10;` replaces 9 with 10."
+        concepts: [borrow.mut]
+
+      - type: spot-bug
+        id: spot-level-up
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn level_up(level: &mut i32) {
+                *level += 1;
+            }
+
+            fn main() {
+                let mut level = 1;
+                level_up(&level);
+                println!("{level}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 7
+        explanation: "`level_up` wants a `&mut i32`, but line 7 lends a `&i32`. Write `level_up(&mut level)`."
+        concepts: [borrow.mut]
+
+      - type: match-pairs
+        id: pairs-param-types
+        prompt: Match each parameter type to what the function can do
+        pairs:
+          - ["s: &String", "read a String it doesn't own"]
+          - ["s: &mut String", "change a String it doesn't own"]
+          - ["s: String", "own the String"]
+          - ["n: &mut i32", "change a number it doesn't own"]
+        concepts: [borrow.mut, borrow.shared, own.fn-move]

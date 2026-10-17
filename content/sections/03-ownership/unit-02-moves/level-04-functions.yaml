@@ -1,0 +1,559 @@
+id: ownership.moves.functions
+title: Ownership and functions
+icon: function
+concepts: [own.fn-move, own.fn-return]
+reviewConcepts: [own.move, own.copy, own.clone, err.E0382, fn.params, fn.return, own.scope-drop]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-fn-move
+        title: Passing a String moves it
+        markdown: |
+          **Passing a `String` to a function moves it into the parameter**, the same as `let text = name;` would.
+
+          Now `shout` owns the text and drops it when it returns. `name` in `main` is no longer valid.
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let name = String::from("Ferris");
+                shout(name);
+            }
+          verify: run
+          expectStdout: "Ferris!\n"
+        diagram:
+          caption: "Inside shout(name)"
+          frames:
+            - name: main
+              vars:
+                - { name: name, moved: true }
+            - name: shout
+              vars:
+                - { name: text, points: h1 }
+          heap:
+            - { id: h1, value: '"Ferris"' }
+        concepts: [own.fn-move]
+
+      - type: compiles
+        id: compiles-use-after-call
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let name = String::from("Ferris");
+                shout(name);
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `name`" }
+            - { id: b, text: "E0425: cannot find value `text` in this scope", why: "`main` never uses `text`. It uses `name`, whose value moved into `shout`." }
+            - { id: c, text: "None: `shout` gives the text back when it returns", why: "`shout` returns nothing. It dropped the text when it finished." }
+          answer: a
+        explanation: "`shout(name)` moved the `String` into `text`, so `name` can't be used on line 8."
+        concepts: [own.fn-move, err.E0382]
+
+      - type: true-false
+        id: tf-int-param
+        prompt: "Passing an `i32` to a function moves it, so you can't use it afterwards."
+        answer: false
+        explanation: "`i32` is Copy, so the function gets its own copy and the caller's variable stays valid."
+        concepts: [own.fn-move, own.copy]
+
+      - type: predict-output
+        id: predict-int-param
+        code:
+          rust: |
+            fn double(n: i32) -> i32 {
+                n * 2
+            }
+
+            fn main() {
+                let score = 4;
+                let big = double(score);
+                println!("{score} {big}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "4 8" }
+          - { id: b, text: "8 8", why: "`double` works on its own copy, `n`. It doesn't change `score`." }
+          - { id: c, text: "8 4", why: "`score` is printed first, and it's still 4." }
+        answer: a
+        explanation: "`score` is copied into `n`, so it's still valid and still 4 after the call."
+        concepts: [own.fn-move, own.copy]
+
+      - type: concept
+        id: concept-fn-return
+        title: Returning gives ownership back
+        markdown: |
+          **Returning a `String` moves it out to the caller.** A parameter can be `mut`, like a `let`, so the function can change the text before handing it back.
+        code:
+          rust: |
+            fn add_bang(mut s: String) -> String {
+                s.push_str("!");
+                s
+            }
+
+            fn main() {
+                let name = String::from("Hi");
+                let loud = add_bang(name);
+                println!("{loud}");
+            }
+          verify: run
+          expectStdout: "Hi!\n"
+        diagram:
+          caption: "After let loud = add_bang(name);"
+          frames:
+            - name: main
+              vars:
+                - { name: name, moved: true }
+                - { name: loud, points: h1 }
+          heap:
+            - { id: h1, value: '"Hi!"' }
+        concepts: [own.fn-return]
+
+      - type: mcq
+        id: mcq-who-owns-after
+        prompt: "In the last program, who owns the text after line 8?"
+        options:
+          - { id: a, text: "`loud`" }
+          - { id: b, text: "`name`", why: "`name` moved into `add_bang` and never gets the value back. The return value goes to `loud`." }
+          - { id: c, text: "Nobody: it was dropped when `add_bang` returned", why: "`add_bang` returned `s`, so the `String` moved out instead of being dropped." }
+        answer: a
+        explanation: "The `String` moves from `name` into `s`, then out of `add_bang` into `loud`."
+        concepts: [own.fn-return, own.fn-move]
+
+      - type: fill-tokens
+        id: fill-return-type
+        prompt: Fill the blank so `make_title` gives its `String` to the caller
+        code:
+          rust: |
+            fn make_title() ___1___ {
+                String::from("Report")
+            }
+
+            fn main() {
+                let title = make_title();
+                println!("{title}");
+            }
+          verify: run
+          expectStdout: "Report\n"
+        blanks:
+          "1": { answer: ["-> String"] }
+        bank: ["-> String", "-> ()", "String", "-> i32"]
+        explanation: "`-> String` says the function returns a `String`. The new text moves out to `title` instead of being dropped."
+        concepts: [own.fn-return, fn.return]
+
+      - type: spot-bug
+        id: spot-after-call
+        prompt: Tap the line where the compiler reports the error
+        code:
+          rust: |
+            fn save(note: String) {
+                println!("Saved {note}");
+            }
+
+            fn main() {
+                let memo = String::from("Buy milk");
+                println!("{memo}");
+                save(memo);
+                println!("{memo}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 9
+        explanation: "Line 7 prints `memo` before the call, which is fine. Line 8 moves it into `save`, so line 9 is too late."
+        concepts: [own.fn-move, err.E0382]
+
+      - type: match-pairs
+        id: pairs-fn-own
+        pairs:
+          - ["fn f(s: String)", "takes ownership"]
+          - ["fn f() -> String", "gives ownership to the caller"]
+          - ["fn f(n: i32)", "gets a copy"]
+          - ["f(s.clone())", "passes a new String"]
+        concepts: [own.fn-move, own.fn-return, own.clone]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-give-back
+        title: Take it and give it back
+        markdown: |
+          **To keep using a `String` after a call, the function can return it.** Shadowing the name with the result makes it look as though it never left.
+
+          This works, but it's clumsy. Next unit shows a better way.
+        code:
+          rust: |
+            fn shout(text: String) -> String {
+                println!("{text}!");
+                text
+            }
+
+            fn main() {
+                let name = String::from("Kai");
+                let name = shout(name);
+                println!("{name}");
+            }
+          verify: run
+          expectStdout: "Kai!\nKai\n"
+        concepts: [own.fn-return]
+
+      - type: decode-error
+        id: decode-param-note
+        prompt: "The compiler adds a note pointing at line 1. What does it mean?"
+        code:
+          rust: |
+            fn count(text: String) -> usize {
+                text.len()
+            }
+
+            fn main() {
+                let word = String::from("tree");
+                let n = count(word);
+                println!("{word} has {n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "The parameter `text: String` takes ownership of whatever you pass in" }
+          - { id: b, text: "`count` has the wrong return type", why: "`len()` returns `usize`, which matches. The note is about ownership." }
+          - { id: c, text: "Functions can't take a `String`", why: "They can. Doing so moves the `String` in." }
+        answer: a
+        explanation: "The note says `this parameter takes ownership of the value`. That's why `word` is invalid after the call on line 7."
+        concepts: [own.fn-move, err.E0382, compiler.read-error]
+
+      - type: decode-error
+        id: decode-fix-return
+        prompt: "Which change fixes the error and prints `tree has 4`?"
+        code:
+          rust: |
+            fn count(text: String) -> usize {
+                text.len()
+            }
+
+            fn main() {
+                let word = String::from("tree");
+                let n = count(word);
+                println!("{word} has {n}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 7 to `let n = count(word.clone());`" }
+          - { id: b, text: "Change line 1 to `fn count(mut text: String) -> usize {`", why: "`mut` lets `count` change `text`. The `String` still moves in." }
+          - { id: c, text: "Change line 7 to `let n = count(word) + 0;`", why: "Adding to the result doesn't change the move. `word` is still invalid." }
+        answer: a
+        explanation: "Cloning passes a separate `String`, so `word` stays valid. Next unit shows how to avoid the clone."
+        concepts: [own.fn-move, own.clone]
+
+      - type: predict-output
+        id: predict-give-back
+        code:
+          rust: |
+            fn add_s(mut word: String) -> String {
+                word.push_str("s");
+                word
+            }
+
+            fn main() {
+                let pet = String::from("cat");
+                let pet = add_s(pet);
+                let pet = add_s(pet);
+                println!("{pet}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "catss" }
+          - { id: b, text: "cats", why: "`add_s` runs twice, each time on the result of the last call." }
+          - { id: c, text: "cat", why: "`add_s` returns the changed `String`, and `pet` is shadowed with it." }
+        answer: a
+        explanation: "The `String` goes in and comes back out twice, gaining an `s` each time."
+        concepts: [own.fn-return, own.fn-move]
+
+      - type: compiles
+        id: compiles-create-return
+        code:
+          rust: |
+            fn greeting() -> String {
+                let text = String::from("G'day");
+                text
+            }
+
+            fn main() {
+                let hello = greeting();
+                println!("{hello}");
+            }
+          verify: run
+          expectStdout: "G'day\n"
+        answer: true
+        explanation: "`text` is moved out as the return value, so it isn't dropped when `greeting` ends. `hello` owns it."
+        concepts: [own.fn-return]
+
+      - type: mcq
+        id: mcq-diagram-frames
+        prompt: "This diagram shows the program in the middle of a call. What could the call be?"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: total, value: "10" }
+                - { name: label, moved: true }
+            - name: show
+              vars:
+                - { name: n, value: "10" }
+                - { name: s, points: h1 }
+          heap:
+            - { id: h1, value: '"pts"' }
+        options:
+          - { id: a, code: "show(total, label);" }
+          - { id: b, code: "show(total.clone(), label.clone());", why: "Cloning `label` would leave it valid in `main` and make a second heap box." }
+          - { id: c, code: "show(label, total);", why: "The order doesn't match: `n` holds the number and `s` the text." }
+        answer: a
+        explanation: "`total` was copied into `n` and is still valid. `label` moved into `s`, so it's greyed out in `main`."
+        concepts: [own.fn-move, own.copy]
+
+      - type: true-false
+        id: tf-dropped-in-fn
+        prompt: "When a function takes a `String` and doesn't return it, the text is freed when the function ends."
+        answer: true
+        explanation: "The parameter owns the `String`. It goes out of scope at the function's closing `}`, so the text is dropped there."
+        concepts: [own.fn-move, own.scope-drop]
+
+      - type: spot-bug
+        id: spot-forgot-return
+        prompt: "Tap the line with the mistake."
+        code:
+          rust: |
+            fn tidy(mut text: String) {
+                text.push_str(".");
+                text
+            }
+
+            fn main() {
+                let line = String::from("Done");
+                let line = tidy(line);
+                println!("{line}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 1
+        explanation: "Line 3 returns `text`, but line 1 has no `-> String`, so the compiler reports E0308 on line 3. The fix goes on line 1: `fn tidy(mut text: String) -> String {`."
+        concepts: [own.fn-return, fn.return]
+
+      - type: compiles
+        id: compiles-twice
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let name = String::from("Mo");
+                shout(name);
+                shout(name);
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: use of moved value: `name`" }
+            - { id: b, text: "None: each call gets the same `name`", why: "The first call moved the `String` away, so there's nothing left to pass." }
+            - { id: c, text: "E0384: cannot assign twice", why: "Nothing is assigned twice. `name` is moved twice." }
+          answer: a
+        explanation: "A value can only move once. The second `shout(name)` uses a value that already moved."
+        concepts: [own.fn-move, err.E0382]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-take-give
+        prompt: "Arrange the lines to write `add_tag`, so the program prints `todo #home`"
+        lines:
+          - { id: l1, text: "fn add_tag(mut item: String) -> String {" }
+          - { id: l2, text: '    item.push_str(" #home");' }
+          - { id: l3, text: "    item" }
+          - { id: l4, text: "}" }
+        distractors:
+          - { id: d1, text: "fn add_tag(item: String) {" }
+          - { id: d2, text: "    item;" }
+        answer: [l1, l2, l3, l4]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                let task = String::from("todo");
+                let task = add_tag(task);
+                println!("{task}");
+            }
+          mode: run
+          expectStdout: "todo #home\n"
+        explanation: "The parameter must be `mut` to call `push_str`, and the last line `item` (no `;`) returns the `String` to the caller."
+        concepts: [own.fn-return, own.fn-move]
+
+      - type: fill-tokens
+        id: fill-give-back
+        prompt: Fill the blanks so the program compiles and prints `Length 5`, then `hello`
+        code:
+          rust: |
+            fn report(text: String) -> String {
+                println!("Length {}", text.len());
+                ___1___
+            }
+
+            fn main() {
+                let word = String::from("hello");
+                let word = report(___2___);
+                println!("{word}");
+            }
+          verify: run
+          expectStdout: "Length 5\nhello\n"
+        blanks:
+          "1": { answer: ["text"] }
+          "2": { answer: ["word"] }
+        bank: ["text", "word", "text;", "word.len()", "hello"]
+        explanation: "`report` returns `text` so the `String` comes back, and `main` shadows `word` with it."
+        concepts: [own.fn-return, own.fn-move]
+
+      - type: predict-output
+        id: predict-copy-and-move
+        code:
+          rust: |
+            fn tag(n: i32, unit: String) -> String {
+                let mut out = unit;
+                out.push_str("!");
+                println!("{n}");
+                out
+            }
+
+            fn main() {
+                let n = 3;
+                let unit = String::from("kg");
+                let text = tag(n, unit);
+                println!("{n} {text}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "3\n3 kg!" }
+          - { id: b, text: "3 kg!", why: "`tag` prints `n` on its own line first." }
+          - { id: c, text: "3\n3 kg", why: "`push_str(\"!\")` changes the text before it's returned." }
+        answer: a
+        explanation: "`n` is copied in and still valid in `main`. `unit` moves in, becomes `out`, gets `!`, and moves back out as `text`."
+        concepts: [own.fn-move, own.fn-return, own.copy]
+
+      - type: compiles
+        id: compiles-return-param
+        code:
+          rust: |
+            fn pick(
+                x: String,
+                y: String,
+            ) -> String {
+                println!("{y}");
+                x
+            }
+
+            fn main() {
+                let a = String::from("A");
+                let b = String::from("B");
+                let kept = pick(a, b);
+                println!("{kept} {b}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `b`" }
+            - { id: b, text: "E0382: borrow of moved value: `kept`", why: "`kept` owns the returned `String` and is valid." }
+            - { id: c, text: "None: `pick` only returns `x`, so `b` stays in `main`", why: "Both arguments moved in. `y` was dropped at the end of `pick`." }
+          answer: a
+        explanation: "Both `a` and `b` moved into `pick`. Only `x` came back, as `kept`; `y` was dropped inside `pick`."
+        concepts: [own.fn-move, own.fn-return, err.E0382]
+
+      - type: decode-error
+        id: decode-loop-move
+        prompt: "What does `value moved here, in previous iteration of loop` mean?"
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let cheer = String::from("Go");
+                for _ in 0..3 {
+                    shout(cheer);
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "The first time round the loop moves `cheer`, so the second time there's nothing to pass" }
+          - { id: b, text: "`for` loops can't call functions", why: "They can. The problem is passing the same `String` on every pass." }
+          - { id: c, text: "`0..3` should be `0..=3`", why: "The range isn't the problem. Any loop that runs twice would fail." }
+        answer: a
+        explanation: "Each pass of the loop runs `shout(cheer)`. After the first pass, `cheer` has moved. `shout(cheer.clone())` would fix it."
+        concepts: [own.fn-move, err.E0382]
+
+      - type: true-false
+        id: tf-diagram-after-return
+        prompt: "This is the memory after `let name = shout(name);`, where `shout` takes a `String` and returns it."
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: name (old), moved: true }
+                - { name: name (new), points: h1 }
+          heap:
+            - { id: h1, value: '"Kai"' }
+        answer: true
+        explanation: "The old `name` moved into `shout`. The `String` came back out to a new `name` that shadows the old one, still using the same heap text."
+        concepts: [own.fn-return]
+
+      - type: mcq
+        id: mcq-signature
+        prompt: "`fn check(n: u32, word: String) -> String`. After `let w = check(x, s);`, which caller variables can still be used?"
+        options:
+          - { id: a, text: "`x` and `w`" }
+          - { id: b, text: "`x`, `s` and `w`", why: "`s` moved into `word`. The returned `String` is owned by `w`, not `s`." }
+          - { id: c, text: "Only `w`", why: "`x` is a `u32`, which is Copy, so it's still valid." }
+        answer: a
+        explanation: "`x` was copied, `s` moved in, and the returned `String` belongs to `w`."
+        concepts: [own.fn-move, own.fn-return, own.copy]
+
+      - type: spot-bug
+        id: spot-loop-fix
+        prompt: "This should print `Go!` three times. Tap the line with the mistake."
+        code:
+          rust: |
+            fn shout(text: String) {
+                println!("{text}!");
+            }
+
+            fn main() {
+                let cheer = String::from("Go");
+                for _ in 0..3 {
+                    shout(cheer);
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 8
+        explanation: "Line 8 moves `cheer` on the first pass. `shout(cheer.clone())` gives each call its own `String`."
+        concepts: [own.fn-move, own.clone]

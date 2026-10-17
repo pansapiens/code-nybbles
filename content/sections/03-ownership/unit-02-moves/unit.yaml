@@ -1,0 +1,20 @@
+id: ownership.moves
+title: Moves, Copies & Clones
+description: See what happens to a value when you assign it, copy it, clone it or pass it to a function.
+colour: teal
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#variables-and-data-interacting-with-move
+sources:
+  - name: The Rust Programming Language, ch. 4.1
+    url: https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#variables-and-data-interacting-with-move
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-move
+  - level: level-02-copy
+  - level: level-03-clone
+  - chest
+  - level: level-04-functions
+  - level: level-05-marathon
+  - code-read: code-read-who-owns
+  - checkpoint: checkpoint-moves
