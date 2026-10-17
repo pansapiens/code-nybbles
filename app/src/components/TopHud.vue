@@ -2,9 +2,14 @@
   <header class="top-hud">
     <span class="course-badge" title="Rust course">Rust</span>
     <div class="row chips">
-      <HudChip kind="streak" :value="game.streak" :dim="!game.extendedToday" @click="router.push('/streak')" />
-      <HudChip kind="gems" :value="game.gems" @click="router.push('/shop')" />
-      <HudChip kind="hearts" :value="game.hearts" :infinite="!settings.heartsMode" />
+      <HudChip
+        kind="streak"
+        :value="progress.view.streak.currentStreak"
+        :dim="!progress.view.extendedToday"
+        @click="router.push('/streak')"
+      />
+      <HudChip kind="gems" :value="progress.state.gems" @click="router.push('/shop')" />
+      <HudChip kind="hearts" :value="progress.view.hearts" :infinite="!settings.heartsMode" />
     </div>
   </header>
 </template>
@@ -12,11 +17,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import HudChip from './HudChip.vue'
-import { useGameStore } from '@/stores/game'
+import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore } from '@/stores/settings'
 
 const router = useRouter()
-const game = useGameStore()
+const progress = useProgressStore()
 const settings = useSettingsStore()
 </script>
 

@@ -72,7 +72,7 @@ export function reconcileStreak(
   if (daysBetween(d, today) > RECONCILE_CAP_DAYS) d = addDays(today, -RECONCILE_CAP_DAYS)
 
   for (; d < today; d = addDays(d, 1)) {
-    if (s.days[d] === 'active') continue
+    if (s.days[d]) continue // already final (active, frozen, repaired, missed): replays stay idempotent
     if (s.currentStreak === 0) continue
     if (s.freezesEquipped > 0) {
       s.freezesEquipped -= 1

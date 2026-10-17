@@ -10,7 +10,8 @@
       <TopHud />
       <div class="rail-card">
         <h2>Daily goal</h2>
-        <ProgressBar :value="0" label="Daily XP goal" />
+        <ProgressBar :value="Math.min(1, progress.view.todayXp / progress.dailyGoal)" label="Daily XP goal" />
+        <p class="goal-text">{{ progress.view.todayXp }} / {{ progress.dailyGoal }} XP</p>
       </div>
       <RouterLink to="/settings" class="rail-link">Settings</RouterLink>
     </aside>
@@ -29,8 +30,11 @@ import AppNav from '@/components/AppNav.vue'
 import DuoButton from '@/components/DuoButton.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import TopHud from '@/components/TopHud.vue'
+import { useProgressStore } from '@/stores/progress'
 
 const route = useRoute()
+const progress = useProgressStore()
+void progress.load()
 // registerType: 'prompt' -> never auto-reload; the user chooses when (plans/01 §5.3).
 const { needRefresh, updateServiceWorker } = useRegisterSW()
 </script>
@@ -51,6 +55,11 @@ const { needRefresh, updateServiceWorker } = useRegisterSW()
 .rail-card h2 {
   margin: 0 0 var(--s-3);
   font-size: 1.1rem;
+}
+.goal-text {
+  margin: var(--s-2) 0 0;
+  color: var(--c-text-2);
+  font-weight: 700;
 }
 .rail-link {
   color: var(--c-text-2);

@@ -1,11 +1,11 @@
 <template>
   <div class="lesson">
-    <header v-if="!summary" class="lesson-top">
+    <header v-if="!screens" class="lesson-top">
       <button class="icon-btn" type="button" aria-label="Quit lesson" @click="confirmExit = true">
         <AppIcon name="close" />
       </button>
       <ProgressBar :value="run ? progress(run) : 0" label="Lesson progress" />
-      <HudChip kind="hearts" :value="game.hearts" :infinite="!settings.heartsMode" />
+      <HudChip kind="hearts" :value="game.view.hearts" :infinite="!heartsApply" />
     </header>
 
     <main v-if="error" class="prompt stack">
@@ -14,18 +14,8 @@
       <DuoButton @click="router.push('/')">Back to the path</DuoButton>
     </main>
 
-    <main v-else-if="summary" class="prompt stack done">
-      <h1>Lesson complete!</h1>
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-label">Accuracy</span>
-          <strong>{{ Math.round(summary.accuracy * 100) }}%</strong>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Time</span>
-          <strong>{{ formatDuration(summary.durationMs) }}</strong>
-        </div>
-      </div>
+    <main v-else-if="screens" class="prompt">
+      <CelebrationScreen :key="screenIndex" :screen="screens[screenIndex]!" />
     </main>
 
     <main v-else-if="exercise" class="prompt">
@@ -58,15 +48,25 @@
         </details>
       </div>
       <DuoButton
-        v-if="summary || (exercise && (result || !checksItself(exercise)))"
+        v-if="screens || (exercise && (result || !checksItself(exercise)))"
         block
         :variant="!result ? 'primary' : result.correct ? 'correct' : 'danger'"
-        :disabled="!canPress"
+        :disabled="!canPress || saving"
         @click="press"
       >
         {{ buttonLabel }}
       </DuoButton>
     </footer>
+
+    <BottomSheet v-model:open="outOfHearts" title="You're out of hearts">
+      <p>Hearts refill one every 4 hours. You can refill them all now with gems, or come back later.</p>
+      <div class="stack">
+        <DuoButton block :disabled="game.state.gems < PRICES.hearts" @click="refillHearts">
+          Refill for {{ PRICES.hearts }} gems
+        </DuoButton>
+        <DuoButton block variant="ghost" @click="router.push('/')">End session</DuoButton>
+      </div>
+    </BottomSheet>
 
     <BottomSheet v-model:open="confirmExit" title="Wait, don't go!">
       <p>You'll lose your progress in this lesson.</p>
@@ -101,28 +101,42 @@ import {
 } from '@/domain/lesson-planner'
 import { type Grade, grade, solution } from '@/exercises/grade'
 import { checksItself, isGraded, rendererFor } from '@/exercises/registry'
+import CelebrationScreen, { type Screen } from '@/components/CelebrationScreen.vue'
+import { addDays } from '@/domain/dates'
+import { ACHIEVEMENTS, PRICES } from '@/domain/progress'
 import { type Cue, feedback } from '@/services/feedback'
-import { useGameStore } from '@/stores/game'
+import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore } from '@/stores/settings'
 
 const props = defineProps<{ levelId: string; lessonId: string }>()
 const router = useRouter()
-const game = useGameStore()
+const game = useProgressStore()
 const settings = useSettingsStore()
+const checkpoint = ref(false)
+/** Hearts only apply in new lessons: levels not yet complete (plans/01 §3.8). */
+const newLesson = ref(false)
+const heartsApply = computed(() => settings.heartsMode && newLesson.value)
+const outOfHearts = ref(false)
+const screens = ref<Screen[]>()
+const screenIndex = ref(0)
+const saving = ref(false)
 
 const exercises = new Map<string, CompiledExercise>()
 const run = shallowRef<LessonRun>()
 const error = ref<string>()
-const summary = ref<LessonSummary>()
 const response = ref<unknown>()
 const result = ref<Grade>()
 const confirmExit = ref(false)
 
 onMounted(async () => {
   try {
-    const level = await loadLevel(props.levelId)
+    const [found] = await Promise.all([loadLevel(props.levelId), game.load()])
+    const level = found?.level
     const lesson = level?.lessons.find((l) => l.id === props.lessonId)
     if (!level || !lesson) throw new Error(`There's no lesson ${props.levelId}/${props.lessonId}.`)
+    checkpoint.value = found!.checkpoint
+    newLesson.value = (game.state.levels[level.id]?.lessons ?? 0) < level.lessons.length
+    if (heartsApply.value && game.view.hearts === 0) outOfHearts.value = true
     for (const ex of lesson.exercises) exercises.set(`${level.id}/${lesson.id}/${ex.id}`, ex)
     run.value = startRun(planLesson(level.id, lesson), Date.now())
   } catch (e) {
@@ -135,10 +149,10 @@ const explanation = computed(() => (exercise.value && 'explanation' in exercise.
 const shownSolution = computed(() => (exercise.value ? solution(exercise.value as never) : {}))
 const feedbackClass = computed(() => (result.value ? (result.value.correct ? 'ok' : 'bad') : ''))
 const canPress = computed(
-  () => !!summary.value || !!result.value || response.value !== undefined || (!!exercise.value && !isGraded(exercise.value)),
+  () => !!screens.value || !!result.value || response.value !== undefined || (!!exercise.value && !isGraded(exercise.value)),
 )
 const buttonLabel = computed(() => {
-  if (summary.value || result.value) return 'Continue'
+  if (screens.value || result.value) return 'Continue'
   return exercise.value && !isGraded(exercise.value) ? 'Got it' : 'Check'
 })
 
@@ -148,6 +162,13 @@ function check() {
   const ex = exercise.value!
   result.value = grade(ex as never, response.value as never)
   cue(result.value.correct ? 'correct' : 'wrong')
+  if (!result.value.correct && heartsApply.value) {
+    void game.loseHeart().then(() => (outOfHearts.value = game.view.hearts === 0))
+  }
+}
+
+async function refillHearts() {
+  if (!(await game.purchase('hearts'))) outOfHearts.value = false
 }
 
 function next(correct: boolean, mistakes: number) {
@@ -155,14 +176,57 @@ function next(correct: boolean, mistakes: number) {
   run.value = r
   response.value = undefined
   result.value = undefined
-  if (isFinished(r)) {
-    summary.value = summarise(r, (ref) => isGraded(exercises.get(ref)!), Date.now())
-    cue('complete')
+  if (isFinished(r)) void finish(r)
+}
+
+async function finish(r: LessonRun) {
+  saving.value = true
+  const sum = summarise(r, (ref) => isGraded(exercises.get(ref)!), Date.now())
+  const out = await game.finishLesson({
+    levelId: props.levelId,
+    lessonId: props.lessonId,
+    checkpoint: checkpoint.value,
+    ...sum,
+  })
+  saving.value = false
+  screens.value = celebrations(out, sum)
+  cue('complete')
+}
+
+type Finished = Awaited<ReturnType<typeof game.finishLesson>>
+function celebrations(out: Finished, sum: LessonSummary): Screen[] {
+  const list: Screen[] = [{ kind: 'summary', xp: out.xp, checkpoint: checkpoint.value, ...sum }]
+  const gems = (reason: string, ref?: string) =>
+    out.events.find((e) => e.type === 'gems_awarded' && e.payload.reason === reason && (!ref || e.payload.ref === ref))
+  for (const n of out.notices) {
+    if (n.type === 'streak_extended') {
+      const today = n.date
+      const week = Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(today, i - 6)
+        const label = new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'narrow', timeZone: 'UTC' })
+        return { date, label, status: out.state.streak.days[date] }
+      })
+      list.push({ kind: 'streak', length: n.length, week })
+    }
+    if (n.type === 'streak_milestone') {
+      const e = gems('milestone', String(n.length))
+      list.push({ kind: 'milestone', length: n.length, gems: e?.type === 'gems_awarded' ? e.payload.gems : 0 })
+    }
+    if (n.type === 'daily_goal_reached') list.push({ kind: 'goal', gems: n.gems })
+    if (n.type === 'achievement') {
+      const a = ACHIEVEMENTS.find((x) => x.id === n.id)
+      if (a) list.push({ kind: 'achievement', title: a.title, description: a.description, gems: a.gems })
+    }
   }
+  return list
 }
 
 function press() {
-  if (summary.value) return void router.push('/')
+  if (screens.value) {
+    if (screenIndex.value < screens.value.length - 1) screenIndex.value++
+    else void router.push('/')
+    return
+  }
   const ex = exercise.value!
   if (!isGraded(ex)) return next(true, 0)
   if (!result.value) return check()
@@ -173,10 +237,6 @@ watch(response, (r) => {
   if (r !== undefined && exercise.value && checksItself(exercise.value) && !result.value) check()
 })
 
-function formatDuration(ms: number) {
-  const s = Math.round(ms / 1000)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-}
 </script>
 
 <style scoped>
@@ -207,31 +267,6 @@ function formatDuration(ms: number) {
 .prompt {
   flex: 1;
   padding: var(--s-4);
-}
-.done {
-  justify-content: center;
-  text-align: center;
-}
-.stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-3);
-}
-.stat {
-  display: grid;
-  gap: var(--s-1);
-  padding: var(--s-3);
-  border: 2px solid var(--c-border);
-  border-radius: var(--radius-card);
-}
-.stat-label {
-  color: var(--c-text-2);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-}
-.stat strong {
-  font-size: 1.5rem;
 }
 .lesson-foot {
   position: sticky;
