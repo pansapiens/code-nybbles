@@ -1,1 +1,2 @@
-Track work using git, commit at key m
+
+Track work using git, commit at key milestones.
