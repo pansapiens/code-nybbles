@@ -1,0 +1,11 @@
+{
+  "name": "code-nybbles",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @code-nybbles/app dev",
+    "build": "pnpm --filter @code-nybbles/app build",
+    "test": "pnpm -r --if-present run test:unit --run",
+    "content:build": "pnpm --filter @code-nybbles/content-build build"
+  }
+}

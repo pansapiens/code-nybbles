@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.eslintcache
+test-results/
+playwright-report/
+tools/rust-verify/target/
+tools/rust-verify/cases/
+app/public/content/
+.DS_Store
+*.local
