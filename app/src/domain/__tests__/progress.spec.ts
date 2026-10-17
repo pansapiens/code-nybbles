@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BEGINNER_FINAL,
   buy,
   completeLesson,
   type Ctx,
@@ -62,6 +63,9 @@ describe('progress', () => {
     // Code Reads and checkpoints have flat XP, with no perfect bonus.
     expect(completeLesson(s.state, lesson({ codeRead: true }), ctx(T0)).xp).toBe(15)
     expect(completeLesson(s.state, lesson({ checkpoint: true }), ctx(T0)).xp).toBe(30)
+    // Passing the last beginner checkpoint unlocks Rustacean Initiate.
+    const final = completeLesson(s.state, lesson({ levelId: BEGINNER_FINAL, checkpoint: true }), ctx(T0))
+    expect(final.state.achievements['rustacean-initiate']).toBeDefined()
   })
 
   it('live state equals a replay of the log, across gaps, freezes, loss and repair', () => {

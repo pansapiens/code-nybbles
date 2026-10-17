@@ -244,6 +244,9 @@ export interface Achievement {
 const lessonAt = (ev: DomainEvent, test: (hour: number) => boolean) =>
   ev.type === 'lesson_completed' && test(localHour(ev.ts, ev.tz))
 
+/** The last checkpoint of the beginner course (Section 5, plans/02); passing it earns "Rustacean Initiate". */
+export const BEGINNER_FINAL = 'collections.hashmap.checkpoint'
+
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'hello-world', title: 'Hello, World!', description: 'Finish your first lesson', gems: 25, earned: (p) => Object.keys(p.levels).length > 0 },
   { id: 'perfectionist', title: 'Perfectionist', description: 'Finish 10 lessons without a mistake', gems: 50, earned: (p) => p.perfectLessons >= 10 },
@@ -255,6 +258,13 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'night-owl', title: 'Night Owl', description: 'Finish a lesson after 10pm', gems: 25, earned: (_p, ev) => lessonAt(ev, (h) => h >= 22) },
   { id: 'early-crab', title: 'Early Crab', description: 'Finish a lesson before 7am', gems: 25, earned: (_p, ev) => lessonAt(ev, (h) => h < 7) },
   { id: 'xp-500', title: 'Five hundred', description: 'Earn 500 XP', gems: 50, earned: (p) => p.xp >= 500 },
+  {
+    id: 'rustacean-initiate',
+    title: 'Rustacean Initiate',
+    description: 'Pass the Section 5 checkpoint and finish the beginner course',
+    gems: 100,
+    earned: (p) => !!p.levels[BEGINNER_FINAL],
+  },
 ]
 
 // ---- Commands ----
