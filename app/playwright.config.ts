@@ -21,7 +21,7 @@ export default defineConfig({
   webServer: {
     command: `pnpm build-only && pnpm preview --port ${PORT} --strictPort`,
     port: PORT,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false, // a stale preview would test an old build
     timeout: 120_000,
   },
 })

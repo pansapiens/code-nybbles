@@ -4,8 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @code-nybbles/app dev",
-    "build": "pnpm --filter @code-nybbles/app build",
-    "test": "pnpm -r --if-present run test:unit --run",
-    "content:build": "pnpm --filter @code-nybbles/content-build build"
+    "build": "pnpm content:build && pnpm --filter @code-nybbles/app build",
+    "test": "pnpm -r --if-present run test",
+    "type-check": "pnpm -r --if-present run type-check",
+    "content:build": "pnpm --filter @code-nybbles/content-build build",
+    "content:check": "pnpm --filter @code-nybbles/content-build check"
   }
 }

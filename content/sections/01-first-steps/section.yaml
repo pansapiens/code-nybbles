@@ -1,0 +1,6 @@
+id: first-steps
+title: First Steps
+description: Read and write tiny programs, meet values and types, and learn to read compiler errors.
+colour: purple
+units:
+  - unit-01-hello

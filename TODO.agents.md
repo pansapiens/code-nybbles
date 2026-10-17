@@ -14,17 +14,26 @@ Conventions:
 package.json, pnpm-workspace.yaml   # pnpm workspace: app, tools/content-build
 app/                                # Vue 3 + Vite + TS PWA
   src/domain/                       # pure TS game rules, no Vue/Dexie imports (01 §5.2)
-  src/db/                           # Dexie schema + commit()/rebuildDerived()
+  src/db/                           # Dexie schema (commit()/rebuildDerived() in M2)
+  src/content/loader.ts             # fetch manifest + section bundles (BASE_URL-relative)
   src/styles/tokens.css, base.css   # design tokens (01 §4.1)
+  src/stores/                       # Pinia: settings (theme persisted), game (HUD placeholder)
   src/components/                   # base UI components
   src/views/                        # screens
-tools/content-build/                # YAML -> zod -> JSON bundles (03 §4.1)
-tools/rust-verify/                  # snippet verification against real rustc (03 §4.2)
+tools/content-build/
+  schema.ts                         # zod content schema; app imports types via @code-nybbles/content-build/schema
+  build.ts                          # load -> validate -> cross-check -> verify -> emit (CLI + buildContent())
+  verify.ts                         # rust-verify driver: rustc per snippet, cached outcomes
+  build.test.ts                     # node:test fixtures that must pass/fail
+tools/rust-verify/                  # rust-toolchain.toml pin (1.98.1), cases/ and .cache/ (gitignored)
 content/                            # authored course content (03 §2)
 ```
 
-Commands (from repo root): `pnpm dev`, `pnpm build`, `pnpm test`; in `app/`: `pnpm test:unit`, `pnpm test:e2e`,
-`pnpm type-check`, `pnpm lint`.
+Commands (from repo root): `pnpm content:build`, `pnpm dev`, `pnpm build`, `pnpm test`, `pnpm type-check`;
+in `app/`: `pnpm test:e2e`, `pnpm lint`, `pnpm lint:style`.
+
+Local environment note: this machine's PATH `cc` is micromamba's conda gcc (old sysroot), which can't link
+Rust std. Run content builds/tests with `RUST_VERIFY_LINKER=/usr/bin/gcc`. CI doesn't need it.
 
 ---
 
@@ -81,32 +90,54 @@ Commands (from repo root): `pnpm dev`, `pnpm build`, `pnpm test`; in `app/`: `pn
 
 ## M1: Content pipeline + lesson engine (01 §9 M1, 03)
 
-- [ ] Content zod schema `tools/content-build/schema.ts` (03 §2), types inferred for app via `z.infer`
-  - [ ] course.yaml, concepts.yaml, section.yaml, unit.yaml (path entries, sources), level.yaml, lessons, exercises
-  - [ ] Exercise schemas for the 10 MVP types (03 §1)
-- [ ] `content-build`: parse YAML + Markdown, validate, cross-checks (03 §4.1)
-  - [ ] Unique slug IDs; concept refs exist; answers present in options/banks; >= 2 distractors; no duplicate options
-  - [ ] Lesson length 8-15; level 3-5 lessons; unit has a checkpoint
-  - [ ] Code width (> 40 cols) and line-count warnings
+- [x] Content zod schema `tools/content-build/schema.ts` (03 §2), types inferred for app via `z.output`
+  - [x] course.yaml, concepts.yaml, section.yaml, unit.yaml (path entries, sources), level.yaml, lessons, exercises
+  - [x] Exercise schemas for the 10 MVP types (03 §1); `.strict()` objects so typos in field names fail
+  - [x] Compiled output types (`CompiledSection`, `ContentManifest`, `verified.compilerOutput/stdout`)
+  - (new) Added `expectErrorMessage` (substring) for compile errors without a code, e.g. missing `;`
+  - (new) `spot-bug.answer` is a 1-based line number (token-level spotting later if needed)
+  - (new) `hidden` is `{ before, after }`
+  - [ ] (new) Schemas for Code Read and Build files (path entries are accepted but skipped with a warning)
+- [~] `content-build`: parse YAML + Markdown, validate, cross-checks (03 §4.1)
+  - [x] Unique IDs; concept refs exist; answers present in options/banks; >= 2 distractors; no duplicate options
+  - [x] (new) Answers checked against reality: predict-output answer == real stdout; `compiles` answer agrees
+    with the verify mode; decode-error must be compile-fail; fill-tokens markers <-> blanks; parsons orders
+  - [x] Lesson length 8-15; level 3-5 lessons; unit has a checkpoint (warnings; `--strict` makes them errors)
+  - [x] Code width (> 40 cols) and line-count warnings
   - [ ] Concept taught-before-tested check along path order
-  - [ ] Licence allow-list for `sources:`; generate `ATTRIBUTIONS.md` (01 §13.3)
-  - [ ] Emit `app/public/content/section-XX.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
+  - [~] Licence allow-list for `sources:` (enforced by schema enum); [ ] generate `ATTRIBUTIONS.md` (01 §13.3)
+  - [x] Emit `app/public/content/section-<id>.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
   - [ ] Build-time syntax highlighting (Shiki or Lezer) (03 §4.1)
-- [ ] `rust-verify` (03 §4.2)
-  - [ ] Extract snippets to `cases/<global-id>.rs` applying `wrap` and `hidden`
-  - [ ] Modes: run (timeout, stdout, expectPanic), compile, compile-fail (error codes via `--error-format=json`), test
-  - [ ] Pinned `rust-toolchain.toml` (stable, edition 2024)
-  - [ ] Capture rendered stderr for `decode-error`; cache by snippet hash; parallel
+  - [ ] Guidebook Markdown -> HTML at build time (markdown-it); currently raw Markdown in the bundle
+  - [ ] Turn on `--strict` in CI once the vertical slice meets the length rules
+  - [ ] (new) Warn when a decode-error snippet uses `wrap: auto`/`hidden.before` (line numbers in the
+    baked compiler output wouldn't match the shown code)
+- [~] `rust-verify` (03 §4.2)
+  - Deviation: implemented in TypeScript (`tools/content-build/verify.ts`) calling `rustc` directly, not as
+    a Cargo project. One toolchain for the pipeline and no IPC; `tools/rust-verify/` keeps the toolchain pin.
+    Revisit when `deps:` support needs a Cargo project.
+  - [x] Generate per-case sources applying `wrap` and `hidden` (`cases/<hash>/main.rs`)
+  - [x] Modes: run (10 s timeout, stdout, expectPanic), compile + compile-fail (`--emit=metadata`,
+    `--error-format=json` codes), test (`--test`); `denyWarnings` -> `-D warnings`
+  - [x] Pinned `rust-toolchain.toml` (1.98.1, edition from course.yaml)
+  - [x] Capture rendered errors for `decode-error` (build paths stripped); cache by hash; parallel workers
+  - [x] Toolchain/link failures are reported with a hint and never cached
+  - [x] `node --test` fixtures (`build.test.ts`)
   - [ ] `deps:` cases in a shared Cargo project (later; needed from Section 2.4 `rand`)
   - [ ] Guidebook ```rust blocks with mdBook annotations (03 §4.3)
-  - [ ] Parsons `alternatives` orders verified via harness
+  - [x] Parsons `alternatives` orders verified via harness
+  - [ ] Weekly CI job against latest stable reporting drift (03 §4.2)
 - [ ] Lesson player: queue, CHECK -> feedback sheet -> CONTINUE, mistake re-queue, progress bar, exit confirm (01 §4.3.4)
   - [ ] `domain/lesson-planner.ts` -> `LessonPlan` (03 §6)
   - [ ] `exercises/registry.ts` (renderer + grader per type)
 - [ ] Renderers + graders: concept, mcq, predict-output, fill-tokens, parsons, compiles, spot-bug, match-pairs, decode-error, true-false
 - [ ] Sound (Web Audio) + haptics (`navigator.vibrate`) services, settings toggles
 - [ ] Dev routes: `/dev/content/:levelId`, exercise gallery with answers (03 §5)
-- [ ] Content: Section 1, Units 1.1-1.2 vertical slice (02 §4)
+- [~] Content: Section 1, Units 1.1-1.2 vertical slice (02 §4)
+  - [x] course.yaml, concepts.yaml (Units 1.1-1.2), section 1, unit 1.1 with guidebook
+  - [x] Seed level `level-02-anatomy` lesson l1: 10 exercises, one of each MVP type, all verified
+  - [ ] Rest of Unit 1.1 (levels 1, 3-5, 3-5 lessons each, checkpoint) and Unit 1.2
+- [~] (new) App content loader `src/content/loader.ts` (manifest + cached section fetch); SW precaches bundles
 - [ ] Done-check: complete real lessons offline; all snippets verified in CI
 
 ## M2: Path + gamification (01 §9 M2)
@@ -160,4 +191,7 @@ Commands (from repo root): `pnpm dev`, `pnpm build`, `pnpm test`; in `app/`: `pn
 
 ## Session log
 
-- 2026-10-17: Session 1. Scaffolded workspace and app; started M0.
+- 2026-10-17: Session 1. M0 essentially complete (shell, tokens, components, PWA, Dexie schema, streak domain
+  with tests, CI workflow). M1 foundations: content schema, content-build with cross-checks, rust-verify,
+  seed content level, app loader. Next: lesson player + exercise registry (M1), rest of the vertical slice.
+  Not done: no GitHub remote yet, so CI/deploy hasn't run; Lighthouse not run.

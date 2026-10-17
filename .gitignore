@@ -10,3 +10,4 @@ tools/rust-verify/cases/
 app/public/content/
 .DS_Store
 *.local
+tools/rust-verify/.cache/

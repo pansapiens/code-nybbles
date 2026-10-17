@@ -1,0 +1,6 @@
+id: rust
+title: Rust
+mascot: ferris
+edition: '2024'
+sections:
+  - 01-first-steps

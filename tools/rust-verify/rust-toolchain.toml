@@ -1,0 +1,5 @@
+# Pinned toolchain for content verification (plans/03 §4.2). Bump deliberately:
+# a new version can change diagnostics baked into decode-error exercises.
+[toolchain]
+channel = "1.98.1"
+profile = "minimal"

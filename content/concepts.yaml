@@ -1,0 +1,17 @@
+# Concept ID registry (plans/03 §2). Every `concepts:` entry in content must exist here.
+# Section 1, Unit 1.1: Hello, Rust
+- { id: intro.what-is-rust, title: What Rust is }
+- { id: intro.main, title: The main function }
+- { id: macro.println-basic, title: Printing with println! }
+- { id: macro.bang, title: "The ! means macro", prerequisites: [macro.println-basic] }
+- { id: syntax.comments, title: Comments }
+- { id: compiler.read-error, title: Reading a compiler error }
+# Section 1, Unit 1.2: Variables & Mutability
+- { id: var.let, title: let bindings }
+- { id: style.snake-case, title: snake_case naming }
+- { id: var.mut, title: Mutable variables, prerequisites: [var.let] }
+- { id: err.E0384, title: "E0384: assign twice to immutable variable", prerequisites: [var.mut] }
+- { id: var.shadowing, title: Shadowing, prerequisites: [var.let] }
+- { id: var.const, title: Constants }
+- { id: fmt.placeholders, title: "{} placeholders" }
+- { id: fmt.inline-args, title: "Inline format args {name}", prerequisites: [fmt.placeholders] }

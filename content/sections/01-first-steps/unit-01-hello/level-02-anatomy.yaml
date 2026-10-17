@@ -1,0 +1,156 @@
+id: first-steps.hello.anatomy
+title: Anatomy of a program
+icon: star
+concepts: [intro.main, macro.println-basic]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-main
+        title: Every program starts at main
+        markdown: |
+          When you run a Rust program, it starts at the function called **`main`**.
+          `fn` starts a function, and its body goes between `{` and `}`.
+        code:
+          rust: |
+            fn main() {
+                println!("Hello, world!");
+            }
+          verify: run
+          expectStdout: "Hello, world!\n"
+        concepts: [intro.main]
+
+      - type: predict-output
+        id: predict-two-lines
+        code:
+          rust: |
+            fn main() {
+                println!("Ready");
+                println!("Go!");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Ready\nGo!" }
+          - { id: b, text: "Ready Go!", why: "Each `println!` ends its line, so the words don't share one." }
+          - { id: c, text: "Go!\nReady", why: "Statements run from top to bottom." }
+        answer: a
+        explanation: Statements run top to bottom, and each `println!` prints its text followed by a new line.
+        concepts: [macro.println-basic]
+
+      - type: true-false
+        id: tf-braces
+        prompt: "The body of a function goes between curly braces `{ }`."
+        answer: true
+        explanation: "`{` opens the function body and `}` closes it."
+        concepts: [intro.main]
+
+      - type: fill-tokens
+        id: fill-hello
+        prompt: Complete the program so it prints `Hello, Ferris!`
+        code:
+          rust: |
+            ___1___ main() {
+                ___2___("Hello, Ferris!");
+            }
+          verify: run
+          expectStdout: "Hello, Ferris!\n"
+        blanks:
+          "1": { answer: ["fn"] }
+          "2": { answer: ["println!"] }
+        bank: ["fn", "func", "def", "println!", "print", "echo"]
+        explanation: Functions start with `fn`, and `println!` prints a line.
+        concepts: [intro.main, macro.println-basic]
+
+      - type: mcq
+        id: mcq-bang
+        prompt: "What does the `!` in `println!` tell you?"
+        options:
+          - { id: a, text: "It's a macro, not a regular function" }
+          - { id: b, text: "The line is extra important", why: "Rust has no syntax for importance; `!` here marks a macro." }
+          - { id: c, text: "The text is printed in bold", why: "`println!` prints plain text." }
+        answer: a
+        explanation: "A name followed by `!` is a macro call. Macros can do things functions can't, like take a varying number of arguments."
+        concepts: [macro.bang]
+
+      - type: parsons
+        id: parsons-countdown
+        prompt: Arrange the lines so the program prints `3`, `2`, `1` on separate lines
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    println!("3");' }
+          - { id: l3, text: '    println!("2");' }
+          - { id: l4, text: '    println!("1");' }
+          - { id: l5, text: "}" }
+        distractors:
+          - { id: d1, text: '    println("1");' }
+        answer: [l1, l2, l3, l4, l5]
+        verify:
+          mode: run
+          expectStdout: "3\n2\n1\n"
+        explanation: The function header comes first, the statements run top to bottom, and `}` closes the body.
+        concepts: [intro.main, macro.println-basic]
+
+      - type: compiles
+        id: compiles-missing-semicolon
+        code:
+          rust: |
+            fn main() {
+                println!("Hello")
+                println!("world");
+            }
+          verify: compile-fail
+          expectErrorMessage: "expected `;`"
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "A `;` is missing after the first `println!`" }
+            - { id: b, text: "`main` needs a return type" }
+            - { id: c, text: "You can't call `println!` twice" }
+          answer: a
+        explanation: "Statements are separated by `;`. Without it, Rust can't tell where the first `println!` ends."
+        concepts: [macro.println-basic, compiler.read-error]
+
+      - type: spot-bug
+        id: spot-missing-bang
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                println!("one");
+                println("two");
+                println!("three");
+            }
+          verify: compile-fail
+          expectErrors: [E0423]
+        answer: 3
+        explanation: "`println` without `!` names the macro as if it were a function. Macro calls need the `!`."
+        concepts: [macro.bang]
+
+      - type: match-pairs
+        id: pairs-anatomy
+        pairs:
+          - ["fn", "starts a function"]
+          - ["main", "where the program begins"]
+          - ["{ }", "wraps the function body"]
+          - [";", "ends a statement"]
+        concepts: [intro.main]
+
+      - type: decode-error
+        id: decode-misspelled-macro
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                printline!("Hi!");
+            }
+          wrap: none
+          verify: compile-fail
+          expectErrorMessage: "cannot find macro `printline`"
+        options:
+          - { id: a, text: "There's no macro called `printline!`. It should be `println!`." }
+          - { id: b, text: "Macros can't print text", why: "`println!` is a macro, and it prints text." }
+          - { id: c, text: "A `;` is missing", why: "The line ends with `;`. The problem is the name." }
+        answer: a
+        explanation: "The compiler says it can't find `printline` and suggests the similar name `println`."
+        concepts: [compiler.read-error, macro.println-basic]

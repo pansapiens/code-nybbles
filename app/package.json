@@ -15,9 +15,11 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
-    "lint:style": "stylelint \"src/**/*.{css,vue}\""
+    "lint:style": "stylelint \"src/**/*.{css,vue}\"",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@code-nybbles/content-build": "workspace:*",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/nunito": "^5.3.0",
     "dexie": "^4.4.6",

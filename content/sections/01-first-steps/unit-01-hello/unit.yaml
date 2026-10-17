@@ -1,0 +1,13 @@
+id: first-steps.hello
+title: Hello, Rust
+description: Your first Rust program, and what each part of it does.
+colour: purple
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch01-02-hello-world.html
+sources:
+  - name: The Rust Programming Language, ch. 1.2
+    url: https://doc.rust-lang.org/book/ch01-02-hello-world.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-02-anatomy
