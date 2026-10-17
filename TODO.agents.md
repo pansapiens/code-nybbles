@@ -219,6 +219,16 @@ also works. CI doesn't need either.
   - [x] Code Reads: 1.1 Ferris says hello, 1.3 Temperature converter, 2.1 Area calculator, 2.3 Collatz sequence
   - [ ] Code Reads library in the Practice hub (M4)
 - [ ] Content QA pass (03 §5 checklist)
+  - [x] Units 1.3-1.5 and 2.1-2.3 reviewed by two independent agents: 22 fixes (wrong claims, ambiguous
+    items, unanswerable tile exercises, a concept used before it is taught)
+  - [x] (new) Build: concept cards over 60 words of prose warn; predict-output tiles must be able to spell the answer
+  - [ ] Judgement calls for a human: `if` preview card in 2.1 level 5; `std::env::args().count()` as a recipe
+    in 1.4 level 4; `let x = println!(..)` (clippy `let_unit_value`) in 1.4 level 2; "char holds any emoji"
+    simplification in 1.3 level 5; `fill-and-or` in 2.2 accepts `||` by values (prompt rules it out)
+  - [ ] (new) plans/03 §3 says spacing inside output matters, but the tiles grader collapses whitespace;
+    tile items with significant spacing were converted to options mode
+  - [ ] (new) Clippy-clean check for snippets (03 §5) not automated
+  - [ ] Units 1.1-1.2 haven't had an independent review
 - [x] (new) rust-verify compile checks used `--emit=metadata`, which skips deny-by-default MIR lints
   (`unconditional_panic`, `arithmetic_overflow`); now `--emit=mir`
 - [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives
