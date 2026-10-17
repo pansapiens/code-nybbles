@@ -31,7 +31,10 @@ const router = createRouter({
       meta: { fullscreen: true },
     },
     ...(import.meta.env.DEV
-      ? [{ path: '/dev/components', component: () => import('@/views/dev/ComponentGallery.vue') }]
+      ? [
+          { path: '/dev/components', component: () => import('@/views/dev/ComponentGallery.vue') },
+          { path: '/dev/content/:levelId?', component: () => import('@/views/dev/ContentPreview.vue') },
+        ]
       : []),
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
