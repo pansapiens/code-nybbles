@@ -527,7 +527,8 @@ if (import.meta.main) {
   const t0 = performance.now()
   const r = await buildContent({
     contentDir: values.content,
-    outDir: values.out,
+    // Unverified bundles lack compiler output and stdout, so a --no-verify check never writes them.
+    outDir: values['no-verify'] ? undefined : values.out,
     verify: !values['no-verify'],
     strict: values.strict,
   })
@@ -539,6 +540,7 @@ if (import.meta.main) {
       `${r.issues.errors.length} errors, ${r.issues.list.length - r.issues.errors.length} warnings`,
   )
   if (r.issues.errors.length) process.exit(1)
+  if (values['no-verify']) process.exit(0)
   // Only the real course owns the repo's ATTRIBUTIONS.md; test builds of other dirs must not overwrite it.
   const ownCourse = values.content === join(repo, 'content')
   if (ownCourse) writeFileSync(join(repo, 'ATTRIBUTIONS.md'), attributionsMarkdown(r.manifest!.attributions))
