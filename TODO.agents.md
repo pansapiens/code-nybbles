@@ -77,8 +77,8 @@ also works. CI doesn't need either.
   - [x] `domain/streak.ts`: `reconcileStreak`, `onSessionCompleted`, milestones, bounded loop (cap 400 days) (01 §3.4-3.7)
     - Also: starter freezes, `canRepair`/`repairCost`/`repairStreak`, earn-back (3 sessions same day), `isStreakAtRisk`
     - Pure: returns `{ state, events }` instead of emitting
-    - [ ] (new) Forward timezone travel across the date line can skip a local date entirely; forgive it
-      (01 §3.7 "accept the day if any event exists on either local date"). Needs event tz data in reconcile.
+    - [x] (new) Forward timezone travel across the date line can skip a local date entirely; forgive it
+      (01 §3.7). Done in `progress.ts` `forgiveTravel`: the skipped date is marked 'repaired'.
     - Milestones after 365 are every multiple of 100 (400, 500, ...); plan wording was ambiguous
   - [x] `domain/ids.ts`: UUIDv7 (01 §9.4)
 - [x] Stylelint rule: no raw hex colours in components (01 §4.7)
@@ -145,7 +145,7 @@ also works. CI doesn't need either.
   - [x] `domain/lesson-planner.ts`: `planLesson`, `LessonRun`, `answerCurrent`, `progress`, `summarise` (tested)
     - [ ] (new) Pool sampling + SRS review items + Legendary subsets (M4)
   - [x] `exercises/registry.ts` (renderer per type) + `exercises/grade.ts` (grader + solution per type, tested)
-  - [ ] (new) Persist lesson completion (levelProgress, XP events) - M2 with the event log
+  - [x] (new) Persist lesson completion (levelProgress, XP events) - M2 with the event log
   - [ ] (new) Hint button (v1), combo toasts, Enter-to-check keyboard shortcut
 - [x] Renderers + graders for all 10 MVP types. Shared pieces: `OptionList` (mcq/decode-error/predict-output/
   true-false/compiles follow-up), `OrderExercise` (parsons + predict-output assemble mode)
@@ -182,16 +182,27 @@ also works. CI doesn't need either.
 
 ## M2: Path + gamification (01 §9 M2)
 
-- [ ] Learning path: sine-wave nodes, banners, guidebook view, node popovers, locking rules, jump-to-current (01 §4.3.2)
-- [ ] XP rules (01 §3.2); daily goal + chest (01 §3.3)
-- [ ] Streak: reconciliation wired to app start / visibilitychange / midnight; freezes; repair + earn-back (01 §3.5-3.6)
-- [ ] Hearts with setting (default off), refill rules (01 §3.8)
-- [ ] Gems + shop (01 §3.9)
-- [ ] Lesson-complete, streak-extended, milestone celebration screens
-- [ ] Streak calendar screen; profile/stats; achievements v1 (01 §3.10)
-- [ ] Event log `commit(events[])` + derived tables + `rebuildDerived()` (01 §6)
-- [ ] Export/import JSON backup (zod-validated, merge by event ID) (01 §6)
-- [ ] Domain unit tests: streak edge cases (DST, timezone travel, long absence), XP, hearts, economy
+- [x] Learning path: sine-wave nodes, banners, guidebook view, node popovers, locking rules, jump-to-current (01 §4.3.2)
+  - `domain/path.ts` (`nodeStates`, `nextLesson`, tested); `PathNode.vue` (Reka Popover, progress ring); `GuidebookView`
+  - (new) Practice / Code Read / Build path entries are skipped until M4+; chest nodes added to both unit.yaml files
+- [x] XP rules (01 §3.2); daily goal + chest (01 §3.3); daily goal picker in Settings (10/20/30/50)
+- [x] Streak: reconciliation wired to app start / visibilitychange / midnight; freezes; repair + earn-back (01 §3.5-3.6)
+  - Store `now` ticks every 60 s and on visibilitychange; `viewAt` settles the streak to today
+- [x] Hearts with setting (default off), refill rules (01 §3.8); out-of-hearts sheet with gem refill
+- [x] Gems + shop (01 §3.9): freeze, repair (when offered), hearts refill (hearts mode only)
+  - [ ] (new) Freeze uses the star icon as placeholder art; needs an ice/freeze icon
+- [x] Lesson-complete, streak-extended, milestone, daily-goal and achievement celebration screens
+- [x] Streak calendar screen; profile/stats (7-day XP bars); achievements v1, 10 entries (01 §3.10)
+- [x] Event log `commit(events[])` + derived tables + `rebuildDerived()` (01 §6)
+  - Deviation: derived state is one snapshot row (`derived` table, `DERIVED_VERSION`), not per-entity tables;
+    `freeze_used` / `streak_lost` are derived on replay, not stored, so live state always equals `fold(events)`
+  - Deviation: settings live in localStorage (needed before first paint), included in backups
+  - Settings has "Repair data" (rebuild) and "Reset progress" (confirmed)
+- [x] Export/import JSON backup (zod-validated, merge by event ID) (01 §6); import reloads the page
+  - [ ] (new) Backup reminder (01 §6) not done
+- [x] Domain unit tests: streak edge cases (DST, timezone travel, long absence), XP, hearts, economy
+  - [ ] (new) e2e that finishes a whole lesson and checks XP/streak (verified manually with a script so far)
+- [ ] (new) Cross-tab sync (ponytail: a second tab sees changes on reload)
 
 ## M3: Beginner content (02 Sections 1-5)
 
@@ -241,3 +252,8 @@ also works. CI doesn't need either.
   and 1.2 authored by two subagents (303 exercises, 199 verified snippets, strict build clean). Next: M2 (learning
   path, XP, streak wiring, event log + Dexie persistence of progress). Still not done: GitHub remote/CI run,
   Lighthouse, human playtest.
+- 2026-10-17: Session 3. M2 complete: event-sourced progress (`domain/progress.ts`: reducer, commands, achievements),
+  Dexie event log with snapshot + rebuild + backup, progress store, learning path with popovers/chests/guidebook,
+  celebration screens, Streak, Shop, Profile and Settings data controls. 31 unit + 6 e2e tests pass, strict content
+  build clean. Next: M3 beginner content (Sections 1-5). Still not done: GitHub remote/CI run, Lighthouse, human
+  playtest, backup reminder.

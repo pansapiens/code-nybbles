@@ -31,3 +31,10 @@ export async function loadLevel(levelId: string) {
     return { level, unit, checkpoint }
   }
 }
+
+/** The manifest and every section bundle (all small for now; lazy per-section loading later, plans/03 §6). */
+export async function loadCourse() {
+  const manifest = await loadManifest()
+  const sections = await Promise.all(manifest.sections.map((s) => loadSection(manifest, s.id)))
+  return { manifest, sections }
+}

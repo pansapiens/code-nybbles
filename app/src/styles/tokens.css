@@ -15,6 +15,7 @@
   --c-text-2: light-dark(#8f89a0, #a9a3b8);
   --c-border: light-dark(#e7e3f0, #342c47);
   --c-scrim: rgb(0 0 0 / 0.4);
+  --c-shade: #000; /* mixed into colours for ledges: color-mix(in oklab, X, var(--c-shade) 25%) */
   --c-terminal: light-dark(#1f1b2e, #0b0912);
   --c-terminal-text: #ece9f5;
   /* Syntax highlighting; light values chosen for >= 4.5:1 on --c-surface */

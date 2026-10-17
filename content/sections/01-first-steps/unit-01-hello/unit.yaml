@@ -13,6 +13,7 @@ path:
   - level: level-01-what-is-rust
   - level: level-02-anatomy
   - level: level-03-macros
+  - chest
   - level: level-04-comments
   - level: level-05-first-errors
   - checkpoint: checkpoint-hello

@@ -13,6 +13,7 @@ path:
   - level: level-01-let
   - level: level-02-mut
   - level: level-03-shadowing
+  - chest
   - level: level-04-const
   - level: level-05-formatting
   - checkpoint: checkpoint-variables

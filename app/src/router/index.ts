@@ -17,6 +17,7 @@ const router = createRouter({
     { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/streak', name: 'streak', component: () => import('@/views/StreakView.vue') },
+    { path: '/guidebook/:unitId', component: () => import('@/views/GuidebookView.vue'), props: true },
     {
       path: '/lesson/:levelId/:lessonId',
       name: 'lesson',

@@ -2,16 +2,20 @@ import { expect, test } from '@playwright/test'
 
 test('shell navigates between tabs', async ({ page }) => {
   await page.goto('./')
-  await expect(page.getByRole('heading', { name: 'Hello, Rust', level: 1 })).toBeVisible()
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Shop' }).click()
-  await expect(page.getByRole('heading', { name: 'Shop' })).toBeVisible()
-  await expect(page).toHaveURL(/\/code-nybbles\/shop$/)
+  await expect(page.getByRole('list', { name: / path$/ }).first()).toBeVisible()
+  const nav = page.getByRole('navigation', { name: 'Main' })
+  for (const [tab, heading] of [['Shop', 'Shop'], ['Profile', 'Profile']]) {
+    await nav.getByRole('link', { name: tab }).click()
+    await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible()
+  }
+  await expect(page).toHaveURL(/\/code-nybbles\/profile$/)
 })
 
 test('lesson player: answer, feedback, quit', async ({ page }) => {
   // Content-agnostic: skips concept cards, answers the first choice exercise with any option.
   await page.goto('./')
-  await page.getByRole('button', { name: 'Start' }).first().click()
+  await page.getByRole('button', { name: /, up next$/ }).click()
+  await page.getByRole('button', { name: /^Start/ }).click()
   const gotIt = page.getByRole('button', { name: 'Got it' })
   const radio = page.getByRole('radio').first()
   await expect(gotIt.or(radio).first()).toBeVisible()
