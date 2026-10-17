@@ -138,9 +138,9 @@ lessons:
         markdown: |
           **`as` never fails, so it can quietly change your value.**
 
-          - Integer to a smaller integer: the extra bits are cut off. `300` as a `u8` becomes `44` (300 - 256).
+          - Integer to a smaller integer: the extra bits are cut off. `300` as a `u8` becomes `44`.
           - Negative to unsigned: `-1` as a `u8` becomes `255`.
-          - Float to integer: values beyond the range stick at the limit. `300.0 as u8` is `255`, and `-5.0 as u8` is `0`.
+          - Float to integer: out-of-range values stick at the limit. `300.0 as u8` is `255`, and `-5.0 as u8` is `0`.
         code:
           rust: |
             let big: i32 = 300;

@@ -52,9 +52,9 @@ lessons:
         id: concept-release-wrap
         title: Release builds wrap
         markdown: |
-          **Release builds skip the check and wrap around.** When you build for speed with `cargo run --release`, overflow doesn't panic. The value wraps back to the start of the range: for a `u8`, 255 + 1 becomes 0, and 0 - 1 becomes 255.
+          **Release builds skip the check and wrap around.** With `cargo run --release`, overflow wraps back to the start of the range: for a `u8`, 255 + 1 becomes 0, and 0 - 1 becomes 255.
 
-          The wrapped value is almost never what you meant, so treat overflow as a bug in either mode.
+          The wrapped value is almost never what you meant, so treat overflow as a bug.
         concepts: [types.overflow]
 
       - type: mcq

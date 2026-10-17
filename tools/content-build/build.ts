@@ -194,6 +194,13 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
   for (const c of ('concepts' in ex ? ex.concepts : undefined) ?? [])
     if (!concepts.has(c)) issues.error(where, `unknown concept "${c}" (add it to concepts.yaml)`)
 
+  if (ex.type === 'concept') {
+    // Prose only: tables and fenced code don't count (plans/03 §5: no wall of text, <= 60 words).
+    const prose = ex.markdown.replace(/```[\s\S]*?```/g, '').replace(/^\|.*$/gm, '')
+    const words = prose.split(/\s+/).filter(Boolean).length
+    if (words > 60) issues.warn(where, `concept card has ${words} words (aim for at most 60)`)
+  }
+
   const code = 'code' in ex ? ex.code : undefined
   if (code) {
     // Fill-tokens lines are measured with the answers in place of the `___N___` markers.
