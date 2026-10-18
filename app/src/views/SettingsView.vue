@@ -101,7 +101,7 @@ import AnswerTile from '@/components/AnswerTile.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import DuoButton from '@/components/DuoButton.vue'
 import { loadManifest } from '@/content/loader'
-import { exportBackup, importBackup, rebuildDerived, resetProgress } from '@/db/repo'
+import { BACKUP_NUDGE_KEY, exportBackup, importBackup, rebuildDerived, resetProgress } from '@/db/repo'
 import { DAILY_GOALS } from '@/domain/progress'
 import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore, type Theme } from '@/stores/settings'
@@ -125,6 +125,7 @@ async function exportFile() {
   a.download = `code-nybbles-backup-${game.view.today}.json`
   a.click()
   URL.revokeObjectURL(a.href)
+  localStorage.setItem(BACKUP_NUDGE_KEY, String(Date.now()))
 }
 async function importFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]

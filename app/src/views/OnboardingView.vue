@@ -80,6 +80,7 @@ async function setReminder(time: string) {
 /** Marks onboarding done, then goes to `to`, or straight into the first lesson. */
 async function finish(to?: string) {
   await game.saveProfile({ onboardedAt: Date.now() })
+  void navigator.storage?.persist?.() // makes eviction of IndexedDB less likely (plans/01 §5)
   if (to) return void router.push(to)
   const first = (await loadCourse()).sections[0]!.units[0]!
   const level = unitNodes(first)[0]!.id

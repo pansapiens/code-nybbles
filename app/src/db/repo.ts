@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { uuidv7 } from '@/domain/ids'
 import { apply, DAILY_GOALS, type DomainEvent, fold, type Progress } from '@/domain/progress'
 import { type ActivityEvent, type CodeNybblesDB, db as defaultDb, type Profile } from './schema'
+import { loggedErrors } from '@/services/error-log'
 
 export const DERIVED_VERSION = 3
 
@@ -65,6 +66,12 @@ export async function commit(events: DomainEvent[], db: CodeNybblesDB = defaultD
 // ---- Backup (plans/01 §6) ----
 
 const SETTINGS_KEYS = ['code-nybbles:theme', 'code-nybbles:settings']
+/** When the learner last exported a backup or postponed the reminder. */
+export const BACKUP_NUDGE_KEY = 'code-nybbles:backup-nudged'
+const BACKUP_EVERY_MS = 30 * 24 * 3600_000
+
+/** A backup reminder every ~30 days (plans/01 §6), counted from the first launch until the first backup. */
+export const backupDue = (now: number, createdAt: number, nudgedAt = 0) => now - Math.max(createdAt, nudgedAt) > BACKUP_EVERY_MS
 
 const BackupSchema = z.object({
   app: z.literal('code-nybbles'),
@@ -83,6 +90,8 @@ const BackupSchema = z.object({
     })
     .optional(),
   settings: z.record(z.string(), z.string()).default({}),
+  /** The local error log, for bug reports; not imported. */
+  errors: z.array(z.object({ ts: z.number(), message: z.string() })).optional(),
   events: z.array(
     z.object({
       id: z.uuid(),
@@ -111,6 +120,7 @@ export async function exportBackup(db: CodeNybblesDB = defaultDb): Promise<Backu
     exportedAt: Date.now(),
     profile,
     settings,
+    errors: loggedErrors(),
     events: sortEvents(await db.events.toArray()),
   }
 }

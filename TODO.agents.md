@@ -328,9 +328,11 @@ also works. CI doesn't need either.
 
 - [ ] Accessibility audit, WCAG AA contrast check of tokens, reduced motion, font scaling (01 §4.5)
 - [ ] Performance on low-end Android
-- [ ] Install prompt timing, update prompt, `navigator.storage.persist()`, backup reminders
+- [x] Install prompt timing, update prompt, `navigator.storage.persist()`, backup reminders
+  - (new) Install toast after the first XP, "Not now" is permanent (Settings has no install button yet);
+    backup toast 30 days after first launch or the last export/"Later"; one toast at a time
 - [ ] Optional: Periodic Background Sync experiment, `.ics` reminder (01 §8.1)
-- [ ] Local error ring buffer included in backups
+- [x] Local error ring buffer included in backups (last 50, `code-nybbles:errors`; exported, not imported)
 
 ## M6: Playground + Android
 

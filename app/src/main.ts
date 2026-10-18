@@ -5,5 +5,12 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
+import { logError } from './services/error-log'
+import './services/install'
 
-createApp(App).use(createPinia()).use(router).mount('#app')
+const app = createApp(App)
+app.config.errorHandler = (e) => {
+  console.error(e)
+  logError(e)
+}
+app.use(createPinia()).use(router).mount('#app')

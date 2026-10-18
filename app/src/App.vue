@@ -17,26 +17,60 @@
     </aside>
   </div>
 
-  <div v-if="needRefresh && !route.meta.fullscreen" class="toast row" role="status">
-    <span>New lessons available.</span>
-    <DuoButton @click="updateServiceWorker()">Refresh</DuoButton>
-  </div>
+  <template v-if="!route.meta.fullscreen">
+    <div v-if="needRefresh" class="toast row" role="status">
+      <span>New lessons available.</span>
+      <DuoButton @click="updateServiceWorker()">Refresh</DuoButton>
+    </div>
+    <div v-else-if="offerInstall" class="toast row" role="status">
+      <span>Install Code Nybbles?</span>
+      <DuoButton @click="install()">Install</DuoButton>
+      <DuoButton variant="ghost" @click="dismissInstall">Not now</DuoButton>
+    </div>
+    <div v-else-if="remindBackup" class="toast row" role="status">
+      <span>Back up your progress?</span>
+      <DuoButton @click="router.push('/settings').then(snoozeBackup)">Settings</DuoButton>
+      <DuoButton variant="ghost" @click="snoozeBackup">Later</DuoButton>
+    </div>
+  </template>
 </template>
 
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { computed, ref } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import AppNav from '@/components/AppNav.vue'
 import DuoButton from '@/components/DuoButton.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import TopHud from '@/components/TopHud.vue'
+import { BACKUP_NUDGE_KEY, backupDue } from '@/db/repo'
+import { install, installEvent } from '@/services/install'
 import { useProgressStore } from '@/stores/progress'
 
 const route = useRoute()
+const router = useRouter()
 const progress = useProgressStore()
 void progress.load()
 // registerType: 'prompt' -> never auto-reload; the user chooses when (plans/01 §5.3).
 const { needRefresh, updateServiceWorker } = useRegisterSW()
+
+// Ask to install only after the first finished lesson (plans/01 §4.3), and not again once dismissed.
+const INSTALL_KEY = 'code-nybbles:install-dismissed'
+const installDismissed = ref(!!localStorage.getItem(INSTALL_KEY))
+const offerInstall = computed(() => !!installEvent.value && progress.state.xp > 0 && !installDismissed.value)
+function dismissInstall() {
+  localStorage.setItem(INSTALL_KEY, '1')
+  installDismissed.value = true
+}
+
+const nudgedAt = ref(Number(localStorage.getItem(BACKUP_NUDGE_KEY) ?? 0))
+const remindBackup = computed(
+  () => progress.state.xp > 0 && !!progress.profile && backupDue(Date.now(), progress.profile.createdAt, nudgedAt.value),
+)
+function snoozeBackup() {
+  nudgedAt.value = Date.now()
+  localStorage.setItem(BACKUP_NUDGE_KEY, String(nudgedAt.value))
+}
 </script>
 
 <style scoped>
@@ -95,6 +129,9 @@ const { needRefresh, updateServiceWorker } = useRegisterSW()
   background: var(--c-surface);
   border: 2px solid var(--c-border);
   font-weight: 700;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--s-3));
 }
 </style>
