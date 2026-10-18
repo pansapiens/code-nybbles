@@ -57,6 +57,12 @@
 - { id: ctrl.continue, title: continue }
 - { id: ctrl.labels, title: Loop labels, prerequisites: [ctrl.loop] }
 - { id: practice.fizzbuzz, title: Classic loop problems, prerequisites: [ctrl.for, ctrl.if] }
+# Section 2, Unit 2.4: Project: Guessing Game (Build)
+- { id: io.stdin, title: Reading a line of input, prerequisites: [var.mut] }
+- { id: string.parse-intro, title: "Parsing text into a number", prerequisites: [io.stdin, types.int] }
+- { id: match.ordering, title: "Comparing with Ordering", prerequisites: [match.intro] }
+- { id: ctrl.loop-input, title: Looping until the input is right, prerequisites: [ctrl.loop, string.parse-intro] }
+- { id: cargo.dependency-intro, title: Using a crate }
 # Section 3, Unit 3.1: Memory Basics
 - { id: mem.stack-heap, title: The stack and the heap }
 - { id: string.string-vs-literal, title: "String vs string literals", prerequisites: [string.str-literal-intro] }
@@ -142,6 +148,8 @@
 - { id: map.entry, title: The entry API, prerequisites: [map.basics] }
 - { id: map.iter, title: Iterating over maps, prerequisites: [map.basics] }
 - { id: collections.choose, title: Choosing a collection, prerequisites: [vec.basics, map.basics] }
+# Section 5, Unit 5.4: Project: Inventory (Build)
+- { id: practice.inventory, title: "Project: an inventory model", prerequisites: [method.self, enum.data, vec.basics, map.basics] }
 # Compiler errors met in several exercises (tagged automatically from expectErrors)
 - { id: err.E0423, title: "E0423: expected a value, found something else", prerequisites: [macro.bang] }
 - { id: err.E0585, title: "E0585: doc comment not documenting anything", prerequisites: [syntax.comments] }

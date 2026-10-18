@@ -65,6 +65,9 @@ describe('progress', () => {
     // Code Reads and checkpoints have flat XP, with no perfect bonus.
     expect(completeLesson(s.state, lesson({ codeRead: true }), ctx(T0)).xp).toBe(15)
     expect(completeLesson(s.state, lesson({ checkpoint: true }), ctx(T0)).xp).toBe(30)
+    // Build steps are 15 XP, plus 20 when the last one completes the Build.
+    expect(completeLesson(s.state, lesson({ build: 'step' }), ctx(T0)).xp).toBe(15)
+    expect(completeLesson(s.state, lesson({ build: 'final' }), ctx(T0)).xp).toBe(35)
     // Passing the last beginner checkpoint unlocks Rustacean Initiate.
     const final = completeLesson(s.state, lesson({ levelId: BEGINNER_FINAL, checkpoint: true }), ctx(T0))
     expect(final.state.achievements['rustacean-initiate']).toBeDefined()

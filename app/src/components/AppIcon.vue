@@ -37,6 +37,7 @@ const PATHS = {
   chest: 'M4 4h16a2 2 0 0 1 2 2v4H2V6a2 2 0 0 1 2-2Zm-2 8h8v2h4v-2h8v8H2v-8Z',
   lock: 'M7 10V7a5 5 0 0 1 10 0v3h2v12H5V10h2Zm2 0h6V7a3 3 0 0 0-6 0v3Z',
   book: 'M4 3h7a3 3 0 0 1 1 .2A3 3 0 0 1 13 3h7v16h-7a2 2 0 0 0-1 .3 2 2 0 0 0-1-.3H4V3Zm2 2v12h5l.9.2V6a1 1 0 0 0-1-1H6Zm12 0h-4.9a1 1 0 0 0-1 1v11.2l.9-.2h5V5Z',
+  build: 'M3 13h8v8H3v-8Zm10 0h8v8h-8v-8ZM8 3h8v8H8V3Z',
   'arrow-down': 'M11 4h2v12l5-5 1.4 1.4L12 19.8l-7.4-7.4L6 11l5 5V4Z',
 } as const
 

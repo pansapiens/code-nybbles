@@ -10,6 +10,7 @@ import MarkdownIt from 'markdown-it'
 import { parse as parseYaml } from 'yaml'
 import type { z } from 'zod'
 import {
+  Build,
   CodeRead,
   Concepts,
   Course,
@@ -137,6 +138,7 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
         expectErrorMessage: code.expectErrorMessage,
         expectPanic: code.expectPanic,
         denyWarnings: code.denyWarnings,
+        stdin: code.stdin,
       },
       apply: (r) => {
         if (code.verify === 'compile-fail' && ex.type === 'decode-error' && ex.showCompilerOutput)
@@ -162,6 +164,7 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
           expectErrorMessage: v.expectErrorMessage,
           expectPanic: v.expectPanic,
           denyWarnings: v.denyWarnings,
+          stdin: v.stdin,
         },
         apply: () => {},
       })
@@ -243,10 +246,77 @@ function codeReadLevel(
   return level
 }
 
-// ---- Cross-checks (plans/03 §4.1) ----
-
 const norm = (s: string) => s.replace(/\s+$/, '')
 const wideLines = (code: string) => code.split('\n').filter((l) => l.length > MAX_COLS).length
+
+const fence = (lang: string, text: string) => `\`\`\`${lang}\n${text.replace(/\n?$/, '\n')}\`\`\``
+
+/**
+ * A Build becomes a level with one lesson per step, each framed by generated concept cards: the goal and the
+ * previous file, then the new file and its verified output (filled in by `apply` once the file has run).
+ */
+function buildLevel(
+  b: Build | undefined,
+  where: string,
+  edition: string,
+  issues: Issues,
+  snippets: { s: Snippet; where: string }[],
+): CompiledLevel | undefined {
+  if (!b) return
+  const { steps, ...rest } = b
+  const ids = steps.map((s) => s.id)
+  if (new Set(ids).size !== ids.length) issues.error(where, 'duplicate step ids')
+  const level: CompiledLevel = { ...rest, build: true, lessons: [] }
+  for (const [i, step] of steps.entries()) {
+    const at = `${where}: ${step.id}`
+    const { file } = step
+    if (file.verify !== 'run') issues.error(at, 'a step file must be `verify: run` so the end card can show its output')
+    const total = file.rust.replace(/\n$/, '').split('\n').length
+    if (total > 40) issues.warn(at, `file has ${total} lines (Builds allow 40)`)
+    const wide = wideLines(file.rust)
+    if (wide) issues.warn(at, `${wide} file line(s) wider than ${MAX_COLS} columns`)
+    if (step.exercises.length < 3 || step.exercises.length > 8)
+      issues.warn(at, `${step.exercises.length} exercises (expected 3-8)`)
+    const prev = steps[i - 1]?.file.rust
+    const intro: Exercise = {
+      type: 'concept',
+      id: 'step-goal',
+      title: step.title,
+      markdown: step.goal.trim() + (prev ? `\n\nYour program so far:\n\n${fence('rust', prev)}` : ''),
+    }
+    const shown = `Your program now:\n\n${fence('rust', file.rust)}`
+    const outro: Extract<Exercise, { type: 'concept' }> = { type: 'concept', id: 'step-result', markdown: shown }
+    level.lessons.push({ id: step.id, exercises: [intro, ...step.exercises, outro] })
+    if (file.verify === 'run')
+      snippets.push({
+        where: `${at}: file`,
+        s: {
+          case: {
+            id: `${b.id}/${step.id}/file`,
+            source: caseSource(file.rust, file.wrap, file.hidden, file.verify),
+            mode: file.verify,
+            edition,
+            expectStdout: file.expectStdout,
+            expectErrors: file.expectErrors,
+            expectErrorMessage: file.expectErrorMessage,
+            expectPanic: file.expectPanic,
+            denyWarnings: file.denyWarnings,
+            stdin: file.stdin,
+          },
+          apply: (r) => {
+            const out = r.outcome.stdout ?? ''
+            outro.markdown =
+              shown +
+              (file.stdin ? `\n\nYou type:\n\n${fence('text', file.stdin)}` : '') +
+              (out ? `\n\nIt prints:\n\n${fence('text', out)}` : '')
+          },
+        },
+      })
+  }
+  return level
+}
+
+// ---- Cross-checks (plans/03 §4.1) ----
 
 /** Code shown outside `code`: parsons lines and option code. Measured like `code` lines. */
 function checkWidths(ex: Exercise, where: string, issues: Issues) {
@@ -501,17 +571,14 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
           continue
         }
         const [kind, file] = Object.entries(entry)[0] as [keyof typeof entry, string]
-        if (kind === 'build') {
-          issues.warn(uwhere, `${kind} nodes are not supported yet (${file})`)
-          path.push({ kind, id: `${unit.id}.${file}` })
-          continue
-        }
         const lfile = join(udir, `${file}.yaml`)
         const lwhere = relative(root, lfile)
         const level =
           kind === 'code-read'
             ? codeReadLevel(load(CodeRead, lfile, issues, root), lwhere, course.edition, issues, snippets)
-            : (load(Level, lfile, issues, root) as CompiledLevel | undefined)
+            : kind === 'build'
+              ? buildLevel(load(Build, lfile, issues, root), lwhere, course.edition, issues, snippets)
+              : (load(Level, lfile, issues, root) as CompiledLevel | undefined)
         if (!level) continue
         if (levelIds.has(level.id)) issues.error(lwhere, `duplicate level id "${level.id}"`)
         // The app finds a level's section bundle from the first segment of its id.
@@ -531,7 +598,7 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
         for (const lesson of level.lessons) {
           if (lessonIds.has(lesson.id)) issues.error(lwhere, `duplicate lesson id "${lesson.id}"`)
           lessonIds.add(lesson.id)
-          if (kind !== 'code-read' && (lesson.exercises.length < 8 || lesson.exercises.length > 15))
+          if (kind !== 'code-read' && kind !== 'build' && (lesson.exercises.length < 8 || lesson.exercises.length > 15))
             issues.warn(`${lwhere}: ${lesson.id}`, `${lesson.exercises.length} exercises (expected 8-15)`)
           const exIds = new Set<string>()
           for (const ex of lesson.exercises) {
@@ -548,7 +615,8 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
           }
         }
       }
-      if (!path.some((p) => p.kind === 'checkpoint')) issues.warn(uwhere, 'unit has no checkpoint')
+      // A project unit (only a Build, e.g. Unit 2.4) has no checkpoint of its own.
+      if (!path.some((p) => p.kind === 'checkpoint' || p.kind === 'build')) issues.warn(uwhere, 'unit has no checkpoint')
       let guidebook: string | undefined
       if (unit.guidebook) {
         const g = join(udir, unit.guidebook)

@@ -22,7 +22,7 @@ import {
 
 // ---- Rules (plans/01 §3.2, §3.8, §3.9) ----
 
-export const XP = { lesson: 10, perfectBonus: 5, checkpoint: 30, codeRead: 15, practice: 10 }
+export const XP = { lesson: 10, perfectBonus: 5, checkpoint: 30, codeRead: 15, build: 15, buildDone: 20, practice: 10 }
 export const GEMS = { perfectLesson: 5, checkpoint: 50, dailyChest: [10, 30], pathChest: [20, 50] } as const
 export const PRICES = { freeze: 200, hearts: 350 } as const
 export const MAX_HEARTS = 5
@@ -51,6 +51,8 @@ export type EventBody =
         lessonId: string
         checkpoint: boolean
         codeRead?: boolean
+        /** A Build step; `final` when it completes the Build. */
+        build?: 'step' | 'final'
         xp: number
         accuracy: number
         mistakes: number
@@ -412,6 +414,7 @@ export interface LessonResult {
   lessonId: string
   checkpoint: boolean
   codeRead?: boolean
+  build?: 'step' | 'final'
   accuracy: number
   mistakes: number
   durationMs: number
@@ -423,7 +426,7 @@ export function completeLesson(p: Progress, r: LessonResult, ctx: Ctx) {
   const b = batch(p, ctx)
   const goalBefore = (p.daily[b.localDate]?.xp ?? 0) >= ctx.dailyGoalXp
   const firstPass = !p.levels[r.levelId]
-  const xp = r.checkpoint ? XP.checkpoint : r.codeRead ? XP.codeRead : XP.lesson + (r.mistakes ? 0 : XP.perfectBonus)
+  const xp = r.checkpoint ? XP.checkpoint : r.codeRead ? XP.codeRead : r.build ? XP.build + (r.build === 'final' ? XP.buildDone : 0) : XP.lesson + (r.mistakes ? 0 : XP.perfectBonus)
   const { ev, notices } = b.push({ type: 'lesson_completed', payload: { ...r, xp } })
 
   if (!r.mistakes) b.push({ type: 'gems_awarded', payload: { gems: GEMS.perfectLesson, reason: 'perfect-lesson' } })

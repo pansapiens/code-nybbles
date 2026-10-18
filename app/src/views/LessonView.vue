@@ -121,6 +121,8 @@ const router = useRouter()
 const game = useProgressStore()
 const settings = useSettingsStore()
 const checkpoint = ref(false)
+/** Builds: `final` when this lesson completes the Build for the first time. */
+const build = ref<'step' | 'final'>()
 /** Hearts only apply in new lessons: levels not yet complete (plans/01 §3.8). */
 const newLesson = ref(false)
 const heartsApply = computed(() => settings.heartsMode && newLesson.value && !program.value && !props.mode)
@@ -165,6 +167,8 @@ onMounted(async () => {
     if (!level || !lesson) throw new Error(`There's no lesson ${props.levelId}/${props.lessonId}.`)
     checkpoint.value = found!.checkpoint
     newLesson.value = (game.state.levels[level.id]?.lessons ?? 0) < level.lessons.length
+    if (level.build)
+      build.value = newLesson.value && (game.state.levels[level.id]?.lessons ?? 0) + 1 >= level.lessons.length ? 'final' : 'step'
     if (heartsApply.value && game.view.hearts === 0) outOfHearts.value = true
     lesson.exercises.forEach((ex, i) => {
       exercises.set(`${level.id}/${lesson.id}/${ex.id}`, ex)
@@ -253,6 +257,7 @@ async function finish(r: LessonRun) {
         lessonId: props.lessonId!,
         checkpoint: checkpoint.value,
         codeRead: !!program.value,
+        build: build.value,
         results,
         ...sum,
       })

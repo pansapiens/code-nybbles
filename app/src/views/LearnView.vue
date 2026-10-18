@@ -25,7 +25,7 @@
             :title="n.title"
             :done="Math.min(game.state.levels[n.id]?.lessons ?? 0, n.lessons ?? 0)"
             :total="n.lessons ?? 0"
-            :xp="n.kind === 'checkpoint' ? XP.checkpoint : n.kind === 'code-read' ? XP.codeRead : n.kind === 'practice' ? XP.practice : XP.lesson"
+            :xp="n.kind === 'checkpoint' ? XP.checkpoint : n.kind === 'code-read' ? XP.codeRead : n.kind === 'build' ? XP.build : n.kind === 'practice' ? XP.practice : XP.lesson"
             :colour="u.colour"
             :offset="n.offset"
             @start="start(n)"

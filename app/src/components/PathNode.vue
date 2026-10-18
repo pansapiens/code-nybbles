@@ -40,7 +40,7 @@ import AppIcon from './AppIcon.vue'
 import DuoButton from './DuoButton.vue'
 
 const props = defineProps<{
-  kind: 'level' | 'checkpoint' | 'code-read' | 'chest' | 'practice'
+  kind: 'level' | 'checkpoint' | 'code-read' | 'build' | 'chest' | 'practice'
   state: NodeState
   title: string
   /** Lessons done / total, for the ring. */
@@ -56,9 +56,9 @@ const emit = defineEmits<{ start: []; jump: [] }>()
 const open = ref(false)
 
 const current = computed(() => props.state === 'current')
-const fill = computed(() => (props.kind === 'level' && props.total ? Math.min(1, props.done / props.total) : 0))
+const fill = computed(() => ((props.kind === 'level' || props.kind === 'build') && props.total ? Math.min(1, props.done / props.total) : 0))
 const icon = computed(() =>
-  props.state === 'locked' ? 'lock' : props.kind === 'chest' ? 'chest' : props.kind === 'practice' ? 'dumbbell' : props.kind === 'checkpoint' ? 'trophy' : props.kind === 'code-read' ? 'book' : props.state === 'done' ? 'check' : 'star',
+  props.state === 'locked' ? 'lock' : props.kind === 'chest' ? 'chest' : props.kind === 'practice' ? 'dumbbell' : props.kind === 'checkpoint' ? 'trophy' : props.kind === 'code-read' ? 'book' : props.kind === 'build' ? 'build' : props.state === 'done' ? 'check' : 'star',
 )
 const stateLabel = computed(() => ({ done: 'complete', current: 'up next', locked: 'locked' })[props.state])
 const subtitle = computed(() => {
@@ -70,6 +70,8 @@ const subtitle = computed(() => {
   if (props.kind === 'chest') return props.state === 'done' ? 'Opened.' : 'A free reward for getting this far.'
   if (props.kind === 'checkpoint') return props.state === 'done' ? 'Passed. Replay it any time.' : 'Test yourself on the whole unit.'
   if (props.kind === 'code-read') return props.state === 'done' ? 'Read. Replay it any time.' : 'Read a whole program and answer questions about it.'
+  if (props.kind === 'build')
+    return props.done >= props.total ? 'Built! Replay a step to review.' : `Build: step ${props.done + 1} of ${props.total}`
   if (props.done >= props.total) return 'Complete! Replay a lesson to review.'
   return `Lesson ${props.done + 1} of ${props.total}`
 })
@@ -102,7 +104,8 @@ const action = computed(() => {
 .node.current {
   --size: 84px;
 }
-.node.done.level {
+.node.done.level,
+.node.done.build {
   background: none;
 }
 .node.locked {

@@ -23,6 +23,8 @@ const Expectations = {
   /** `true`, or a substring the panic message must contain. */
   expectPanic: z.union([z.boolean(), z.string()]).optional(),
   denyWarnings: z.boolean().optional(),
+  /** Piped to the program's standard input (`verify: run` or `test`). */
+  stdin: z.string().optional(),
   /** Crate dependencies, compiled in a shared Cargo project (not yet supported). */
   deps: z.array(z.string()).optional(),
 }
@@ -285,6 +287,32 @@ export const CodeRead = z
   })
   .strict()
 
+/**
+ * Build (plans/03 type 15): a program grown over several steps. Each step's `file` is the whole program after
+ * that step; its exercises practise the change. Compiles to an ordinary level with one lesson per step.
+ */
+export const BuildStep = z
+  .object({
+    id: Slug,
+    title: z.string(),
+    /** Markdown: what this step adds and why. */
+    goal: z.string(),
+    file: Code,
+    exercises: z.array(Exercise).min(1),
+  })
+  .strict()
+
+export const Build = z
+  .object({
+    id: Slug,
+    title: z.string(),
+    icon: z.string().optional(),
+    concepts: z.array(ConceptId).default([]),
+    reviewConcepts: z.array(ConceptId).default([]),
+    steps: z.array(BuildStep).min(1),
+  })
+  .strict()
+
 /** Licences we can adapt from (plans/01 §13.2). Anything else fails the build. */
 export const SourceLicence = z.enum(['MIT', 'Apache-2.0', 'MIT OR Apache-2.0', 'CC0-1.0', 'CC-BY-4.0', 'CC-BY-SA-4.0'])
 
@@ -357,6 +385,7 @@ export type ExerciseType = Exercise['type']
 export type Lesson = z.output<typeof Lesson>
 export type Level = z.output<typeof Level>
 export type CodeRead = z.output<typeof CodeRead>
+export type Build = z.output<typeof Build>
 export type Unit = z.output<typeof Unit>
 export type Section = z.output<typeof Section>
 export type Course = z.output<typeof Course>
@@ -383,6 +412,8 @@ export type CompiledLevel = Omit<Level, 'lessons'> & {
   /** Code Reads only: the program, and how many of its lines are visible at each exercise of the one lesson. */
   program?: Code & { verified?: VerifiedCode }
   reveals?: number[]
+  /** Builds only: one lesson per step. */
+  build?: true
 }
 
 export type CompiledPathNode =
@@ -390,7 +421,7 @@ export type CompiledPathNode =
   | { kind: 'checkpoint'; levelId: string }
   | { kind: 'code-read'; levelId: string }
   | { kind: 'chest' | 'practice'; id: string }
-  | { kind: 'build'; id: string }
+  | { kind: 'build'; levelId: string }
 
 export interface CompiledUnit extends Omit<Unit, 'path' | 'guidebook'> {
   guidebook?: string // rendered HTML

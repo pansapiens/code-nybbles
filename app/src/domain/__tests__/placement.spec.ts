@@ -4,14 +4,14 @@ import { nodesUpTo, placementItems, placementScore, sectionCheckpoints } from '.
 
 const level = (id: string, n = 1) => ({ id, lessons: Array.from({ length: n }, (_, i) => ({ id: `l${i}`, exercises: [{ type: 'mcq', id: 'q1' }, { type: 'mcq', id: 'q2' }, { type: 'mcq', id: 'q3' }, { type: 'mcq', id: 'q4' }, { type: 'concept', id: 'c' }] })) })
 const unit = (id: string, extra: string[] = []) => {
-  const ids = [`${id}.a`, `${id}.cp`, ...extra]
+  const ids = [`${id}.a`, `${id}.build`, `${id}.cp`, ...extra]
   return {
     id,
     levels: Object.fromEntries(ids.map((i) => [i, level(i, 2)])),
     path: [
       { kind: 'level', levelId: `${id}.a` },
       { kind: 'chest', id: `${id}.chest-1` },
-      { kind: 'build', levelId: `${id}.build` }, // not playable yet: skipped
+      { kind: 'build', levelId: `${id}.build` },
       { kind: 'practice', id: `${id}.practice-2` },
       { kind: 'checkpoint', levelId: `${id}.cp` },
     ],
@@ -19,13 +19,13 @@ const unit = (id: string, extra: string[] = []) => {
 }
 const sections = [{ units: [unit('s1.u1'), unit('s1.u2')] }, { units: [unit('s2.u1')] }] as unknown as CompiledSection[]
 
-it('lists levels and chests up to and including a checkpoint, skipping practice and build nodes', () => {
+it('lists levels and chests up to and including a checkpoint, skipping practice nodes', () => {
   expect(nodesUpTo(sections, 's1.u1.cp')).toEqual({
-    levels: [{ id: 's1.u1.a', lessons: 2 }, { id: 's1.u1.cp', lessons: 2 }],
+    levels: [{ id: 's1.u1.a', lessons: 2 }, { id: 's1.u1.build', lessons: 2 }, { id: 's1.u1.cp', lessons: 2 }],
     chests: ['s1.u1.chest-1'],
   })
   const all = nodesUpTo(sections, 's2.u1.cp')
-  expect(all.levels).toHaveLength(6)
+  expect(all.levels).toHaveLength(9)
   expect(all.chests).toHaveLength(3)
   expect(sectionCheckpoints(sections)).toEqual(['s1.u2.cp', 's2.u1.cp'])
 })

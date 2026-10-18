@@ -4,16 +4,16 @@ import type { Progress } from './progress'
 
 export interface PathNode {
   id: string
-  kind: 'level' | 'checkpoint' | 'code-read' | 'chest' | 'practice'
-  /** Lessons in the level (level, checkpoint and code-read nodes). */
+  kind: 'level' | 'checkpoint' | 'code-read' | 'build' | 'chest' | 'practice'
+  /** Lessons in the level (level, checkpoint, code-read and build nodes; a build's lessons are its steps). */
   lessons?: number
 }
 export type NodeState = 'done' | 'current' | 'locked'
 
-/** A unit's playable nodes. Build nodes aren't playable yet (M5), so they're left off. */
+/** A unit's playable nodes. */
 export function unitNodes(u: CompiledUnit): PathNode[] {
   return u.path.flatMap((p): PathNode[] =>
-    p.kind === 'build' ? [] : 'levelId' in p ? [{ id: p.levelId, kind: p.kind, lessons: u.levels[p.levelId]!.lessons.length }] : [{ id: p.id, kind: p.kind }],
+    'levelId' in p ? [{ id: p.levelId, kind: p.kind, lessons: u.levels[p.levelId]!.lessons.length }] : [{ id: p.id, kind: p.kind }],
   )
 }
 

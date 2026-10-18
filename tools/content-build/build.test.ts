@@ -156,3 +156,50 @@ test('guidebook rust blocks are verified, honouring compile_fail and should_pani
   g('```rust\nprintln!("{y}");\n```\n')
   assert.match(await errs(), /expected it to compile/)
 })
+
+test('stdin is piped to the program, for code and parsons verification', async () => {
+  const rust = 'let mut s = String::new();\nstd::io::stdin().read_line(&mut s).unwrap();\nprint!("got {}", s);\n'
+  const ex = { ...predict('a', rust), options: [{ id: 'a', text: 'got 50' }, { id: 'b', text: 'got' }] }
+  const code = (stdin?: string) => ({ ...ex.code, stdin, expectStdout: 'got 50\n' })
+  assert.equal(await errors([{ ...ex, code: code('50\n') }]), '')
+  assert.match(await errors([{ ...ex, code: code() }]), /stdout mismatch/)
+})
+
+test('a build compiles to a level with one lesson per step and generated cards', async () => {
+  const root = fixture([predict('a')])
+  writeFileSync(join(root, 'sections/s1/u1/unit.yaml'), stringify({ id: 's1.u1', title: 'U1', description: 'd', path: [{ level: 'level' }, { build: 'b' }] }))
+  const tf = (id: string) => ({ type: 'true-false', id, prompt: 'p', answer: true, explanation: 'e', concepts: ['intro.main'] })
+  const step = (id: string, rust: string, stdout: string, stdin?: string) => ({
+    id,
+    title: id,
+    goal: `Goal of ${id}.`,
+    file: { rust, verify: 'run', stdin, expectStdout: stdout },
+    exercises: [tf('a'), tf('b'), tf('c')],
+  })
+  const one = 'fn main() {\n    println!("hi");\n}\n'
+  const two = 'use std::io;\nfn main() {\n    let mut s = String::new();\n    io::stdin().read_line(&mut s).ok();\n    print!("got {s}");\n}\n'
+  const write = (steps: unknown[]) => writeFileSync(join(root, 'sections/s1/u1/b.yaml'), stringify({ id: 's1.u1.b', title: 'B', concepts: ['intro.main'], steps }))
+  write([step('one', one, 'hi\n'), step('two', two, 'got 50\n', '50\n')])
+  const r = await buildContent({ contentDir: root })
+  const mine = r.issues.list.filter((i) => i.where.includes('b.yaml'))
+  assert.equal(mine.length, 0, mine.map((i) => i.message).join('\n'))
+  const u = r.sections[0]!.units[0]!
+  assert.deepEqual(u.path[1], { kind: 'build', levelId: 's1.u1.b' })
+  const level = u.levels['s1.u1.b']!
+  assert.equal(level.build, true)
+  assert.deepEqual(level.lessons.map((l) => l.id), ['one', 'two'])
+  const [first, second] = level.lessons.map((l) => l.exercises as { type: string; title?: string; markdown: string }[])
+  assert.equal(first!.length, 5)
+  assert.equal(first![0]!.title, 'one')
+  assert.doesNotMatch(first![0]!.markdown, /so far/)
+  assert.match(first![4]!.markdown, /It prints:[\s\S]*hi/)
+  assert.match(second![0]!.markdown, /Your program so far:[\s\S]*println!/)
+  assert.match(second![4]!.markdown, /You type:[\s\S]*50[\s\S]*It prints:[\s\S]*got 50/)
+
+  write([step('one', one, 'hi\n'), step('one', one, 'hi\n')])
+  assert.match((await buildContent({ contentDir: root })).issues.errors.map((i) => i.message).join('\n'), /duplicate step ids/)
+  write([{ ...step('one', one, 'hi\n'), exercises: [tf('a')] }])
+  assert.match((await buildContent({ contentDir: root })).issues.list.map((i) => i.message).join('\n'), /1 exercises \(expected 3-8\)/)
+  write([{ ...step('one', one, 'hi\n'), file: { rust: one, verify: 'compile' } }])
+  assert.match((await buildContent({ contentDir: root })).issues.errors.map((i) => i.message).join('\n'), /must be `verify: run`/)
+})

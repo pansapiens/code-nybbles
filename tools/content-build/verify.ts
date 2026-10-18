@@ -32,6 +32,7 @@ export interface Case {
   expectErrorMessage?: string
   expectPanic?: boolean | string
   denyWarnings?: boolean
+  stdin?: string
 }
 
 interface Outcome {
@@ -108,7 +109,11 @@ async function compileAndRun(c: Case, dir: string): Promise<Outcome> {
   if (!compiled || checkOnly) return outcome
 
   try {
-    const r = await exec('./main', [], { cwd: dir, timeout: RUN_TIMEOUT_MS })
+    const run = exec('./main', [], { cwd: dir, timeout: RUN_TIMEOUT_MS })
+    // Always close stdin so a program that reads it sees EOF instead of waiting for the timeout.
+    run.child.stdin!.on('error', () => {}) // EPIPE when the program exits without reading
+    run.child.stdin!.end(c.stdin ?? '')
+    const r = await run
     return { ...outcome, stdout: r.stdout, stderr: r.stderr, exitCode: 0 }
   } catch (e) {
     const err = e as { stdout?: string; stderr?: string; code?: number; killed?: boolean }
@@ -156,7 +161,7 @@ export async function verifyCases(cases: Case[]): Promise<{ results: CaseResult[
     while (next < cases.length) {
       const i = next++
       const c = cases[i]!
-      const key = createHash('sha256').update(JSON.stringify([version, 'mir', c.edition, c.mode, c.denyWarnings ?? false, c.source])).digest('hex').slice(0, 20)
+      const key = createHash('sha256').update(JSON.stringify([version, 'mir', c.edition, c.mode, c.denyWarnings ?? false, c.source, ...(c.stdin === undefined ? [] : [c.stdin])])).digest('hex').slice(0, 20)
       const cacheFile = join(CACHE_DIR, `${key}.json`)
       let outcome: Outcome
       if (existsSync(cacheFile)) {

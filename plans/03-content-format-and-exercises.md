@@ -238,11 +238,38 @@ lessons:
 | `code.wrap` | most | `auto` (default: wrap bare statements in `fn main() {}` for verification but show unwrapped) · `none` |
 | `code.hidden` | most | Extra code prepended/appended only for verification (imports, helper structs) |
 | `expectStdout` / `expectErrors` / `expectPanic` | verified code | Asserted by `rust-verify` |
+| `stdin` | `verify: run` | Text piped to the program's standard input (also on a parsons `verify:`), for programs that read a line. Part of the verification cache key |
 | `explanation` | graded | Feedback-sheet text (Markdown) |
 | `hint` | graded | Optional 💡 hint |
 | `why` | options | Per-option explanation |
 
 The zod schema in `tools/content-build/schema.ts` is the single source of truth. TypeScript types for the app are inferred from it with `z.infer`, so the app and the content tools never disagree.
+
+### 2.4 Build file
+
+A unit path entry `- build: build-guessing-game` points to `build-guessing-game.yaml`: a program grown over several steps (type 15, `build-step`). Each step's `file` is the whole program after that step; its exercises are ordinary exercise types that practise the change.
+
+```yaml
+id: s2.u4.build-guessing-game
+title: Guessing Game
+concepts: [...]
+reviewConcepts: [...]
+steps:
+  - id: read-input
+    title: Read a guess
+    goal: |              # Markdown, a few sentences: what this step adds and why
+      ...
+    file:                # verified like any Code; `verify: run` is required
+      rust: |
+        ...
+      verify: run
+      stdin: "50\n"      # optional: piped to the program
+      expectStdout: |
+        ...
+    exercises: [...]     # 3-8 exercises that build this step's change
+```
+
+It compiles to an ordinary level (`build: true`) with one lesson per step, so the player needs no special case. Each lesson is a generated `concept` card (titled with the step title: the goal, then "Your program so far:" with the previous file, omitted for step 1), the step's exercises, and a generated `concept` card ("Your program now:" with the file, "You type:" with `stdin` if any, "It prints:" with the verified stdout). The file may exceed the 15-line code limit (warning above 40 lines); the 40-column rule applies. Step ids are unique. XP: 15 per step, plus 20 when the last step first completes.
 
 ---
 
