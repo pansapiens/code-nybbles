@@ -6,3 +6,4 @@ units:
   - unit-01-vectors
   - unit-02-strings
   - unit-03-hashmap
+  - unit-04-inventory

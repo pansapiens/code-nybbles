@@ -326,8 +326,15 @@ also works. CI doesn't need either.
 
 ## M6: Playground + Android
 
-- [ ] `services/code-runner.ts`: `RemotePlaygroundRunner` (throttled), `SelfCheckRunner` fallback (01 §7)
-- [ ] Playground screen; Build nodes with runnable checks
+- [x] `services/code-runner.ts`: play.rust-lang.org (one in flight, 10 runs/min, 15 s timeout, offline-safe;
+  cargo's progress lines stripped from stderr). Only the remote tier for now (spike said "not yet")
+- [x] Playground screen (Practice hub link; editor kept in localStorage; never runs automatically)
+- [x] (new) Build nodes: `build-<slug>.yaml` steps (goal, verified `file`, 3-8 exercises) compile to a level with
+  generated opening/closing cards per step, played by the normal lesson player; 15 XP a step, +20 on finishing;
+  `stdin` piped to programs at verification (plans/03 §2.4)
+  - [~] (new) Units 2.4 Guessing Game and 5.4 Inventory being written (briefs /tmp/cn-brief/unit-2.4.md, 5.4)
+  - [ ] (new) A "Run it" button on a Build's closing card (needs the runner; the Playground has no stdin)
+  - [ ] (new) Playground: `test` mode UI, symbol key row (01 §4.4)
 - [ ] Capacitor Android project, local notifications, haptics (01 §8.2)
 
 ## Mascot (separate design task, 01 §4.6)

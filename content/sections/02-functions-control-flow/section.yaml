@@ -6,3 +6,4 @@ units:
   - unit-01-functions
   - unit-02-conditionals
   - unit-03-loops
+  - unit-04-guessing-game
