@@ -263,14 +263,17 @@ also works. CI doesn't need either.
 - [ ] (new) Register error-code concepts the authors wanted: E0277, E0004, E0317, E0061, E0425, E0069, E0604,
   E0505, E0506, E0507, E0596, E0597, E0063, E0560, E0594, E0609, E0618, E0369, E0005...
   (items are tagged with the nearest topic concept for now)
-- [ ] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3); some are annotated mdBook-style already
+- [x] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3): run by default; `compile_fail[,Ecode]`,
+  `should_panic`, `no_run`, `ignore` honoured. Found one unannotated panic and one fragment
 - [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports
-- [ ] (new) Build check: a fill-tokens bank tile that would also be correct (compile each alternative);
-  plain identifiers in pattern positions are the common case (4.5 agent's script: /tmp/cn45tools/alts.py)
-- [ ] (new) Width check doesn't cover parsons `lines`, mcq `options[].code` or Code Read programs
+- [x] (new) Build check: a fill-tokens bank tile that would also be correct. Tries each unused tile per blank and
+  each swap of two answers (`verify: run` + `expectStdout` only); found 9 in Sections 1-2, now fixed
+  - [ ] (new) Not every combination (ponytail; /tmp/cn45tools/alts.py does the full search); items that check a
+    type or keyword the output can't show (e.g. `u8` vs `i32`) use `verify: compile`, so aren't probed
+- [x] (new) Width check covers parsons lines, option `code` and Code Read programs (26 items over 40 columns)
 - [ ] (new) Shared prelude for snippets (struct definitions repeated across items in Section 4)
-- [ ] (new) Fill-tokens: each bank tile can be placed once, so two blanks with the same answer need the tile twice
-  in the bank; say so in plans/03 and have the build check the bank can spell the answer
+- [x] (new) Fill-tokens: a tile two blanks need must be in the bank twice (the build checks; plans/03 says so).
+  Three items needed this and couldn't be answered before
 - [ ] (new) Authoring note: answers with combining characters (`e\u{301}`) must match the real output's code
   points; a precomposed `é` looks the same but fails
 - [ ] (new) spot-bug: optional "line the compiler reports" field, for "mistake here, error there" items

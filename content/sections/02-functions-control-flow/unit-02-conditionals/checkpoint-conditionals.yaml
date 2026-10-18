@@ -140,8 +140,8 @@ lessons:
         id: parsons-fare
         prompt: Arrange the lines so students pay 3 and everyone else pays by age
         lines:
-          - { id: l1, text: "fn fare(age: u32, student: bool) -> u32 {" }
-          - { id: l2, text: "    if student {" }
+          - { id: l1, text: "fn fare(age: u32, pupil: bool) -> u32 {" }
+          - { id: l2, text: "    if pupil {" }
           - { id: l3, text: "        return 3;" }
           - { id: l4, text: "    }" }
           - { id: l5, text: "    match age {" }

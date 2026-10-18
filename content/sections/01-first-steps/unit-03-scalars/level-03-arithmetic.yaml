@@ -344,11 +344,11 @@ lessons:
         lines:
           - { id: l1, text: "fn main() {" }
           - { id: l2, text: "    let celsius = 25.0;" }
-          - { id: l3, text: "    let fahrenheit = celsius * 1.8 + 32.0;" }
-          - { id: l4, text: '    println!("{fahrenheit}");' }
+          - { id: l3, text: "    let temp_f = celsius * 1.8 + 32.0;" }
+          - { id: l4, text: '    println!("{temp_f}");' }
           - { id: l5, text: "}" }
         distractors:
-          - { id: d1, text: "    let fahrenheit = celsius * 1.8 + 32;" }
+          - { id: d1, text: "    let temp_f = celsius * 1.8 + 32;" }
         answer: [l1, l2, l3, l4, l5]
         verify:
           mode: run

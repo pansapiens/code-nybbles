@@ -8,13 +8,13 @@ program:
         String::from("tea")
     }
 
-    fn add_milk(mut drink: String) -> String {
-        drink.push_str(" with milk");
-        drink
+    fn add_milk(mut cup: String) -> String {
+        cup.push_str(" with milk");
+        cup
     }
 
-    fn finish(drink: String) {
-        println!("Finished {drink}");
+    fn finish(cup: String) {
+        println!("Finished {cup}");
     }
 
     fn main() {
@@ -49,13 +49,13 @@ chunks:
         options:
           - { id: a, text: "`add_milk` takes ownership of a `String` and gives one back" }
           - { id: b, text: "`add_milk` gets a copy, so the caller keeps its `String`", why: "A `String` parameter takes ownership. Only Copy types are copied in." }
-          - { id: c, text: "`mut` means the caller's variable must be `mut`", why: "`mut drink` only lets `add_milk` change its own parameter." }
+          - { id: c, text: "`mut` means the caller's variable must be `mut`", why: "`mut cup` only lets `add_milk` change its own parameter." }
         answer: a
-        explanation: "`drink: String` takes ownership; `-> String` returns it. `mut` lets the function call `push_str` on it."
+        explanation: "`cup: String` takes ownership; `-> String` returns it. `mut` lets the function call `push_str` on it."
         concepts: [own.fn-move, own.fn-return]
       - type: true-false
         id: add-milk-semicolon
-        prompt: "If line 7 were `drink;`, `add_milk` would drop the text instead of returning it, and the program would not compile."
+        prompt: "If line 7 were `cup;`, `add_milk` would drop the text instead of returning it, and the program would not compile."
         answer: true
         explanation: "With `;` the body returns `()`, which doesn't match `-> String` (E0308). The `String` would be dropped inside `add_milk`."
         concepts: [own.fn-return, err.E0308]
@@ -65,11 +65,11 @@ chunks:
         id: finish-drop
         prompt: "When is the `String` passed to `finish` freed?"
         options:
-          - { id: a, text: "At the `}` on line 12, when `drink` goes out of scope" }
+          - { id: a, text: "At the `}` on line 12, when `cup` goes out of scope" }
           - { id: b, text: "Back in `main`, at the end of the program", why: "`finish` doesn't return it, so ownership never goes back to `main`." }
-          - { id: c, text: "Never: `println!` takes it", why: "`println!` only reads the value. `drink` still owns it." }
+          - { id: c, text: "Never: `println!` takes it", why: "`println!` only reads the value. `cup` still owns it." }
         answer: a
-        explanation: "`finish` owns `drink` and returns nothing, so the text is dropped when `finish` ends."
+        explanation: "`finish` owns `cup` and returns nothing, so the text is dropped when `finish` ends."
         concepts: [own.fn-move, own.scope-drop]
   - lines: 3
     exercises:

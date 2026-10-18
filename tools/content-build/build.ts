@@ -79,6 +79,28 @@ interface Snippet {
   /** Absent for a Code Read's program. */
   exercise?: Exercise
   apply: (r: CaseResult) => void
+  /** A probe isn't held to the case's expectations; it returns a problem message, if any. */
+  probe?: (r: CaseResult) => string | undefined
+}
+
+/**
+ * Wrong fill-tokens responses a learner can make, as blank key -> tile: each unused bank tile in each blank,
+ * and each pair of answers swapped. Those the grader accepts (answer lists, anyOrder groups) are left out.
+ * ponytail: not every combination (that grows as bank^blanks); /tmp/cn45tools/alts.py does the full search.
+ */
+export function wrongFills(ex: Extract<Exercise, { type: 'fill-tokens' }>): Record<string, string>[] {
+  const right = Object.fromEntries(Object.entries(ex.blanks).map(([k, b]) => [k, b.answer[0]!]))
+  const keys = Object.keys(right)
+  const inUse = new Set(Object.values(right))
+  const together = (a: string, b: string) => (ex.anyOrder ?? []).some((g) => g.includes(a) && g.includes(b))
+  const out: Record<string, string>[] = []
+  for (const k of keys)
+    for (const t of ex.bank) if (!inUse.has(t) && !ex.blanks[k]!.answer.includes(t)) out.push({ ...right, [k]: t })
+  for (const [i, a] of keys.entries())
+    for (const b of keys.slice(i + 1))
+      if (!together(a, b) && !(ex.blanks[a]!.answer.includes(right[b]!) && ex.blanks[b]!.answer.includes(right[a]!)))
+        out.push({ ...right, [a]: right[b]!, [b]: right[a]! })
+  return out
 }
 
 function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippet[] {
@@ -86,7 +108,23 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
   const code = 'code' in ex ? ex.code : undefined
   if (code && code.verify !== 'none') {
     let rust = code.rust
-    if (ex.type === 'fill-tokens') rust = rust.replace(BLANK, (_, n: string) => ex.blanks[n]?.answer[0] ?? '')
+    if (ex.type === 'fill-tokens') {
+      rust = rust.replace(BLANK, (_, n: string) => ex.blanks[n]?.answer[0] ?? '')
+      // A wrong response that still prints the expected output would be marked wrong for a working program.
+      if (code.verify === 'run' && code.expectStdout !== undefined)
+        for (const [i, fill] of wrongFills(ex).entries()) {
+          const changed = Object.entries(fill).filter(([k, t]) => ex.blanks[k]!.answer[0] !== t)
+          out.push({
+            exercise: ex,
+            case: { id: `${gid}#fill${i}`, source: caseSource(code.rust.replace(BLANK, (_, n: string) => fill[n] ?? ''), code.wrap, code.hidden, 'run'), mode: 'run', edition },
+            apply: () => {},
+            probe: (r) =>
+              r.outcome.compiled && r.outcome.exitCode === 0 && r.outcome.stdout === code.expectStdout
+                ? `also correct with ${changed.map(([k, t]) => `"${t}" in blank ${k}`).join(' and ')}; drop the tile or change the code`
+                : undefined,
+          })
+        }
+    }
     out.push({
       exercise: ex,
       case: {
@@ -132,6 +170,31 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
   return out
 }
 
+/**
+ * Guidebook ```rust blocks (plans/03 §4.3), with mdBook-style attributes: `ignore` skips, `compile_fail`
+ * (optionally with an error code) must fail, `should_panic` must panic, `no_run` compiles only.
+ */
+export function guidebookCases(markdown: string, id: string, edition: string): Case[] {
+  return md
+    .parse(markdown, {})
+    .filter((t) => t.type === 'fence' && /^rust\b/.test(t.info))
+    .flatMap((t, i) => {
+      const attrs = t.info.trim().split(/[\s,]+/).slice(1)
+      if (attrs.includes('ignore')) return []
+      const failing = attrs.includes('compile_fail')
+      return [
+        {
+          id: `${id}#${i + 1}`,
+          source: caseSource(t.content, 'auto'),
+          mode: failing ? 'compile-fail' : attrs.includes('no_run') ? 'compile' : 'run',
+          edition,
+          expectErrors: failing ? attrs.filter((a) => /^E\d{4}$/.test(a)) : undefined,
+          expectPanic: attrs.includes('should_panic') || undefined,
+        } satisfies Case,
+      ]
+    })
+}
+
 /** A Code Read becomes a one-lesson level with the program and a per-exercise reveal count. */
 function codeReadLevel(
   cr: CodeRead | undefined,
@@ -146,6 +209,8 @@ function codeReadLevel(
   const revealed = chunks.reduce((n, c) => n + c.lines, 0)
   if (revealed !== total) issues.error(where, `chunks reveal ${revealed} lines but the program has ${total}`)
   if (total > 25) issues.warn(where, `program has ${total} lines (Code Reads allow 25)`)
+  const wide = wideLines(program.rust)
+  if (wide) issues.warn(where, `${wide} program line(s) wider than ${MAX_COLS} columns`)
   const level: CompiledLevel = { ...rest, program, reveals: [], lessons: [{ id: 'read', exercises: [] }] }
   let shown = 0
   for (const c of chunks) {
@@ -181,6 +246,17 @@ function codeReadLevel(
 // ---- Cross-checks (plans/03 §4.1) ----
 
 const norm = (s: string) => s.replace(/\s+$/, '')
+const wideLines = (code: string) => code.split('\n').filter((l) => l.length > MAX_COLS).length
+
+/** Code shown outside `code`: parsons lines and option code. Measured like `code` lines. */
+function checkWidths(ex: Exercise, where: string, issues: Issues) {
+  const parts: string[] = []
+  if (ex.type === 'parsons') parts.push(...[...ex.lines, ...(ex.distractors ?? [])].map((l) => l.text))
+  if ('options' in ex && ex.options) parts.push(...ex.options.flatMap((o) => (o.code ? [o.code] : [])))
+  if (ex.type === 'compiles' && ex.followUp) parts.push(...ex.followUp.options.flatMap((o) => (o.code ? [o.code] : [])))
+  const wide = parts.reduce((n, c) => n + wideLines(c), 0)
+  if (wide) issues.warn(where, `${wide} line(s) in ${ex.type === 'parsons' ? 'parsons lines' : 'option code'} wider than ${MAX_COLS} columns`)
+}
 
 function checkOptions(where: string, options: Option[], answer: string, issues: Issues) {
   const ids = options.map((o) => o.id)
@@ -227,6 +303,7 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
     const wide = lines.filter((l) => l.length > MAX_COLS).length
     if (wide) issues.warn(where, `${wide} code line(s) wider than ${MAX_COLS} columns`)
   }
+  checkWidths(ex, where, issues)
 
   switch (ex.type) {
     case 'mcq':
@@ -259,8 +336,14 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
       const answers = new Set(Object.values(ex.blanks).flatMap((b) => b.answer))
       for (const [k, b] of Object.entries(ex.blanks))
         if (!ex.bank.includes(b.answer[0]!)) issues.error(where, `blanks.${k} answer "${b.answer[0]}" is not in the bank`)
-      if (ex.bank.filter((t) => !answers.has(t)).length < 2) issues.error(where, 'bank needs at least 2 distractors')
-      if (new Set(ex.bank).size !== ex.bank.length) issues.error(where, 'duplicate tokens in bank')
+      if (new Set(ex.bank.filter((t) => !answers.has(t))).size < 2) issues.error(where, 'bank needs at least 2 distractors')
+      // Each bank tile can be placed once, so a tile two blanks need must be in the bank twice.
+      const need = Map.groupBy(Object.values(ex.blanks), (b) => b.answer[0]!)
+      for (const [t, bs] of need) {
+        const have = ex.bank.filter((b) => b === t).length
+        if (have && have < bs.length) issues.error(where, `${bs.length} blanks need "${t}" but the bank has it ${have} time(s)`)
+      }
+      if (ex.bank.some((t, i) => ex.bank.indexOf(t) !== i && !need.has(t))) issues.error(where, 'duplicate distractor tiles in bank')
       break
     }
     case 'parsons': {
@@ -465,8 +548,13 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
       let guidebook: string | undefined
       if (unit.guidebook) {
         const g = join(udir, unit.guidebook)
-        if (existsSync(g)) guidebook = block(readFileSync(g, 'utf8'))
-        else issues.error(uwhere, `guidebook ${unit.guidebook} not found`)
+        if (existsSync(g)) {
+          const text = readFileSync(g, 'utf8')
+          guidebook = block(text)
+          const gwhere = relative(root, g)
+          for (const [i, c] of guidebookCases(text, `${unit.id}/guidebook`, course.edition).entries())
+            snippets.push({ where: `${gwhere}: rust block ${i + 1}`, s: { case: c, apply: () => {} } })
+        } else issues.error(uwhere, `guidebook ${unit.guidebook} not found`)
       }
       const { path: _path, guidebook: _g, ...rest } = unit
       units.push({ ...rest, guidebook, path, levels })
@@ -481,6 +569,11 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
     stats.compiled = compiled
     results.forEach((r, i) => {
       const { s, where } = snippets[i]!
+      if (s.probe) {
+        const p = s.probe(r)
+        if (p) issues.error(where, p)
+        return
+      }
       const w = r.id.includes('#') ? `${where} (${r.id.split('#')[1]})` : where
       for (const p of r.problems) issues.error(w, `rust-verify: ${p}`)
       if (!r.problems.length) {

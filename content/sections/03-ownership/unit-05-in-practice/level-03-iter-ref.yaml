@@ -393,25 +393,31 @@ lessons:
     exercises:
       - type: parsons
         id: parsons-count-letters
-        prompt: "Arrange the lines so the program prints `5 letters in 2 names`"
+        prompt: "Arrange the lines so the program prints `5 letters` then `2 names`"
         lines:
-          - { id: l1, text: '    let names = [String::from("Ann"), String::from("Bo")];' }
+          - { id: l1, text: "    let names = [" }
+          - { id: l7, text: '        String::from("Ann"),' }
+          - { id: l8, text: '        String::from("Bo"),' }
+          - { id: l9, text: "    ];" }
           - { id: l2, text: "    let mut total = 0;" }
           - { id: l3, text: "    for name in &names {" }
           - { id: l4, text: "        total += name.len();" }
           - { id: l5, text: "    }" }
-          - { id: l6, text: '    println!("{total} letters in {} names", names.len());' }
+          - { id: l6, text: '    println!("{total} letters");' }
+          - { id: l10, text: '    println!("{} names", names.len());' }
         distractors:
           - { id: d1, text: "    for name in names {" }
-        answer: [l1, l2, l3, l4, l5, l6]
+        answer: [l1, l7, l8, l9, l2, l3, l4, l5, l6, l10]
         alternatives:
-          - [l2, l1, l3, l4, l5, l6]
+          - [l1, l8, l7, l9, l2, l3, l4, l5, l6, l10]
+          - [l2, l1, l7, l8, l9, l3, l4, l5, l6, l10]
+          - [l2, l1, l8, l7, l9, l3, l4, l5, l6, l10]
         verify:
           harness: |
             fn main() {
             {{solution}}}
           mode: run
-          expectStdout: "5 letters in 2 names\n"
+          expectStdout: "5 letters\n2 names\n"
         explanation: "The loop has to borrow with `&names`, because `names.len()` is used after it. `for name in names` would move the array."
         concepts: [own.iter-ref]
 

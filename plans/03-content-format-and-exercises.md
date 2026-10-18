@@ -249,7 +249,7 @@ The zod schema in `tools/content-build/schema.ts` is the single source of truth.
 ## 3. Grading details
 
 - **Option-based types** (mcq, compiles, decode-error, true-false, spot-bug): compare IDs.
-- **fill-tokens / reorder-tokens:** compare token strings per blank against the `answer` list (alternatives allowed). Optional `anyOrder` groups for commutative cases (for example `a + b`).
+- **fill-tokens / reorder-tokens:** compare token strings per blank against the `answer` list (alternatives allowed). Optional `anyOrder` groups for commutative cases (for example `a + b`). Each bank tile can be placed once, so a tile that two blanks need appears in the bank twice. For `verify: run` items with `expectStdout`, the build tries each unused tile in each blank and each swap of two answers, and fails if any of them still prints the expected output (a plain name in a `match` pattern is the usual culprit, since it matches anything).
 - **parsons:** default is the exact `answer` order; `alternatives: [[...], [...]]` lists other valid orders. A build-time check verifies that every listed order compiles/passes via the harness.
 - **type-it:** tokenise both the learner's input and each accepted answer with a small Rust-ish lexer (identifiers, literals, punctuation, lifetimes; whitespace and comments dropped), then compare token streams. "Almost correct" (single typo in an identifier, Levenshtein ≤ 1, a missing trailing `;`) is accepted with a "Watch the typo" note, like Duolingo.
 - **predict-output (assembled):** normalise trailing whitespace and the final newline only. Spacing inside output matters, because formatting is often the point.
@@ -281,6 +281,7 @@ flowchart LR
   - All IDs unique and slug-formatted; no ID reuse across content versions without a migration note
   - Every `concepts` entry exists; every concept is taught (has a `concept` card or guidebook mention) before it is tested on the path order
   - Correct answers are present in options/banks; banks contain at least 2 distractors; no duplicate options
+  - Parsons lines, option `code` and Code Read programs follow the same 40-column warning as `code`
   - Lesson length within 8–15; unit has a checkpoint; levels have 3–5 lessons
   - Code width warnings (> 40 columns) and line count limits
 - Highlighting: pre-renders Rust code to tokenised HTML/JSON (Shiki or Lezer) so the app ships no highlighter for read-only code
@@ -301,7 +302,7 @@ flowchart LR
 
 ### 4.3 Guidebook verification
 
-```` ```rust ```` blocks in `guidebook.md` are verified too, using mdBook-style annotations: ```` ```rust,compile_fail,E0382 ````, ```` ```rust,should_panic ````, ```` ```rust,ignore ```` (requires a reason comment).
+```` ```rust ```` blocks in `guidebook.md` are verified too, using mdBook-style annotations: ```` ```rust,compile_fail,E0382 ````, ```` ```rust,should_panic ````, ```` ```rust,ignore ```` (requires a reason comment). Plain blocks are run (wrapped in `main` when they have none); `no_run` only compiles.
 
 ---
 

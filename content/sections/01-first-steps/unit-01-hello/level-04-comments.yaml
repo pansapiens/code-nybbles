@@ -282,17 +282,18 @@ lessons:
 
       - type: fill-tokens
         id: fill-comment-markers
-        prompt: Fill the blanks so the program compiles and prints only `Done`
+        prompt: Fill the blanks so the program prints only `Start` and `Done`
         code:
           rust: |
             fn main() {
                 ___1___ TODO: add a menu
+                println!("Start");
                 ___2___ println!("Old");
                 println!("Older"); ___3___
                 println!("Done");
             }
           verify: run
-          expectStdout: "Done\n"
+          expectStdout: "Start\nDone\n"
         blanks:
           "1": { answer: ["//"] }
           "2": { answer: ["/*"] }

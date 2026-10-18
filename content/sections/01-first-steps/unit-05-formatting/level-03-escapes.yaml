@@ -138,7 +138,7 @@ lessons:
         blanks:
           "1": { answer: ['\"'] }
           "2": { answer: ['\"'] }
-        bank: ['\"', '"', "\\'", "''"]
+        bank: ['\"', '\"', '"', "\\'", "''"]
         explanation: "Each quote inside the string needs a backslash in front. A bare `\"` would end the string early."
         concepts: [string.literals]
 

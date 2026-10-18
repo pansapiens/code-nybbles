@@ -97,8 +97,7 @@ lessons:
           rust: |
             let level: ___1___ = 7;
             println!("{level}");
-          verify: run
-          expectStdout: "7\n"
+          verify: compile
         blanks:
           "1": { answer: ["u8"] }
         bank: ["u8", "i8", "i32", "8"]

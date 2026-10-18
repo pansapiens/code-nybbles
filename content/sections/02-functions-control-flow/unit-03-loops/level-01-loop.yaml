@@ -90,7 +90,7 @@ lessons:
 
       - type: fill-tokens
         id: fill-loop-break
-        prompt: "Fill the blanks so the program prints `1`, `2`, then stops"
+        prompt: "Fill the blanks so the program prints `1`, `2`, then `Done`"
         code:
           rust: |
             let mut n = 0;
@@ -101,13 +101,14 @@ lessons:
                     ___2___;
                 }
             }
+            println!("Done");
           verify: run
-          expectStdout: "1\n2\n"
+          expectStdout: "1\n2\nDone\n"
         blanks:
           "1": { answer: ["loop"] }
           "2": { answer: ["break"] }
         bank: ["loop", "repeat", "break", "stop", "return"]
-        explanation: "`loop` repeats the block and `break` ends it. Rust has no `repeat` or `stop` keyword."
+        explanation: "`loop` repeats the block and `break` ends it. `return` would end `main` before `Done`, and Rust has no `repeat` or `stop` keyword."
         concepts: [ctrl.loop]
 
       - type: concept

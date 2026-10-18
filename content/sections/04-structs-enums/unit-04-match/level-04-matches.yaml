@@ -383,22 +383,22 @@ lessons:
     exercises:
       - type: parsons
         id: parsons-is-vertical
-        prompt: "Arrange the lines into a function that says whether a direction is north or south"
+        prompt: "Arrange the lines into a function that says whether a direction is up or down"
         lines:
           - { id: l1, text: "fn is_vertical(d: Dir) -> bool {" }
-          - { id: l2, text: "    matches!(d, Dir::North | Dir::South)" }
+          - { id: l2, text: "    matches!(d, Dir::Up | Dir::Down)" }
           - { id: l3, text: "}" }
         distractors:
-          - { id: d1, text: "    matches!(d, Dir::North || Dir::South)" }
-          - { id: d2, text: "    matches!(d, Dir::North | Dir::South);" }
+          - { id: d1, text: "    matches!(d, Dir::Up || Dir::Down)" }
+          - { id: d2, text: "    matches!(d, Dir::Up | Dir::Down);" }
         answer: [l1, l2, l3]
         verify:
           harness: |
-            enum Dir { North, East, South, West }
+            enum Dir { Up, Right, Down, Left }
             {{solution}}
             fn main() {
-                let a = is_vertical(Dir::South);
-                let b = is_vertical(Dir::East);
+                let a = is_vertical(Dir::Down);
+                let b = is_vertical(Dir::Right);
                 println!("{a} {b}");
             }
           mode: run

@@ -415,13 +415,14 @@ lessons:
         prompt: "Fill the blanks so `Welcome` prints only for adults who have ID"
         code:
           rust: |
-            let age = 20;
+            let age = 15;
             let has_id = true;
             if age ___1___ 18 ___2___ has_id {
                 println!("Welcome");
             }
+            println!("Done");
           verify: run
-          expectStdout: "Welcome\n"
+          expectStdout: "Done\n"
         blanks:
           "1": { answer: [">="] }
           "2": { answer: ["&&"] }

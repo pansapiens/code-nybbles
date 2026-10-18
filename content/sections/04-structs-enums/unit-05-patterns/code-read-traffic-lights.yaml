@@ -9,22 +9,22 @@ program:
     impl Light {
         fn next(&self) -> Light {
             match self {
-                Light::Red => Light::Green,
-                Light::Green => Light::Amber,
-                Light::Amber => Light::Red,
+                Self::Red => Self::Green,
+                Self::Green => Self::Amber,
+                Self::Amber => Self::Red,
             }
         }
-        fn seconds(&self) -> u32 {
-            match self {
-                Light::Amber => 5,
-                Light::Red | Light::Green => 30,
-            }
+    }
+    fn seconds(light: &Light) -> u32 {
+        match light {
+            Light::Amber => 5,
+            Light::Red | Light::Green => 30,
         }
     }
     fn main() {
         let mut light = Light::Red;
         for _ in 0..4 {
-            let s = light.seconds();
+            let s = seconds(&light);
             println!("{light:?} for {s}s");
             light = light.next();
         }
@@ -64,7 +64,7 @@ chunks:
           - { id: b, text: "`Light::Red`", why: "That's what `Amber` turns into. `Green` is on line 7." }
           - { id: c, text: "`Light::Green`", why: "`next` always returns a different light, chosen by the `match`." }
         answer: a
-        explanation: "The arm on line 7 matches `Light::Green` and returns `Light::Amber`."
+        explanation: "The arm on line 7 matches `Self::Green`, which is `Light::Green` here, and returns `Light::Amber`."
         concepts: [match.enum, enum.impl]
       - type: true-false
         id: delete-arm
@@ -76,7 +76,7 @@ chunks:
     exercises:
       - type: mcq
         id: or-pattern
-        prompt: "What does the `|` on line 14 mean?"
+        prompt: "What does the `|` on line 15 mean?"
         options:
           - { id: a, text: "The arm matches `Red` or `Green`" }
           - { id: b, text: "The arm matches only when the light is both `Red` and `Green`", why: "A light is only ever one variant. `|` means \"or\"." }
@@ -86,10 +86,10 @@ chunks:
         concepts: [pattern.guards]
       - type: mcq
         id: amber-seconds
-        prompt: "What does `Light::Amber.seconds()` return?"
+        prompt: "What does `seconds(&Light::Amber)` return?"
         options:
           - { id: a, text: "5" }
-          - { id: b, text: "30", why: "Line 13 matches `Amber` first and gives 5." }
+          - { id: b, text: "30", why: "Line 14 matches `Amber` first and gives 5." }
           - { id: c, text: "35", why: "Only one arm runs, so nothing is added up." }
         answer: a
         explanation: "The first arm matches `Light::Amber`, so `seconds` returns 5."
@@ -113,7 +113,7 @@ chunks:
         prompt: "Why is `light` declared with `mut` on line 19?"
         options:
           - { id: a, text: "The loop assigns it a new `Light` each time round" }
-          - { id: b, text: "Calling a method needs `mut`", why: "`seconds` and `next` take `&self`, which only needs to read `light`." }
+          - { id: b, text: "Calling `next` or `seconds` needs `mut`", why: "`next` takes `&self` and `seconds` takes `&Light`. Both only read `light`." }
           - { id: c, text: "Enums are always `mut`", why: "Enum variables follow the same rule as any other: `mut` only if you change them." }
         answer: a
         explanation: "The loop body replaces `light` with `light.next()`, and a variable can only be assigned again if it's `mut`."

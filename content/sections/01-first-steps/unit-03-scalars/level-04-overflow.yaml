@@ -281,11 +281,11 @@ lessons:
 
       - type: mcq
         id: mcq-gives-none
-        prompt: "Which of these prints `None`?"
+        prompt: "Which of these gives `None`?"
         options:
-          - { id: a, code: 'println!("{:?}", 100u8.checked_add(200));' }
-          - { id: b, code: 'println!("{:?}", 100u8.checked_add(100));', why: "100 + 100 = 200 fits in a `u8`, so this prints `Some(200)`." }
-          - { id: c, code: 'println!("{:?}", 100u8.wrapping_add(200));', why: "`wrapping_add` never gives `None`. This prints `44`." }
+          - { id: a, code: "100u8.checked_add(200)" }
+          - { id: b, code: "100u8.checked_add(100)", why: "100 + 100 = 200 fits in a `u8`, so this gives `Some(200)`." }
+          - { id: c, code: "100u8.wrapping_add(200)", why: "`wrapping_add` never gives `None`. This gives `44`." }
         answer: a
         explanation: "100 + 200 = 300 is too big for a `u8`, so `checked_add` returns `None`."
         concepts: [types.overflow]
@@ -404,12 +404,17 @@ lessons:
         lines:
           - { id: l1, text: "fn main() {" }
           - { id: l2, text: "    let gold: u8 = 150;" }
-          - { id: l3, text: '    println!("{:?}", gold.checked_add(50));' }
-          - { id: l4, text: '    println!("{:?}", gold.checked_add(150));' }
+          - { id: l3, text: "    let fits = gold.checked_add(50);" }
+          - { id: l4, text: "    let over = gold.checked_add(150);" }
+          - { id: l6, text: '    println!("{:?}", fits);' }
+          - { id: l7, text: '    println!("{:?}", over);' }
           - { id: l5, text: "}" }
         distractors:
-          - { id: d1, text: '    println!("{:?}", gold.wrapping_add(150));' }
-        answer: [l1, l2, l3, l4, l5]
+          - { id: d1, text: "    let over = gold.wrapping_add(150);" }
+        answer: [l1, l2, l3, l4, l6, l7, l5]
+        alternatives:
+          - [l1, l2, l4, l3, l6, l7, l5]
+          - [l1, l2, l3, l6, l4, l7, l5]
         verify:
           mode: run
           expectStdout: "Some(200)\nNone\n"

@@ -416,12 +416,12 @@ lessons:
 
       - type: parsons
         id: parsons-block-len
-        prompt: "Arrange the lines so the program prints `6`"
+        prompt: "Arrange the lines so the program prints `4`"
         lines:
           - { id: l1, text: "fn main() {" }
           - { id: l2, text: "    let mut total = 0;" }
           - { id: l3, text: "    {" }
-          - { id: l4, text: '        let word = String::from("ferris");' }
+          - { id: l4, text: '        let word = String::from("crab");' }
           - { id: l5, text: "        total += word.len();" }
           - { id: l6, text: "    }" }
           - { id: l7, text: '    println!("{total}");' }
@@ -433,7 +433,7 @@ lessons:
           - [l1, l2, l3, l4, l5, l7, l6, l8]
         verify:
           mode: run
-          expectStdout: "6\n"
+          expectStdout: "4\n"
         explanation: "`total` is created outside the block so it survives the `}`. `word` can only be used inside the block."
         concepts: [own.scope-drop]
 

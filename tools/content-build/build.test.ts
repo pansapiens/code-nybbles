@@ -122,3 +122,37 @@ test('concept diagrams validate their arrows', async () => {
   assert.equal(await errors([card('h1'), predict('a')]), '')
   assert.match(await errors([card('h2'), predict('a')]), /"h2" isn't a heap box or variable id/)
 })
+
+const fill = (bank: string[], rust = 'let n = 2;\nprintln!("{}", n ___1___ 2);\n', blanks: object = { 1: { answer: ['*'] } }) => ({
+  type: 'fill-tokens',
+  id: 'f',
+  prompt: 'p',
+  code: { rust, verify: 'run', expectStdout: '4\n' },
+  blanks,
+  bank,
+  explanation: 'e',
+  concepts: ['intro.main'],
+})
+
+test('a fill-tokens tile that also gives the expected output is an error', async () => {
+  assert.equal(await errors([fill(['*', '-', '/'])]), '')
+  assert.match(await errors([fill(['*', '+', '-'])]), /also correct with "\+" in blank 1/)
+})
+
+test('two blanks needing one tile need it twice in the bank', async () => {
+  const rust = 'println!("{}", 2 ___1___ 3 ___2___ 2);\n'
+  const ex = (bank: string[]) => ({ ...fill(bank, rust, { 1: { answer: ['*'] }, 2: { answer: ['*'] } }), code: { rust, verify: 'run', expectStdout: '12\n' } })
+  assert.match(await errors([ex(['*', '-', '/'])]), /2 blanks need "\*" but the bank has it 1 time/)
+  assert.equal(await errors([ex(['*', '*', '-', '/'])]), '')
+})
+
+test('guidebook rust blocks are verified, honouring compile_fail and should_panic', async () => {
+  const root = fixture([predict('a')])
+  writeFileSync(join(root, 'sections/s1/u1/unit.yaml'), stringify({ id: 's1.u1', title: 'U1', description: 'd', guidebook: 'g.md', path: [{ level: 'level' }] }))
+  const g = (md: string) => writeFileSync(join(root, 'sections/s1/u1/g.md'), md)
+  const errs = async () => (await buildContent({ contentDir: root })).issues.errors.map((i) => i.message).join('\n')
+  g('```rust\nlet x = 1;\nprintln!("{x}");\n```\n\n```rust,compile_fail,E0384\nlet x = 1;\nx = 2;\n```\n\n```rust,should_panic\nlet v = [1];\nlet i = std::env::args().count();\nprintln!("{}", v[i]);\n```\n')
+  assert.equal(await errs(), '')
+  g('```rust\nprintln!("{y}");\n```\n')
+  assert.match(await errs(), /expected it to compile/)
+})

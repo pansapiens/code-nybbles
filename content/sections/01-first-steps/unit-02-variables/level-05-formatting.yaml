@@ -218,8 +218,8 @@ lessons:
           expectStdout: "Next: 4\n"
         blanks:
           "1": { answer: ["lives + 1"] }
-        bank: ["lives + 1", "{lives + 1}", "lives += 1", "lives"]
-        explanation: "A value after the text can be a calculation. `lives += 1` is an assignment, not a value, and braces inside the text can't hold a calculation."
+        bank: ["lives + 1", "\"lives + 1\"", "lives += 1", "lives"]
+        explanation: "A value after the text can be a calculation. `lives += 1` is an assignment, not a value, and `\"lives + 1\"` in quotes is text, so it would print as written."
         concepts: [fmt.placeholders]
 
       - type: predict-output

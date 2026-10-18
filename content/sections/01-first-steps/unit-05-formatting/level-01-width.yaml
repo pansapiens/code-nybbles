@@ -307,20 +307,20 @@ lessons:
     exercises:
       - type: parsons
         id: parsons-receipt
-        prompt: "Arrange the lines so the program prints a heading, then `tea` on the first row and `cake` on the second"
+        prompt: "Arrange the lines so the program prints a heading, then `tea` on the first row and `pie` on the second"
         lines:
           - { id: l1, text: "fn main() {" }
-          - { id: l2, text: '    println!("{:<6}{:>6}", "item", "cost");' }
-          - { id: l3, text: '    println!("{:<6}{:>6.2}", "tea", 3.5);' }
-          - { id: l4, text: '    println!("{:<6}{:>6.2}", "cake", 4.25);' }
+          - { id: l2, text: '    println!("item    cost");' }
+          - { id: l3, text: '    println!("{:6}{:>6.2}", "tea", 3.5);' }
+          - { id: l4, text: '    println!("{:6}{:>6.2}", "pie", 4.2);' }
           - { id: l5, text: "}" }
         distractors:
-          - { id: d1, text: '    println!("{:<6}{:>6.2f}", "tea", 3.5);' }
+          - { id: d1, text: '    println!("{:6}{:6.2f}", "tea", 3.5);' }
         answer: [l1, l2, l3, l4, l5]
         verify:
           mode: run
-          expectStdout: "item    cost\ntea     3.50\ncake    4.25\n"
-        explanation: "Each row pads the name on the left to 6 and the price on the right to 6, so the columns line up. Rust's precision has no trailing `f`."
+          expectStdout: "item    cost\ntea     3.50\npie     4.20\n"
+        explanation: "Text goes left by default, so `{:6}` pads the name on the right to 6. `{:>6.2}` puts the price on the right of 6 columns with 2 decimal places, so the columns line up under the heading. Rust's precision has no trailing `f`."
         concepts: [fmt.width-precision]
 
       - type: fill-tokens

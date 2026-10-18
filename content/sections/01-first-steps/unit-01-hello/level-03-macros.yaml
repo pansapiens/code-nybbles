@@ -207,7 +207,7 @@ lessons:
         blanks:
           "1": { answer: ["println!"] }
           "2": { answer: ["println!"] }
-        bank: ["println!", "println", "print_line!", "echo!"]
+        bank: ["println!", "println!", "println", "print_line!", "echo!"]
         explanation: "Both lines call the `println!` macro, with its `!`. With no arguments it prints an empty line."
         concepts: [macro.bang, macro.println-basic]
 

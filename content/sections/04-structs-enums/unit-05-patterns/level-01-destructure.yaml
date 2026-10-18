@@ -399,24 +399,24 @@ lessons:
         prompt: "Arrange the lines so the program prints `origin`"
         lines:
           - { id: l1, text: "fn main() {" }
-          - { id: l2, text: "    let p = Point { x: 0, y: 0 };" }
+          - { id: l2, text: "    let p = Pt { x: 0, y: 0 };" }
           - { id: l3, text: "    let place = match p {" }
-          - { id: l4, text: '        Point { x: 0, y: 0 } => "origin",' }
-          - { id: l5, text: '        Point { x: 0, .. } => "y axis",' }
+          - { id: l4, text: '        Pt { x: 0, y: 0 } => "origin",' }
+          - { id: l5, text: '        Pt { x: 0, .. } => "y axis",' }
           - { id: l6, text: '        _ => "elsewhere",' }
           - { id: l7, text: "    };" }
           - { id: l8, text: '    println!("{place}");' }
           - { id: l9, text: "}" }
         distractors:
-          - { id: d1, text: '        Point { 0, 0 } => "origin",' }
+          - { id: d1, text: '        Pt { 0, 0 } => "origin",' }
         answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
         verify:
           harness: |
-            struct Point { x: i32, y: i32 }
+            struct Pt { x: i32, y: i32 }
             {{solution}}
           mode: run
           expectStdout: "origin\n"
-        explanation: "Arms are tried top to bottom, so the most specific pattern goes first. If `Point { x: 0, .. }` came first, `(0, 0)` would print `y axis`."
+        explanation: "Arms are tried top to bottom, so the most specific pattern goes first. If `Pt { x: 0, .. }` came first, `(0, 0)` would print `y axis`."
         concepts: [pattern.destructure, match.enum]
 
       - type: predict-output

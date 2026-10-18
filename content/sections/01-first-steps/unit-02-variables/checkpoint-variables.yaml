@@ -100,7 +100,7 @@ lessons:
           "1": { answer: ["const"] }
           "2": { answer: ["mut"] }
           "3": { answer: ["points"] }
-        bank: ["const", "let", "mut", "points", "BONUS", "{points}"]
+        bank: ["const", "let", "mut", "points", "BONUS", "\"points\""]
         explanation: "`BONUS` is a constant, `points` must be `mut` for `+=`, and `points` fills the `{}`."
         concepts: [var.const, var.mut, fmt.placeholders]
 

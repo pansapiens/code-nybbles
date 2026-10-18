@@ -5,13 +5,13 @@ reviewConcepts: [types.float, types.inference, ops.arith, types.as-cast, types.b
 program:
   rust: |
     fn main() {
-        let celsius: f64 = 25.0;
-        let fahrenheit = celsius * 9.0 / 5.0 + 32.0;
-        println!("{celsius} C is {fahrenheit} F");
+        let c: f64 = 25.0;
+        let f = c * 9.0 / 5.0 + 32.0;
+        println!("{c} C is {f} F");
 
-        let oven_f = 356.0;
-        let oven_c = (oven_f - 32.0) * 5.0 / 9.0;
-        println!("{oven_f} F is {oven_c} C");
+        let oven = 356.0;
+        let oven_c = (oven - 32.0) / 1.8;
+        println!("{oven} F is {oven_c} C");
 
         let rounded = 179.9_f64 as i32;
         println!("Cast: {rounded}");
@@ -32,11 +32,11 @@ chunks:
         id: why-nine-point-oh
         prompt: "Line 3 writes `9.0` and `5.0`, not `9` and `5`. Why?"
         options:
-          - { id: a, text: "`celsius` is an `f64`, and Rust won't do arithmetic between a float and an integer." }
+          - { id: a, text: "`c` is an `f64`, and Rust won't do arithmetic between a float and an integer." }
           - { id: b, text: "`9.0` is more accurate than `9`.", why: "Both are exact. The problem is the type: an integer literal next to an `f64` is a compile error." }
           - { id: c, text: "It's only a style choice.", why: "With `9`, the program doesn't compile: Rust has no `f64 * integer` operation." }
         answer: a
-        explanation: "Rust never converts between number types for you. `celsius * 9` would be a compile error, so the literals are written as floats."
+        explanation: "Rust never converts between number types for you. `c * 9` would be a compile error, so the literals are written as floats."
         concepts: [types.float, ops.arith]
       - type: mcq
         id: first-output
@@ -44,7 +44,7 @@ chunks:
         options:
           - { id: a, text: "`25 C is 77 F`" }
           - { id: b, text: "`25.0 C is 77.0 F`", why: "`{}` prints a whole-number float without the `.0`." }
-          - { id: c, text: "`{celsius} C is {fahrenheit} F`", why: "`{celsius}` is replaced by the value of `celsius`." }
+          - { id: c, text: "`{c} C is {f} F`", why: "`{c}` is replaced by the value of `c`." }
         answer: a
         explanation: "25 x 9 / 5 + 32 is 77. When an `f64` holds a whole number, `{}` prints it without a decimal point."
         concepts: [types.float, fmt.inline-args]
@@ -52,7 +52,7 @@ chunks:
     exercises:
       - type: mcq
         id: oven-type
-        prompt: "Line 6 has no type annotation. What type is `oven_f`?"
+        prompt: "Line 6 has no type annotation. What type is `oven`?"
         options:
           - { id: a, text: "`f64`" }
           - { id: b, text: "`f32`", why: "A float literal with no other clues defaults to `f64`, not `f32`." }
@@ -64,7 +64,7 @@ chunks:
         id: brackets-matter
         prompt: "On line 7, removing the brackets would give the same result."
         answer: false
-        explanation: "Without brackets, `oven_f - 32.0 * 5.0 / 9.0` multiplies and divides first, then subtracts. The brackets make the subtraction happen first."
+        explanation: "Without brackets, `oven - 32.0 / 1.8` divides first, then subtracts. The brackets make the subtraction happen first."
         concepts: [ops.arith]
   - lines: 3
     exercises:

@@ -257,9 +257,9 @@ lessons:
         id: mcq-error-where
         prompt: "Your program can't open a file. Which line suits the message best?"
         options:
-          - { id: a, code: 'eprintln!("error: cannot open scores.txt");' }
-          - { id: b, code: 'println!("error: cannot open scores.txt");', why: "That works, but the error would be mixed in with the results on stdout." }
-          - { id: c, code: 'format!("error: cannot open scores.txt");', why: "`format!` builds the text but doesn't print it." }
+          - { id: a, code: 'eprintln!("error: cannot open data");' }
+          - { id: b, code: 'println!("error: cannot open data");', why: "That works, but the error would be mixed in with the results on stdout." }
+          - { id: c, code: 'format!("error: cannot open data");', why: "`format!` builds the text but doesn't print it." }
         answer: a
         explanation: "Errors go to stderr with `eprintln!`. Then someone saving your results to a file still sees the error in the terminal."
         concepts: [macro.print-family]

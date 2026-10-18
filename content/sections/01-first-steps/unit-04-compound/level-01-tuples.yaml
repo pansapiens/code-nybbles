@@ -314,12 +314,12 @@ lessons:
     exercises:
       - type: parsons
         id: parsons-lives
-        prompt: "Arrange the lines so the program prints `Ferris has 3 lives`"
+        prompt: "Arrange the lines so the program prints `Ferris: 3 lives`"
         lines:
           - { id: l1, text: "fn main() {" }
           - { id: l2, text: '    let player = ("Ferris", 3);' }
           - { id: l3, text: "    let (name, lives) = player;" }
-          - { id: l4, text: '    println!("{name} has {lives} lives");' }
+          - { id: l4, text: '    println!("{name}: {lives} lives");' }
           - { id: l5, text: "}" }
         distractors:
           - { id: d1, text: '    let player = ["Ferris", 3];' }
@@ -327,7 +327,7 @@ lessons:
         answer: [l1, l2, l3, l4, l5]
         verify:
           mode: run
-          expectStdout: "Ferris has 3 lives\n"
+          expectStdout: "Ferris: 3 lives\n"
         explanation: "Create the tuple first, then unpack it with names in the same order as its elements."
         concepts: [types.tuple, fmt.inline-args]
 

@@ -304,21 +304,21 @@ lessons:
         prompt: "Arrange the lines so the program prints `Hi` then `Hi, Lin`"
         lines:
           - { id: l1, text: "fn main() {" }
-          - { id: l2, text: '    let mut message = String::from("Hi");' }
-          - { id: l3, text: "    let plain = message.clone();" }
-          - { id: l4, text: '    message.push_str(", Lin");' }
+          - { id: l2, text: '    let mut msg = String::from("Hi");' }
+          - { id: l3, text: "    let plain = msg.clone();" }
+          - { id: l4, text: '    msg.push_str(", Lin");' }
           - { id: l5, text: '    println!("{plain}");' }
-          - { id: l6, text: '    println!("{message}");' }
+          - { id: l6, text: '    println!("{msg}");' }
           - { id: l7, text: "}" }
         distractors:
-          - { id: d1, text: "    let plain = message;" }
+          - { id: d1, text: "    let plain = msg;" }
         answer: [l1, l2, l3, l4, l5, l6, l7]
         alternatives:
           - [l1, l2, l3, l5, l4, l6, l7]
         verify:
           mode: run
           expectStdout: "Hi\nHi, Lin\n"
-        explanation: "The clone must come before `push_str`, so `plain` keeps `Hi`. A move would leave `message` unusable."
+        explanation: "The clone must come before `push_str`, so `plain` keeps `Hi`. A move would leave `msg` unusable."
         concepts: [own.clone]
 
       - type: fill-tokens

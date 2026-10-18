@@ -390,17 +390,18 @@ lessons:
         prompt: "Arrange the lines so the program prints `(\"Ada!\", 10)`"
         lines:
           - { id: l1, text: "fn main() {" }
-          - { id: l2, text: '    let mut player = (String::from("Ada"), 0);' }
+          - { id: l7, text: '    let name = String::from("Ada");' }
+          - { id: l2, text: '    let mut player = (name, 0);' }
           - { id: l3, text: "    player.1 += 10;" }
           - { id: l4, text: '    player.0.push_str("!");' }
           - { id: l5, text: '    println!("{:?}", player);' }
           - { id: l6, text: "}" }
         distractors:
-          - { id: d1, text: '    let player = (String::from("Ada"), 0);' }
+          - { id: d1, text: '    let player = (name, 0);' }
           - { id: d2, text: '    let mut player = ("Ada", 0);' }
-        answer: [l1, l2, l3, l4, l5, l6]
+        answer: [l1, l7, l2, l3, l4, l5, l6]
         alternatives:
-          - [l1, l2, l4, l3, l5, l6]
+          - [l1, l7, l2, l4, l3, l5, l6]
         verify:
           mode: run
           expectStdout: "(\"Ada!\", 10)\n"

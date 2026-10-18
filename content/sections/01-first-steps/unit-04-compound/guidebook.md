@@ -45,7 +45,7 @@ println!("{}", primes.len()); // 5
 
 ## Out of bounds
 
-```rust
+```rust,should_panic
 let scores = [90, 72, 85];
 // scores[3]: compile error, the compiler can see 3 is too big
 

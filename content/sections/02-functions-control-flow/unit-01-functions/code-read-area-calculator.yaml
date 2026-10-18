@@ -8,18 +8,20 @@ program:
         side * side
     }
 
-    fn rectangle(width: u32, height: u32) -> u32 {
-        width * height
+    fn rectangle(w: u32, h: u32) -> u32 {
+        w * h
     }
 
-    fn triangle(base: u32, height: u32) -> u32 {
-        rectangle(base, height) / 2
+    fn triangle(b: u32, h: u32) -> u32 {
+        rectangle(b, h) / 2
     }
 
     fn main() {
-        let total = square(3) + triangle(4, 5);
-        println!("Square: {}", square(3));
-        println!("Triangle: {}", triangle(4, 5));
+        let sq = square(3);
+        let tri = triangle(4, 5);
+        let total = sq + tri;
+        println!("Square: {sq}");
+        println!("Triangle: {tri}");
         println!("Total: {total}");
     }
   verify: run
@@ -54,7 +56,7 @@ chunks:
     exercises:
       - type: true-false
         id: param-types
-        prompt: "You could write `fn rectangle(width, height) -> u32` and let Rust infer the parameter types."
+        prompt: "You could write `fn rectangle(w, h) -> u32` and let Rust infer the parameter types."
         answer: false
         explanation: "Function parameters always need a type annotation in Rust. Inference works inside function bodies, not in signatures."
         concepts: [fn.params]
@@ -80,7 +82,7 @@ chunks:
         answer: a
         explanation: "`rectangle(3, 3)` is 9, and `9 / 2` with integers is 4. The remainder is dropped."
         concepts: [ops.arith, types.int]
-  - lines: 6
+  - lines: 8
     exercises:
       - type: true-false
         id: order
@@ -90,11 +92,11 @@ chunks:
         concepts: [fn.define]
       - type: mcq
         id: total
-        prompt: What does line 17 print?
+        prompt: What does line 19 print?
         options:
           - { id: a, text: "`Total: 19`" }
           - { id: b, text: "`Total: 29`", why: "`triangle(4, 5)` is 10, not 20. Check the division by 2." }
-          - { id: c, text: "`Total: 9 + 10`", why: "Line 14 adds the two numbers before printing, so `total` holds one number." }
+          - { id: c, text: "`Total: 9 + 10`", why: "Line 16 adds the two numbers before printing, so `total` holds one number." }
         answer: a
         explanation: "`square(3)` is 9 and `triangle(4, 5)` is 10, so `total` is 19."
         concepts: [fn.return]

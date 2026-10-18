@@ -10,7 +10,7 @@ program:
         *b = temp;
     }
 
-    fn add_to(total: &mut i32, amount: i32) {
+    fn add(total: &mut i32, amount: i32) {
         *total += amount;
     }
 
@@ -20,15 +20,15 @@ program:
         let mut total = 0;
 
         swap(&mut left, &mut right);
-        println!("left {left}, right {right}");
+        println!("{left}, {right}");
 
-        add_to(&mut total, left);
-        add_to(&mut total, left);
+        add(&mut total, left);
+        add(&mut total, left);
         println!("total {total}");
     }
   verify: run
   expectStdout: |
-    left 8, right 3
+    8, 3
     total 16
 chunks:
   - lines: 5
@@ -55,7 +55,7 @@ chunks:
         id: why-two-types
         prompt: "Why is `total` a `&mut i32` but `amount` a plain `i32`?"
         options:
-          - { id: a, text: "`add_to` changes the caller's `total`, but only reads `amount`" }
+          - { id: a, text: "`add` changes the caller's `total`, but only reads `amount`" }
           - { id: b, text: "The first parameter of a function must be a reference", why: "Parameters can be any type, in any order. Each one is chosen by what the function does with it." }
           - { id: c, text: "`amount` can't be borrowed because it's an `i32`", why: "You can borrow an `i32`. It isn't needed: a copy is cheaper and the caller keeps its value." }
         answer: a
@@ -88,9 +88,9 @@ chunks:
                 - { name: b, points: right }
           heap: []
         options:
-          - { id: a, text: "`left 8, right 3`" }
-          - { id: b, text: "`left 3, right 8`", why: "`a` and `b` point at `main`'s variables, so `swap` changes them." }
-          - { id: c, text: "`left 8, right 8`", why: "`temp` saved the old 3 before line 3 overwrote it, and line 4 puts it in `right`." }
+          - { id: a, text: "`8, 3`" }
+          - { id: b, text: "`3, 8`", why: "`a` and `b` point at `main`'s variables, so `swap` changes them." }
+          - { id: c, text: "`8, 8`", why: "`temp` saved the old 3 before line 3 overwrote it, and line 4 puts it in `right`." }
         answer: a
         explanation: "`swap` writes through the references, so `main`'s `left` becomes 8 and `right` becomes 3."
         concepts: [borrow.mut]
@@ -114,16 +114,16 @@ chunks:
           - { id: b, text: "3", why: "The swap on line 16 already ran, so `left` is 8 now." }
           - { id: c, text: "0", why: "`left` is passed by value, and it holds 8 after the swap." }
         answer: a
-        explanation: "After the swap, `left` is 8, and `add_to` gets a copy of that number."
+        explanation: "After the swap, `left` is 8, and `add` gets a copy of that number."
         concepts: [own.copy, borrow.mut]
       - type: mcq
         id: final-total
         prompt: "What does line 21 print?"
         options:
           - { id: a, text: "`total 16`" }
-          - { id: b, text: "`total 0`", why: "`add_to` changes `main`'s `total` through the `&mut` reference." }
+          - { id: b, text: "`total 0`", why: "`add` changes `main`'s `total` through the `&mut` reference." }
           - { id: c, text: "`total 11`", why: "Both calls pass `left`, which is 8. Neither adds `right`." }
           - { id: d, text: "`total 8`", why: "Both calls run, and each adds 8." }
         answer: a
-        explanation: "`total` starts at 0, and each `add_to` call adds 8 through the reference: 16."
+        explanation: "`total` starts at 0, and each `add` call adds 8 through the reference: 16."
         concepts: [borrow.mut, own.param-choice]

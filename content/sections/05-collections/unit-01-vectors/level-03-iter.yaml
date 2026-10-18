@@ -528,7 +528,7 @@ lessons:
         blanks:
           "1": { answer: ["*r"] }
           "2": { answer: ["*r"] }
-        bank: ["*r", "r", "&r", "readings"]
+        bank: ["*r", "*r", "r", "&r", "readings"]
         explanation: "`r` is a `&mut i32`. Both reading and writing the number need `*r`. Comparing `r` itself with `100` mixes a reference and a number."
         concepts: [vec.iter, borrow.mut]
 

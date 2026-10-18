@@ -6,41 +6,41 @@ reviewConcepts: [method.self, method.associated, style.new, method.auto-ref, der
 program:
   rust: |
     #[derive(Debug)]
-    struct Rectangle {
+    struct Rect {
         width: u32,
         height: u32,
     }
-    impl Rectangle {
+    impl Rect {
         fn area(&self) -> u32 {
             self.width * self.height
         }
-        fn can_hold(&self, other: &Rectangle) -> bool {
-            self.width > other.width
-                && self.height > other.height
+        fn holds(&self, o: &Rect) -> bool {
+            self.width > o.width
+                && self.height > o.height
         }
-        fn square(size: u32) -> Self {
-            Self { width: size, height: size }
+        fn square(s: u32) -> Self {
+            Self { width: s, height: s }
         }
     }
-
     fn main() {
-        let rect = Rectangle { width: 30, height: 50 };
-        let sq = Rectangle::square(20);
+        let r =
+            Rect { width: 3, height: 5 };
+        let sq = Rect::square(2);
         println!("{sq:?}");
-        println!("{}", rect.area());
-        println!("{}", rect.can_hold(&sq));
+        println!("{}", r.area());
+        println!("{}", r.holds(&sq));
     }
   verify: run
   expectStdout: |
-    Rectangle { width: 20, height: 20 }
-    1500
+    Rect { width: 2, height: 2 }
+    15
     true
 chunks:
   - lines: 5
     exercises:
       - type: mcq
         id: derive-debug
-        prompt: "What does `#[derive(Debug)]` on line 1 let you do with a `Rectangle`?"
+        prompt: "What does `#[derive(Debug)]` on line 1 let you do with a `Rect`?"
         options:
           - { id: a, text: "Print it with `{:?}`" }
           - { id: b, text: "Print it with `{}`", why: "A struct can't be printed with `{}` unless you write that formatting yourself. `derive(Debug)` gives you `{:?}`." }
@@ -58,31 +58,31 @@ chunks:
           - { id: b, text: "`self` would let it change `width`", why: "Plain `self` takes ownership. It's about who owns the value, and `area` doesn't need to own it." }
           - { id: c, text: "Methods with `self` can't return a value", why: "They can return anything. But `self` would move the rectangle into `area`." }
         answer: a
-        explanation: "`&self` borrows the rectangle read-only. With plain `self`, calling `rect.area()` would move `rect` and it couldn't be used on line 24."
+        explanation: "`&self` borrows the rectangle read-only. With plain `self`, calling `r.area()` would move `r` and it couldn't be used on line 24."
         concepts: [method.self]
       - type: true-false
         id: area-full-form
-        prompt: "`rect.area()` could also be written `Rectangle::area(&rect)`."
+        prompt: "`r.area()` could also be written `Rect::area(&r)`."
         answer: true
-        explanation: "The method call borrows `rect` for you. Written in full, you pass `&rect` yourself."
+        explanation: "The method call borrows `r` for you. Written in full, you pass `&r` yourself."
         concepts: [method.auto-ref]
   - lines: 4
     exercises:
       - type: mcq
         id: can-hold-other
-        prompt: "In `can_hold`, what is `other`?"
+        prompt: "In `holds`, what is `o`?"
         options:
           - { id: a, text: "A borrowed second rectangle, passed in the brackets" }
-          - { id: b, text: "The rectangle the method was called on", why: "That's `self`. `other` is the extra parameter after it." }
-          - { id: c, text: "An owned rectangle that `can_hold` moves", why: "Its type is `&Rectangle`, so it's only borrowed." }
+          - { id: b, text: "The rectangle the method was called on", why: "That's `self`. `o` is the extra parameter after it." }
+          - { id: c, text: "An owned rectangle that `holds` moves", why: "Its type is `&Rect`, so it's only borrowed." }
         answer: a
-        explanation: "Methods can take more parameters after `self`. `other: &Rectangle` borrows a second rectangle to compare with."
+        explanation: "Methods can take more parameters after `self`. `o: &Rect` borrows a second rectangle to compare with."
         concepts: [method.self]
       - type: true-false
         id: can-hold-strict
-        prompt: "`can_hold` returns `true` for two rectangles of exactly the same size."
+        prompt: "`holds` returns `true` for two rectangles of exactly the same size."
         answer: false
-        explanation: "It uses `>`, so each side of `self` must be strictly bigger than the matching side of `other`."
+        explanation: "It uses `>`, so each side of `self` must be strictly bigger than the matching side of `o`."
         concepts: [method.self, types.bool]
   - lines: 4
     exercises:
@@ -90,9 +90,9 @@ chunks:
         id: square-kind
         prompt: "`square` has no `self` parameter. How is it called?"
         options:
-          - { id: a, code: "Rectangle::square(20)" }
-          - { id: b, code: "rect.square(20)", why: "Without `self` it's an associated function, not a method, so a dot call is E0599." }
-          - { id: c, code: "square(20)", why: "`square` belongs to `Rectangle`, so it needs the type name in front." }
+          - { id: a, code: "Rect::square(2)" }
+          - { id: b, code: "r.square(2)", why: "Without `self` it's an associated function, not a method, so a dot call is E0599." }
+          - { id: c, code: "square(2)", why: "`square` belongs to `Rect`, so it needs the type name in front." }
         answer: a
         explanation: "Associated functions are called on the type with `::`."
         concepts: [method.associated]
@@ -100,11 +100,11 @@ chunks:
         id: square-self
         prompt: "What does `Self` mean on lines 14 and 15?"
         options:
-          - { id: a, text: "`Rectangle`, the type of the `impl` block" }
+          - { id: a, text: "`Rect`, the type of the `impl` block" }
           - { id: b, text: "The rectangle `square` was called on", why: "`square` isn't called on a rectangle. Capital `Self` is a type." }
-          - { id: c, text: "A square, a different type from `Rectangle`", why: "There's no separate square type. `square` builds a `Rectangle` with equal sides." }
+          - { id: c, text: "A square, a different type from `Rect`", why: "There's no separate square type. `square` builds a `Rect` with equal sides." }
         answer: a
-        explanation: "`Self` is short for the `impl` block's type, so `square` returns a `Rectangle`."
+        explanation: "`Self` is short for the `impl` block's type, so `square` returns a `Rect`."
         concepts: [method.associated, style.new]
   - lines: 4
     exercises:
@@ -112,11 +112,11 @@ chunks:
         id: sq-fields
         prompt: "After line 21, what does `sq` hold?"
         options:
-          - { id: a, text: "A `Rectangle` with width 20 and height 20" }
-          - { id: b, text: "The number 400", why: "`square` returns a `Rectangle`, not its area." }
-          - { id: c, text: "A `Rectangle` with width 20 and height 0", why: "`square` uses `size` for both fields." }
+          - { id: a, text: "A `Rect` with width 2 and height 2" }
+          - { id: b, text: "The number 4", why: "`square` returns a `Rect`, not its area." }
+          - { id: c, text: "A `Rect` with width 2 and height 0", why: "`square` uses `s` for both fields." }
         answer: a
-        explanation: "`Rectangle::square(20)` builds `Self { width: 20, height: 20 }`."
+        explanation: "`Rect::square(2)` builds `Self { width: 2, height: 2 }`."
         concepts: [method.associated]
   - lines: 4
     exercises:
@@ -124,8 +124,8 @@ chunks:
         id: debug-line
         prompt: "What does line 22 print?"
         options:
-          - { id: a, text: "`Rectangle { width: 20, height: 20 }`" }
-          - { id: b, text: "`400`", why: "`{sq:?}` prints the struct itself, not its area." }
+          - { id: a, text: "`Rect { width: 2, height: 2 }`" }
+          - { id: b, text: "`4`", why: "`{sq:?}` prints the struct itself, not its area." }
           - { id: c, text: "`sq`", why: "The braces print the value of `sq`, in Debug format." }
         answer: a
         explanation: "Debug format prints the struct's name followed by each field and its value."
@@ -134,15 +134,15 @@ chunks:
         id: last-lines
         prompt: "What do lines 23 and 24 print?"
         options:
-          - { id: a, text: "`1500` then `true`" }
-          - { id: b, text: "`80` then `true`", why: "`area` multiplies the sides; 30 + 50 would be 80." }
-          - { id: c, text: "`1500` then `false`", why: "30 > 20 and 50 > 20, so `rect` can hold `sq`." }
+          - { id: a, text: "`15` then `true`" }
+          - { id: b, text: "`8` then `true`", why: "`area` multiplies the sides; 3 + 5 would be 8." }
+          - { id: c, text: "`15` then `false`", why: "3 > 2 and 5 > 2, so `r` can hold `sq`." }
         answer: a
-        explanation: "`rect.area()` is 30 times 50. Both sides of `rect` are bigger than 20, so `can_hold` returns `true`."
+        explanation: "`r.area()` is 3 times 5. Both sides of `r` are bigger than 2, so `holds` returns `true`."
         concepts: [method.self, method.auto-ref]
       - type: true-false
         id: swap-can-hold
-        prompt: "`sq.can_hold(&rect)` would also be `true`."
+        prompt: "`sq.holds(&r)` would also be `true`."
         answer: false
-        explanation: "Now `self` is `sq`, and 20 isn't bigger than 30, so it returns `false`. The order of the two rectangles matters."
+        explanation: "Now `self` is `sq`, and 2 isn't bigger than 3, so it returns `false`. The order of the two rectangles matters."
         concepts: [method.self]

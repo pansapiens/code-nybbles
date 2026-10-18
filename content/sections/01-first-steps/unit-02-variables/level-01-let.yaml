@@ -276,22 +276,22 @@ lessons:
     exercises:
       - type: parsons
         id: parsons-lives
-        prompt: Arrange the lines so the program prints `Ferris has 3 lives`
+        prompt: "Arrange the lines so the program prints `Ferris: 3 lives`"
         lines:
           - { id: l1, text: "fn main() {" }
-          - { id: l2, text: '    let player_name = "Ferris";' }
+          - { id: l2, text: '    let name = "Ferris";' }
           - { id: l3, text: "    let lives = 3;" }
-          - { id: l4, text: '    println!("{player_name} has {lives} lives");' }
+          - { id: l4, text: '    println!("{name}: {lives} lives");' }
           - { id: l5, text: "}" }
         distractors:
-          - { id: d1, text: '    let player name = "Ferris";' }
+          - { id: d1, text: '    let my name = "Ferris";' }
           - { id: d2, text: "    lives = 3;" }
         answer: [l1, l2, l3, l4, l5]
         alternatives:
           - [l1, l3, l2, l4, l5]
         verify:
           mode: run
-          expectStdout: "Ferris has 3 lives\n"
+          expectStdout: "Ferris: 3 lives\n"
         explanation: "Both variables must be created with `let` before the `println!` uses them. Names can't contain spaces."
         concepts: [var.let, intro.main]
 

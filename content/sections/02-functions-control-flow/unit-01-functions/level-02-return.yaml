@@ -408,7 +408,7 @@ lessons:
 
       - type: fill-tokens
         id: fill-max-score
-        prompt: "Fill the blanks so the program prints `300`"
+        prompt: "Fill the blanks so the program prints `400`"
         code:
           rust: |
             fn max_score(level: i32) -> ___1___ {
@@ -416,10 +416,10 @@ lessons:
             }
 
             fn main() {
-                println!("{}", max_score(3));
+                println!("{}", max_score(4));
             }
           verify: run
-          expectStdout: "300\n"
+          expectStdout: "400\n"
         blanks:
           "1": { answer: ["i32"] }
           "2": { answer: ["level"] }

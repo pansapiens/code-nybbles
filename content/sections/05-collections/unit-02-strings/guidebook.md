@@ -23,7 +23,10 @@ let s3 = s1 + &s2;   // s1 moves, s2 is borrowed
 - `s1 + s2` is E0308 (add `&`). `"a" + "b"` and `&s1 + &s2` are E0369 (the left side must be an owned `String`).
 
 ```rust
+let city = String::from("Hobart");
+let state = String::from("Tasmania");
 let place = format!("{city}, {state}"); // borrows both
+println!("{place}, from {city}"); // city still usable
 ```
 
 - `format!` works like `println!` but returns the `String`. It borrows everything, so nothing moves. Use it for joining more than two pieces.

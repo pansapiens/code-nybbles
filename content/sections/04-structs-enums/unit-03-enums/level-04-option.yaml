@@ -365,9 +365,9 @@ lessons:
 
       - type: parsons
         id: parsons-first-negative
-        prompt: Arrange the lines so `find_neg` returns the first number below zero, if there is one
+        prompt: Arrange the lines so `neg` returns the first number below zero, if there is one
         lines:
-          - { id: l1, text: "fn find_neg(a: [i32; 4]) -> Option<i32> {" }
+          - { id: l1, text: "fn neg(a: [i32; 4]) -> Option<i32> {" }
           - { id: l2, text: "    for n in a {" }
           - { id: l3, text: "        if n < 0 {" }
           - { id: l4, text: "            return Some(n);" }
@@ -383,8 +383,8 @@ lessons:
           harness: |
             {{solution}}
             fn main() {
-                println!("{:?}", find_neg([3, -2, 5, -7]));
-                println!("{:?}", find_neg([1, 2, 3, 4]));
+                println!("{:?}", neg([3, -2, 5, -7]));
+                println!("{:?}", neg([1, 2, 3, 4]));
             }
           mode: run
           expectStdout: "Some(-2)\nNone\n"

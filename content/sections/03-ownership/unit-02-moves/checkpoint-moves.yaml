@@ -231,10 +231,10 @@ lessons:
 
       - type: parsons
         id: parsons-checkpoint
-        prompt: "Arrange the lines so the program prints `log: start!` then `log: start`"
+        prompt: "Arrange the lines so the program prints `start!` then `start`"
         lines:
           - { id: l1, text: "fn main() {" }
-          - { id: l2, text: '    let entry = String::from("log: start");' }
+          - { id: l2, text: '    let entry = String::from("start");' }
           - { id: l3, text: "    let mut loud = entry.clone();" }
           - { id: l4, text: '    loud.push_str("!");' }
           - { id: l5, text: '    println!("{entry}");' }
@@ -245,7 +245,7 @@ lessons:
         answer: [l1, l2, l3, l4, l6, l5, l7]
         verify:
           mode: run
-          expectStdout: "log: start!\nlog: start\n"
+          expectStdout: "start!\nstart\n"
         explanation: "`entry` is printed last, so `loud` must be a clone. The `!` goes on `loud` before `loud` is printed."
         concepts: [own.clone]
 

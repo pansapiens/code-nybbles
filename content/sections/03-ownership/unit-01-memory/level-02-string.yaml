@@ -187,7 +187,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         options:
-          - { id: a, code: "let city: String = String::from(\"Hobart\");" }
+          - { id: a, code: "let city = String::from(\"Hobart\");" }
           - { id: b, code: "let mut city: String = \"Hobart\";", why: "`mut` lets a variable change, but doesn't change the type of `\"Hobart\"`." }
           - { id: c, code: "let city: String = 'Hobart';", why: "Single quotes make a `char`, and a `char` holds only one character." }
         answer: a
