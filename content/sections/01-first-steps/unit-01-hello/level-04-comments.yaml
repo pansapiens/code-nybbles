@@ -1,7 +1,7 @@
 id: first-steps.hello.comments
 title: Comments
 icon: chat
-concepts: [syntax.comments]
+concepts: [syntax.comments, err.E0585]
 reviewConcepts: [intro.main, macro.println-basic, macro.bang]
 lessons:
   - id: l1
@@ -278,7 +278,7 @@ lessons:
             - { id: c, text: "`println!` needs a `///` comment before it", why: "Comments are always optional." }
           answer: a
         explanation: "A `///` comment documents the item after it. Here nothing follows, so Rust reports an error and suggests `//`."
-        concepts: [syntax.comments]
+        concepts: [syntax.comments, err.E0585]
 
       - type: fill-tokens
         id: fill-comment-markers

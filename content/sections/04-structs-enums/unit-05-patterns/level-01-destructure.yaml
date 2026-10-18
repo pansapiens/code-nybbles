@@ -107,7 +107,7 @@ lessons:
             - { id: c, text: "E0382: use of moved value", why: "Nothing is used after a move here. Both fields are `i32` anyway." }
           answer: a
         explanation: "A struct pattern must mention every field. Write `Point { x, .. }` to ignore the rest."
-        concepts: [pattern.destructure]
+        concepts: [pattern.destructure, err.E0027]
 
       - type: concept
         id: concept-tuples-nested
@@ -330,7 +330,7 @@ lessons:
           expectErrors: [E0308]
         answer: 3
         explanation: "The tuple has 3 items but the pattern has 2, which is E0308: mismatched types. Write `(wins, losses, _)` or `(wins, losses, ..)`."
-        concepts: [pattern.destructure, types.tuple]
+        concepts: [pattern.destructure, types.tuple, err.E0308]
 
       - type: mcq
         id: mcq-dots-middle
@@ -481,7 +481,7 @@ lessons:
           - { id: c, code: "let Order(item, qty) = order;", why: "Brackets are for tuple structs. `Order` has named fields, so its pattern uses braces." }
         answer: a
         explanation: "The pattern doesn't mention `paid` (E0027). Adding `..` says \"ignore the other fields\"."
-        concepts: [pattern.destructure]
+        concepts: [pattern.destructure, err.E0027]
 
       - type: fill-tokens
         id: fill-nested-enum

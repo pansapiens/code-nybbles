@@ -79,7 +79,7 @@ lessons:
           - { id: c, text: "Use `word.as_bytes()[1]`", why: "That's byte 1, which is the second half of `é`, not the character `c`." }
         answer: a
         explanation: "Text can't be indexed with a number (E0277). `.chars().nth(1)` counts whole characters, so it finds `c` even though `é` is 2 bytes."
-        concepts: [string.utf8, option.methods]
+        concepts: [string.utf8, option.methods, err.E0277]
 
       - type: predict-output
         id: predict-gruesse
@@ -204,7 +204,7 @@ lessons:
           - { id: c, code: "&a + b", why: "That's a `&&str` on the left, which `+` can't use either." }
         answer: a
         explanation: "`+` needs an owned `String` on its left (E0369 for `&str + &str`). `a.to_string()` makes one; `format!(\"{a}{b}\")` also works."
-        concepts: [string.build, string.convert]
+        concepts: [string.build, string.convert, err.E0369]
 
       - type: predict-output
         id: predict-replace-contains

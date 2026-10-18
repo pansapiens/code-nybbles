@@ -89,7 +89,7 @@ lessons:
         answer: a
         explanation: "`greet` has one parameter but the call passes two arguments (E0061). The compiler's help suggests removing the extra one."
         difficulty: 2
-        concepts: [fn.params, compiler.read-error]
+        concepts: [fn.params, compiler.read-error, err.E0061]
 
       - type: spot-bug
         id: spot-param-no-type
@@ -279,7 +279,7 @@ lessons:
         answer: a
         explanation: "E0425 means `name` isn't in scope inside `greet`. Passing it as an argument gives `greet` its own `name`."
         difficulty: 3
-        concepts: [fn.params, compiler.read-error]
+        concepts: [fn.params, compiler.read-error, err.E0425]
 
       - type: predict-output
         id: predict-width-return

@@ -1,7 +1,7 @@
 id: structs-enums.structs.define
 title: Your own types
 icon: package
-concepts: [struct.define, struct.update]
+concepts: [struct.define, struct.update, err.E0063]
 reviewConcepts: [var.mut, own.move, own.copy, own.clone, fn.return, fn.params, borrow.mut, err.E0382, err.E0384]
 lessons:
   - id: l1
@@ -104,7 +104,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "`5` is a fine `i32`. The problem is the field that has no value." }
           answer: a
         explanation: "Every field needs a value when you create an instance. `y` is missing, so this is E0063."
-        concepts: [struct.define]
+        concepts: [struct.define, err.E0063]
 
       - type: true-false
         id: tf-field-order
@@ -200,7 +200,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "`10` is a fine `u32`. The problem is that `score` isn't `mut`." }
           answer: a
         explanation: "`score` isn't `mut`, so none of its fields can change. E0594 is the error for assigning to a field; the fix is `let mut score`."
-        concepts: [struct.define, var.mut]
+        concepts: [struct.define, var.mut, err.E0594]
 
       - type: fill-tokens
         id: fill-city
@@ -554,7 +554,7 @@ lessons:
           - { id: c, text: "Line 7: `let mut hero = Hero {`", why: "Making `hero` mutable doesn't stop its `String` from moving." }
         answer: a
         explanation: "`..hero` moves `hero.name` into `lv2`. Cloning gives `lv2` its own copy of the text, so `hero.name` stays usable."
-        concepts: [struct.update, own.move, own.clone]
+        concepts: [struct.update, own.move, own.clone, err.E0382]
 
       - type: predict-output
         id: predict-update-then-change
@@ -649,7 +649,7 @@ lessons:
           expectErrors: [E0425]
         answer: 7
         explanation: "Shorthand `name` needs a variable called `name`, but the parameter is `n`. Write `name: n`, or rename the parameter."
-        concepts: [struct.update, fn.params]
+        concepts: [struct.update, fn.params, err.E0425]
 
       - type: predict-output
         id: predict-whole-move

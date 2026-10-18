@@ -1,7 +1,7 @@
 id: ownership.memory.string
 title: String vs string literals
 icon: text
-concepts: [string.string-vs-literal]
+concepts: [string.string-vs-literal, err.E0596]
 reviewConcepts: [mem.stack-heap, string.str-literal-intro, string.literals, var.mut, err.E0308, macro.print-family, ctrl.for, ctrl.if]
 lessons:
   - id: l1
@@ -115,7 +115,7 @@ lessons:
             - { id: c, text: "`\" Lovelace\"` should be a `String` too", why: "`push_str` takes a `&str`, so a literal is the right thing to pass." }
           answer: a
         explanation: "Changing a `String` needs a `mut` variable, the same as changing a number. The compiler reports E0596 and suggests `let mut name`."
-        concepts: [string.string-vs-literal, var.mut]
+        concepts: [string.string-vs-literal, var.mut, err.E0596]
 
       - type: true-false
         id: tf-len-bytes
@@ -214,7 +214,7 @@ lessons:
             - { id: c, text: "`push_str` needs a `char`, like `'W'`", why: "`push_str` takes text in double quotes." }
           answer: a
         explanation: "A literal's text is fixed, so `&str` has no `push_str` method (E0599). Start from `String::from(\"Dr\")` to get text that can grow."
-        concepts: [string.string-vs-literal]
+        concepts: [string.string-vs-literal, err.E0599]
 
       - type: true-false
         id: tf-diagram-realloc
@@ -247,7 +247,7 @@ lessons:
           expectErrors: [E0596]
         answer: 2
         explanation: "The error points at line 4, but the fix belongs on line 2: `let mut list` so the `String` can be changed."
-        concepts: [string.string-vs-literal, var.mut]
+        concepts: [string.string-vs-literal, var.mut, err.E0596]
 
       - type: match-pairs
         id: pairs-string-words
@@ -388,7 +388,7 @@ lessons:
           - { id: c, text: "Change line 3 to `title.push_str(' Who');`", why: "Single quotes make a `char`, and a `char` can only hold one character." }
         answer: a
         explanation: "The compiler says there's no `push_str` for `&str`. A `String` has one, so make `title` a `String`."
-        concepts: [string.string-vs-literal, compiler.read-error]
+        concepts: [string.string-vs-literal, compiler.read-error, err.E0599]
 
       - type: predict-output
         id: predict-tiles-path

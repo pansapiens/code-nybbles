@@ -1,7 +1,7 @@
 id: structs-enums.match.bind
 title: Taking data out of variants
 icon: package
-concepts: [match.bind]
+concepts: [match.bind, err.E0027]
 reviewConcepts: [match.enum, match.exhaustive, err.E0004, enum.data, option.basics, own.move, err.E0382, borrow.shared]
 lessons:
   - id: l1
@@ -281,7 +281,7 @@ lessons:
             - { id: c, text: "Add a `_ =>` arm at the end", why: "The problem is inside the `Move` pattern, not a missing variant." }
           answer: a
         explanation: "A braces pattern must mention every field (E0027) unless it ends with `..`."
-        concepts: [match.bind]
+        concepts: [match.bind, err.E0027]
 
       - type: mcq
         id: mcq-same-pattern
@@ -317,7 +317,7 @@ lessons:
           expectErrors: [E0425]
         answer: 10
         explanation: "The pattern ignores the second value with `_`, so there's no `h`. Bind it with `Shape::Rect(w, h)`."
-        concepts: [match.bind]
+        concepts: [match.bind, err.E0425]
 
       - type: true-false
         id: tf-two-dotdot

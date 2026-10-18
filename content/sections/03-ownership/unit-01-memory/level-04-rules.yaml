@@ -280,7 +280,7 @@ lessons:
           expectErrors: [E0425]
         answer: 7
         explanation: "`t` was dropped at the `}` on line 6, along with everything it owned. Line 7 can't use it."
-        concepts: [own.rules, own.scope-drop]
+        concepts: [own.rules, own.scope-drop, err.E0425]
 
       - type: decode-error
         id: decode-e0384-string
@@ -477,7 +477,7 @@ lessons:
           - { id: c, text: "Remove `mut` from line 2", why: "The tuple still holds a `&str`, which has no `push_str`." }
         answer: a
         explanation: "`player.0` is a literal, a `&str`, so it can't grow. A tuple holding a `String` can have its text changed."
-        concepts: [own.rules, string.string-vs-literal, compiler.read-error]
+        concepts: [own.rules, string.string-vs-literal, compiler.read-error, err.E0599]
 
       - type: true-false
         id: tf-main-end

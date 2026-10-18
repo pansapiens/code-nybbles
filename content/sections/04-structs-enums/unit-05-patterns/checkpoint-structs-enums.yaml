@@ -75,7 +75,7 @@ lessons:
             - { id: c, text: "E0382: borrow of moved value", why: "`&mut self` borrows `c`; it doesn't move it." }
           answer: a
         explanation: "A `&mut self` method needs a mutable borrow, which needs `let mut c`."
-        concepts: [method.self]
+        concepts: [method.self, err.E0596]
 
       - type: decode-error
         id: decode-coin
@@ -180,7 +180,7 @@ lessons:
           expectErrors: [E0424]
         answer: 4
         explanation: "`minutes` has no `self` parameter, so line 5 can't use `self` and line 11 can't call it as a method. Write `fn minutes(&self) -> u32`."
-        concepts: [method.self]
+        concepts: [method.self, err.E0424]
 
       - type: mcq
         id: mcq-matches
@@ -269,7 +269,7 @@ lessons:
           - { id: c, text: "`bonus` needs to be `mut`", why: "Nothing changes `bonus`. The problem is its type." }
         answer: a
         explanation: "`+` isn't defined between `i32` and `Option<i32>`. Rust makes you decide what to do about `None` before you can add."
-        concepts: [option.type-safety]
+        concepts: [option.type-safety, err.E0277]
 
       - type: fill-tokens
         id: fill-let-else-flag

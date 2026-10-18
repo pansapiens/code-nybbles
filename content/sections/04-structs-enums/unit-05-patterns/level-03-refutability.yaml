@@ -64,7 +64,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "The types fit: `Some(litres)` is an `Option` pattern." }
           answer: a
         explanation: "The compiler checks types, not values. An `Option` could be `None`, and a plain `let` can't handle that."
-        concepts: [pattern.refutability]
+        concepts: [pattern.refutability, err.E0005]
 
       - type: concept
         id: concept-handle-failure
@@ -150,7 +150,7 @@ lessons:
           expectErrors: [E0005]
         answer: 3
         explanation: "A `for` loop's pattern must match every item, and `Some(r)` doesn't match `None` (E0005). Loop over `item` and use `if let Some(r) = item` inside."
-        concepts: [pattern.refutability]
+        concepts: [pattern.refutability, err.E0005]
 
       - type: match-pairs
         id: pairs-on-failure
@@ -208,7 +208,7 @@ lessons:
           - { id: c, text: "`r` needs a type annotation", why: "Rust knows `r` is an `f64` from the variant. The problem is that the pattern can fail." }
         answer: a
         explanation: "The compiler goes by the type, not by the value you wrote on line 7. Any `Shape` might be a `Square`."
-        concepts: [pattern.refutability, enum.data]
+        concepts: [pattern.refutability, enum.data, err.E0005]
 
       - type: compiles
         id: compiles-tuple-struct-let
@@ -325,7 +325,7 @@ lessons:
           expectErrors: [E0005]
         answer: 4
         explanation: "Line 3 is fine: an array of length 2 always matches `[first, second]`. Line 4 isn't: `first` is an `Option`, which could be `None`."
-        concepts: [pattern.refutability, pattern.destructure]
+        concepts: [pattern.refutability, pattern.destructure, err.E0005]
 
       - type: predict-output
         id: tiles-if-let-loop
@@ -444,7 +444,7 @@ lessons:
           - { id: c, code: "let Cmd::Move { x, .. } = cmd;", why: "Still refutable: `cmd` could be `Quit`. It also no longer binds `y`." }
         answer: a
         explanation: "`let ... else` accepts a refutable pattern, as long as the `else` block leaves when it fails."
-        concepts: [pattern.refutability, match.let-else]
+        concepts: [pattern.refutability, match.let-else, err.E0005]
 
       - type: fill-tokens
         id: fill-while-let
@@ -485,7 +485,7 @@ lessons:
           expectErrors: [E0005]
         answer: 3
         explanation: "`true` is a literal, so `(round, true)` fails on `(2, false)`. Loop over `(round, won)` and test `if won` inside."
-        concepts: [pattern.refutability]
+        concepts: [pattern.refutability, err.E0005]
 
       - type: mcq
         id: mcq-which-compiles

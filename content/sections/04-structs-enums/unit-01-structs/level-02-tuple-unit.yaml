@@ -85,7 +85,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "The types are fine. `Point` has only fields `0` and `1`." }
           answer: a
         explanation: "`Point` has two fields, `.0` and `.1`. Asking for `.2` is E0609, caught at compile time."
-        concepts: [struct.tuple]
+        concepts: [struct.tuple, err.E0609]
 
       - type: concept
         id: concept-newtype
@@ -293,7 +293,7 @@ lessons:
           expectErrors: [E0609]
         answer: 5
         explanation: "`Point` is a tuple struct, so its fields are `p.0` and `p.1`. There is no field `x` (E0609)."
-        concepts: [struct.tuple]
+        concepts: [struct.tuple, err.E0609]
 
       - type: true-false
         id: tf-mixed-types
@@ -502,7 +502,7 @@ lessons:
           expectErrors: [E0369]
         answer: 6
         explanation: "A new struct doesn't get `+` automatically (E0369). Add the numbers inside instead: `Metres(a.0 + b.0)`."
-        concepts: [struct.tuple]
+        concepts: [struct.tuple, err.E0369]
 
       - type: mcq
         id: mcq-kelvin
@@ -541,7 +541,7 @@ lessons:
           - { id: c, code: "let red = Colour(255, 0,);", why: "A trailing comma doesn't add a value. There are still only two." }
         answer: a
         explanation: "`Colour` has three fields, so creating one takes three values. E0061 counts the arguments for you."
-        concepts: [struct.tuple]
+        concepts: [struct.tuple, err.E0061]
 
       - type: predict-output
         id: predict-coupe

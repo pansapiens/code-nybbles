@@ -1,7 +1,7 @@
 id: first-steps.variables.let
 title: Naming values with let
 icon: tag
-concepts: [var.let, style.snake-case]
+concepts: [var.let, style.snake-case, err.E0425]
 reviewConcepts: [intro.main, macro.println-basic]
 lessons:
   - id: l1
@@ -106,7 +106,7 @@ lessons:
             - { id: c, text: "Variables can't be printed", why: "They can. The problem is the order of the lines." }
           answer: a
         explanation: "A variable exists only from its `let` line onwards. Move the `let` above the `println!`."
-        concepts: [var.let]
+        concepts: [var.let, err.E0425]
 
       - type: concept
         id: concept-text-values
@@ -227,7 +227,7 @@ lessons:
           expectErrors: [E0425]
         answer: 5
         explanation: "There's no variable called `levels`. The variable created on line 3 is `level`."
-        concepts: [var.let, compiler.read-error]
+        concepts: [var.let, compiler.read-error, err.E0425]
 
       - type: decode-error
         id: decode-missing-let
@@ -246,7 +246,7 @@ lessons:
           - { id: c, text: "Numbers can't be stored in variables", why: "They can, once the variable is created with `let`." }
         answer: a
         explanation: "Without `let`, `score = 10;` tries to change an existing variable. None exists, so the compiler reports `cannot find value`."
-        concepts: [var.let, compiler.read-error]
+        concepts: [var.let, compiler.read-error, err.E0425]
 
       - type: fill-tokens
         id: fill-two-vars
@@ -377,7 +377,7 @@ lessons:
           - { id: c, text: "`println!` can't print numbers", why: "It can. The compiler can't find `Score`." }
         answer: a
         explanation: "Rust treats `Score` and `score` as different names. The compiler even suggests the similar name `score`."
-        concepts: [var.let, compiler.read-error]
+        concepts: [var.let, compiler.read-error, err.E0425]
 
       - type: match-pairs
         id: pairs-names

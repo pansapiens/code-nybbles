@@ -338,7 +338,7 @@ lessons:
           - { id: c, text: "Change line 2 to `let team = ...`", why: "Without `mut`, the `push` on line 6 wouldn't be allowed at all." }
         answer: a
         explanation: "`clone()` makes `captain` its own `String`, so it no longer borrows `team` and the `push` is fine."
-        concepts: [vec.borrow, own.clone, borrow.fixes]
+        concepts: [vec.borrow, own.clone, borrow.fixes, err.E0502]
 
       - type: predict-output
         id: predict-tiles-index-kept

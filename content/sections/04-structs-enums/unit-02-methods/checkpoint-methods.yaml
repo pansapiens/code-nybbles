@@ -333,4 +333,4 @@ lessons:
           expectErrors: [E0596]
         answer: 8
         explanation: "The error points at line 9, but the mistake is the parameter on line 8: `refuel` needs `t: &mut Tank` to call a `&mut self` method."
-        concepts: [method.auto-ref, own.param-choice]
+        concepts: [method.auto-ref, own.param-choice, err.E0596]

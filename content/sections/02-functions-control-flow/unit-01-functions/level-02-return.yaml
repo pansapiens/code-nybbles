@@ -149,7 +149,7 @@ lessons:
             - { id: c, text: "`let` before `5`", why: "`let` needs a name, and it wouldn't return anything." }
           answer: a
         explanation: "Without `->`, a function returns `()`, so a body ending in `5` is a type error. The compiler's help suggests adding `-> i32`."
-        concepts: [fn.return]
+        concepts: [fn.return, err.E0308]
 
       - type: predict-output
         id: predict-nested-calls
@@ -226,7 +226,7 @@ lessons:
           - { id: c, text: "`is_adult` needs a second parameter", why: "The call passes one argument for one parameter, which matches." }
         answer: a
         explanation: "A comparison like `age >= 18` is `true` or `false`. Changing the return type to `-> bool` fixes it."
-        concepts: [fn.return, types.bool]
+        concepts: [fn.return, types.bool, err.E0308]
 
       - type: predict-output
         id: predict-tuple-return
@@ -448,7 +448,7 @@ lessons:
           - { id: c, text: "A function call can't be stored in a variable", why: "It can, as long as the function returns something useful." }
         answer: a
         explanation: "`greet` has no `->`, so `message` holds `()`. `{}` can't display `()`, so the compiler reports E0277."
-        concepts: [fn.return, types.unit]
+        concepts: [fn.return, types.unit, err.E0277]
 
       - type: predict-output
         id: predict-arg-unchanged

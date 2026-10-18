@@ -51,7 +51,7 @@ lessons:
             - { id: c, text: "`{:?}` can't print an array of tuples", why: "It can. The array itself isn't valid, because its elements differ in type." }
           answer: a
         explanation: "Every element of an array must have the same type. `4.5` makes the second tuple `(i32, f64)`."
-        concepts: [types.array, types.tuple]
+        concepts: [types.array, types.tuple, err.E0308]
 
       - type: decode-error
         id: decode-display-pair
@@ -71,7 +71,7 @@ lessons:
           - { id: c, code: 'println!("{city}: {}", range[0]);', why: "Tuples don't use square brackets. That's E0608." }
         answer: a
         explanation: "The tuple needs `{:?}`. `city` is text, which `{}` prints fine."
-        concepts: [fmt.debug, compiler.read-error]
+        concepts: [fmt.debug, compiler.read-error, err.E0277]
 
       - type: mcq
         id: mcq-runtime-or-compile
@@ -209,7 +209,7 @@ lessons:
           - { id: c, text: "Numbers this big need `i64`", why: "1920 fits in an `i32`. The error is the tuple pattern on an array." }
         answer: a
         explanation: "A tuple pattern only matches a tuple. Making `size` a tuple, `(1920, 1080)`, would fix it."
-        concepts: [types.tuple, types.array, compiler.read-error]
+        concepts: [types.tuple, types.array, compiler.read-error, err.E0308]
 
       - type: mcq
         id: mcq-panic-read

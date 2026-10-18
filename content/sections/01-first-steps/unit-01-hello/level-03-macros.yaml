@@ -1,7 +1,7 @@
 id: first-steps.hello.macros
 title: The ! means macro
 icon: sparkles
-concepts: [macro.bang]
+concepts: [macro.bang, err.E0423]
 reviewConcepts: [intro.main, macro.println-basic]
 lessons:
   - id: l1
@@ -64,7 +64,7 @@ lessons:
           expectErrors: [E0423]
         answer: 3
         explanation: "`println` without `!` names the macro as if it were a function. Macro calls need the `!`."
-        concepts: [macro.bang]
+        concepts: [macro.bang, err.E0423]
 
       - type: concept
         id: concept-why-macro
@@ -128,7 +128,7 @@ lessons:
             - { id: c, text: "`main` needs a return type", why: "`fn main()` with no return type is fine." }
           answer: a
         explanation: "Without `!`, Rust looks for a function called `println`, but `println` is a macro."
-        concepts: [macro.bang]
+        concepts: [macro.bang, err.E0423]
 
       - type: mcq
         id: mcq-vec-macro
@@ -180,7 +180,7 @@ lessons:
           expectErrors: [E0423]
         answer: 4
         explanation: "Line 4 calls `println` without `!`. Line 3 is fine: `println!()` prints an empty line."
-        concepts: [macro.bang]
+        concepts: [macro.bang, err.E0423]
 
       - type: mcq
         id: mcq-main-vs-println
@@ -260,7 +260,7 @@ lessons:
           - { id: c, text: "The text needs single quotes", why: "Text goes in double quotes, as it is here. The problem is the missing `!`." }
         answer: a
         explanation: "The error says Rust expected a function but found a macro, and the `help` line shows where to add `!`."
-        concepts: [macro.bang]
+        concepts: [macro.bang, err.E0423]
 
       - type: parsons
         id: parsons-gap
@@ -374,4 +374,4 @@ lessons:
           expectErrors: [E0423]
         answer: 5
         explanation: "Line 5 is missing the `!`, so Rust looks for a function called `println` and doesn't find one."
-        concepts: [macro.bang]
+        concepts: [macro.bang, err.E0423]

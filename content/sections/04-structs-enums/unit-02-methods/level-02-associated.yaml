@@ -1,7 +1,7 @@
 id: structs-enums.methods.associated
 title: Associated functions and new
 icon: package
-concepts: [method.associated, style.new]
+concepts: [method.associated, style.new, err.E0424]
 reviewConcepts: [method.self, struct.define, own.move, err.E0382, fn.return]
 lessons:
   - id: l1
@@ -152,7 +152,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "The types line up. The problem is calling `new` with a dot." }
           answer: a
         explanation: "`new` has no `self` parameter, so it isn't a method and can't be called with a dot. Write `Timer::new()`."
-        concepts: [method.associated]
+        concepts: [method.associated, err.E0599]
 
       - type: match-pairs
         id: pairs-call-kinds
@@ -230,7 +230,7 @@ lessons:
           - { id: c, code: "let die = Self::d6();", why: "`Self` only works inside an `impl` block. In `main`, name the type." }
         answer: a
         explanation: "The compiler says `d6` is an associated function, not a method. Call it on the type: `Dice::d6()`."
-        concepts: [method.associated]
+        concepts: [method.associated, err.E0599]
 
       - type: true-false
         id: tf-new-keyword
@@ -269,7 +269,7 @@ lessons:
             - { id: c, text: "`lose_life` must be called as `Player::lose_life()`", why: "It's a method, so `hero.lose_life()` is the right form. The variable needs `mut`." }
           answer: a
         explanation: "The value from `new` is stored in an immutable variable, so it can't be borrowed mutably (E0596)."
-        concepts: [style.new, method.self]
+        concepts: [style.new, method.self, err.E0596]
 
       - type: predict-output
         id: predict-two-constructors
@@ -320,7 +320,7 @@ lessons:
           expectErrors: [E0425]
         answer: 10
         explanation: "`new` belongs to `Lamp`, so outside the `impl` block you must call it as `Lamp::new()`."
-        concepts: [method.associated]
+        concepts: [method.associated, err.E0425]
 
       - type: compiles
         id: compiles-self-in-associated
@@ -348,7 +348,7 @@ lessons:
             - { id: c, text: "Associated functions can't take parameters", why: "They can take any parameters, like `start` here. They don't take `self`." }
           answer: a
         explanation: "There's no value to read in an associated function. It should use its parameter: `Self { coins: start * 2 }`."
-        concepts: [method.associated]
+        concepts: [method.associated, err.E0424]
 
       - type: true-false
         id: tf-mixed-impl
@@ -505,7 +505,7 @@ lessons:
           - { id: c, code: "Self { coins: Self.coins + n }", why: "`Self` is a type. A type has no `coins` value to read." }
         answer: a
         explanation: "An associated function has no `self` to read from (E0424). Build the new value from the parameter `n`."
-        concepts: [method.associated]
+        concepts: [method.associated, err.E0424]
 
       - type: predict-output
         id: predict-player-hp

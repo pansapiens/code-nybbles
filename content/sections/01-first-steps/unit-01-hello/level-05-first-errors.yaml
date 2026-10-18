@@ -1,7 +1,7 @@
 id: first-steps.hello.first-errors
 title: Your first compiler errors
 icon: bug
-concepts: [compiler.read-error]
+concepts: [compiler.read-error, err.E0765]
 reviewConcepts: [intro.what-is-rust, intro.main, macro.println-basic, macro.bang, syntax.comments]
 lessons:
   - id: l1
@@ -108,7 +108,7 @@ lessons:
           - { id: c, text: "The `}` on line 4 is missing", why: "The `}` is there, but Rust reads it as part of the unfinished text." }
         answer: a
         explanation: "The text that starts on line 2 never closes there, so Rust thinks a new string starts at the closing quote on line 3 and runs to the end of the file."
-        concepts: [compiler.read-error, macro.println-basic]
+        concepts: [compiler.read-error, macro.println-basic, err.E0765]
 
       - type: true-false
         id: tf-line-always
@@ -145,7 +145,7 @@ lessons:
           expectErrors: [E0765]
         answer: 3
         explanation: "Line 3 is missing the `\"` after `Middle`. The compiler reports it on line 4, where the leftover quote starts a string that never ends."
-        concepts: [compiler.read-error]
+        concepts: [compiler.read-error, err.E0765]
 
       - type: decode-error
         id: decode-misspelled-macro
@@ -417,4 +417,4 @@ lessons:
           - { id: c, text: "Add a `;` after the comment", why: "Comments never need `;`. The help line points to `//`." }
         answer: a
         explanation: "A `///` doc comment must come before something to document. For a plain note, use `//`."
-        concepts: [compiler.read-error, syntax.comments]
+        concepts: [compiler.read-error, syntax.comments, err.E0585]

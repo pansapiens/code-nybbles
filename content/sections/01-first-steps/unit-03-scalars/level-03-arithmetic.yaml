@@ -1,7 +1,7 @@
 id: first-steps.scalars.arithmetic
 title: Decimals and arithmetic
 icon: calculator
-concepts: [types.float, ops.arith]
+concepts: [types.float, ops.arith, err.E0277]
 reviewConcepts: [types.int, types.inference, var.mut, fmt.inline-args]
 lessons:
   - id: l1
@@ -141,7 +141,7 @@ lessons:
             let total = 2 + 1.5; // error[E0277]
           verify: compile-fail
           expectErrors: [E0277]
-        concepts: [ops.arith, types.float]
+        concepts: [ops.arith, types.float, err.E0277]
 
       - type: compiles
         id: compiles-price-count
@@ -162,7 +162,7 @@ lessons:
             - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign in this program." }
           answer: a
         explanation: "`price` is a float and `count` is an integer, so `*` can't combine them. Writing `let count = 3.0;` fixes it."
-        concepts: [ops.arith, types.float]
+        concepts: [ops.arith, types.float, err.E0277]
 
       - type: predict-output
         id: predict-display-whole-float
@@ -211,7 +211,7 @@ lessons:
           - { id: c, code: "let average: f64 = 15 / 2.0;", why: "The annotation doesn't change `15`. It's still an integer divided by a float." }
         answer: a
         explanation: "`15` is an integer and `2.0` is a float, so `/` can't combine them. Writing `15.0` makes both sides floats."
-        concepts: [ops.arith, types.float, compiler.read-error]
+        concepts: [ops.arith, types.float, compiler.read-error, err.E0277]
 
       - type: predict-output
         id: predict-precedence
@@ -249,7 +249,7 @@ lessons:
           expectErrors: [E0277]
         answer: 4
         explanation: "`subtotal` is a float, but `2` is an integer. Line 4 needs `2.0` (or `tip`)."
-        concepts: [ops.arith, types.float]
+        concepts: [ops.arith, types.float, err.E0277]
 
       - type: predict-output
         id: predict-mut-float
@@ -336,7 +336,7 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`weight` is only given one value." }
           answer: a
         explanation: "`5` is an integer literal, and Rust won't use it as an `f32`. Write `5.0` instead."
-        concepts: [types.float]
+        concepts: [types.float, err.E0308]
 
       - type: parsons
         id: parsons-fahrenheit

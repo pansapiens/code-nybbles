@@ -468,7 +468,7 @@ lessons:
           expectErrors: [E0425]
         answer: 10
         explanation: "`last` is created inside the loop's block, so it's gone after the `}`. To use it outside, give it back with `break last`."
-        concepts: [ctrl.loop, ctrl.break-value]
+        concepts: [ctrl.loop, ctrl.break-value, err.E0425]
 
       - type: decode-error
         id: decode-break-unit

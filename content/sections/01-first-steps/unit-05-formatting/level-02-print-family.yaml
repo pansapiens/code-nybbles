@@ -176,7 +176,7 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`message` is only assigned once." }
           answer: a
         explanation: "`println!` prints and gives back `()`, the unit value, which `{}` can't display. To keep the text, use `format!`."
-        concepts: [macro.print-family, types.unit]
+        concepts: [macro.print-family, types.unit, err.E0277]
 
       - type: spot-bug
         id: spot-two-lines
@@ -407,7 +407,7 @@ lessons:
           - { id: c, code: 'let text = "{hp} hp";', why: "That compiles, but a plain string isn't filled in, so it prints `[{hp} hp]`." }
         answer: a
         explanation: "`println!` returns `()`, which `{}` can't display. `format!` returns the filled-in text instead."
-        concepts: [macro.print-family, types.unit]
+        concepts: [macro.print-family, types.unit, err.E0277]
 
       - type: mcq
         id: mcq-prints-nothing

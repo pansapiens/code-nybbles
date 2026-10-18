@@ -185,7 +185,7 @@ lessons:
             }
           verify: compile-fail
           expectErrors: [E0596]
-        concepts: [borrow.shared]
+        concepts: [borrow.shared, err.E0596]
 
       - type: compiles
         id: compiles-change-through-ref
@@ -208,7 +208,7 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "No variable is assigned twice. The problem is changing the text through `r`." }
           answer: a
         explanation: "`r` is a `&` reference, so `push_str` can't change the text through it, even though `s` is `mut`."
-        concepts: [borrow.shared]
+        concepts: [borrow.shared, err.E0596]
 
       - type: predict-output
         id: predict-show-twice
@@ -250,7 +250,7 @@ lessons:
           expectErrors: [E0308]
         answer: 7
         explanation: "`print_len` wants a `&String`, but line 7 passes the `String` itself (E0308). Write `print_len(&city)`."
-        concepts: [borrow.shared, fn.params]
+        concepts: [borrow.shared, fn.params, err.E0308]
 
       - type: decode-error
         id: decode-moved-into-fn
@@ -441,7 +441,7 @@ lessons:
             - { id: c, text: "E0596: cannot borrow as mutable", why: "Nothing tries to change the text." }
           answer: a
         explanation: "`shout` wants an owned `String`, but `&word` is a `&String`. The two types don't match."
-        concepts: [borrow.shared, fn.params]
+        concepts: [borrow.shared, fn.params, err.E0308]
 
       - type: decode-error
         id: decode-e0596
@@ -465,7 +465,7 @@ lessons:
           - { id: c, text: "`push_str` can't add text that starts with `#`", why: "Any text is fine. The problem is what kind of reference `s` is." }
         answer: a
         explanation: "A `&String` lets the function read, not change. `mut` on `label` doesn't change what the reference allows."
-        concepts: [borrow.shared]
+        concepts: [borrow.shared, err.E0596]
 
       - type: mcq
         id: mcq-borrow-vs-clone
@@ -497,7 +497,7 @@ lessons:
           expectErrors: [E0308]
         answer: 8
         explanation: "`count(b)` passes a `String` where `count` wants a `&String`. It should be `count(&b)`."
-        concepts: [borrow.shared]
+        concepts: [borrow.shared, err.E0308]
 
       - type: true-false
         id: tf-borrow-frees

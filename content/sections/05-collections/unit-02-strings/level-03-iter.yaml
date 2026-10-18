@@ -114,7 +114,7 @@ lessons:
             - { id: c, text: "`word` needs `mut`", why: "Reading doesn't need `mut`. Rust needs you to choose characters or bytes." }
           answer: a
         explanation: "E0277: `String` is not an iterator. Rust makes you pick: `.chars()` for characters or `.bytes()` for bytes."
-        concepts: [string.iter]
+        concepts: [string.iter, err.E0277]
 
       - type: predict-output
         id: predict-capitals
@@ -243,7 +243,7 @@ lessons:
           expectErrors: [E0308]
         answer: 5
         explanation: "`c` is a `char`, but `\"a\"` is a `&str` (E0308). Compare with `'a'` in single quotes."
-        concepts: [string.iter, types.char]
+        concepts: [string.iter, types.char, err.E0308]
 
       - type: decode-error
         id: decode-loop-string
@@ -264,7 +264,7 @@ lessons:
           - { id: c, code: "for word in text.chars() {", why: "That compiles, but it prints one character per line, not one word." }
         answer: a
         explanation: "`String` is not an iterator (E0277). `split_whitespace()` says you want the words."
-        concepts: [string.iter]
+        concepts: [string.iter, err.E0277]
 
       - type: match-pairs
         id: pairs-iters

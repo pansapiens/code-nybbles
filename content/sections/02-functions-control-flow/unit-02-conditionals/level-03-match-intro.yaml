@@ -1,7 +1,7 @@
 id: functions-control-flow.conditionals.match-intro
 title: A first look at match
 icon: switch
-concepts: [match.intro]
+concepts: [match.intro, err.E0004]
 reviewConcepts: [ctrl.if, ctrl.if-expr, err.E0308, fn.return, fn.params, fn.early-return, types.int, types.bool, types.char, expr.block]
 lessons:
   - id: l1
@@ -203,7 +203,7 @@ lessons:
             - { id: c, text: "E0317: `if` may be missing an `else` clause", why: "That's for `if`. A `match` that misses values gives its own error." }
           answer: a
         explanation: "`dice` is an `i32`, which could be any value from about -2 billion to 2 billion. The compiler checks the type, not the value 3, so it wants an arm for the rest."
-        concepts: [match.intro]
+        concepts: [match.intro, err.E0004]
 
       - type: decode-error
         id: decode-e0004-fix
@@ -225,7 +225,7 @@ lessons:
           - { id: c, code: "default: println!(\"too many\"),", why: "That's `switch` syntax from other languages. Rust uses `_ =>`." }
         answer: a
         explanation: "The compiler lists the values that aren't covered, such as numbers below 1 and above 4. A final `_` arm covers all of them."
-        concepts: [match.intro]
+        concepts: [match.intro, err.E0004]
 
       - type: concept
         id: concept-match-value
@@ -448,7 +448,7 @@ lessons:
           - { id: d, text: "Every value above 255", why: "A `u8` can't go above 255, so there's nothing there to cover." }
         answer: a
         explanation: "The two ranges skip exactly one `u8` value, 100. The compiler reports `pattern 100_u8 not covered`."
-        concepts: [match.intro, types.int]
+        concepts: [match.intro, types.int, err.E0004]
 
       - type: predict-output
         id: predict-match-bool

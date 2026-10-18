@@ -1,7 +1,7 @@
 id: functions-control-flow.functions.define
 title: Defining functions
 icon: pencil
-concepts: [fn.define, fn.params]
+concepts: [fn.define, fn.params, err.E0061]
 reviewConcepts: [intro.main, macro.println-basic, var.let, fmt.placeholders, fmt.inline-args, style.snake-case, compiler.read-error]
 lessons:
   - id: l1
@@ -252,7 +252,7 @@ lessons:
           - { id: c, text: "`4` is the wrong type for `width`", why: "`4` is a fine `i32`. The problem is the missing second argument." }
         answer: a
         explanation: "E0061 means the number of arguments doesn't match the number of parameters. The note shows the definition, so you can see what it expects."
-        concepts: [fn.params, compiler.read-error]
+        concepts: [fn.params, compiler.read-error, err.E0061]
 
       - type: predict-output
         id: predict-arg-order
@@ -292,7 +292,7 @@ lessons:
           expectErrors: [E0308]
         answer: 2
         explanation: "`level` is an `i32`, a whole number, but the call on line 2 passes `7.5`. Rust never converts the argument for you."
-        concepts: [fn.params]
+        concepts: [fn.params, err.E0308]
 
       - type: mcq
         id: mcq-argument
@@ -429,7 +429,7 @@ lessons:
             - { id: c, text: "E0061: wrong number of arguments", why: "`greet` takes no parameters and is called with none, so the count matches." }
           answer: a
         explanation: "A function can't see the variables of the function that calls it. Pass the value in as a parameter: `fn greet(name: &str)` and `greet(name)`."
-        concepts: [fn.params, compiler.read-error]
+        concepts: [fn.params, compiler.read-error, err.E0425]
 
       - type: decode-error
         id: decode-e0425-typo
@@ -451,7 +451,7 @@ lessons:
           - { id: c, code: "let print_scroe = 10;", why: "That makes a variable, not a function, so the call still fails." }
         answer: a
         explanation: "The call has a typo. The compiler's help points out that a function with a similar name, `print_score`, exists."
-        concepts: [fn.define, compiler.read-error]
+        concepts: [fn.define, compiler.read-error, err.E0425]
 
       - type: mcq
         id: mcq-matching-call

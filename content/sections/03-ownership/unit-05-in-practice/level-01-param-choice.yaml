@@ -161,7 +161,7 @@ lessons:
             - { id: c, text: "Write `let mut score = 5;`", why: "`main` already has that. The parameter type `&i32` is what's read-only." }
           answer: a
         explanation: "You can't assign through a shared reference `&i32`. To change the caller's value, both the parameter and the call need `&mut`."
-        concepts: [own.param-choice, borrow.mut]
+        concepts: [own.param-choice, borrow.mut, err.E0594]
 
       - type: predict-output
         id: predict-copy-arg
@@ -266,7 +266,7 @@ lessons:
             - { id: c, text: "E0382: borrow of moved value", why: "`&name` borrows. Nothing is moved." }
           answer: a
         explanation: "`shout` expects `&mut String` but gets `&String`. The two reference types differ, so the call must say `&mut name`."
-        concepts: [own.param-choice, borrow.mut]
+        concepts: [own.param-choice, borrow.mut, err.E0308]
 
       - type: fill-tokens
         id: fill-add-item
@@ -309,7 +309,7 @@ lessons:
           expectErrors: [E0596]
         answer: 6
         explanation: "The compiler reports line 7, but the fix is on line 6: `let mut score = 42;`. You can only take `&mut` of a mutable variable."
-        concepts: [own.param-choice, borrow.mut]
+        concepts: [own.param-choice, borrow.mut, err.E0596]
 
       - type: mcq
         id: mcq-which-signature-diagram
@@ -450,7 +450,7 @@ lessons:
           - { id: c, text: "Only change the call to `add_title(&mut name)`", why: "Rust accepts a `&mut String` where `&String` is expected, but inside the function `name` is still a `&String`. `push_str` fails the same way." }
         answer: a
         explanation: "The message says `name` is behind a `&` reference, so it can't be changed. The function needs `&mut String`, and the call needs `&mut name`."
-        concepts: [own.param-choice, borrow.mut]
+        concepts: [own.param-choice, borrow.mut, err.E0596]
 
       - type: spot-bug
         id: spot-log-twice
@@ -494,7 +494,7 @@ lessons:
           - { id: c, text: "Return `message` from `log` and ignore the result", why: "Returning gives ownership back only if you store it: `let message = log(message);`. Ignoring it drops the text." }
         answer: a
         explanation: "`log` only reads its text, so a shared borrow is enough. Borrowing twice is fine because neither borrow changes anything."
-        concepts: [own.param-choice, slice.str-param]
+        concepts: [own.param-choice, slice.str-param, err.E0382]
 
       - type: fill-tokens
         id: fill-show-shout

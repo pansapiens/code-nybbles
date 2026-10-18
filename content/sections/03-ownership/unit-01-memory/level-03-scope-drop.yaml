@@ -61,7 +61,7 @@ lessons:
             - { id: c, text: "E0596: cannot borrow as mutable", why: "Nothing changes `word` here. The problem is where line 6 is." }
           answer: a
         explanation: "`word` only exists inside the inner block. On line 6 there's no `word` in scope, so the compiler reports E0425."
-        concepts: [own.scope-drop]
+        concepts: [own.scope-drop, err.E0425]
 
       - type: concept
         id: concept-drop
@@ -229,7 +229,7 @@ lessons:
           - { id: c, text: "Change line 6 to `println!(\"{}\", name.len());`", why: "That still uses `name` outside its scope." }
         answer: a
         explanation: "Without the inner braces, `name`'s scope is the whole of `main`, so line 6 can use it. The compiler's help note says the same thing: `name` is in a different scope."
-        concepts: [own.scope-drop, compiler.read-error]
+        concepts: [own.scope-drop, compiler.read-error, err.E0425]
 
       - type: spot-bug
         id: spot-fn-var
@@ -249,7 +249,7 @@ lessons:
           expectErrors: [E0425]
         answer: 8
         explanation: "`title` belongs to `make_title`'s body and is dropped when it returns. `main` has no variable called `title`."
-        concepts: [own.scope-drop, fn.define]
+        concepts: [own.scope-drop, fn.define, err.E0425]
 
       - type: mcq
         id: mcq-loop-frees
@@ -459,7 +459,7 @@ lessons:
             - { id: c, text: "A `String` can't be created inside an `if`", why: "It can. It's dropped at the end of the `if` block." }
           answer: a
         explanation: "An `if` body is a block like any other. `msg` is dropped at its `}`, so line 6 can't find it (E0425)."
-        concepts: [own.scope-drop, ctrl.if]
+        concepts: [own.scope-drop, ctrl.if, err.E0425]
 
       - type: true-false
         id: tf-shadow-not-freed
@@ -498,7 +498,7 @@ lessons:
           - { id: c, text: "`add_points` must be called after line 8", why: "The order of calls doesn't matter. `main` never has a `points` variable." }
         answer: a
         explanation: "Each function body is its own scope. `points` lives in `add_points`'s frame and is gone when it returns, so `main` gets E0425."
-        concepts: [own.scope-drop, fn.define, compiler.read-error]
+        concepts: [own.scope-drop, fn.define, compiler.read-error, err.E0425]
 
       - type: mcq
         id: mcq-alive-count
@@ -579,7 +579,7 @@ lessons:
           expectErrors: [E0425]
         answer: 6
         explanation: "`row` is created inside the loop body and dropped at the end of each pass. After the loop there's no `row` to print."
-        concepts: [own.scope-drop, ctrl.for]
+        concepts: [own.scope-drop, ctrl.for, err.E0425]
 
       - type: true-false
         id: tf-scope-not-last-use

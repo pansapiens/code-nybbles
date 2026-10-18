@@ -179,7 +179,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "There's no second type to compare with. `Up` isn't one of the variants at all." }
           answer: a
         explanation: "An enum has only the variants you list. `Direction` has no `Up`, so the compiler reports E0599."
-        concepts: [enum.define]
+        concepts: [enum.define, err.E0599]
 
       - type: match-pairs
         id: pairs-enum-parts
@@ -277,7 +277,7 @@ lessons:
           expectErrors: [E0425]
         answer: 8
         explanation: "`Large` on its own isn't in scope. Write `Size::Large` to name the variant through its enum."
-        concepts: [enum.define, compiler.read-error]
+        concepts: [enum.define, compiler.read-error, err.E0425]
 
       - type: compiles
         id: compiles-no-debug
@@ -303,7 +303,7 @@ lessons:
             - { id: c, text: "A value inside `Small`, like `Small(1)`", why: "Variants don't need data. The problem is printing." }
           answer: a
         explanation: "Enums, like structs, can't be printed with `{:?}` until they derive `Debug`. The compiler reports E0277."
-        concepts: [enum.define, derive.debug]
+        concepts: [enum.define, derive.debug, err.E0277]
 
       - type: decode-error
         id: decode-lowercase-variant
@@ -328,7 +328,7 @@ lessons:
           - { id: c, text: "`Size` needs to be written in lowercase", why: "Enum names use `CamelCase`. The variant `small` doesn't exist." }
         answer: a
         explanation: "`small` and `Small` are different names. The compiler can't find `small` in `Size`, so it reports E0599."
-        concepts: [enum.define, compiler.read-error]
+        concepts: [enum.define, compiler.read-error, err.E0599]
 
       - type: mcq
         id: mcq-call-turn
@@ -484,7 +484,7 @@ lessons:
           - { id: c, text: "Change line 8 to `let mut a = Direction::North;`", why: "`mut` lets you change `a`, but the move on line 9 still happens." }
         answer: a
         explanation: "Borrowing with `&a` leaves the value in `a`. Both can then be printed, and `{:?}` prints through a reference."
-        concepts: [enum.define, own.move, borrow.shared]
+        concepts: [enum.define, own.move, borrow.shared, err.E0382]
 
       - type: predict-output
         id: predict-for-directions

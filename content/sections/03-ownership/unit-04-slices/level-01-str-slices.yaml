@@ -143,7 +143,7 @@ lessons:
             - { id: c, text: "Ranges can't be used on text", why: "They can, but only through a reference: `&s[0..2]`." }
           answer: a
         explanation: "A slice is always used through a reference. Without `&`, Rust would need to store the text itself in `start`, and its size isn't known when compiling (E0277)."
-        concepts: [slice.str]
+        concepts: [slice.str, err.E0277]
 
       - type: fill-tokens
         id: fill-moon
@@ -245,7 +245,7 @@ lessons:
             - { id: c, text: "A `String` can only be sliced once", why: "You can make as many shared slices as you like." }
           answer: a
         explanation: "`part` borrows `s`'s text and is used on line 5. Moving `s` before then would leave `part` pointing at text `s` no longer owns."
-        concepts: [slice.str, own.move]
+        concepts: [slice.str, own.move, err.E0505]
 
       - type: spot-bug
         id: spot-cat-bounds

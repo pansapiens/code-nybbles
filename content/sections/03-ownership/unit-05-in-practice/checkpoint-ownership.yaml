@@ -222,7 +222,7 @@ lessons:
           - { id: c, text: "The slice `0..3` is out of range", why: "`draft` has 5 bytes, so `0..3` is fine. This is a compile-time borrow error, E0505." }
         answer: a
         explanation: "E0505 means moving a value while it's borrowed. Printing `summary` before the move, or slicing `finished` instead, fixes it."
-        concepts: [borrow.fixes, slice.str]
+        concepts: [borrow.fixes, slice.str, err.E0505]
 
       - type: compiles
         id: compiles-str-param-both

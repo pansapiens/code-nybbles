@@ -312,7 +312,7 @@ lessons:
           - { id: c, text: "`lap` needs a type, like `lap: i32`", why: "The loop variable's type is worked out from what you loop over." }
         answer: a
         explanation: "`for` needs something that gives values one by one, like a range or an array. A plain integer isn't one."
-        concepts: [ctrl.for, range.basics]
+        concepts: [ctrl.for, range.basics, err.E0277]
 
   - id: l3
     exercises:
@@ -404,7 +404,7 @@ lessons:
             - { id: c, text: "`i` must be `mut` to be printed", why: "Printing only reads a value. `i` is out of scope after the loop." }
           answer: a
         explanation: "The loop variable belongs to the loop's block. After the `}`, `i` is gone, so the compiler can't find it."
-        concepts: [ctrl.for]
+        concepts: [ctrl.for, err.E0425]
 
       - type: predict-output
         id: predict-nested
@@ -483,4 +483,4 @@ lessons:
           - { id: c, code: "let mut count: i32 = 3;", why: "`mut` doesn't change the type. Indexes must be `usize`." }
         answer: a
         explanation: "Array indexes must be `usize`. `scores.len()` is a `usize`, so `i` becomes one too."
-        concepts: [ctrl.for, range.basics, types.int]
+        concepts: [ctrl.for, range.basics, types.int, err.E0277]

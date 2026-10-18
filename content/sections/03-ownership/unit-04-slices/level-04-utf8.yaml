@@ -234,7 +234,7 @@ lessons:
             - { id: c, text: "`s` must be `mut` to read from it", why: "Reading never needs `mut`." }
           answer: a
         explanation: "E0277: `str` cannot be indexed by an integer. Text can only be indexed with ranges, like `&s[0..1]`."
-        concepts: [slice.utf8]
+        concepts: [slice.utf8, err.E0277]
 
       - type: true-false
         id: tf-s0-first-char
@@ -347,7 +347,7 @@ lessons:
           - { id: c, text: "`second` should be a `&str`, not a `char`", why: "Even as `&str`, `name[1]` isn't allowed. You'd need a range like `&name[1..2]`." }
         answer: a
         explanation: "Because characters can take several bytes, Rust doesn't offer `name[1]`. The compiler suggests `.chars()` instead."
-        concepts: [slice.utf8]
+        concepts: [slice.utf8, err.E0277]
 
       - type: predict-output
         id: predict-hello-world-cn

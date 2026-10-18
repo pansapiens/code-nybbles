@@ -1,7 +1,7 @@
 id: first-steps.variables.const
 title: Constants
 icon: lock
-concepts: [var.const]
+concepts: [var.const, err.E0435]
 reviewConcepts: [var.let, var.mut, var.shadowing, style.snake-case]
 lessons:
   - id: l1
@@ -193,7 +193,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "The problem is where the value comes from, not its type." }
           answer: a
         explanation: "`lives` is a variable, so its value isn't fixed at compile time. A constant can only use literals and other constants."
-        concepts: [var.const]
+        concepts: [var.const, err.E0435]
 
       - type: predict-output
         id: predict-const-from-const
@@ -398,7 +398,7 @@ lessons:
           - { id: c, text: "Constants can't be multiplied", why: "They can, like `60 * 60`. The problem is using a variable." }
         answer: a
         explanation: "Constants are worked out at compile time, before `level` exists. The compiler suggests using `let` instead."
-        concepts: [var.const]
+        concepts: [var.const, err.E0435]
 
       - type: predict-output
         id: predict-step

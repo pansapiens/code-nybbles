@@ -116,7 +116,7 @@ lessons:
             - { id: c, text: "You can't change elements inside a loop", why: "You can, with `&mut`. You need `*` to reach the number." }
           answer: a
         explanation: "`+=` works on the `i32`, not on the reference to it. The error is E0368: binary assignment operation `+=` cannot be applied to type `&mut {integer}`."
-        concepts: [vec.iter, borrow.mut]
+        concepts: [vec.iter, borrow.mut, err.E0368]
 
       - type: concept
         id: concept-for-move
@@ -216,7 +216,7 @@ lessons:
           - { id: c, code: "for s in stock {", why: "Then `s` is an owned copy of the number, so the vector wouldn't change, and `stock` would be moved before line 6." }
         answer: a
         explanation: "`s` is a `&mut i32`. `*s` is the number in the vector, which `-= 1` can change."
-        concepts: [vec.iter, borrow.mut]
+        concepts: [vec.iter, borrow.mut, err.E0368]
 
       - type: spot-bug
         id: spot-assign-shared
@@ -234,7 +234,7 @@ lessons:
           expectErrors: [E0594]
         answer: 3
         explanation: "The error is reported on line 4, but the loop on line 3 only borrows with `&`, which can't change anything. Write `for l in &mut lights`."
-        concepts: [vec.iter, borrow.shared]
+        concepts: [vec.iter, borrow.shared, err.E0594]
 
       - type: predict-output
         id: predict-mut-strings
@@ -277,7 +277,7 @@ lessons:
             - { id: c, text: "You can't use `&mut` in a `for` loop", why: "You can. That's how you change every element." }
           answer: a
         explanation: "You can only borrow a variable mutably if it's declared `mut`. The error is E0596."
-        concepts: [vec.iter, var.mut]
+        concepts: [vec.iter, var.mut, err.E0596]
 
       - type: match-pairs
         id: pairs-loop-forms

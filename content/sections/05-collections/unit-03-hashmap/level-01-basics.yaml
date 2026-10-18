@@ -403,7 +403,7 @@ lessons:
             - { id: c, text: "`len` doesn't work on maps", why: "`len` counts a map's entries. The problem is the missing `mut`." }
           answer: a
         explanation: "`insert` borrows the map mutably, which needs `let mut scores`. The error is E0596: cannot borrow as mutable."
-        concepts: [map.basics, var.mut]
+        concepts: [map.basics, var.mut, err.E0596]
 
       - type: fill-tokens
         id: fill-contains-remove

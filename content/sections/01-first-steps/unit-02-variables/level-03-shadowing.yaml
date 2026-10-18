@@ -1,7 +1,7 @@
 id: first-steps.variables.shadowing
 title: Shadowing
 icon: layers
-concepts: [var.shadowing]
+concepts: [var.shadowing, err.E0308]
 reviewConcepts: [var.let, var.mut, err.E0384]
 lessons:
   - id: l1
@@ -91,7 +91,7 @@ lessons:
             - { id: c, text: "E0425: cannot find value in this scope", why: "`spaces` exists on line 1." }
           answer: a
         explanation: "`mut` lets you change the value but not its type. `spaces` holds text, so it can't be given a number."
-        concepts: [var.shadowing, var.mut]
+        concepts: [var.shadowing, var.mut, err.E0308]
 
       - type: mcq
         id: mcq-shadow-vs-assign
@@ -390,7 +390,7 @@ lessons:
           - { id: c, code: "mut input = input.len();", why: "A new variable needs `let`. `mut` on its own isn't valid." }
         answer: a
         explanation: "`input` holds text, so assigning a number is a type mismatch. Shadowing with `let` makes a new `input` that holds the number."
-        concepts: [var.shadowing]
+        concepts: [var.shadowing, err.E0308]
 
       - type: spot-bug
         id: spot-shadow-ok

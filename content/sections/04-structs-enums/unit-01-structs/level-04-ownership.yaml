@@ -694,7 +694,7 @@ lessons:
             - { id: c, text: "E0106: missing lifetime specifier", why: "The function returns an owned `String`, so no lifetime is needed." }
           answer: a
         explanation: "`p` only borrows the `Pet`, so `take_name` can't move the `String` out of it. Returning `p.name.clone()` would work."
-        concepts: [struct.ownership, borrow.shared]
+        concepts: [struct.ownership, borrow.shared, err.E0507]
 
       - type: predict-output
         id: predict-match-qty

@@ -1,7 +1,7 @@
 id: ownership.borrowing.dangling
 title: No dangling references
 icon: shield
-concepts: [borrow.dangling, err.E0106]
+concepts: [borrow.dangling, err.E0106, err.E0597]
 reviewConcepts: [borrow.shared, own.scope-drop, own.fn-return, own.clone, borrow.nll]
 lessons:
   - id: l1
@@ -34,7 +34,7 @@ lessons:
                 - { name: s, id: s, points: h1 }
           heap:
             - { id: h1, value: '"hi"', freed: true }
-        concepts: [borrow.dangling]
+        concepts: [borrow.dangling, err.E0597]
 
       - type: true-false
         id: tf-scope-frees
@@ -244,7 +244,7 @@ lessons:
           expectErrors: [E0597]
         answer: 6
         explanation: "`city` lives until the `}` on line 6. Line 7 uses `r` after that, so the compiler reports E0597."
-        concepts: [borrow.dangling, own.scope-drop]
+        concepts: [borrow.dangling, own.scope-drop, err.E0597]
 
       - type: predict-output
         id: predict-in-out
@@ -286,7 +286,7 @@ lessons:
           - { id: c, text: "`let r;` needs a value straight away", why: "It can get its value later, as long as that happens before it's used." }
         answer: a
         explanation: "The value has to live at least as long as the reference is used. `s` doesn't, so Rust stops `r` dangling."
-        concepts: [borrow.dangling]
+        concepts: [borrow.dangling, err.E0597]
 
       - type: true-false
         id: tf-runtime

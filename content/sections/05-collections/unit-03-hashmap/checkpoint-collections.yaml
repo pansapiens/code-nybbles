@@ -328,7 +328,7 @@ lessons:
           - { id: c, text: "Change line 6 to `for n in names {`", why: "Then `n` is an owned but immutable `String`, and `names` is moved, so line 9 fails." }
         answer: a
         explanation: "`&names` lends shared references that can't change anything. `&mut names` lends each `String` mutably, so `push` works."
-        concepts: [vec.iter, borrow.mut]
+        concepts: [vec.iter, borrow.mut, err.E0596]
 
       - type: predict-output
         id: predict-btree-letters

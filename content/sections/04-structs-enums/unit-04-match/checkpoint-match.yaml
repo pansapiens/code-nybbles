@@ -135,7 +135,7 @@ lessons:
           expectErrors: [E0027]
         answer: 10
         explanation: "The `Rect` pattern doesn't mention `h`. Write `Shape::Rect { w, .. }` or bind both fields."
-        concepts: [match.bind]
+        concepts: [match.bind, err.E0027]
 
       - type: predict-output
         id: predict-tiles-while-let

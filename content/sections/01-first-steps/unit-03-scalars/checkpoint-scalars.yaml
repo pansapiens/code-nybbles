@@ -66,7 +66,7 @@ lessons:
           - { id: c, code: "let distance: f64 = speed * hours;", why: "The annotation doesn't convert `speed`. It's still an integer times a float." }
         answer: a
         explanation: "Convert the integer to `f64` so both sides are floats: 60.0 * 1.5 = 90.0, printed as `90`."
-        concepts: [ops.arith, types.as-cast, types.float]
+        concepts: [ops.arith, types.as-cast, types.float, err.E0277]
 
       - type: predict-output
         id: predict-u8-as-i8
@@ -152,7 +152,7 @@ lessons:
           expectErrors: [E0308]
         answer: 5
         explanation: "`lives` is a `u8`, not a `bool`. A comparison would make one: `let alive = lives > 0;`."
-        concepts: [types.bool, types.char, var.const]
+        concepts: [types.bool, types.char, var.const, err.E0308]
 
       - type: compiles
         id: compiles-no-mut-add
@@ -172,7 +172,7 @@ lessons:
             - { id: c, text: "E0277: cannot add a float to an integer", why: "There are no floats here." }
           answer: a
         explanation: "`+=` changes `level`, so it needs `let mut`. The type is fine."
-        concepts: [var.mut, types.int]
+        concepts: [var.mut, types.int, err.E0384]
 
       - type: mcq
         id: mcq-print-b
@@ -246,4 +246,4 @@ lessons:
             - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
           answer: a
         explanation: "`f32` and `f64` are different types, even though both are floats. Convert one: `small as f64 + large`."
-        concepts: [types.float, types.as-cast]
+        concepts: [types.float, types.as-cast, err.E0308]

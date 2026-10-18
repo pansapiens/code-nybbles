@@ -70,7 +70,7 @@ lessons:
             - { id: c, text: "`{total:.1}` needs a float", why: "Precision on an integer is allowed. The error is on line 2." }
           answer: a
         explanation: "`10` makes `total` an integer, and `+=` with `2.5` mixes types. Writing `10.0` makes it a float, and then it prints `12.5`."
-        concepts: [types.float, types.int, var.mut]
+        concepts: [types.float, types.int, var.mut, err.E0277]
 
       - type: predict-output
         id: predict-minutes
@@ -215,7 +215,7 @@ lessons:
           expectErrors: [E0277]
         answer: false
         explanation: "Arrays don't have a `{}` format. Use `{:?}` to print `[1, 2, 3]`."
-        concepts: [fmt.debug, types.array]
+        concepts: [fmt.debug, types.array, err.E0277]
 
       - type: match-pairs
         id: pairs-errors

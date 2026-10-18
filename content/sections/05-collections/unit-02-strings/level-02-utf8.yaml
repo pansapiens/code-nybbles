@@ -84,7 +84,7 @@ lessons:
             - { id: c, text: "None: it compiles because `hello` is all ASCII", why: "Rust checks the type, not the text. No `String` can be indexed with a number, whatever it holds." }
           answer: a
         explanation: "Strings can't be indexed with a single number, even when every character is 1 byte. Use `.chars().nth(0)` for a character."
-        concepts: [string.utf8]
+        concepts: [string.utf8, err.E0277]
 
       - type: predict-output
         id: predict-naive
@@ -204,7 +204,7 @@ lessons:
           - { id: c, text: "The index should be 1, because strings count from 1", why: "Rust counts from 0. No number works here." }
         answer: a
         explanation: "`str` doesn't support `[number]` indexing. You choose bytes (`as_bytes()`) or characters (`chars()`) instead."
-        concepts: [string.utf8]
+        concepts: [string.utf8, err.E0277]
 
       - type: predict-output
         id: predict-nth
@@ -276,7 +276,7 @@ lessons:
             - { id: c, text: "`word` has moved into `chars()`", why: "`.chars()` only borrows `word`." }
           answer: a
         explanation: "`nth` returns an `Option`, because there might be no such character. Print it with `{first:?}`, or unwrap it with `unwrap_or`."
-        concepts: [string.utf8, option.type-safety]
+        concepts: [string.utf8, option.type-safety, err.E0277]
 
       - type: mcq
         id: mcq-first-char
@@ -354,7 +354,7 @@ lessons:
           - { id: c, text: "Use `word.chars().nth(2)` on its own", why: "That compiles on line 3, but `third` is then an `Option<char>`, and `{third}` can't print an `Option`." }
         answer: a
         explanation: "`.chars()` can't be indexed with `[2]` (E0608). `nth(2)` gives an `Option<char>`, and `unwrap_or('?')` turns it into a `char`."
-        concepts: [string.utf8, option.methods]
+        concepts: [string.utf8, option.methods, err.E0608]
 
       - type: mcq
         id: mcq-len-true
@@ -415,7 +415,7 @@ lessons:
           expectErrors: [E0277]
         answer: 5
         explanation: "Even with a computed position, text can't be indexed with a number (E0277). Use `.chars()` to work with characters instead."
-        concepts: [string.utf8]
+        concepts: [string.utf8, err.E0277]
 
       - type: predict-output
         id: predict-crab

@@ -244,7 +244,7 @@ lessons:
             - { id: c, text: "`scores` can't be used outside the braces", why: "`scores` was created outside the block, so it's still in scope." }
           answer: a
         explanation: "The map holds a `&str` pointing into `name`, but `name` is dropped at the end of the block. Rust reports E0597: `name` does not live long enough."
-        concepts: [map.ownership, borrow.shared]
+        concepts: [map.ownership, borrow.shared, err.E0597]
 
       - type: spot-bug
         id: spot-push-after-insert
@@ -332,7 +332,7 @@ lessons:
             - { id: c, text: "Call `count(shop.clone())`", why: "That compiles, but copies the whole map to count it. Borrowing is cheaper." }
           answer: a
         explanation: "A whole map moves into a function like any other owned value. `count` only reads it, so it should borrow it."
-        concepts: [map.ownership, own.fn-move, own.param-choice]
+        concepts: [map.ownership, own.fn-move, own.param-choice, err.E0382]
 
       - type: decode-error
         id: decode-moved-key

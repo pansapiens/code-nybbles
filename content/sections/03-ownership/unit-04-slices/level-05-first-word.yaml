@@ -361,7 +361,7 @@ lessons:
           - { id: c, text: "A `String` can never be emptied once it's been sliced", why: "It can, once the slice is no longer used." }
         answer: a
         explanation: "The borrow rules turn a bug that would show up at run time into a compile error."
-        concepts: [practice.first-word, borrow.exclusive]
+        concepts: [practice.first-word, borrow.exclusive, err.E0502]
 
       - type: decode-error
         id: decode-move-clear

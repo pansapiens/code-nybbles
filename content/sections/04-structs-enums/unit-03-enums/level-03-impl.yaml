@@ -310,7 +310,7 @@ lessons:
           expectErrors: [E0424]
         answer: 4
         explanation: "The compiler points at `self` on line 5, but the mistake is line 4: `value` has no `&self` parameter, so there's no `self` to match on."
-        concepts: [enum.impl, method.self]
+        concepts: [enum.impl, method.self, err.E0424]
 
       - type: decode-error
         id: decode-missing-self
@@ -337,7 +337,7 @@ lessons:
           - { id: c, text: "Change line 5 to `match Self {`", why: "`Self` is the type name too. You need the value, `self`." }
         answer: a
         explanation: "A method needs a `self` parameter to use `self`. Without it, `value` is an associated function with no value to look at."
-        concepts: [enum.impl, method.self, method.associated]
+        concepts: [enum.impl, method.self, method.associated, err.E0424]
 
       - type: compiles
         id: compiles-call-on-variant
@@ -514,7 +514,7 @@ lessons:
             - { id: c, text: "`*self` can't be assigned a variant", why: "Through `&mut self` you can replace the whole value. The variable `light` is the problem." }
           answer: a
         explanation: "Calling a `&mut self` method borrows `light` mutably, which needs `let mut light`. The compiler reports E0596."
-        concepts: [enum.impl, method.self, borrow.mut]
+        concepts: [enum.impl, method.self, borrow.mut, err.E0596]
 
       - type: predict-output
         id: predict-advance-loop

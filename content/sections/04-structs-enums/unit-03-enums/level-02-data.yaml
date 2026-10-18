@@ -192,7 +192,7 @@ lessons:
             - { id: c, text: "E0599: no variant named `Move`", why: "`Move` exists. It needs two values." }
           answer: a
         explanation: "`Move` holds two `i32`s, so you must give it exactly two. Rust doesn't fill in missing values."
-        concepts: [enum.data]
+        concepts: [enum.data, err.E0061]
 
       - type: match-pairs
         id: pairs-variant-kinds
@@ -360,7 +360,7 @@ lessons:
           - { id: c, text: "`Resize` can't have two fields", why: "Struct-like variants can have as many named fields as you need." }
         answer: a
         explanation: "As with structs, every named field must be given a value. The compiler reports E0063: missing field `height`."
-        concepts: [enum.data]
+        concepts: [enum.data, err.E0063]
 
       - type: fill-tokens
         id: fill-write-field
@@ -501,7 +501,7 @@ lessons:
           - { id: c, text: "Change line 8 to `Colour::Grey { 90, 160, 220 }`", why: "Curly brackets need field names, and `Grey` still holds only one value." }
         answer: a
         explanation: "Three colour values match the `Rgb` variant. `Grey` takes one `u8`, so three arguments is E0061."
-        concepts: [enum.data]
+        concepts: [enum.data, err.E0061]
 
       - type: fill-tokens
         id: fill-two-kinds

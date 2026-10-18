@@ -1,7 +1,7 @@
 id: first-steps.compound.unit
 title: The unit type
 icon: circle
-concepts: [types.unit]
+concepts: [types.unit, err.E0369]
 reviewConcepts: [types.tuple, var.mut, fmt.placeholders, fmt.inline-args, macro.println-basic, compiler.read-error]
 lessons:
   - id: l1
@@ -86,7 +86,7 @@ lessons:
             - { id: c, text: "E0425: cannot find value", why: "Nothing is missing. `println!` gives back `()`, which isn't an `i32`." }
           answer: a
         explanation: "Printing `3` doesn't make `println!` return 3. It returns `()`, which can't go in an `i32`."
-        concepts: [types.unit]
+        concepts: [types.unit, err.E0308]
 
       - type: match-pairs
         id: pairs-unit-tuples
@@ -151,7 +151,7 @@ lessons:
           - { id: c, text: "`println!` can't be used on the right of `let`", why: "It can. The problem is the type: you get `()`, not `i32`." }
         answer: a
         explanation: "The compiler says it expected `i32` but found `()`. Use `lives` directly if you need the number."
-        concepts: [types.unit, compiler.read-error]
+        concepts: [types.unit, compiler.read-error, err.E0308]
 
       - type: compiles
         id: compiles-print-unit
@@ -175,7 +175,7 @@ lessons:
           expectErrors: [E0277]
         answer: false
         explanation: "`{}` is for values meant for people, and `()` isn't one of them. `{:?}` prints it."
-        concepts: [types.unit]
+        concepts: [types.unit, err.E0277]
 
       - type: spot-bug
         id: spot-unit-maths
@@ -192,7 +192,7 @@ lessons:
           expectErrors: [E0369]
         answer: 4
         explanation: "`shown` is `()`, not 7, so it can't be multiplied. Line 4 should use `score * 2`."
-        concepts: [types.unit]
+        concepts: [types.unit, err.E0369]
 
       - type: predict-output
         id: predict-unit-in-tuple
@@ -331,7 +331,7 @@ lessons:
           expectErrors: [E0594]
         answer: 4
         explanation: "`totals` isn't `mut`, so line 4 can't change it. Printing `note` with `{:?}` on line 5 is fine."
-        concepts: [types.tuple, types.unit, var.mut]
+        concepts: [types.tuple, types.unit, var.mut, err.E0594]
 
       - type: decode-error
         id: decode-unit-display
@@ -350,4 +350,4 @@ lessons:
           - { id: c, code: 'println!("{}", result.0);', why: "`()` has no elements, so there's no `.0` to read." }
         answer: a
         explanation: "`()` can't be printed with `{}`, but `{:?}` prints it as `()`."
-        concepts: [types.unit, compiler.read-error]
+        concepts: [types.unit, compiler.read-error, err.E0277]

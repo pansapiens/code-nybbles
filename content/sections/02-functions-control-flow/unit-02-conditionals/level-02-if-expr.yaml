@@ -1,7 +1,7 @@
 id: functions-control-flow.conditionals.if-expr
 title: if gives a value
 icon: equals
-concepts: [ctrl.if-expr]
+concepts: [ctrl.if-expr, err.E0317]
 reviewConcepts: [ctrl.if, expr.vs-stmt, expr.block, err.E0308, fn.return, fn.params, types.unit, types.bool, ops.arith, var.shadowing]
 lessons:
   - id: l1
@@ -223,7 +223,7 @@ lessons:
             - { id: c, text: "`10` needs a `;` after it", why: "A `;` would make the block's value `()`, which still isn't a number." }
           answer: a
         explanation: "Rust needs a value for `bonus` either way. Add `else { 0 }` so both cases give an integer."
-        concepts: [ctrl.if-expr]
+        concepts: [ctrl.if-expr, err.E0317]
 
       - type: predict-output
         id: predict-inline-if
@@ -466,7 +466,7 @@ lessons:
           - { id: c, text: "Write the condition as `score > 50 == true`", why: "The condition is fine. The missing `else` is the problem." }
         answer: a
         explanation: "Without `else`, Rust has no value for `message` when `score > 50` is false. An `else` block giving a `&str` fixes it."
-        concepts: [ctrl.if-expr]
+        concepts: [ctrl.if-expr, err.E0317]
 
       - type: spot-bug
         id: spot-semicolon-return

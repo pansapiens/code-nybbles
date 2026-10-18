@@ -298,7 +298,7 @@ lessons:
           - { id: c, text: "`rooms` needs to be `mut` to be indexed", why: "Reading an element doesn't need `mut`." }
         answer: a
         explanation: "Indexes have the type `usize`. Removing `: i32` lets Rust pick `usize`."
-        concepts: [types.array, compiler.read-error]
+        concepts: [types.array, compiler.read-error, err.E0277]
 
       - type: mcq
         id: mcq-when-caught
@@ -410,7 +410,7 @@ lessons:
           - { id: c, text: "Tuples can't hold numbers above 1000", why: "Any `i32` fits. The problem is the position `.2`." }
         answer: a
         explanation: "A tuple position is always written in the code, so a bad one is always a compile error. Tuples never panic like this."
-        concepts: [types.tuple, types.array-bounds, compiler.read-error]
+        concepts: [types.tuple, types.array-bounds, compiler.read-error, err.E0609]
 
       - type: fill-tokens
         id: fill-first-element

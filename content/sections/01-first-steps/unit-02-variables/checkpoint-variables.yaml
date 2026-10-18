@@ -120,7 +120,7 @@ lessons:
           expectErrors: [E0435]
         answer: 5
         explanation: "Line 4 shadowing `lives` is fine. Line 5 tries to build a constant from a variable, which isn't known at compile time."
-        concepts: [var.const, var.shadowing]
+        concepts: [var.const, var.shadowing, err.E0435]
 
       - type: predict-output
         id: predict-tiles-len
@@ -196,7 +196,7 @@ lessons:
           - { id: c, text: "Text can't be printed with `{level}`", why: "It can. The error is on line 3, the assignment." }
         answer: a
         explanation: "E0308 means mismatched types. To switch to text, shadow with `let level = \"two\";` instead."
-        concepts: [var.mut, var.shadowing]
+        concepts: [var.mut, var.shadowing, err.E0308]
 
       - type: predict-output
         id: predict-start

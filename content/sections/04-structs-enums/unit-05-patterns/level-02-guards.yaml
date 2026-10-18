@@ -507,7 +507,7 @@ lessons:
           expectErrors: [E0425]
         answer: 4
         explanation: "The compiler complains about `n` on line 5, but the fix is on line 4: a range on its own doesn't bind a name. Write `Some(n @ 80..=89)`."
-        concepts: [pattern.at]
+        concepts: [pattern.at, err.E0425]
 
       - type: mcq
         id: mcq-even-arm

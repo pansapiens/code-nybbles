@@ -87,7 +87,7 @@ lessons:
           - { id: c, text: "`level` must be `mut` to be compared", why: "Comparing only reads `level`." }
         answer: a
         explanation: "The `if` is the function's last expression, so it must give a `u32` either way. Add `else { 0 }`."
-        concepts: [ctrl.if-expr, fn.return]
+        concepts: [ctrl.if-expr, fn.return, err.E0317]
 
       - type: spot-bug
         id: spot-else-order
@@ -222,7 +222,7 @@ lessons:
             - { id: c, text: "E0317: `if` may be missing an `else` clause", why: "That error is for `if`. `match` reports missing values as E0004." }
           answer: a
         explanation: "A `bool` has two values and only `true` has an arm. Add `false => ...` or `_ => ...`."
-        concepts: [match.intro]
+        concepts: [match.intro, err.E0004]
 
       - type: mcq
         id: mcq-equivalent

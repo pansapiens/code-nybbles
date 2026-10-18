@@ -220,7 +220,6 @@ also works. CI doesn't need either.
       a course-wide choice); tuple sort order used but not taught (`predict-tiles-sorted`); a `&str` map key
       drawn as a heap label because diagrams can't draw arrows from heap boxes; four near-identical
       borrow-then-push items in 5.1 level 4 lesson 1; a non-compiling `format!` fragment in the 5.2 guidebook
-    - [ ] (new) Error codes used without concepts: E0507, E0596, E0597, E0515, E0433, E0368
     - [x] (new) HashMap output order: every `verify: run` HashMap program rebuilt uncached 3 times, stable
   - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists
     so agents only touch their own unit directory (briefs in the session log of 2026-10-17)
@@ -260,9 +259,10 @@ also works. CI doesn't need either.
 - [x] (new) rust-verify compile checks used `--emit=metadata`, which skips deny-by-default MIR lints
   (`unconditional_panic`, `arithmetic_overflow`); now `--emit=mir`
 - [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives
-- [ ] (new) Register error-code concepts the authors wanted: E0277, E0004, E0317, E0061, E0425, E0069, E0604,
-  E0505, E0506, E0507, E0596, E0597, E0063, E0560, E0594, E0609, E0618, E0369, E0005...
-  (items are tagged with the nearest topic concept for now)
+- [x] (new) Error-code concepts: every code in 3+ compile-fail snippets is an `err.Exxxx` concept (24 new, 31 in
+  all), introduced by the level that first uses it; 583 exercise tags added from `expectErrors`
+  - [ ] (new) Codes used once or twice stay untagged (E0069, E0604, E0560, E0618, ...); rerun the tagging
+    (/tmp/cn-errtag/tag.py, or a build check) as new content adds error items
 - [x] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3): run by default; `compile_fail[,Ecode]`,
   `should_panic`, `no_run`, `ignore` honoured. Found one unannotated panic and one fragment
 - [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports

@@ -101,7 +101,7 @@ lessons:
             - { id: c, text: "E0425: cannot find value in this scope", why: "Nothing is missing. The value has the wrong type." }
           answer: a
         explanation: "`'F'` is a `char`, but the annotation says `&str`. Writing `\"F\"` would fix it."
-        concepts: [string.str-literal-intro, types.char]
+        concepts: [string.str-literal-intro, types.char, err.E0308]
 
       - type: predict-output
         id: predict-len-space
@@ -204,7 +204,7 @@ lessons:
           - { id: c, text: "A number can't be put into text", why: "`format!` turns `score` into text without a problem." }
         answer: a
         explanation: "E0308 means mismatched types. Writing `let msg: String` or removing the annotation fixes it."
-        concepts: [string.str-literal-intro, macro.print-family, compiler.read-error]
+        concepts: [string.str-literal-intro, macro.print-family, compiler.read-error, err.E0308]
 
       - type: spot-bug
         id: spot-number-as-str
@@ -221,7 +221,7 @@ lessons:
           expectErrors: [E0308]
         answer: 4
         explanation: "`36` is an integer, not text. Line 4 needs `\"36\"`, or an integer type such as `u32`."
-        concepts: [string.str-literal-intro]
+        concepts: [string.str-literal-intro, err.E0308]
 
       - type: mcq
         id: mcq-len-type
@@ -356,7 +356,7 @@ lessons:
             - { id: c, text: "`\"hi\"` is too short to be a string", why: "Any length works, even `\"\"`." }
           answer: a
         explanation: "A literal is a `&str`. The compiler reports a type mismatch (E0308) and suggests borrowing, which means adding `&`."
-        concepts: [string.str-literal-intro]
+        concepts: [string.str-literal-intro, err.E0308]
 
       - type: decode-error
         id: decode-char-fix
@@ -375,7 +375,7 @@ lessons:
           - { id: c, code: "let initial: &char = 'A';", why: "`'A'` is a `char`, not a `&char`, so this is still a mismatch." }
         answer: a
         explanation: "Double quotes make a `&str`, which matches the annotation. `let initial: char = 'A';` would also work."
-        concepts: [string.str-literal-intro, types.char, compiler.read-error]
+        concepts: [string.str-literal-intro, types.char, compiler.read-error, err.E0308]
 
       - type: spot-bug
         id: spot-len-no-brackets

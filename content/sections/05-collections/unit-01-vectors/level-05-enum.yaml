@@ -202,7 +202,7 @@ lessons:
           - { id: c, code: "match row[0] {", why: "Matching the value instead of a reference doesn't add the missing `Float` arm." }
         answer: a
         explanation: "Adding an arm for `Cell::Float` covers every variant, so the `match` is exhaustive."
-        concepts: [vec.enum, match.exhaustive]
+        concepts: [vec.enum, match.exhaustive, err.E0004]
 
       - type: predict-output
         id: predict-sum-ints
@@ -531,7 +531,7 @@ lessons:
           expectErrors: [E0507]
         answer: 8
         explanation: "`row[0]` would move the `Cell` out of the vector, which isn't allowed (E0507). Borrow it with `&row[0]` and match on the reference."
-        concepts: [vec.enum, vec.access]
+        concepts: [vec.enum, vec.access, err.E0507]
 
       - type: true-false
         id: tf-match-ref-binding

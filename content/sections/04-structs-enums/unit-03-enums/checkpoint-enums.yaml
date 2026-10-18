@@ -96,7 +96,7 @@ lessons:
           - { id: c, text: "Change line 11 to `println!(\"{score:?}\");`", why: "The error is on line 10, where an `Option` is added to a number. Printing doesn't fix that." }
         answer: a
         explanation: "`bonus(3)` is `Some(3)`, an `Option<u32>`. `unwrap_or(0)` gives the plain 3, and 9 + 3 is 12."
-        concepts: [option.type-safety, option.methods]
+        concepts: [option.type-safety, option.methods, err.E0277]
 
       - type: spot-bug
         id: spot-wrong-pattern-count
@@ -283,7 +283,7 @@ lessons:
           - { id: c, text: "`lives` must be declared `mut`", why: "`unwrap_or` only reads. The method doesn't exist on `u32` at all." }
         answer: a
         explanation: "`unwrap_or` belongs to `Option`. A `u32` always has a value, so there's nothing to unwrap. Use `lives` directly."
-        concepts: [option.methods, option.type-safety]
+        concepts: [option.methods, option.type-safety, err.E0599]
 
       - type: spot-bug
         id: spot-unwrap-div

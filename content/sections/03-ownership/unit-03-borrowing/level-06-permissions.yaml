@@ -1,7 +1,7 @@
 id: ownership.borrowing.permissions
 title: Read, write and own
 icon: key
-concepts: [borrow.permissions]
+concepts: [borrow.permissions, err.E0505, err.E0506, err.E0507]
 reviewConcepts: [borrow.shared, borrow.mut, borrow.exclusive, borrow.nll, own.move, own.clone]
 lessons:
   - id: l1
@@ -115,7 +115,7 @@ lessons:
             - { id: c, text: "Read: `s` can't be read while borrowed", why: "A `&` borrow leaves `s` with Read." }
           answer: a
         explanation: "`r` is still used on line 5, so `s` has only R on line 4. Moving needs O (error E0505)."
-        concepts: [borrow.permissions, own.move]
+        concepts: [borrow.permissions, own.move, err.E0505]
 
       - type: predict-output
         id: predict-ok-bang
@@ -197,7 +197,7 @@ lessons:
             - { id: c, text: "`r` has no Read permission", why: "`r` can read. The problem is changing `score` under it." }
           answer: a
         explanation: "`r` is used on line 5, so on line 4 `score` has only R. Assigning needs W (error E0506)."
-        concepts: [borrow.permissions]
+        concepts: [borrow.permissions, err.E0506]
 
       - type: decode-error
         id: decode-move-out-of-ref
@@ -218,7 +218,7 @@ lessons:
           - { id: c, code: "let owned = r;", why: "That compiles, but it copies the reference: `owned` is a `&String`, not a `String` it owns." }
         answer: a
         explanation: "Through `r` you have R, not O, so you can't move the `String` out. `clone` only needs R and makes a new `String` that `owned` owns."
-        concepts: [borrow.permissions, own.clone]
+        concepts: [borrow.permissions, own.clone, err.E0507]
 
       - type: true-false
         id: tf-ref-own
@@ -283,7 +283,7 @@ lessons:
           expectErrors: [E0502]
         answer: 5
         explanation: "`r` is used again on line 7, so on line 5 `s` has only R. A `&mut` borrow needs R and W."
-        concepts: [borrow.permissions]
+        concepts: [borrow.permissions, err.E0502]
 
       - type: compiles
         id: compiles-clone-read
@@ -372,7 +372,7 @@ lessons:
           - { id: c, text: "`r` was moved into `moved`", why: "Line 4 moves `song`, not `r`." }
         answer: a
         explanation: "`r` is used on line 5, so `song` has only R on line 4. Printing `r` before the move would fix it."
-        concepts: [borrow.permissions, own.move]
+        concepts: [borrow.permissions, own.move, err.E0505]
 
       - type: predict-output
         id: predict-abcd
@@ -416,7 +416,7 @@ lessons:
             - { id: c, text: "Own", why: "It has lost Own too, but `len` doesn't need it. The missing one that matters is Read." }
           answer: a
         explanation: "`w` is used on line 5, so `name` has no permissions on line 4. Reading its length needs R (E0502)."
-        concepts: [borrow.permissions]
+        concepts: [borrow.permissions, err.E0502]
 
       - type: true-false
         id: tf-diagram-readers-done

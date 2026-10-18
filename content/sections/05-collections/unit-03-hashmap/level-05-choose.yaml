@@ -173,7 +173,7 @@ lessons:
             - { id: c, text: "`ids` needs `.get(0)` instead", why: "A `HashSet` has no `get(index)` either. You check values with `contains`." }
           answer: a
         explanation: "A set isn't ordered, so there's no first element to index. The error is E0608: cannot index into a `HashSet`."
-        concepts: [collections.choose]
+        concepts: [collections.choose, err.E0608]
 
   - id: l2
     exercises:
@@ -413,7 +413,7 @@ lessons:
             - { id: c, text: "`q` was moved by `push_back`", why: "`push_back` borrows `q` mutably; it doesn't move it." }
           answer: a
         explanation: "`pop_front` returns an `Option` because the queue might be empty. Print it with `{next:?}` or take the value out with `if let`."
-        concepts: [collections.choose, option.basics]
+        concepts: [collections.choose, option.basics, err.E0277]
 
       - type: decode-error
         id: decode-set-index
@@ -437,7 +437,7 @@ lessons:
           - { id: c, text: "Change line 4 to `let mut guests = HashSet::new(1);`", why: "`new` takes no size, and a size wouldn't make the set indexable." }
         answer: a
         explanation: "A `HashSet` answers \"is this value in the set?\" with `contains`. It has no order, so it can't be indexed."
-        concepts: [collections.choose]
+        concepts: [collections.choose, err.E0608]
 
       - type: mcq
         id: mcq-undo

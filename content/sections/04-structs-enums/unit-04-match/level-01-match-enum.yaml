@@ -329,7 +329,7 @@ lessons:
           expectErrors: [E0599]
         answer: 7
         explanation: "`Light` has no variant called `Yellow`. The arm should be `Light::Amber`."
-        concepts: [match.enum]
+        concepts: [match.enum, err.E0599]
 
       - type: mcq
         id: mcq-new-variant

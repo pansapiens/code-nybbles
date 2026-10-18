@@ -1,7 +1,7 @@
 id: structs-enums.match.if-let
 title: if let, while let and let else
 icon: filter
-concepts: [match.if-let, match.let-else]
+concepts: [match.if-let, match.let-else, err.E0005]
 reviewConcepts: [match.bind, match.enum, match.exhaustive, err.E0004, option.basics, ctrl.while, fn.early-return, types.overflow, err.E0308, err.E0384]
 lessons:
   - id: l1
@@ -135,7 +135,7 @@ lessons:
             - { id: c, text: "`rain` is used twice", why: "`rain` is only used once, on line 3." }
           answer: a
         explanation: "Variables from an `if let` pattern live until the end of its block. Line 6 is outside it, so `mm` can't be found (E0425)."
-        concepts: [match.if-let]
+        concepts: [match.if-let, err.E0425]
 
       - type: predict-output
         id: predict-if-let-enum
@@ -289,7 +289,7 @@ lessons:
             - { id: c, text: "`n` is used before it has a value", why: "`n` has a value whenever line 6 is reached, as long as the `else` leaves." }
           answer: a
         explanation: "If the `else` block finished normally, line 6 would run without an `n`. The compiler reports that the `else` clause does not diverge (E0308)."
-        concepts: [match.let-else]
+        concepts: [match.let-else, err.E0308]
 
       - type: true-false
         id: tf-let-else-scope
@@ -367,7 +367,7 @@ lessons:
           - { id: c, text: "Change line 3 to `let n = Some(slot);`", why: "That wraps `slot` in another `Some`. `n` would be `Some(Some(3))`." }
         answer: a
         explanation: "A plain `let` must match every possible value, and `slot` could be `None` (E0005). `let ... else` says what to do in that case."
-        concepts: [match.let-else]
+        concepts: [match.let-else, err.E0005]
 
   - id: l3
     exercises:
@@ -549,7 +549,7 @@ lessons:
           - { id: c, text: "Replace lines 5 to 7 with `let Some(n) = slot;`", why: "A plain `let` can't handle the `None` case, which is E0005." }
         answer: a
         explanation: "The `else` block must leave. Inside a loop, `continue` skips to the next slot, and the program prints `empty slot` then `8`."
-        concepts: [match.let-else]
+        concepts: [match.let-else, err.E0308]
 
       - type: predict-output
         id: predict-review-weather

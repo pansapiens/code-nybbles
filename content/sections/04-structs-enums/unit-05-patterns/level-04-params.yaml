@@ -77,7 +77,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "The compiler reports the wrong number of arguments first." }
           answer: a
         explanation: "`show` takes one tuple. Call it as `show((1, 2))`, with the tuple's own brackets inside the call's brackets."
-        concepts: [pattern.params, fn.params]
+        concepts: [pattern.params, fn.params, err.E0061]
 
       - type: concept
         id: concept-ref-param
@@ -216,7 +216,7 @@ lessons:
             - { id: c, text: "E0061: wrong number of arguments", why: "There's one parameter and one argument." }
           answer: a
         explanation: "Any caller could pass `None`, and a parameter has no way to handle that. Take `n: Option<i32>` and `match` on it inside."
-        concepts: [pattern.params, pattern.refutability]
+        concepts: [pattern.params, pattern.refutability, err.E0005]
 
       - type: mcq
         id: mcq-for-ref-type
@@ -249,7 +249,7 @@ lessons:
           - { id: c, text: "Rename `x` and `y`", why: "The names are fine. The `&` in the pattern expects a reference, but the type is a plain tuple." }
         answer: a
         explanation: "A `&` in the pattern only matches a reference type. Either drop it, or change the type to `&(i32, i32)` and call `show(&(1, 2))`."
-        concepts: [pattern.params]
+        concepts: [pattern.params, err.E0308]
 
       - type: fill-tokens
         id: fill-enumerate-s
@@ -287,7 +287,7 @@ lessons:
           expectErrors: [E0308]
         answer: 3
         explanation: "Each item is a pair `(i32, char)`, but the pattern has three parts, which is E0308. Write `for (count, item) in stock`."
-        concepts: [pattern.params]
+        concepts: [pattern.params, err.E0308]
 
       - type: true-false
         id: tf-any-irrefutable
@@ -450,7 +450,7 @@ lessons:
           - { id: c, text: "The pattern needs a `&`: `&Some((x, y))`", why: "Looping over the array by value gives plain `Option`s, and a `&` wouldn't make the pattern irrefutable anyway." }
         answer: a
         explanation: "A `for` loop's pattern must match every item. `None` doesn't match `Some((x, y))`, so it's E0005."
-        concepts: [pattern.params, pattern.refutability]
+        concepts: [pattern.params, pattern.refutability, err.E0005]
 
       - type: fill-tokens
         id: fill-span
@@ -519,7 +519,7 @@ lessons:
           expectErrors: [E0005]
         answer: true
         explanation: "The compiler checks the pattern against the type `Option<i32>`, not the values in the array. That type includes `None`."
-        concepts: [pattern.params, pattern.refutability]
+        concepts: [pattern.params, pattern.refutability, err.E0005]
 
       - type: predict-output
         id: predict-middle

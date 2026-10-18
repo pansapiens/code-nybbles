@@ -123,7 +123,7 @@ lessons:
             - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
           answer: a
         explanation: "`u8` and `i32` are different types, and Rust won't add them together. Both values need the same integer type."
-        concepts: [types.inference, types.int]
+        concepts: [types.inference, types.int, err.E0308]
 
       - type: match-pairs
         id: pairs-literal-types
@@ -221,7 +221,7 @@ lessons:
           - { id: c, text: "`level` must be marked `mut`", why: "Nothing is changed after it's created, so `mut` isn't needed." }
         answer: a
         explanation: "Rust never converts between integer types on its own. Even though 3 would fit in an `i32`, a `u8` value can't go into an `i32` variable."
-        concepts: [types.inference, types.int, compiler.read-error]
+        concepts: [types.inference, types.int, compiler.read-error, err.E0308]
 
       - type: true-false
         id: tf-auto-convert
@@ -260,7 +260,7 @@ lessons:
           expectErrors: [E0308]
         answer: 4
         explanation: "`speed` is a `u16`, but `over` is declared as an `i32`. The types must match exactly."
-        concepts: [types.inference, types.int]
+        concepts: [types.inference, types.int, err.E0308]
 
       - type: mcq
         id: mcq-pick-suffix

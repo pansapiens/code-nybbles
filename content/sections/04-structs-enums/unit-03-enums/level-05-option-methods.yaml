@@ -111,7 +111,7 @@ lessons:
             - { id: c, text: "`if ticket.unwrap_or(0) {`", why: "That gives a `u32`, and a number isn't a `bool` either." }
           answer: a
         explanation: "An `if` condition must be a `bool`, and Rust has no truthiness. `is_some()` gives the `bool` you need."
-        concepts: [option.methods, ctrl.if]
+        concepts: [option.methods, ctrl.if, err.E0308]
 
       - type: mcq
         id: mcq-is-some-type
@@ -353,7 +353,7 @@ lessons:
           - { id: c, text: "Change line 3 to `let extra = bonus.is_some();`", why: "`is_some()` is a `bool`, and you can't add a `bool` to a number." }
         answer: a
         explanation: "`map` still returns an `Option`, which can't be added to a number (E0277). `unwrap_or(0)` turns `None` into 0, so `total` is 100."
-        concepts: [option.methods, option.type-safety]
+        concepts: [option.methods, option.type-safety, err.E0277]
 
       - type: mcq
         id: mcq-unwrap-or-vs-unwrap

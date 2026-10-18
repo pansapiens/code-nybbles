@@ -213,7 +213,7 @@ lessons:
           - { id: c, code: "let mut names = [", why: "`mut` lets the array change. The loop still moves it." }
         answer: a
         explanation: "The loop only prints, so borrowing the array is enough. Then `names` is still available on line 9."
-        concepts: [own.iter-ref, borrow.fixes]
+        concepts: [own.iter-ref, borrow.fixes, err.E0382]
 
       - type: predict-output
         id: predict-total-len

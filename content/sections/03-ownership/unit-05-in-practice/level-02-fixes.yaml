@@ -64,7 +64,7 @@ lessons:
           - { id: c, code: "let mut home = city;", why: "Still a move. `mut` only lets `home` change." }
         answer: a
         explanation: "A shared borrow lets `home` read the text while `city` keeps ownership, so both can be printed."
-        concepts: [borrow.fixes, borrow.shared]
+        concepts: [borrow.fixes, borrow.shared, err.E0382]
 
       - type: concept
         id: concept-e0505
@@ -90,7 +90,7 @@ lessons:
                 - { name: view, points: name }
           heap:
             - { id: h1, value: '"Ann"' }
-        concepts: [borrow.fixes]
+        concepts: [borrow.fixes, err.E0505]
 
       - type: compiles
         id: compiles-e0505-restructured
@@ -150,7 +150,7 @@ lessons:
           - { id: c, text: "`best` should be a `&mut` reference", why: "A mutable borrow would conflict with the assignment too." }
         answer: a
         explanation: "E0506 means assigning to a value that's borrowed. `best` is used on line 5, so its borrow covers line 4. To keep the old number, copy it: `let best = score;`."
-        concepts: [borrow.fixes]
+        concepts: [borrow.fixes, err.E0506]
 
       - type: match-pairs
         id: pairs-error-codes
@@ -253,7 +253,7 @@ lessons:
           expectErrors: [E0505]
         answer: 8
         explanation: "Line 8 moves `note` while `preview` still borrows it, because `preview` is used on line 9. That's E0505."
-        concepts: [borrow.fixes, own.fn-move]
+        concepts: [borrow.fixes, own.fn-move, err.E0505]
 
       - type: decode-error
         id: decode-e0505-ticket
@@ -278,7 +278,7 @@ lessons:
           - { id: c, text: "Call `submit(&ticket)`", why: "`submit` takes a `String`, so passing `&String` is a type mismatch (E0308)." }
         answer: a
         explanation: "Once `label` is finished, nothing borrows `ticket`, so moving it into `submit` is allowed."
-        concepts: [borrow.fixes, borrow.nll]
+        concepts: [borrow.fixes, borrow.nll, err.E0505]
 
       - type: predict-output
         id: predict-nll-count
@@ -380,7 +380,7 @@ lessons:
           - { id: c, code: "let mut first = &scores[0];", why: "`mut` on `first` lets it point somewhere else later. It's still a borrow of `scores[0]`." }
         answer: a
         explanation: "`i32` is `Copy`, so `scores[0]` copies the number and nothing stays borrowed. `first` keeps 3 after `scores[0]` changes."
-        concepts: [borrow.fixes, own.copy]
+        concepts: [borrow.fixes, own.copy, err.E0506]
 
       - type: compiles
         id: compiles-swap-same
@@ -447,7 +447,7 @@ lessons:
           expectErrors: [E0506]
         answer: 4
         explanation: "`+=` assigns to `level` while `shown` still borrows it (E0506). Printing `shown` before line 4, or writing `let shown = level;`, fixes it."
-        concepts: [borrow.fixes]
+        concepts: [borrow.fixes, err.E0506]
 
       - type: mcq
         id: mcq-when-clone

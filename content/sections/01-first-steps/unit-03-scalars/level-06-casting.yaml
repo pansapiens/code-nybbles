@@ -405,7 +405,7 @@ lessons:
             - { id: c, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic or float here." }
           answer: a
         explanation: "Even though every `u8` fits in a `u32`, Rust won't convert for you. Write `score as u32`."
-        concepts: [types.as-cast, types.inference]
+        concepts: [types.as-cast, types.inference, err.E0308]
 
       - type: predict-output
         id: predict-negative-float-u8

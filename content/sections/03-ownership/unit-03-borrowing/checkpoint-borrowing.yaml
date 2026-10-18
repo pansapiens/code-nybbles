@@ -112,7 +112,7 @@ lessons:
           expectErrors: [E0308]
         answer: 2
         explanation: "`n` is a reference, so `n = 0` tries to store a number in it (E0308). Write `*n = 0;` to change the value it points at."
-        concepts: [borrow.mut]
+        concepts: [borrow.mut, err.E0308]
 
       - type: true-false
         id: tf-no-params
@@ -200,7 +200,7 @@ lessons:
             - { id: c, text: "`r` must be `mut` to be given a value later", why: "`let r;` can get its value once without `mut`." }
           answer: a
         explanation: "`r` would dangle on line 7, so Rust rejects it (E0597: `note` does not live long enough)."
-        concepts: [borrow.dangling]
+        concepts: [borrow.dangling, err.E0597]
 
       - type: parsons
         id: parsons-tide
@@ -281,4 +281,4 @@ lessons:
           - { id: c, text: "Change line 1 to `fn take(mut s: &String) -> String`", why: "`mut s` lets `s` point elsewhere. `*s` still has no Own, so it can't be moved out." }
         answer: a
         explanation: "Through `&String` you have R but not O, so you can't move the `String` out (E0507). `clone` makes a new one to return."
-        concepts: [borrow.permissions, own.clone]
+        concepts: [borrow.permissions, own.clone, err.E0507]

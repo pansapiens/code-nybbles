@@ -1,7 +1,7 @@
 id: first-steps.compound.arrays
 title: Arrays
 icon: grid
-concepts: [types.array]
+concepts: [types.array, err.E0599]
 reviewConcepts: [types.tuple, types.unit, var.mut, var.shadowing, fmt.placeholders, fmt.inline-args, compiler.read-error]
 lessons:
   - id: l1
@@ -88,7 +88,7 @@ lessons:
             - { id: c, text: "E0277: cannot be formatted", why: "Nothing is printed. The array itself can't mix types." }
           answer: a
         explanation: "The first element makes it an array of integers, so `true` doesn't fit. A tuple `(1, true)` would work."
-        concepts: [types.array]
+        concepts: [types.array, err.E0308]
 
       - type: fill-tokens
         id: fill-array-length
@@ -145,7 +145,7 @@ lessons:
             - { id: c, text: "Arrays can't have a type written out", why: "They can: `[i32; 3]`. Here the length doesn't match." }
           answer: a
         explanation: "The length is part of the type, so `[i32; 3]` needs exactly three values. This is E0308, mismatched types."
-        concepts: [types.array]
+        concepts: [types.array, err.E0308]
 
   - id: l2
     exercises:
@@ -197,7 +197,7 @@ lessons:
           expectErrors: [E0594]
         answer: 4
         explanation: "`seats` isn't `mut`, so its elements can't change. Line 2 would need `let mut seats`."
-        concepts: [types.array, var.mut]
+        concepts: [types.array, var.mut, err.E0594]
 
       - type: compiles
         id: compiles-push
@@ -216,7 +216,7 @@ lessons:
             - { id: c, text: "`push` only works on arrays of text", why: "No array has `push`, whatever its type." }
           answer: a
         explanation: "Error E0599 says there's no method `push` for arrays. An array's length is fixed by its type."
-        concepts: [types.array]
+        concepts: [types.array, err.E0599]
 
       - type: predict-output
         id: predict-add-prices
@@ -251,7 +251,7 @@ lessons:
           - { id: c, code: 'println!("{}", heights(0));', why: "Parentheses after a name call it like a function. Arrays use square brackets." }
         answer: a
         explanation: "The dot with a number is for tuples. Arrays are indexed with square brackets."
-        concepts: [types.array, types.tuple, compiler.read-error]
+        concepts: [types.array, types.tuple, compiler.read-error, err.E0609]
 
       - type: mcq
         id: mcq-index-type
@@ -270,7 +270,7 @@ lessons:
           - { id: d, text: "`f64`", why: "An index can't be a fraction. It must be a `usize`." }
         answer: a
         explanation: "Array indexes have the type `usize`. Without the `: i32`, Rust would make `slot` a `usize` for you."
-        concepts: [types.array]
+        concepts: [types.array, err.E0277]
 
       - type: true-false
         id: tf-repeat-len
@@ -424,7 +424,7 @@ lessons:
           - { id: c, text: "Arrays can't hold floats", why: "They can, as long as every element is a float. Write `19.0`." }
         answer: a
         explanation: "All elements must have one type. Rust won't turn `19` into a float for you, so write `19.0`."
-        concepts: [types.array, compiler.read-error]
+        concepts: [types.array, compiler.read-error, err.E0308]
 
       - type: true-false
         id: tf-array-grows

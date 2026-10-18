@@ -83,7 +83,7 @@ lessons:
             - { id: c, text: "`push` only works on `Vec::new()` vectors", why: "`push` works on any `Vec`, as long as the variable is `mut`." }
           answer: a
         explanation: "`push` changes the vector, and variables are immutable by default. The error is E0596: cannot borrow `names` as mutable. Write `let mut names`."
-        concepts: [vec.basics, var.mut]
+        concepts: [vec.basics, var.mut, err.E0596]
 
       - type: fill-tokens
         id: fill-new-push
@@ -225,7 +225,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "There are no two types to mismatch. Rust has no type at all for the elements." }
           answer: a
         explanation: "Nothing is ever pushed, so Rust can't work out what `names` holds. Write `let names: Vec<String> = Vec::new();` or similar."
-        concepts: [vec.basics, types.inference]
+        concepts: [vec.basics, types.inference, err.E0282]
 
       - type: true-false
         id: tf-pop-empty
@@ -281,7 +281,7 @@ lessons:
           - { id: c, code: "let queue = Vec::new(u32);", why: "`Vec::new()` takes no arguments. The type goes in an annotation." }
         answer: a
         explanation: "The compiler needs to know the element type. An annotation like `Vec<u32>` gives it."
-        concepts: [vec.basics, types.inference]
+        concepts: [vec.basics, types.inference, err.E0282]
 
       - type: mcq
         id: mcq-diagram-grow
@@ -412,7 +412,7 @@ lessons:
           - { id: c, text: "`scores` can't be printed with `{:?}`", why: "A `Vec` of numbers prints fine with `{:?}`. The error is on line 3." }
         answer: a
         explanation: "Calling `push` borrows `scores` mutably, which needs `let mut scores`. The compiler's help suggests exactly that."
-        concepts: [vec.basics, var.mut]
+        concepts: [vec.basics, var.mut, err.E0596]
 
       - type: predict-output
         id: predict-tiles-mixed

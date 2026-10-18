@@ -100,7 +100,7 @@ lessons:
           - { id: c, text: "`n > 1` isn't a valid condition", why: "`n > 1` is a `bool`, which is fine. The missing `else` is the problem." }
         answer: a
         explanation: "An `if` used as a value must give a value either way. Add `else { \"small\" }`."
-        concepts: [ctrl.if-expr, ctrl.for]
+        concepts: [ctrl.if-expr, ctrl.for, err.E0317]
 
       - type: fill-tokens
         id: fill-block-loop
@@ -286,7 +286,7 @@ lessons:
             - { id: c, text: "E0425: cannot find value in this scope", why: "`n` is the parameter, so it's in scope inside the function." }
           answer: a
         explanation: "Parameters are immutable, like `let` variables. Copy it first with `let mut left = n;`, or write the parameter as `mut n: u32`."
-        concepts: [fn.params, ctrl.while]
+        concepts: [fn.params, ctrl.while, err.E0384]
 
       - type: decode-error
         id: decode-missing-return-type

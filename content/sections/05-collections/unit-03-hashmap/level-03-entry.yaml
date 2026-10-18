@@ -106,7 +106,7 @@ lessons:
             - { id: c, text: "`+=` doesn't work on numbers stored in a map", why: "It does, once you dereference: `*n += 1`." }
           answer: a
         explanation: "You can't add 1 to a reference. `*n` reaches the `i32` it points to. The error is E0368: `+=` cannot be applied to `&mut {integer}`."
-        concepts: [map.entry, borrow.mut]
+        concepts: [map.entry, borrow.mut, err.E0368]
 
       - type: predict-output
         id: predict-count-array
@@ -244,7 +244,7 @@ lessons:
           expectErrors: [E0368]
         answer: 7
         explanation: "`or_insert` returns a `&mut` reference, so the line needs `*` in front to add 1 to the count."
-        concepts: [map.entry]
+        concepts: [map.entry, err.E0368]
 
       - type: predict-output
         id: predict-letters
@@ -310,7 +310,7 @@ lessons:
           - { id: c, text: "Change line 6 to `n = n + 1;`", why: "Adding to a reference fails the same way. You need the value behind it: `*n`." }
         answer: a
         explanation: "`n` is a `&mut i32`. `*n` is the `i32` it points to, which `+= 1` can change."
-        concepts: [map.entry, borrow.mut]
+        concepts: [map.entry, borrow.mut, err.E0368]
 
       - type: mcq
         id: mcq-entry-vs-insert

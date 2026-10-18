@@ -1,7 +1,7 @@
 id: ownership.borrowing.mut
 title: Borrowing to change
 icon: pencil
-concepts: [borrow.mut]
+concepts: [borrow.mut, err.E0368]
 reviewConcepts: [borrow.shared, var.mut, err.E0384, fn.params]
 lessons:
   - id: l1
@@ -68,7 +68,7 @@ lessons:
             - { id: c, text: "Nothing; it's `push_str` that isn't allowed on references", why: "`push_str` works through a `&mut` reference. The problem is that `s` isn't `mut`." }
           answer: a
         explanation: "`&mut s` needs `s` to be declared `mut`. The compiler says: cannot borrow `s` as mutable, as it is not declared as mutable (E0596)."
-        concepts: [borrow.mut, var.mut]
+        concepts: [borrow.mut, var.mut, err.E0596]
 
       - type: concept
         id: concept-mut-fn
@@ -224,7 +224,7 @@ lessons:
             - { id: c, code: "&r += 1;", why: "`&r` borrows `r` again. To reach the number, use `*r`." }
           answer: a
         explanation: "`+=` works on numbers, not on a `&mut i32`. `*r` reaches the number the reference points at."
-        concepts: [borrow.mut]
+        concepts: [borrow.mut, err.E0368]
 
       - type: decode-error
         id: decode-shared-param
@@ -248,7 +248,7 @@ lessons:
           - { id: c, text: "Change line 1 to `fn add(mut s: &String)`", why: "That lets the function point `s` somewhere else. It still can't change the text through a `&` reference." }
         answer: a
         explanation: "The function needs a mutable reference, so both the parameter type and the call change to `&mut`."
-        concepts: [borrow.mut, borrow.shared]
+        concepts: [borrow.mut, borrow.shared, err.E0596]
 
       - type: predict-output
         id: predict-double
@@ -291,7 +291,7 @@ lessons:
           expectErrors: [E0596]
         answer: 6
         explanation: "The compiler reports line 7, but the fix is on line 6: `price` must be `let mut` to be lent as `&mut`."
-        concepts: [borrow.mut, var.mut]
+        concepts: [borrow.mut, var.mut, err.E0596]
 
       - type: true-false
         id: tf-diagram-copy
@@ -471,7 +471,7 @@ lessons:
           - { id: c, text: "`push_str` can't be used inside a function", why: "It can. The error is about the argument's type on line 7." }
         answer: a
         explanation: "`&s` and `&mut s` are different types. The call has to lend `&mut s` to match the parameter."
-        concepts: [borrow.mut]
+        concepts: [borrow.mut, err.E0308]
 
       - type: compiles
         id: compiles-read-through-mut
@@ -536,7 +536,7 @@ lessons:
           expectErrors: [E0308]
         answer: 7
         explanation: "`level_up` wants a `&mut i32`, but line 7 lends a `&i32`. Write `level_up(&mut level)`."
-        concepts: [borrow.mut]
+        concepts: [borrow.mut, err.E0308]
 
       - type: match-pairs
         id: pairs-param-types

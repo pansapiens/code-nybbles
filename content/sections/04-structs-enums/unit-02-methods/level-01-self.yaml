@@ -168,7 +168,7 @@ lessons:
             - { id: c, text: "E0382: borrow of moved value", why: "`&mut self` borrows `laps`; nothing is moved." }
           answer: a
         explanation: "`add` takes `&mut self`, so calling it borrows `laps` mutably. That needs `let mut laps`."
-        concepts: [method.self, borrow.mut]
+        concepts: [method.self, borrow.mut, err.E0596]
 
       - type: fill-tokens
         id: fill-reset
@@ -327,7 +327,7 @@ lessons:
           - { id: c, text: "Change line 7 to `let self.on = true;`", why: "`let` creates a new variable; it can't assign to a field." }
         answer: a
         explanation: "`&self` is a shared borrow, so the method can't change `self.on`. Taking `&mut self` lets it."
-        concepts: [method.self]
+        concepts: [method.self, err.E0594]
 
       - type: predict-output
         id: predict-add-points
@@ -386,7 +386,7 @@ lessons:
           expectErrors: [E0425]
         answer: 7
         explanation: "Inside a method, fields aren't variables on their own. Write `self.degrees += 20;`."
-        concepts: [method.self]
+        concepts: [method.self, err.E0425]
 
       - type: predict-output
         id: predict-read-twice
@@ -443,7 +443,7 @@ lessons:
           - { id: c, text: "Methods can't change fields", why: "They can, with `&mut self`. The variable needs `mut` too." }
         answer: a
         explanation: "Calling a `&mut self` method borrows the value mutably, and only a `mut` variable can be borrowed that way (E0596)."
-        concepts: [method.self, borrow.mut]
+        concepts: [method.self, borrow.mut, err.E0596]
 
       - type: true-false
         id: tf-self-borrow-review
@@ -542,7 +542,7 @@ lessons:
           expectErrors: [E0594]
         answer: 6
         explanation: "The compiler reports line 7, but the mistake is the signature on line 6: `grow` changes a field, so it needs `&mut self`."
-        concepts: [method.self]
+        concepts: [method.self, err.E0594]
 
       - type: decode-error
         id: decode-e0507
@@ -572,7 +572,7 @@ lessons:
           - { id: c, code: "&self.label", why: "That's a `&String`, but the signature promises an owned `String` (E0308)." }
         answer: a
         explanation: "`&self` only borrows the badge, so the method can't move `label` out of it. Cloning returns a new `String` and leaves the field in place."
-        concepts: [method.self, own.clone]
+        concepts: [method.self, own.clone, err.E0507]
 
       - type: predict-output
         id: predict-tiles-heater
@@ -629,7 +629,7 @@ lessons:
             - { id: c, text: "E0382: borrow of moved value: `taps`", why: "`add` takes `&mut self`, which borrows `taps`; nothing moves." }
           answer: a
         explanation: "`taps.add()` borrows `taps` mutably while `first` still holds a shared borrow that's used on the next line. One writer or many readers."
-        concepts: [method.self, borrow.exclusive]
+        concepts: [method.self, borrow.exclusive, err.E0502]
 
       - type: mcq
         id: mcq-why-self

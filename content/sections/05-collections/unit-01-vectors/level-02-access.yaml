@@ -216,7 +216,7 @@ lessons:
             - { id: c, text: "`names` needs `mut`", why: "Reading doesn't need `mut`. The problem is taking ownership of an element." }
           answer: a
         explanation: "A `String` isn't `Copy`, so `let first = names[0];` would move it and leave a hole in the vector. The error is E0507: cannot move out of index. Borrow it with `&names[0]`."
-        concepts: [vec.access, own.move]
+        concepts: [vec.access, own.move, err.E0507]
 
       - type: decode-error
         id: decode-move-out-fix
@@ -239,7 +239,7 @@ lessons:
           - { id: c, code: "let home = cities.pop();", why: "That removes `Hobart`, so the length printed would be 1, and `home` would be an `Option`." }
         answer: a
         explanation: "`&cities[1]` borrows the element instead of moving it. The vector keeps its `String`s, so `cities.len()` still works."
-        concepts: [vec.access, borrow.shared]
+        concepts: [vec.access, borrow.shared, err.E0507]
 
       - type: compiles
         id: compiles-unwrap-or-ref
@@ -324,7 +324,7 @@ lessons:
             - { id: c, text: "`scores` needs to be borrowed with `&`", why: "Indexing works on the vector directly. The index type is the problem." }
           answer: a
         explanation: "The error says the vector `cannot be indexed by i32`. Declare `pos` as `usize`, or write `scores[pos as usize]`."
-        concepts: [vec.access]
+        concepts: [vec.access, err.E0277]
 
   - id: l3
     exercises:
@@ -389,7 +389,7 @@ lessons:
           - { id: c, text: "Change line 2 to `let scores: Vec<usize> = vec![10, 20, 30];`", why: "The element type doesn't matter. The index has to be a `usize`." }
         answer: a
         explanation: "Vectors are indexed by `usize`, the type Rust uses for positions and lengths. With `pos: usize`, `scores[pos]` is 20."
-        concepts: [vec.access]
+        concepts: [vec.access, err.E0277]
 
       - type: predict-output
         id: predict-pop-then-get

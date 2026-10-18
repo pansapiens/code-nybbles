@@ -55,7 +55,7 @@ lessons:
             - { id: c, text: "E0609: no field on type", why: "No field is read here. The whole tuple is passed to `{}`." }
           answer: a
         explanation: "`{}` needs the type to support *Display*, and tuples don't. The compiler suggests `{:?}` instead."
-        concepts: [fmt.debug]
+        concepts: [fmt.debug, err.E0277]
 
       - type: predict-output
         id: predict-debug-text
@@ -149,7 +149,7 @@ lessons:
           - { id: c, code: 'println!("Temps: {temps}");', why: "That's still `{}`, so it fails the same way." }
         answer: a
         explanation: "Arrays don't support `{}`. The note in the error suggests `{:?}`, which prints `[18, 21, 25]`."
-        concepts: [fmt.debug, compiler.read-error]
+        concepts: [fmt.debug, compiler.read-error, err.E0277]
 
       - type: predict-output
         id: predict-nested-debug
@@ -209,7 +209,7 @@ lessons:
           expectErrors: [E0277]
         answer: 5
         explanation: "Line 5 prints a whole tuple with `{}`. Lines 4 and 6 are fine: `{:?}` for the array, `{}` for one number."
-        concepts: [fmt.debug]
+        concepts: [fmt.debug, err.E0277]
 
       - type: predict-output
         id: predict-debug-mixed-types
@@ -328,7 +328,7 @@ lessons:
           - { id: c, text: "You can't print two things in one program", why: "You can print as many times as you like. The problem is the type of `status`." }
         answer: a
         explanation: "The error says `()` doesn't implement `std::fmt::Display`, which is what `{}` needs."
-        concepts: [fmt.debug, types.unit, compiler.read-error]
+        concepts: [fmt.debug, types.unit, compiler.read-error, err.E0277]
 
       - type: fill-tokens
         id: fill-repeat-debug
@@ -396,7 +396,7 @@ lessons:
           expectErrors: [E0609]
         answer: 5
         explanation: "`rgb` has positions 0 to 2, so `rgb.3` doesn't exist. Both Debug lines are fine."
-        concepts: [types.tuple, types.array-bounds, fmt.debug]
+        concepts: [types.tuple, types.array-bounds, fmt.debug, err.E0609]
 
       - type: match-pairs
         id: pairs-debug-output

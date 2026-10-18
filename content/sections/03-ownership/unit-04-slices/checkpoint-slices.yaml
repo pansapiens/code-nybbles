@@ -287,4 +287,4 @@ lessons:
             - { id: c, text: "`3..` is out of range", why: "`hi there` has 8 bytes, so `3..` is fine." }
           answer: a
         explanation: "A slice isn't a `String`, so it can't become a `&String`. With `s: &str`, the call compiles."
-        concepts: [slice.str-param, practice.first-word]
+        concepts: [slice.str-param, practice.first-word, err.E0308]

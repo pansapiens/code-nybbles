@@ -269,7 +269,7 @@ lessons:
           expectErrors: [E0594]
         answer: 6
         explanation: "The error is reported on line 7, but the cause is line 6: `&prices` lends only shared references. Loop over `&mut prices` to change the values."
-        concepts: [map.iter, borrow.mut]
+        concepts: [map.iter, borrow.mut, err.E0594]
 
       - type: compiles
         id: compiles-insert-in-loop
@@ -598,7 +598,7 @@ lessons:
           - { id: c, text: "Change line 4 to `let mut hp: HashMap<&str, i32> = HashMap::new();`", why: "The map is already mutable and the types are fine. The loop's `h` is a shared reference." }
         answer: a
         explanation: "`values()` lends shared `&` references, which can't change anything. `values_mut()` lends `&mut` references."
-        concepts: [map.iter, borrow.mut]
+        concepts: [map.iter, borrow.mut, err.E0594]
 
       - type: fill-tokens
         id: fill-mut-loop

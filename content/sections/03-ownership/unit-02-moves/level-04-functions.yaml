@@ -270,7 +270,7 @@ lessons:
           - { id: c, text: "Change line 7 to `let n = count(word) + 0;`", why: "Adding to the result doesn't change the move. `word` is still invalid." }
         answer: a
         explanation: "Cloning passes a separate `String`, so `word` stays valid. Next unit shows how to avoid the clone."
-        concepts: [own.fn-move, own.clone]
+        concepts: [own.fn-move, own.clone, err.E0382]
 
       - type: predict-output
         id: predict-give-back
@@ -364,7 +364,7 @@ lessons:
           expectErrors: [E0308]
         answer: 1
         explanation: "Line 3 returns `text`, but line 1 has no `-> String`, so the compiler reports E0308 on line 3. The fix goes on line 1: `fn tidy(mut text: String) -> String {`."
-        concepts: [own.fn-return, fn.return]
+        concepts: [own.fn-return, fn.return, err.E0308]
 
       - type: compiles
         id: compiles-twice
@@ -570,4 +570,4 @@ lessons:
           expectErrors: [E0382]
         answer: 8
         explanation: "Line 8 moves `cheer` on the first pass. `shout(cheer.clone())` gives each call its own `String`."
-        concepts: [own.fn-move, own.clone]
+        concepts: [own.fn-move, own.clone, err.E0382]

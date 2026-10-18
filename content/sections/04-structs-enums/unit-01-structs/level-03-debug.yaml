@@ -80,7 +80,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "No types are compared here. `{:?}` needs Debug, which `Point` doesn't have." }
           answer: a
         explanation: "A new struct can't be printed until you ask for it. Without `#[derive(Debug)]`, `{:?}` is error E0277."
-        concepts: [derive.debug]
+        concepts: [derive.debug, err.E0277]
 
       - type: concept
         id: concept-pretty-debug
@@ -279,7 +279,7 @@ lessons:
           - { id: c, text: "Add `#[derive(Debug)]` on the line above `fn main() {`", why: "`derive` only works on a struct (or similar type), not a function (E0774)." }
         answer: a
         explanation: "The compiler's help suggests the same thing: derive Debug on `Order`, then `{o:?}` works."
-        concepts: [derive.debug]
+        concepts: [derive.debug, err.E0277]
 
       - type: compiles
         id: compiles-nested-no-debug
@@ -311,7 +311,7 @@ lessons:
             - { id: c, text: "E0609: no field `power` on type `Car`", why: "`power` is accessed through `Engine` when it's created, which is fine." }
           answer: a
         explanation: "Printing a `Car` prints its `engine` field too, so `Engine` also needs `#[derive(Debug)]`."
-        concepts: [derive.debug]
+        concepts: [derive.debug, err.E0277]
 
       - type: mcq
         id: mcq-dbg-where
@@ -546,7 +546,7 @@ lessons:
           - { id: c, text: "`pet` was moved before it was printed", why: "Nothing moved. The error is about how `pet` can be formatted." }
         answer: a
         explanation: "E0277 says `Pet` doesn't implement `std::fmt::Display`. Debug and Display are separate; the derive only gives Debug."
-        concepts: [derive.debug]
+        concepts: [derive.debug, err.E0277]
 
       - type: true-false
         id: tf-derive-scope

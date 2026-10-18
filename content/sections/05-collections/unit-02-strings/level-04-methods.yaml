@@ -333,7 +333,7 @@ lessons:
             - { id: c, text: "`clean` must be given a value on the line where it's declared", why: "Declaring first and assigning later is fine. The borrow is the problem." }
           answer: a
         explanation: "`trim` returns a slice of `raw`. `raw` is dropped at the end of the block, so `clean` would point at freed memory (E0597: does not live long enough)."
-        concepts: [string.methods, borrow.dangling]
+        concepts: [string.methods, borrow.dangling, err.E0597]
 
       - type: predict-output
         id: predict-case-insensitive

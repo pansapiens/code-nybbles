@@ -386,7 +386,7 @@ lessons:
             - { id: c, text: "The right side needs `&`: `&\"-tac\"`", why: "A literal is already a `&str`. The left side is the problem." }
           answer: a
         explanation: "Error E0369: you can't add `&str` to `&str`. Write `String::from(\"tic\") + \"-tac\"`, or use `format!`."
-        concepts: [string.build, string.string-vs-literal]
+        concepts: [string.build, string.string-vs-literal, err.E0369]
 
       - type: decode-error
         id: decode-moved-left
@@ -462,7 +462,7 @@ lessons:
           expectErrors: [E0369]
         answer: 4
         explanation: "The left side of `+` must be a `String` it can take, not `&first`. Write `first + \" \" + &last`, or use `format!` to keep `first`."
-        concepts: [string.build]
+        concepts: [string.build, err.E0369]
 
       - type: true-false
         id: tf-diagram-moved

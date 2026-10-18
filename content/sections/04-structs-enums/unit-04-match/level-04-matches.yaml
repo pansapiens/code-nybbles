@@ -74,7 +74,7 @@ lessons:
             }
           verify: compile-fail
           expectErrors: [E0369]
-        concepts: [macro.matches]
+        concepts: [macro.matches, err.E0369]
 
       - type: fill-tokens
         id: fill-matches-red
@@ -236,7 +236,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "Both sides are a `Dir`. The problem is that `Dir` can't be compared with `==` yet." }
           answer: a
         explanation: "Your own enums don't support `==` until you ask for it. `matches!(dir, Dir::West)` works now."
-        concepts: [macro.matches]
+        concepts: [macro.matches, err.E0369]
 
       - type: decode-error
         id: decode-eq-fix
@@ -259,7 +259,7 @@ lessons:
           - { id: c, text: "Change line 5 to `if let dir = Dir::West {`", why: "`dir` here is a new variable that matches anything, so this would also print `sunset` for `North`." }
         answer: a
         explanation: "`matches!` checks the pattern without needing `==`, and gives a `bool` for the `if`."
-        concepts: [macro.matches]
+        concepts: [macro.matches, err.E0369]
 
       - type: true-false
         id: tf-matches-exhaustive
@@ -287,7 +287,7 @@ lessons:
           expectErrors: [E0423]
         answer: 5
         explanation: "`matches` without `!` isn't a function Rust knows. The macro is `matches!`."
-        concepts: [macro.matches]
+        concepts: [macro.matches, err.E0423]
 
       - type: predict-output
         id: predict-matches-data
@@ -452,7 +452,7 @@ lessons:
             - { id: c, text: "`slot` could be `None`, so this isn't exhaustive", why: "`matches!` gives `false` for `None`. It doesn't need to be exhaustive." }
           answer: a
         explanation: "`matches!` gives a `bool` and nothing else. Use `if let Some(n) = slot` to use the value."
-        concepts: [macro.matches, match.if-let]
+        concepts: [macro.matches, match.if-let, err.E0425]
 
       - type: mcq
         id: mcq-which-tool

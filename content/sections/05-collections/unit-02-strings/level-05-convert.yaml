@@ -203,7 +203,7 @@ lessons:
             - { id: c, text: "Call `greet(&\"Ferris\")`", why: "That's a `&&str`, not a `&String`." }
           answer: a
         explanation: "A `&String` parameter rejects literals (E0308). `&str` accepts literals and `&String` both."
-        concepts: [string.convert, slice.str-param]
+        concepts: [string.convert, slice.str-param, err.E0308]
 
       - type: predict-output
         id: predict-three-callers
@@ -276,7 +276,7 @@ lessons:
           expectErrors: [E0308]
         answer: 4
         explanation: "The vector holds `String`s, and `\"Grace\"` is a `&str` (E0308). Write `\"Grace\".to_string()`."
-        concepts: [string.convert, vec.basics]
+        concepts: [string.convert, vec.basics, err.E0308]
 
       - type: predict-output
         id: predict-match-as-str
@@ -444,7 +444,7 @@ lessons:
           expectErrors: [E0308]
         answer: 5
         explanation: "`push_str` needs a `&str`, and `count` is a number (E0308). Write `log.push_str(&count.to_string());`."
-        concepts: [string.convert, string.build]
+        concepts: [string.convert, string.build, err.E0308]
 
       - type: fill-tokens
         id: fill-match-as-str

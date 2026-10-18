@@ -367,7 +367,7 @@ lessons:
             - { id: c, text: "E0308: mismatched types", why: "The problem is the name, not a type." }
           answer: a
         explanation: "The name inside the braces must be a variable that exists. Here the variable is `player`."
-        concepts: [fmt.inline-args]
+        concepts: [fmt.inline-args, err.E0425]
 
       - type: predict-output
         id: predict-shadow-format

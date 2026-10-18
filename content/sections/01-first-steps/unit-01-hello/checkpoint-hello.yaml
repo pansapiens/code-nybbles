@@ -47,7 +47,7 @@ lessons:
         answer: 5
         explanation: "Line 5 calls `println` without `!`, so Rust looks for a function that doesn't exist."
         difficulty: 2
-        concepts: [macro.bang, compiler.read-error]
+        concepts: [macro.bang, compiler.read-error, err.E0423]
 
       - type: decode-error
         id: decode-checkpoint-quote
@@ -69,7 +69,7 @@ lessons:
         answer: a
         explanation: "The text on line 3 never closes, so the compiler reports a string that runs from line 4 to the end of the file. Closing the quote on line 3 fixes it."
         difficulty: 3
-        concepts: [compiler.read-error, macro.println-basic]
+        concepts: [compiler.read-error, macro.println-basic, err.E0765]
 
       - type: compiles
         id: compiles-nested-comment
@@ -166,7 +166,7 @@ lessons:
           answer: a
         explanation: "A doc comment must come before an item. `/// done` comes at the end of the body, so Rust rejects it."
         difficulty: 4
-        concepts: [syntax.comments, compiler.read-error]
+        concepts: [syntax.comments, compiler.read-error, err.E0585]
 
       - type: predict-output
         id: predict-checkpoint-tiles

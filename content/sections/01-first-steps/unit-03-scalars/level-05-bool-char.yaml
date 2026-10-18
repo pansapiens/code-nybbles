@@ -216,7 +216,7 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`letter` is only given one value." }
           answer: a
         explanation: "`\"b\"` in double quotes is text, not a `char`. Write `'b'` instead."
-        concepts: [types.char]
+        concepts: [types.char, err.E0308]
 
       - type: decode-error
         id: decode-char-literal
@@ -277,7 +277,7 @@ lessons:
           expectErrors: [E0308]
         answer: 3
         explanation: "`\"S\"` uses double quotes, so it's text, not a `char`. Line 3 needs `'S'`."
-        concepts: [types.char]
+        concepts: [types.char, err.E0308]
 
   - id: l3
     exercises:
@@ -321,7 +321,7 @@ lessons:
           expectErrors: [E0308]
         answer: false
         explanation: "Comparisons follow the same rule as arithmetic: both sides need the same type. `whole` is an integer and `3.0` is a float."
-        concepts: [types.bool, types.float]
+        concepts: [types.bool, types.float, err.E0308]
 
       - type: fill-tokens
         id: fill-vowel
@@ -383,7 +383,7 @@ lessons:
           - { id: c, text: "`1` is too big for a `bool`", why: "It's not about size. Rust doesn't treat numbers as `bool`s at all." }
         answer: a
         explanation: "Some languages treat `1` as true, but Rust doesn't. Write `true`."
-        concepts: [types.bool, compiler.read-error]
+        concepts: [types.bool, compiler.read-error, err.E0308]
 
       - type: match-pairs
         id: pairs-scalar-types

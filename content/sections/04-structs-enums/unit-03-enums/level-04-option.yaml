@@ -1,7 +1,7 @@
 id: structs-enums.enums.option
 title: Some or None
 icon: circle
-concepts: [option.basics, option.type-safety]
+concepts: [option.basics, option.type-safety, err.E0282]
 reviewConcepts: [enum.define, enum.data, enum.impl, types.overflow, fn.return, fn.early-return, ctrl.for, ctrl.if, err.E0308, fmt.debug, string.string-vs-literal, mem.stack-heap, match.intro]
 lessons:
   - id: l1
@@ -94,7 +94,7 @@ lessons:
             - { id: c, text: "Variables can't start out empty", why: "They can, with `None`. It needs a type such as `Option<&str>`." }
           answer: a
         explanation: "Nothing says what `winner` would hold, so the compiler reports E0282: type annotations needed. Write `let winner: Option<&str> = None;`."
-        concepts: [option.basics]
+        concepts: [option.basics, err.E0282]
 
       - type: fill-tokens
         id: fill-middle-name
@@ -166,7 +166,7 @@ lessons:
             }
           verify: compile-fail
           expectErrors: [E0277]
-        concepts: [option.type-safety]
+        concepts: [option.type-safety, err.E0277]
 
       - type: compiles
         id: compiles-some-as-i32
@@ -208,7 +208,7 @@ lessons:
           - { id: c, text: "The sum is too big for an `i32`", why: "15 fits easily. Rust refuses to add the two types at all." }
         answer: a
         explanation: "`bonus` might be `None`, and `10 + None` has no answer. Rust makes you decide what happens in that case."
-        concepts: [option.type-safety]
+        concepts: [option.type-safety, err.E0277]
 
       - type: compiles
         id: compiles-print-option
@@ -229,7 +229,7 @@ lessons:
             - { id: c, text: "Change `Some(60)` to `Some(\"60\")`", why: "The type of the data doesn't matter here. `{}` doesn't work for any `Option`." }
           answer: a
         explanation: "`{}` would have to choose how `None` looks, so `Option` doesn't support it (E0277). `{:?}` prints `Some(60)`."
-        concepts: [option.type-safety, fmt.debug]
+        concepts: [option.type-safety, fmt.debug, err.E0277]
 
       - type: concept
         id: concept-match-option
@@ -489,7 +489,7 @@ lessons:
             - { id: c, text: "`1` must be written `Some(1)`", why: "`Some(3) + Some(1)` fails too. `+` doesn't work on `Option`s at all." }
           answer: a
         explanation: "With the `Option` on the left, the compiler reports E0369: cannot add `{integer}` to `Option<u32>`. With it on the right, as in `1 + lives`, it's E0277. Both mean the same thing."
-        concepts: [option.type-safety]
+        concepts: [option.type-safety, err.E0369]
 
       - type: decode-error
         id: decode-missing-some-return

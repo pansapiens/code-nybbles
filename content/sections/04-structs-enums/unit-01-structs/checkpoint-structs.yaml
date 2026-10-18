@@ -106,7 +106,7 @@ lessons:
           - { id: c, text: "Make it `let mut c` and set `c.height = 24;` afterwards", why: "Every field needs a value when the instance is created. You can change it later, but you can't leave it out." }
         answer: a
         explanation: "E0063 means a field was left out. Every field must be given a value when you create an instance."
-        concepts: [struct.define]
+        concepts: [struct.define, err.E0063]
 
       - type: fill-tokens
         id: fill-temp
@@ -292,7 +292,7 @@ lessons:
           - { id: c, code: "return p.name;", why: "That's the same move written with `return`. It's still E0507." }
         answer: a
         explanation: "`p` only borrows the `Pet`, so the `String` can't be moved out of it. `.clone()` returns a new `String` and leaves `pet` whole."
-        concepts: [struct.ownership, own.clone, borrow.shared]
+        concepts: [struct.ownership, own.clone, borrow.shared, err.E0507]
 
       - type: parsons
         id: parsons-area
@@ -368,4 +368,4 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`p` in `main` is `mut`. The problem is the shared reference inside `reset`." }
           answer: a
         explanation: "A `&Player` only allows reading. To change a field, `reset` needs `p: &mut Player`, called as `reset(&mut p)`."
-        concepts: [struct.define, borrow.mut]
+        concepts: [struct.define, borrow.mut, err.E0594]

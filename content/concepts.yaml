@@ -142,3 +142,28 @@
 - { id: map.entry, title: The entry API, prerequisites: [map.basics] }
 - { id: map.iter, title: Iterating over maps, prerequisites: [map.basics] }
 - { id: collections.choose, title: Choosing a collection, prerequisites: [vec.basics, map.basics] }
+# Compiler errors met in several exercises (tagged automatically from expectErrors)
+- { id: err.E0423, title: "E0423: expected a value, found something else", prerequisites: [macro.bang] }
+- { id: err.E0585, title: "E0585: doc comment not documenting anything", prerequisites: [syntax.comments] }
+- { id: err.E0765, title: "E0765: unterminated string", prerequisites: [compiler.read-error] }
+- { id: err.E0425, title: "E0425: cannot find value in this scope", prerequisites: [var.let] }
+- { id: err.E0435, title: "E0435: non-constant value in a constant", prerequisites: [var.const] }
+- { id: err.E0277, title: "E0277: trait not implemented for a type", prerequisites: [types.float] }
+- { id: err.E0609, title: "E0609: no field on type", prerequisites: [types.tuple] }
+- { id: err.E0594, title: "E0594: assign to an immutable place", prerequisites: [types.tuple] }
+- { id: err.E0608, title: "E0608: cannot index into a value", prerequisites: [types.tuple] }
+- { id: err.E0369, title: "E0369: operator not supported for a type", prerequisites: [types.unit] }
+- { id: err.E0599, title: "E0599: no method found for a type", prerequisites: [types.array] }
+- { id: err.E0061, title: "E0061: wrong number of arguments", prerequisites: [fn.define] }
+- { id: err.E0317, title: "E0317: `if` without `else` must be `()`", prerequisites: [ctrl.if-expr] }
+- { id: err.E0596, title: "E0596: borrow as mutable without `mut`", prerequisites: [string.string-vs-literal] }
+- { id: err.E0368, title: "E0368: compound assignment not supported for a type", prerequisites: [borrow.mut] }
+- { id: err.E0597, title: "E0597: value does not live long enough", prerequisites: [borrow.dangling] }
+- { id: err.E0505, title: "E0505: move out while borrowed", prerequisites: [borrow.permissions] }
+- { id: err.E0506, title: "E0506: assign to a borrowed value", prerequisites: [borrow.permissions] }
+- { id: err.E0507, title: "E0507: move out of a borrow", prerequisites: [borrow.permissions] }
+- { id: err.E0063, title: "E0063: missing struct field", prerequisites: [struct.define] }
+- { id: err.E0424, title: "E0424: `self` in a function without a `self` parameter", prerequisites: [method.associated] }
+- { id: err.E0282, title: "E0282: type annotations needed", prerequisites: [option.basics] }
+- { id: err.E0027, title: "E0027: pattern misses struct fields", prerequisites: [match.bind] }
+- { id: err.E0005, title: "E0005: refutable pattern where one must always match", prerequisites: [match.if-let] }

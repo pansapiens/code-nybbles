@@ -1,7 +1,7 @@
 id: first-steps.compound.tuples
 title: Tuples
 icon: package
-concepts: [types.tuple]
+concepts: [types.tuple, err.E0609, err.E0594, err.E0608]
 reviewConcepts: [var.let, var.mut, var.shadowing, fmt.placeholders, fmt.inline-args, compiler.read-error]
 lessons:
   - id: l1
@@ -107,7 +107,7 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The tuple only has positions 0 and 1." }
           answer: a
         explanation: "A tuple with two elements has positions 0 and 1 only. The compiler checks this before the program runs."
-        concepts: [types.tuple, compiler.read-error]
+        concepts: [types.tuple, compiler.read-error, err.E0609]
 
       - type: predict-output
         id: predict-order
@@ -208,7 +208,7 @@ lessons:
             - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The tuple has 3 elements but the pattern has 2." }
           answer: a
         explanation: "The pattern `(hours, minutes)` has 2 names but `time` has 3 elements, so the types don't match."
-        concepts: [types.tuple]
+        concepts: [types.tuple, err.E0308]
 
       - type: decode-error
         id: decode-pattern-size
@@ -228,7 +228,7 @@ lessons:
           - { id: c, text: "You must use `rgb.0` instead of destructuring", why: "Destructuring works when the pattern has one name per element." }
         answer: a
         explanation: "The pattern needs one name for each element. `let (red, green, blue) = rgb;` would compile."
-        concepts: [types.tuple, compiler.read-error]
+        concepts: [types.tuple, compiler.read-error, err.E0308]
 
       - type: concept
         id: concept-mut-tuple
@@ -262,7 +262,7 @@ lessons:
           expectErrors: [E0594]
         answer: 4
         explanation: "`position` isn't `mut`, so its elements can't be changed. Line 2 would need `let mut position`."
-        concepts: [types.tuple, var.mut]
+        concepts: [types.tuple, var.mut, err.E0594]
 
       - type: predict-output
         id: predict-lives-pair
@@ -363,7 +363,7 @@ lessons:
             - { id: c, text: "E0277: cannot be formatted", why: "Printing an `i32` with `{}` is fine. The values are in the wrong order for the type." }
           answer: a
         explanation: "The type says `i32` first and `bool` second, but the values are the other way round."
-        concepts: [types.tuple]
+        concepts: [types.tuple, err.E0308]
 
       - type: decode-error
         id: decode-square-index
@@ -382,7 +382,7 @@ lessons:
           - { id: c, code: 'println!("{}", score[1]);', why: "Any square-bracket index fails the same way. Tuples use a dot." }
         answer: a
         explanation: "Tuples are read with a dot and a number, like `score.0`. Square brackets are for arrays."
-        concepts: [types.tuple, compiler.read-error]
+        concepts: [types.tuple, compiler.read-error, err.E0608]
 
       - type: mcq
         id: mcq-tuple-type

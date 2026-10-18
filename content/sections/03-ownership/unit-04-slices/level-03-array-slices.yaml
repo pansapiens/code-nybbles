@@ -272,7 +272,7 @@ lessons:
             - { id: c, text: "Slices can't be printed", why: "They can, with the Debug format." }
           answer: a
         explanation: "`{}` doesn't know how to show a list of numbers (E0277). The Debug format `{:?}` prints `[5, 10]`."
-        concepts: [slice.array, fmt.debug]
+        concepts: [slice.array, fmt.debug, err.E0277]
 
       - type: decode-error
         id: decode-pass-array
@@ -348,7 +348,7 @@ lessons:
             - { id: c, text: "`front` is a copy, so it would print the old values", why: "A slice isn't a copy. That's why Rust stops the change." }
           answer: a
         explanation: "`front` borrows the elements and is used on line 5. Rust won't let you change them in the meantime. Moving line 4 below the `println!` fixes it."
-        concepts: [slice.array, borrow.shared]
+        concepts: [slice.array, borrow.shared, err.E0506]
 
       - type: predict-output
         id: predict-loop-slice

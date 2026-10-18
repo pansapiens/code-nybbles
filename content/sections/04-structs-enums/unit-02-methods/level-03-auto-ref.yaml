@@ -309,7 +309,7 @@ lessons:
             - { id: c, text: "E0502: cannot borrow `c` as mutable because it is also borrowed as immutable", why: "The method is called on `r`, not `c`, so the error is about `r`." }
           answer: a
         explanation: "Rust can borrow for you, but it can't turn a shared `&` reference into `&mut`. `r` would need to be `&mut c`."
-        concepts: [method.auto-ref, borrow.mut]
+        concepts: [method.auto-ref, borrow.mut, err.E0596]
 
       - type: decode-error
         id: decode-param-ref
@@ -338,7 +338,7 @@ lessons:
           - { id: c, text: "Change line 4 to `fn add(&self) { self.n += 1; }`", why: "Then `add` can't change `self.n`, so it fails with E0594." }
         answer: a
         explanation: "`add` needs a mutable borrow, and a `&Counter` can't give one. The parameter and the call both need `&mut`."
-        concepts: [method.auto-ref, own.param-choice]
+        concepts: [method.auto-ref, own.param-choice, err.E0596]
 
       - type: true-false
         id: tf-no-mut-needed
@@ -370,7 +370,7 @@ lessons:
           expectErrors: [E0596]
         answer: 11
         explanation: "The error is reported on line 12, but the fix is on line 11: `let mut s`, so `add` can borrow it mutably."
-        concepts: [method.auto-ref, method.self]
+        concepts: [method.auto-ref, method.self, err.E0596]
 
       - type: mcq
         id: mcq-ref-receiver
@@ -650,7 +650,7 @@ lessons:
           expectErrors: [E0308]
         answer: 14
         explanation: "Line 13 is fine. On line 14 Rust doesn't borrow for you, so it must be `Fan::up(&mut fan)`. Splitting the `impl` in two isn't a problem."
-        concepts: [method.auto-ref]
+        concepts: [method.auto-ref, err.E0308]
 
       - type: compiles
         id: compiles-associated-dot-review
@@ -677,4 +677,4 @@ lessons:
             - { id: c, text: "`fan` must be `let mut`", why: "Nothing changes `fan`. `new` must be called as `Fan::new()`." }
           answer: a
         explanation: "Automatic referencing only applies to methods. An associated function is always called on the type: `Fan::new()` (E0599 otherwise)."
-        concepts: [method.auto-ref, method.associated]
+        concepts: [method.auto-ref, method.associated, err.E0599]
