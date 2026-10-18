@@ -206,14 +206,14 @@ also works. CI doesn't need either.
 
 ## M3: Beginner content (02 Sections 1-5)
 
-- [ ] Section 1 (5 units) - [ ] Section 2 (4) - [ ] Section 3 (5) - [ ] Section 4 (5) - [ ] Section 5 (4)
+- [~] Sections 1-5 written and QA'd, except the two Build units (2.4, 5.4) that wait on M6
   - [x] Section 1 complete: Units 1.1-1.5 (1.5 ends with the Section 1 checkpoint, for placement later)
   - [x] Section 2 Units 2.1-2.3 (2.3 ends with the Section 2 checkpoint)
   - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
   - [x] Section 3 complete: Units 3.1-3.5 (3.5 ends with the Section 3 checkpoint), diagrams on every level
-  - [x] Section 4 written: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); not yet QA-reviewed
+  - [x] Section 4 complete: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); QA'd
   - [x] Section 5 written: Units 5.1-5.3, Code Read "Word frequency" (5.3), Section 5 checkpoint
-    (`collections.hashmap.checkpoint`) ends the beginner course; not yet QA-reviewed. Unit 5.4 (Build) waits on M6
+    (`collections.hashmap.checkpoint`) ends the beginner course; QA'd. Unit 5.4 (Build) waits on M6
     - [x] (new) Section 5 QA pass (13 fixes: methods used before a card introduced them, slice diagrams
       pointing at the variable instead of the heap, ambiguous spot-bug prompts, a 44-column parsons line)
     - [ ] (new) Judgement calls: snippets with items but no visible `fn main` (about 50 across Sections 4-5;
@@ -234,7 +234,7 @@ also works. CI doesn't need either.
   - [ ] (new) Per-variable label (e.g. R/W/O permissions in 3.3 level 6 are in the caption for now)
   - [ ] (new) A string literal's text lives in the program binary, which diagrams can't show (prose covers it)
   - [ ] Code Reads library in the Practice hub (M4)
-- [ ] Content QA pass (03 §5 checklist)
+- [x] Content QA pass (03 §5 checklist), all of Sections 1-5
   - [x] Units 1.3-1.5 and 2.1-2.3 reviewed by two independent agents: 22 fixes (wrong claims, ambiguous
     items, unanswerable tile exercises, a concept used before it is taught)
   - [x] (new) Build: concept cards over 60 words of prose warn; predict-output tiles must be able to spell the answer
