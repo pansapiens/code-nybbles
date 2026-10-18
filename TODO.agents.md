@@ -300,7 +300,16 @@ also works. CI doesn't need either.
   - [x] (new) A `practice` node before every checkpoint (21 units); optional, never gates the path
   - [ ] (new) Code Read mistakes are recorded but can't be reviewed (they need their program)
   - [ ] (new) Pool sampling of extra exercises inside normal lessons (plans/03 §1.1) still not done
-- [ ] Placement test (02 §6); onboarding flow (01 §4.3.1)
+- [x] Placement test (02 §6); onboarding flow (01 §4.3.1)
+  - (new) Placement is a straight climb, not 02 §6's up-and-down walk (ponytail): 3 questions per section from
+    its final checkpoint, Section 1 first, 2 of 3 passes, stops at the first failed section. Retake in Settings
+  - (new) `placement_completed` event marks levels and chests done without XP, streak or achievements
+    (`viaPlacement`); never lowers progress; Rustacean Initiate needs the final checkpoint actually played
+  - [x] (new) "Jump here?" on locked checkpoints: no re-queue, pass at 80% first-attempt, places up to it
+  - (new) Onboarding: welcome, experience, daily goal, reminder time (optional), placement offer; first
+    launch only (`profile.onboardedAt`; anyone with logged activity counts as onboarded)
+  - [ ] (new) No e2e for the jump flow or the onboarding placement offer (placement itself has one)
+  - [ ] (new) "Install app" prompt after the first lesson (01 §4.3.1) not done (M5 install prompt timing)
 - [ ] Spike: in-browser compiler (Weblings / Rubrc), record go/no-go (01 §7)
 
 ## M5: Polish + launch

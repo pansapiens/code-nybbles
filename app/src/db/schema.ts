@@ -17,6 +17,8 @@ export interface Profile {
   experience: 'new' | 'other-lang' | 'some-rust'
   dailyGoalXp: DailyGoal
   reminderTime?: string // 'HH:mm'
+  /** Set when the first-launch onboarding finishes (or is abandoned for the placement test). */
+  onboardedAt?: number
   mascotOutfit?: string
 }
 

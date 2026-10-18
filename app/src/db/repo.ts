@@ -7,7 +7,7 @@ import { uuidv7 } from '@/domain/ids'
 import { apply, DAILY_GOALS, type DomainEvent, fold, type Progress } from '@/domain/progress'
 import { type ActivityEvent, type CodeNybblesDB, db as defaultDb, type Profile } from './schema'
 
-export const DERIVED_VERSION = 2
+export const DERIVED_VERSION = 3
 
 export async function getProfile(db: CodeNybblesDB = defaultDb): Promise<Profile> {
   const existing = await db.profile.get('me')
@@ -78,6 +78,7 @@ const BackupSchema = z.object({
       experience: z.enum(['new', 'other-lang', 'some-rust']),
       dailyGoalXp: z.union(DAILY_GOALS.map((g) => z.literal(g))),
       reminderTime: z.string().optional(),
+      onboardedAt: z.number().optional(),
       mascotOutfit: z.string().optional(),
     })
     .optional(),
@@ -86,7 +87,7 @@ const BackupSchema = z.object({
     z.object({
       id: z.uuid(),
       deviceId: z.string(),
-      type: z.enum(['lesson_completed', 'practice_completed', 'gems_awarded', 'gems_spent', 'heart_lost', 'achievement_unlocked']),
+      type: z.enum(['lesson_completed', 'practice_completed', 'placement_completed', 'gems_awarded', 'gems_spent', 'heart_lost', 'achievement_unlocked']),
       ts: z.number(),
       localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       tz: z.string(),

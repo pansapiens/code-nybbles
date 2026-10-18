@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useProgressStore } from '@/stores/progress'
 import LearnView from '@/views/LearnView.vue'
 
 declare module 'vue-router' {
@@ -38,6 +39,14 @@ const router = createRouter({
       component: () => import('@/views/OnboardingView.vue'),
       meta: { fullscreen: true },
     },
+    { path: '/placement', name: 'placement', component: () => import('@/views/LessonView.vue'), props: { mode: 'placement' }, meta: { fullscreen: true } },
+    {
+      path: '/jump/:levelId/:lessonId',
+      name: 'jump',
+      component: () => import('@/views/LessonView.vue'),
+      props: (r) => ({ ...r.params, mode: 'jump' }),
+      meta: { fullscreen: true },
+    },
     ...(import.meta.env.DEV
       ? [
           { path: '/dev/components', component: () => import('@/views/dev/ComponentGallery.vue') },
@@ -46,6 +55,14 @@ const router = createRouter({
       : []),
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
+})
+
+// First launch only. Anyone who already has activity (e.g. from before onboarding existed, or an imported backup) is skipped.
+router.beforeEach(async (to) => {
+  if (to.name === 'onboarding') return
+  const game = useProgressStore()
+  await game.load()
+  if (!game.profile?.onboardedAt && !game.state.last) return { name: 'onboarding' }
 })
 
 export default router

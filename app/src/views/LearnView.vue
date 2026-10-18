@@ -29,6 +29,7 @@
             :colour="u.colour"
             :offset="n.offset"
             @start="start(n)"
+            @jump="jump(n)"
           />
         </li>
       </ol>
@@ -95,6 +96,8 @@ async function start(n: ViewNode) {
   if (n.kind === 'practice') return void router.push({ name: 'practice-session', params: { kind: 'unit', unitId: n.unitId } })
   void router.push({ name: 'lesson', params: { levelId: n.id, lessonId: n.lessonIds[nextLesson(n, game.state)] } })
 }
+
+const jump = (n: ViewNode) => void router.push({ name: 'jump', params: { levelId: n.id, lessonId: n.lessonIds[0] } })
 
 function showToast(text: string) {
   toast.value = text

@@ -25,6 +25,7 @@
         <DuoButton v-if="state !== 'locked'" block variant="secondary" @click="emit('start')">
           {{ action }}
         </DuoButton>
+        <DuoButton v-else-if="kind === 'checkpoint'" block variant="secondary" @click="emit('jump')">Jump here?</DuoButton>
         <PopoverArrow class="pop-arrow" :width="16" :height="8" />
       </PopoverContent>
     </PopoverPortal>
@@ -51,7 +52,7 @@ const props = defineProps<{
   /** Horizontal offset on the winding path, e.g. `40px`. */
   offset: string
 }>()
-const emit = defineEmits<{ start: [] }>()
+const emit = defineEmits<{ start: []; jump: [] }>()
 const open = ref(false)
 
 const current = computed(() => props.state === 'current')
@@ -61,7 +62,10 @@ const icon = computed(() =>
 )
 const stateLabel = computed(() => ({ done: 'complete', current: 'up next', locked: 'locked' })[props.state])
 const subtitle = computed(() => {
-  if (props.state === 'locked') return 'Finish everything above to unlock this.'
+  if (props.state === 'locked')
+    return props.kind === 'checkpoint'
+      ? 'Finish everything above to unlock this, or score 80% on it now to skip ahead.'
+      : 'Finish everything above to unlock this.'
   if (props.kind === 'practice') return 'Review what you have learned so far.'
   if (props.kind === 'chest') return props.state === 'done' ? 'Opened.' : 'A free reward for getting this far.'
   if (props.kind === 'checkpoint') return props.state === 'done' ? 'Passed. Replay it any time.' : 'Test yourself on the whole unit.'

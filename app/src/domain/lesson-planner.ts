@@ -44,13 +44,13 @@ export function startRun(plan: LessonPlan, now: number): LessonRun {
 export const currentRef = (run: LessonRun): ExerciseRef | undefined => run.queue[run.index]
 export const isFinished = (run: LessonRun) => run.index >= run.queue.length
 
-/** Record the answer to the current item and move on. A wrong answer re-queues the item at the end. */
-export function answerCurrent(run: LessonRun, correct: boolean, mistakes = correct ? 0 : 1): LessonRun {
+/** Record the answer to the current item and move on. A wrong answer re-queues the item at the end (unless `requeue` is off, as in tests). */
+export function answerCurrent(run: LessonRun, correct: boolean, mistakes = correct ? 0 : 1, requeue = true): LessonRun {
   const ref = currentRef(run)
   if (!ref) return run
   return {
     ...run,
-    queue: correct ? run.queue : [...run.queue, ref],
+    queue: correct || !requeue ? run.queue : [...run.queue, ref],
     index: run.index + 1,
     attempts: [...run.attempts, { ref, correct, mistakes }],
   }

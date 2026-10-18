@@ -1,6 +1,31 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
+
+/** Clicks through first-launch onboarding as a beginner, which ends in the first lesson. Each test has a fresh profile. */
+async function onboard(page: Page) {
+  await page.goto('./welcome')
+  await page.getByRole('button', { name: 'Get started' }).click()
+  await page.getByRole('button', { name: 'I am new to programming' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('button', { name: 'Skip' }).click()
+  await expect(page.getByRole('button', { name: 'Quit lesson' })).toBeVisible()
+}
+
+test('first launch goes through onboarding into the first lesson', async ({ page }) => {
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'Welcome to Code Nybbles' })).toBeVisible()
+  await page.getByRole('button', { name: 'Get started' }).click()
+  await page.getByRole('button', { name: 'I am new to programming' }).click()
+  await page.getByRole('button', { name: '30 XP' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('button', { name: 'Skip' }).click()
+  await expect(page).toHaveURL(/\/lesson\//)
+  await expect(page.getByRole('button', { name: 'Quit lesson' })).toBeVisible()
+  await page.goto('./') // onboarded now: the path, not the welcome screen
+  await expect(page.getByRole('list', { name: / path$/ }).first()).toBeVisible()
+})
 
 test('shell navigates between tabs', async ({ page }) => {
+  await onboard(page)
   await page.goto('./')
   await expect(page.getByRole('list', { name: / path$/ }).first()).toBeVisible()
   const nav = page.getByRole('navigation', { name: 'Main' })
@@ -13,6 +38,7 @@ test('shell navigates between tabs', async ({ page }) => {
 
 test('lesson player: answer, feedback, quit', async ({ page }) => {
   // Content-agnostic: skips concept cards, answers the first choice exercise with any option.
+  await onboard(page)
   await page.goto('./')
   await page.getByRole('button', { name: /, up next$/ }).click()
   await page.getByRole('button', { name: /^Start/ }).click()
@@ -36,6 +62,7 @@ test('a wrong answer lands in Mistakes review', async ({ page }) => {
   const section = await (await page.request.get('content/section-first-steps.json')).json()
   const unit = section.units[0]
   const lesson = unit.levels[unit.path[0].level ?? unit.path[0].levelId].lessons[0]
+  await onboard(page)
   await page.goto('./')
   await page.getByRole('button', { name: /, up next$/ }).click()
   await page.getByRole('button', { name: /^Start/ }).click()
@@ -64,6 +91,7 @@ test('a wrong answer lands in Mistakes review', async ({ page }) => {
 })
 
 test('works offline after the service worker installs', async ({ page, context }) => {
+  await onboard(page)
   await page.goto('./')
   // registerType 'prompt' doesn't claim the first load, so reload once the SW is active.
   await page.evaluate(() => navigator.serviceWorker.ready)
@@ -73,4 +101,32 @@ test('works offline after the service worker installs', async ({ page, context }
   await page.goto('./practice') // deep link served by the SW navigation fallback
   await expect(page.getByRole('heading', { name: 'Practice', level: 1 })).toBeVisible()
   await context.setOffline(false)
+})
+
+test.describe('placement test', () => {
+  test.use({ serviceWorkers: 'block' }) // so page.route sees the content requests
+
+  test('passing Section 1 and failing Section 2 places you at Unit 2.1', async ({ page }) => {
+    // Each section's checkpoint is replaced by plain multiple-choice questions, so the test can answer right or wrong by position.
+    const mcq = (id: string) => ({ type: 'mcq', id, prompt: 'Pick one', options: [{ id: 'a', code: 'right' }, { id: 'b', code: 'wrong' }], answer: 'a' })
+    await page.route('**/content/section-*.json', async (route) => {
+      const section = await (await route.fetch()).json()
+      const last = section.units.at(-1)
+      const level = last.levels[last.path.find((p: { kind: string }) => p.kind === 'checkpoint').levelId]
+      level.lessons[0].exercises = ['q1', 'q2', 'q3', 'q4'].map(mcq)
+      await route.fulfill({ json: section })
+    })
+    const unit21 = (await (await page.request.get('content/section-functions-control-flow.json')).json()).units[0]
+
+    await onboard(page)
+    await page.goto('./placement')
+    for (const pick of [0, 0, 0, 1, 1, 1]) {
+      await page.getByRole('radio').nth(pick).click()
+      await page.getByRole('button', { name: 'Check' }).click()
+      await page.getByRole('button', { name: 'Continue' }).click()
+    }
+    await expect(page.getByRole('heading', { name: "You've placed into Section 2" })).toBeVisible()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('list', { name: `${unit21.title} path` }).getByRole('button', { name: /, up next$/ })).toBeVisible()
+  })
 })

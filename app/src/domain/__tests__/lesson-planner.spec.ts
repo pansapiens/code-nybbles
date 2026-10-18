@@ -25,4 +25,9 @@ describe('lesson planner', () => {
     expect(s.mistakes).toBe(1)
     expect(s.durationMs).toBe(5000)
   })
+
+  it('does not re-queue a wrong answer when requeue is off', () => {
+    const run = answerCurrent(startRun({ levelId: 'l', lessonId: 'x', items: ['a', 'b'] }, 0), false, 1, false)
+    expect(run.queue).toEqual(['a', 'b'])
+  })
 })

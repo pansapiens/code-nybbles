@@ -7,6 +7,7 @@ import {
   type AnswerResult,
   buy,
   completeLesson,
+  completePlacement,
   completePractice,
   type Ctx,
   type DailyGoal,
@@ -14,6 +15,7 @@ import {
   initialProgress,
   type LessonResult,
   openChest,
+  type PlacementPayload,
   type Progress,
   type ShopItem,
   viewAt,
@@ -73,12 +75,14 @@ export const useProgressStore = defineStore('progress', () => {
     await save(out.events)
     return out.gems
   }
+  const finishPlacement = async (payload: PlacementPayload) => save(completePlacement(state.value, payload, ctx()).events)
   const loseHeart = () => save(wrongAnswer(state.value, ctx()).events)
 
-  async function setDailyGoal(g: DailyGoal) {
-    await updateProfile({ dailyGoalXp: g })
+  async function saveProfile(changes: Partial<Omit<Profile, 'id'>>) {
+    await updateProfile(changes)
     profile.value = await getProfile()
   }
+  const setDailyGoal = (g: DailyGoal) => saveProfile({ dailyGoalXp: g })
 
-  return { state, profile, ready, view, dailyGoal, load, reload, finishLesson, finishPractice, purchase, claimChest, loseHeart, setDailyGoal }
+  return { state, profile, ready, view, dailyGoal, load, reload, finishLesson, finishPractice, purchase, claimChest, loseHeart, finishPlacement, saveProfile, setDailyGoal }
 })

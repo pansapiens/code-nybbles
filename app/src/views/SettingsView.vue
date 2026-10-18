@@ -49,6 +49,11 @@
       {{ settings.codeSize }}px
     </label>
     <fieldset class="stack">
+      <legend>Placement test</legend>
+      <p class="hint">Already know some Rust? Answer a few questions to skip ahead. It never removes progress you have made.</p>
+      <div><DuoButton variant="secondary" @click="router.push('/placement')">Take the placement test</DuoButton></div>
+    </fieldset>
+    <fieldset class="stack">
       <legend>Your data</legend>
       <p class="hint">Progress is stored only on this device. Export a backup to move it or keep it safe.</p>
       <div class="row">
@@ -91,6 +96,7 @@
 <script setup lang="ts">
 import type { ContentManifest } from '@code-nybbles/content-build/schema'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import AnswerTile from '@/components/AnswerTile.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import DuoButton from '@/components/DuoButton.vue'
@@ -100,6 +106,7 @@ import { DAILY_GOALS } from '@/domain/progress'
 import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore, type Theme } from '@/stores/settings'
 
+const router = useRouter()
 const THEMES: Theme[] = ['system', 'light', 'dark']
 const settings = useSettingsStore()
 const manifest = ref<ContentManifest>()

@@ -3,6 +3,7 @@ import {
   BEGINNER_FINAL,
   buy,
   completeLesson,
+  completePlacement,
   completePractice,
   type Ctx,
   type DomainEvent,
@@ -191,5 +192,34 @@ describe('progress', () => {
       expect(s.state.streak.currentStreak).toBe(1)
       expect(heartsAt(s.state.hearts, T0)).toBe(4)
     })
+  })
+
+  it('placement marks levels and chests without XP, gems, sessions or achievements, and never lowers progress', () => {
+    const s = session()
+    s.run(completeLesson(s.state, lesson({ levelId: 'a', accuracy: 0.9, mistakes: 1 }), ctx(T0)))
+    const before = s.state
+    const payload = { source: 'placement' as const, levels: [{ id: 'a', lessons: 1 }, { id: 'b', lessons: 3 }, { id: 'c', lessons: 2 }], chests: ['u.chest-1'] }
+    s.run(completePlacement(s.state, payload, ctx(T0 + 60_000)))
+    expect(s.state.levels.b).toMatchObject({ lessons: 3, viaPlacement: true })
+    expect(s.state.levels.a).toBe(before.levels.a) // already at least that far
+    s.run(completeLesson(s.state, lesson({ levelId: 'c', lessonId: 'l2' }), ctx(T0 + 120_000)))
+    expect(s.state.levels.c!.viaPlacement).toBeUndefined() // playing it for real clears the flag
+    expect(s.state.openedChests).toEqual(['u.chest-1'])
+    expect(s.state.xp).toBe(before.xp + 15)
+    expect(s.state.perfectLessons).toBe(before.perfectLessons + 1)
+    expect(s.state.streak.currentStreak).toBe(1)
+
+    s.run(completePlacement(s.state, { ...payload, levels: [{ id: 'b', lessons: 1 }] }, ctx(T0 + 180_000)))
+    expect(s.state.levels.b!.lessons).toBe(3)
+    expect(fold(s.log)).toEqual(s.state)
+  })
+
+  it('placement past the beginner course does not earn Rustacean Initiate until it is played', () => {
+    const s = session()
+    s.run(completePlacement(s.state, { source: 'jump', levels: [{ id: BEGINNER_FINAL, lessons: 1 }], chests: [] }, ctx(T0)))
+    s.run(completeLesson(s.state, lesson({ levelId: 'x' }), ctx(T0 + 1000)))
+    expect(s.state.achievements['rustacean-initiate']).toBeUndefined()
+    s.run(completeLesson(s.state, lesson({ levelId: BEGINNER_FINAL, checkpoint: true }), ctx(T0 + 2000)))
+    expect(s.state.achievements['rustacean-initiate']).toBeDefined()
   })
 })

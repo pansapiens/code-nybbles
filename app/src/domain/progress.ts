@@ -69,8 +69,16 @@ export type EventBody =
       }
     }
   | { type: 'gems_spent'; payload: { gems: number; item: ShopItem } }
+  | { type: 'placement_completed'; payload: PlacementPayload }
   | { type: 'heart_lost'; payload: Record<string, never> }
   | { type: 'achievement_unlocked'; payload: { id: string } }
+
+/** Levels (with their lesson counts) and chests skipped by the placement test or a "Jump here" checkpoint. */
+export type PlacementPayload = { // a type, not an interface, so it fits the backup schema's Record payload
+  source: 'placement' | 'jump'
+  levels: { id: string; lessons: number }[]
+  chests: string[]
+}
 
 export type ShopItem = 'freeze' | 'repair' | 'hearts'
 export type EventType = EventBody['type']
@@ -90,6 +98,8 @@ export interface LevelStats {
   lessons: number
   bestAccuracy: number
   firstCompletedAt: number
+  /** Set when placement raised this level and it hasn't been played to completion since. */
+  viaPlacement?: boolean
 }
 
 /** Leitner box 0-6; `due` is the first local date the concept should be practised again. */
@@ -256,6 +266,17 @@ export function apply(p: Progress, ev: DomainEvent): { state: Progress; notices:
       if (ev.payload.reason === 'path-chest' && ev.payload.ref) s.openedChests = [...s.openedChests, ev.payload.ref]
       notices.push({ type: 'gems', gems: ev.payload.gems, reason: ev.payload.reason })
       break
+    case 'placement_completed': {
+      // No XP, gems, achievements, session or streak: skipped content isn't earned. Never lowers progress.
+      s.levels = { ...s.levels }
+      for (const { id, lessons } of ev.payload.levels) {
+        const prev = s.levels[id]
+        if ((prev?.lessons ?? 0) >= lessons) continue
+        s.levels[id] = { bestAccuracy: 0, firstCompletedAt: ev.ts, ...prev, lessons, viaPlacement: true }
+      }
+      s.openedChests = [...new Set([...s.openedChests, ...ev.payload.chests])]
+      break
+    }
     case 'gems_spent':
       s.gems -= ev.payload.gems
       if (ev.payload.item === 'freeze') s.streak = equipFreeze(s.streak) ?? s.streak
@@ -332,7 +353,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: 'Rustacean Initiate',
     description: 'Pass the Section 5 checkpoint and finish the beginner course',
     gems: 100,
-    earned: (p) => !!p.levels[BEGINNER_FINAL],
+    earned: (p) => !!p.levels[BEGINNER_FINAL] && !p.levels[BEGINNER_FINAL].viaPlacement,
   },
 ]
 
@@ -421,6 +442,12 @@ export function completePractice(p: Progress, kind: 'smart' | 'mistakes' | 'unit
   sessionRewards(b, notices, goalBefore, ctx, ctx.random ?? Math.random)
   unlockAchievements(b, ev)
   return { events: b.events, notices: b.notices, state: b.state, xp }
+}
+
+export function completePlacement(p: Progress, payload: PlacementPayload, ctx: Ctx) {
+  const b = batch(p, ctx)
+  b.push({ type: 'placement_completed', payload })
+  return { events: b.events, state: b.state }
 }
 
 export type BuyError = 'not-enough-gems' | 'freezes-full' | 'nothing-to-repair' | 'hearts-full'

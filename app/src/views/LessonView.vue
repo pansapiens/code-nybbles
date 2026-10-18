@@ -4,8 +4,8 @@
       <button class="icon-btn" type="button" aria-label="Quit lesson" @click="confirmExit = true">
         <AppIcon name="close" />
       </button>
-      <ProgressBar :value="run ? progress(run) : 0" label="Lesson progress" />
-      <HudChip kind="hearts" :value="game.view.hearts" :infinite="!heartsApply" />
+      <ProgressBar :value="run ? (mode ? run.index / run.queue.length : progress(run)) : 0" label="Lesson progress" />
+      <HudChip v-if="!mode" kind="hearts" :value="game.view.hearts" :infinite="!heartsApply" />
     </header>
 
     <main v-if="error" class="prompt stack">
@@ -101,6 +101,7 @@ import {
   startRun,
   summarise,
 } from '@/domain/lesson-planner'
+import { JUMP_PASS, nodesUpTo, placementItems, placementScore, sectionCheckpoints } from '@/domain/placement'
 import { type PracticeKind, exercisePool, planPractice } from '@/domain/practice'
 import { type Grade, grade, solution } from '@/exercises/grade'
 import { checksItself, isGraded, rendererFor } from '@/exercises/registry'
@@ -113,14 +114,16 @@ import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore } from '@/stores/settings'
 
 // Lesson route: levelId and lessonId. Practice route: kind (and unitId for unit practice).
-const props = defineProps<{ levelId?: string; lessonId?: string; kind?: PracticeKind; unitId?: string }>()
+// `mode` makes it a test: 'jump' plays one checkpoint, 'placement' climbs the sections' checkpoint questions.
+// Tests never re-queue wrong answers, cost hearts or give XP.
+const props = defineProps<{ levelId?: string; lessonId?: string; kind?: PracticeKind; unitId?: string; mode?: 'jump' | 'placement' }>()
 const router = useRouter()
 const game = useProgressStore()
 const settings = useSettingsStore()
 const checkpoint = ref(false)
 /** Hearts only apply in new lessons: levels not yet complete (plans/01 §3.8). */
 const newLesson = ref(false)
-const heartsApply = computed(() => settings.heartsMode && newLesson.value && !program.value)
+const heartsApply = computed(() => settings.heartsMode && newLesson.value && !program.value && !props.mode)
 const outOfHearts = ref(false)
 const screens = ref<Screen[]>()
 const screenIndex = ref(0)
@@ -146,6 +149,14 @@ onMounted(async () => {
       if (!items.length) throw new Error("There's nothing to practise yet. Finish a lesson first.")
       for (const i of pool) exercises.set(i.ref, i.ex)
       run.value = startRun({ levelId: 'practice', lessonId: props.kind, items }, Date.now())
+      return
+    }
+    if (props.mode === 'placement') {
+      const [{ sections }] = await Promise.all([loadCourse(), game.load()])
+      sectionCount.value = sections.length
+      const items = placementItems(sections)
+      for (const i of items) exercises.set(i.ref, i.ex)
+      run.value = startRun({ levelId: 'placement', lessonId: 'placement', items: items.map((i) => i.ref) }, Date.now())
       return
     }
     const [found] = await Promise.all([loadLevel(props.levelId!), game.load()])
@@ -196,11 +207,31 @@ async function refillHearts() {
 }
 
 function next(correct: boolean, mistakes: number) {
-  const r = answerCurrent(run.value!, correct, mistakes)
+  const r = answerCurrent(run.value!, correct, mistakes, !props.mode)
   run.value = r
   response.value = undefined
   result.value = undefined
-  if (isFinished(r)) void finish(r)
+  if (isFinished(r) || (props.mode === 'placement' && placementScore(firstTries(r), sectionCount.value).over)) void finish(r)
+}
+
+const firstTries = (r: LessonRun) => r.attempts.map((a) => a.correct && !a.mistakes)
+const sectionCount = ref(0)
+
+/** Commits what a jump or placement unlocked and says how it went. */
+async function finishTest(r: LessonRun, accuracy: number): Promise<Screen[]> {
+  const { sections } = await loadCourse()
+  if (props.mode === 'jump') {
+    if (accuracy < JUMP_PASS)
+      return [{ kind: 'message', title: 'Not quite yet', text: `You got ${Math.round(accuracy * 100)}% right and need ${JUMP_PASS * 100}% to jump ahead. Keep going along the path and try again whenever you like.` }]
+    await game.finishPlacement({ source: 'jump', ...nodesUpTo(sections, props.levelId!) })
+    return [{ kind: 'message', title: 'Jumped ahead!', text: 'Everything up to here is unlocked.' }]
+  }
+  const { passed } = placementScore(firstTries(r), sections.length)
+  if (!passed) return [{ kind: 'message', title: 'Start from the beginning', text: 'Section 1 is the best place to start. You can retake the test from Settings.' }]
+  await game.finishPlacement({ source: 'placement', ...nodesUpTo(sections, sectionCheckpoints(sections)[passed - 1]!) })
+  return passed < sections.length
+    ? [{ kind: 'message', title: `You've placed into Section ${passed + 1}`, text: `${sections[passed]!.title}. Everything before it is unlocked.` }]
+    : [{ kind: 'message', title: 'You know your stuff!', text: 'You passed every section, so the whole course is unlocked.' }]
 }
 
 async function finish(r: LessonRun) {
@@ -210,6 +241,11 @@ async function finish(r: LessonRun) {
     const ex = exercises.get(ref)!
     return isGraded(ex) ? (ex.concepts ?? []) : undefined
   })
+  if (props.mode) {
+    screens.value = await finishTest(r, sum.accuracy)
+    saving.value = false
+    return cue('complete')
+  }
   const out = props.kind
     ? await game.finishPractice(props.kind, results)
     : await game.finishLesson({

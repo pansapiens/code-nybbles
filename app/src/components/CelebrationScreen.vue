@@ -45,6 +45,12 @@
       <p class="reward"><AppIcon name="gem" /> +{{ screen.gems }} gems from your daily chest</p>
     </template>
 
+    <template v-else-if="screen.kind === 'message'">
+      <AppIcon name="star" :size="96" class="big-star" />
+      <h1>{{ screen.title }}</h1>
+      <p>{{ screen.text }}</p>
+    </template>
+
     <template v-else>
       <AppIcon name="star" :size="96" class="big-star" />
       <p class="eyebrow">Achievement unlocked</p>
@@ -64,6 +70,7 @@ export type Screen =
   | { kind: 'streak'; length: number; week: { date: string; label: string; status?: DayStatus }[] }
   | { kind: 'milestone'; length: number; gems: number }
   | { kind: 'goal'; gems: number }
+  | { kind: 'message'; title: string; text: string }
   | { kind: 'achievement'; title: string; description: string; gems: number }
 
 defineProps<{ screen: Screen }>()
