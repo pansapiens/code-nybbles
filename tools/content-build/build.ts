@@ -292,6 +292,10 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
   }
 
   const code = 'code' in ex ? ex.code : undefined
+  // Registered error codes are concepts, so review can track them.
+  for (const e of code?.expectErrors ?? [])
+    if (concepts.has(`err.${e}`) && !('concepts' in ex && ex.concepts.includes(`err.${e}`)))
+      issues.warn(where, `expects ${e}; add err.${e} to concepts`)
   if (code) {
     // Fill-tokens lines are measured with the answers in place of the `___N___` markers.
     const shown = ex.type === 'fill-tokens' ? code.rust.replace(BLANK, (_, n: string) => ex.blanks[n]?.answer[0] ?? '') : code.rust

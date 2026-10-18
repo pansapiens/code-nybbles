@@ -261,8 +261,9 @@ also works. CI doesn't need either.
 - [x] (new) Parsons grading compares line text, so identical lines (two `}`) don't need listed alternatives
 - [x] (new) Error-code concepts: every code in 3+ compile-fail snippets is an `err.Exxxx` concept (24 new, 31 in
   all), introduced by the level that first uses it; 583 exercise tags added from `expectErrors`
-  - [ ] (new) Codes used once or twice stay untagged (E0069, E0604, E0560, E0618, ...); rerun the tagging
-    (/tmp/cn-errtag/tag.py, or a build check) as new content adds error items
+  - [x] (new) The build warns when a snippet expects a registered code the exercise isn't tagged with
+  - [ ] (new) Codes used once or twice aren't registered (E0069, E0604, E0560, E0618, ...); register them as
+    content adds more items for them
 - [x] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3): run by default; `compile_fail[,Ecode]`,
   `should_panic`, `no_run`, `ignore` honoured. Found one unannotated panic and one fragment
 - [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports
