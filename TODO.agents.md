@@ -100,7 +100,7 @@ also works. CI doesn't need either.
   - (new) Added `expectErrorMessage` (substring) for compile errors without a code, e.g. missing `;`
   - (new) `spot-bug.answer` is a 1-based line number (token-level spotting later if needed)
   - (new) `hidden` is `{ before, after }`
-  - [ ] (new) Schemas for Code Read and Build files (path entries are accepted but skipped with a warning)
+  - [x] (new) Schemas for Code Read and Build files
 - [~] `content-build`: parse YAML + Markdown, validate, cross-checks (03 §4.1)
   - [x] Unique IDs; concept refs exist; answers present in options/banks; >= 2 distractors; no duplicate options
   - [x] (new) Answers checked against reality: predict-output answer == real stdout; `compiles` answer agrees
@@ -135,7 +135,8 @@ also works. CI doesn't need either.
   - [x] Capture rendered errors for `decode-error` (build paths stripped); cache by hash; parallel workers
   - [x] Toolchain/link failures are reported with a hint and never cached
   - [x] `node --test` fixtures (`build.test.ts`)
-  - [ ] `deps:` cases in a shared Cargo project (later; needed from Section 2.4 `rand`)
+  - [ ] `deps:` cases in a shared Cargo project (later). Unit 2.4 shows its `rand` lines as comments and
+    keeps a fixed secret, so those lines are not verified
   - [ ] Guidebook ```rust blocks with mdBook annotations (03 §4.3)
   - [x] Parsons `alternatives` orders verified via harness
   - [ ] Weekly CI job against latest stable reporting drift (03 §4.2)
@@ -206,14 +207,17 @@ also works. CI doesn't need either.
 
 ## M3: Beginner content (02 Sections 1-5)
 
-- [~] Sections 1-5 written and QA'd, except the two Build units (2.4, 5.4) that wait on M6
+- [x] Sections 1-5 written and QA'd, including the Build units 2.4 and 5.4
   - [x] Section 1 complete: Units 1.1-1.5 (1.5 ends with the Section 1 checkpoint, for placement later)
   - [x] Section 2 Units 2.1-2.3 (2.3 ends with the Section 2 checkpoint)
-  - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
+  - [x] Unit 2.4 Guessing Game, a Build (5 steps, 35 exercises; rand 0.10 API). A project unit: no checkpoint
+    - [ ] (new) Judgement call: two items match compiler messages with `expectErrorMessage` instead of codes,
+      E0596 (borrowing is taught in Section 3) and E0284 (no `err.` concept registered)
   - [x] Section 3 complete: Units 3.1-3.5 (3.5 ends with the Section 3 checkpoint), diagrams on every level
   - [x] Section 4 complete: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); QA'd
   - [x] Section 5 written: Units 5.1-5.3, Code Read "Word frequency" (5.3), Section 5 checkpoint
-    (`collections.hashmap.checkpoint`) ends the beginner course; QA'd. Unit 5.4 (Build) waits on M6
+    (`collections.hashmap.checkpoint`) ends the beginner course; QA'd. Unit 5.4 Inventory Build follows it
+    - [ ] (new) Judgement call: Unit 5.4 keys its BTreeMap by `format!("{c:?}")` because `derive(Ord)` isn't taught
     - [x] (new) Section 5 QA pass (13 fixes: methods used before a card introduced them, slice diagrams
       pointing at the variable instead of the heap, ambiguous spot-bug prompts, a 44-column parsons line)
     - [ ] (new) Judgement calls: snippets with items but no visible `fn main` (about 50 across Sections 4-5;
@@ -332,7 +336,10 @@ also works. CI doesn't need either.
 - [x] (new) Build nodes: `build-<slug>.yaml` steps (goal, verified `file`, 3-8 exercises) compile to a level with
   generated opening/closing cards per step, played by the normal lesson player; 15 XP a step, +20 on finishing;
   `stdin` piped to programs at verification (plans/03 §2.4)
-  - [~] (new) Units 2.4 Guessing Game and 5.4 Inventory being written (briefs /tmp/cn-brief/unit-2.4.md, 5.4)
+  - [x] (new) Units 2.4 Guessing Game and 5.4 Inventory written. Build files warn above 80 lines (the closing
+    card scrolls); the fill-tile probe passes `stdin`
+  - [x] (new) Placement: a section's questions come from its last checkpoint, and passing it completes the
+    whole section, including a trailing Build (a project unit has no checkpoint)
   - [ ] (new) A "Run it" button on a Build's closing card (needs the runner; the Playground has no stdin)
   - [ ] (new) Playground: `test` mode UI, symbol key row (01 §4.4)
 - [ ] Capacitor Android project, local notifications, haptics (01 §8.2)
@@ -376,3 +383,8 @@ also works. CI doesn't need either.
   rustc corrections found by agents: `Option<i32> + i32` is E0369 (only `i32 + Option` is E0277); brace
   patterns on tuple structs are E0769. 2654 exercises, 1975 verified snippets, strict build clean, tests and
   e2e pass. Paused at the user's request. Next: Section 4 QA, then Section 5.
+- 2026-10-18: Session 4. Build checks (fill probes, guidebook blocks), M4 (SRS, practice, onboarding and
+  placement, compiler spike: not yet), M6 (runner, Playground, Build nodes) and the Build units 2.4 and 5.4.
+  M3 content complete. 3219 exercises, 4246 verified snippets, strict build clean; 51 unit tests, 15 build
+  tests, 14 e2e pass. Fixed: placement crashed on sections ending in a project unit. Next: Build "Run it",
+  M5 polish (accessibility, install prompt), Capacitor Android, CI (needs a GitHub remote), a playtest.
