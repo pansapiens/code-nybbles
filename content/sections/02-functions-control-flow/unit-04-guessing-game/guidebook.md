@@ -135,6 +135,7 @@ let secret = rand::rng()
 - `use rand::prelude::*;` brings in the traits the generator methods need, and `rand::rng()` gives a generator seeded by the operating system.
 - The next `cargo run` downloads and compiles `rand`, then reuses it on later runs.
 - `1..=100` includes both 1 and 100.
-- The fixed `42` makes the output the same on every run, which is why the steps used it for testing.
+- Steps 1-4 fixed the secret at `42`, so their output was the same on every run and easy to check.
+- This app can't download crates, so step 5 runs on a hidden stand-in for `rand` with the same calls.
 
 Read more: Book §2 · Rust by Example: Std library types, Crates · Rustlings has no folder for this chapter

@@ -580,6 +580,43 @@ steps:
                 }
             }
         }
+      hidden:
+        after: |
+
+          // The app can't download crates, so this stands in for `rand`: the same calls, a simpler generator.
+          // Seeded from the clock, or from NYBBLES_SEED so the content build's expected output is stable.
+          mod rand {
+              pub struct ThreadRng(u64);
+
+              pub fn rng() -> ThreadRng {
+                  let seed = std::env::var("NYBBLES_SEED").ok().and_then(|s| s.parse().ok());
+                  ThreadRng(seed.unwrap_or_else(|| {
+                      let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+                      now.map_or(1, |d| d.as_nanos() as u64)
+                  }))
+              }
+
+              pub mod prelude {
+                  use std::ops::RangeInclusive;
+
+                  pub trait Rng {
+                      fn random_range(&mut self, range: RangeInclusive<u32>) -> u32;
+                  }
+
+                  impl Rng for super::ThreadRng {
+                      // SplitMix64. ponytail: modulo bias is negligible for game-sized ranges.
+                      fn random_range(&mut self, range: RangeInclusive<u32>) -> u32 {
+                          self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
+                          let mut z = self.0;
+                          z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+                          z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+                          z ^= z >> 31;
+                          let span = (*range.end() - *range.start()) as u64 + 1;
+                          *range.start() + (z % span) as u32
+                      }
+                  }
+              }
+          }
       verify: run
       stdin: "50\nabc\n25\n42\n"
       expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\nToo big!\nInput your guess.\nInput your guess.\nYou guessed 25\nToo small!\nInput your guess.\nYou guessed 42\nYou win!\n"
@@ -751,20 +788,19 @@ steps:
   - id: use-rand
     title: A random secret
     goal: |
-      **A fixed secret makes a dull game.** The Book picks a random number with `rand`, a **crate**: a package of Rust code that someone published on crates.io. Cargo downloads and builds crates for you.
+      **A fixed secret makes a dull game.** The Book picks a random number with `rand`, a **crate**: a package of Rust code that someone published on crates.io.
 
-      This app can't run crates, so your program keeps `42` and shows the `rand` lines as comments.
+      This app can't download crates, so it adds a small stand-in for `rand` that you don't see. Your program uses the same lines as the Book.
     file:
       rust: |
         use std::cmp::Ordering;
         use std::io;
-        // use rand::prelude::*;
+        use rand::prelude::*;
 
         fn main() {
             println!("Guess the number!");
-            // let secret = rand::rng()
-            //     .random_range(1..=100);
-            let secret = 42;
+            let secret = rand::rng()
+                .random_range(1..=100);
 
             loop {
                 println!("Input your guess.");
@@ -796,9 +832,46 @@ steps:
                 }
             }
         }
+      hidden:
+        after: |
+
+          // The app can't download crates, so this stands in for `rand`: the same calls, a simpler generator.
+          // Seeded from the clock, or from NYBBLES_SEED so the content build's expected output is stable.
+          mod rand {
+              pub struct ThreadRng(u64);
+
+              pub fn rng() -> ThreadRng {
+                  let seed = std::env::var("NYBBLES_SEED").ok().and_then(|s| s.parse().ok());
+                  ThreadRng(seed.unwrap_or_else(|| {
+                      let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+                      now.map_or(1, |d| d.as_nanos() as u64)
+                  }))
+              }
+
+              pub mod prelude {
+                  use std::ops::RangeInclusive;
+
+                  pub trait Rng {
+                      fn random_range(&mut self, range: RangeInclusive<u32>) -> u32;
+                  }
+
+                  impl Rng for super::ThreadRng {
+                      // SplitMix64. ponytail: modulo bias is negligible for game-sized ranges.
+                      fn random_range(&mut self, range: RangeInclusive<u32>) -> u32 {
+                          self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
+                          let mut z = self.0;
+                          z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+                          z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+                          z ^= z >> 31;
+                          let span = (*range.end() - *range.start()) as u64 + 1;
+                          *range.start() + (z % span) as u32
+                      }
+                  }
+              }
+          }
       verify: run
-      stdin: "50\nabc\n25\n42\n"
-      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\nToo big!\nInput your guess.\nInput your guess.\nYou guessed 25\nToo small!\nInput your guess.\nYou guessed 42\nYou win!\n"
+      stdin: "50\nabc\n75\n66\n"
+      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\nToo small!\nInput your guess.\nInput your guess.\nYou guessed 75\nToo big!\nInput your guess.\nYou guessed 66\nYou win!\n"
     exercises:
       - type: concept
         id: concept-add-crate
@@ -860,7 +933,7 @@ steps:
         id: tf-fixed-testing
         prompt: "With `let secret = 42;`, typing `50`, then `25`, then `42` prints the same output on every run."
         answer: true
-        explanation: "A fixed secret makes the program predictable, so its output can be checked against known input. With `rand`, the hints would change from run to run."
+        explanation: "A fixed secret makes the program predictable, so its output can be checked against known input. With `rand`, the secret and the hints change from run to run."
         concepts: [cargo.dependency-intro]
 
       - type: mcq

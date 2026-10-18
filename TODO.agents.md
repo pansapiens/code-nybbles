@@ -135,8 +135,9 @@ also works. CI doesn't need either.
   - [x] Capture rendered errors for `decode-error` (build paths stripped); cache by hash; parallel workers
   - [x] Toolchain/link failures are reported with a hint and never cached
   - [x] `node --test` fixtures (`build.test.ts`)
-  - [ ] `deps:` cases in a shared Cargo project (later). Unit 2.4 shows its `rand` lines as comments and
-    keeps a fixed secret, so those lines are not verified
+  - [ ] `deps:` cases in a shared Cargo project (later)
+  - [x] (new) Unit 2.4 runs the Book's `rand` lines against a hidden stand-in module (`hidden.after`), seeded
+    from the clock, or from `NYBBLES_SEED`, which the verifier sets so expected output is stable
   - [ ] Guidebook ```rust blocks with mdBook annotations (03 §4.3)
   - [x] Parsons `alternatives` orders verified via harness
   - [ ] Weekly CI job against latest stable reporting drift (03 §4.2)

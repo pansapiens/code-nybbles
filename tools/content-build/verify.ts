@@ -109,7 +109,8 @@ async function compileAndRun(c: Case, dir: string): Promise<Outcome> {
   if (!compiled || checkOnly) return outcome
 
   try {
-    const run = exec('./main', [], { cwd: dir, timeout: RUN_TIMEOUT_MS })
+    // NYBBLES_SEED fixes the hidden `rand` stand-in's secret (Unit 2.4), so expected output is stable.
+    const run = exec('./main', [], { cwd: dir, timeout: RUN_TIMEOUT_MS, env: { ...process.env, NYBBLES_SEED: '1' } })
     // Always close stdin so a program that reads it sees EOF instead of waiting for the timeout.
     run.child.stdin!.on('error', () => {}) // EPIPE when the program exits without reading
     run.child.stdin!.end(c.stdin ?? '')
