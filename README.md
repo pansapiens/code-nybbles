@@ -36,6 +36,23 @@ pnpm type-check
 
 The dev server has a component gallery at `/code-nybbles/dev/components`.
 
+## Android
+
+The Android app is the same Vue build wrapped with Capacitor (`app/android/`), with native haptics and local
+reminder notifications (set in Settings, or during onboarding).
+
+Needs JDK 21 (Gradle 8.14 does not run on newer JDKs) and the Android SDK; Gradle downloads missing SDK platforms.
+
+```sh
+pnpm content:build
+cd app
+pnpm build:android       # build with base "/" and copy into app/android (cap sync)
+export ANDROID_HOME=~/Android/Sdk JAVA_HOME=/path/to/jdk-21
+cd android && ./gradlew assembleDebug     # or: pnpm exec cap open android
+```
+
+The debug APK is written to `app/android/app/build/outputs/apk/debug/app-debug.apk`.
+
 ## Layout
 
 | Path | Contents |

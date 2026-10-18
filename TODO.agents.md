@@ -360,7 +360,13 @@ also works. CI doesn't need either.
   - [ ] (new) A "Run it" button on a Build's closing card. On hold: play.rust-lang.org has no stdin, so the
     Guessing Game would loop on EOF, and the closing card already shows the verified run
   - [x] (new) Playground: symbol key row (keeps editor focus), TEST button shown when the code has `#[test]`
-- [ ] Capacitor Android project, local notifications, haptics (01 §8.2)
+- [x] Capacitor Android project, local notifications, haptics (01 §8.2)
+  - (new) `pnpm build:android` (base `/`, `cap sync`), then `./gradlew assembleDebug` with JDK 21 (Gradle 8.14
+    can't run on Java 25). No service worker or install toast on native. Debug APK builds (about 5 MB)
+  - (new) `services/reminders.ts`: daily reminder at the chosen time plus a 22:00 streak-at-risk one, 3 days
+    ahead, rescheduled on every state change; permission asked after the first XP. Settings can change or clear the time
+  - [ ] (new) Not run on an emulator or phone yet: reminders, haptics and the CSP inside the WebView are untested
+  - [ ] (new) Release signing, app icon and splash (Capacitor defaults for now)
 
 ## Mascot (separate design task, 01 §4.6)
 

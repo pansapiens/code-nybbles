@@ -28,6 +28,11 @@
       </div>
     </fieldset>
     <label class="row">
+      Daily reminder
+      <input type="time" :value="game.profile?.reminderTime ?? ''" @change="setReminder" />
+      <DuoButton v-if="game.profile?.reminderTime" variant="ghost" @click="game.saveProfile({ reminderTime: undefined })">Clear</DuoButton>
+    </label>
+    <label class="row">
       <input v-model="settings.heartsMode" type="checkbox" />
       Hearts mode
     </label>
@@ -117,6 +122,8 @@ void game.load()
 const message = ref<string>()
 const confirmReset = ref(false)
 const fileInput = ref<HTMLInputElement>()
+
+const setReminder = (e: Event) => game.saveProfile({ reminderTime: (e.target as HTMLInputElement).value || undefined })
 
 async function exportFile() {
   const blob = new Blob([JSON.stringify(await exportBackup(), null, 1)], { type: 'application/json' })

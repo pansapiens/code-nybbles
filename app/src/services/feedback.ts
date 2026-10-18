@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core'
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics'
+
 /** Answer feedback: short synthesised tones (no audio files to precache) and vibration. */
 export type Cue = 'correct' | 'wrong' | 'complete'
 
@@ -19,6 +22,13 @@ const TONES: Record<Cue, [number, number, number][]> = {
   ],
 }
 const VIBRATION: Record<Cue, number[]> = { correct: [15], wrong: [40, 60, 40], complete: [20, 40, 20, 40, 60] }
+
+// navigator.vibrate is unreliable in the Android WebView; the plugin uses the system haptic effects.
+function haptic(cue: Cue) {
+  if (!Capacitor.isNativePlatform()) return navigator.vibrate?.(VIBRATION[cue])
+  if (cue === 'correct') return Haptics.impact({ style: ImpactStyle.Light })
+  return Haptics.notification({ type: cue === 'wrong' ? NotificationType.Error : NotificationType.Success })
+}
 
 let ctx: AudioContext | undefined
 
@@ -43,7 +53,7 @@ function play(cue: Cue) {
 export function feedback(cue: Cue, opts: { sound: boolean; haptics: boolean }) {
   try {
     if (opts.sound && typeof AudioContext !== 'undefined') play(cue)
-    if (opts.haptics) navigator.vibrate?.(VIBRATION[cue])
+    if (opts.haptics) void haptic(cue)
   } catch {
     // Feedback is decoration; never let it break the lesson.
   }

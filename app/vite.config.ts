@@ -6,7 +6,8 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const BASE = '/code-nybbles/'
+// The Capacitor build serves from the WebView origin root (pnpm build:android).
+const BASE = process.env.VITE_BASE ?? '/code-nybbles/'
 
 /** GitHub Pages has no rewrites: serve the SPA shell for cold deep links (plans/01 §5.5). */
 function spaFallback(): Plugin {

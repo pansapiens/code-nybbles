@@ -36,7 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { Capacitor } from '@capacitor/core'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import AppNav from '@/components/AppNav.vue'
@@ -45,6 +46,7 @@ import ProgressBar from '@/components/ProgressBar.vue'
 import TopHud from '@/components/TopHud.vue'
 import { BACKUP_NUDGE_KEY, backupDue } from '@/db/repo'
 import { install, installEvent } from '@/services/install'
+import { syncReminders } from '@/services/reminders'
 import { useProgressStore } from '@/stores/progress'
 
 const route = useRoute()
@@ -52,15 +54,29 @@ const router = useRouter()
 const progress = useProgressStore()
 void progress.load()
 // registerType: 'prompt' -> never auto-reload; the user chooses when (plans/01 §5.3).
-const { needRefresh, updateServiceWorker } = useRegisterSW()
+// Native builds bundle the app, so there is no service worker or browser install prompt.
+const native = Capacitor.isNativePlatform()
+const { needRefresh, updateServiceWorker } = native
+  ? { needRefresh: ref(false), updateServiceWorker: () => undefined }
+  : useRegisterSW()
 
 // Ask to install only after the first finished lesson (plans/01 §4.3), and not again once dismissed.
 const INSTALL_KEY = 'code-nybbles:install-dismissed'
 const installDismissed = ref(!!localStorage.getItem(INSTALL_KEY))
-const offerInstall = computed(() => !!installEvent.value && progress.state.xp > 0 && !installDismissed.value)
+const offerInstall = computed(() => !native && !!installEvent.value && progress.state.xp > 0 && !installDismissed.value)
 function dismissInstall() {
   localStorage.setItem(INSTALL_KEY, '1')
   installDismissed.value = true
+}
+
+// Reschedules on start, when a lesson finishes, when the time changes, and at midnight (the store's `now` ticks).
+if (native) {
+  watch(
+    () => [progress.ready, progress.profile?.reminderTime, progress.view.today, progress.view.extendedToday, progress.view.streak.currentStreak, progress.state.xp > 0] as const,
+    ([ready, reminderTime, today, doneToday, streak, hasProgress]) =>
+      ready && void syncReminders({ now: Date.now(), today, reminderTime, streak, doneToday }, hasProgress).catch(console.error),
+    { immediate: true },
+  )
 }
 
 const nudgedAt = ref(Number(localStorage.getItem(BACKUP_NUDGE_KEY) ?? 0))
