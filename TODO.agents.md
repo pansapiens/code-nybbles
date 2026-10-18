@@ -85,7 +85,9 @@ also works. CI doesn't need either.
 - [x] Playwright: Pixel-sized project; offline smoke test of the built shell (01 §10)
   - Runs against `vite preview` of the production build; projects `mobile` (Pixel 7) and `desktop`
 - [x] GitHub Actions: type-check, unit tests, build, deploy to Pages (01 §5.5) - `.github/workflows/deploy.yml`
-  - [ ] (new) Not yet run: needs a GitHub remote (`pansapiens/code-nybbles`) and Pages source set to "GitHub Actions"
+  - [x] (new) Public repo `pansapiens/code-nybbles`, Pages from Actions: https://pansapiens.github.io/code-nybbles/
+    (push over SSH; the gh token lacks the `workflow` scope)
+  - [ ] (new) Actions still target Node 20 (deprecated, forced to Node 24); bump to the next major versions
   - [ ] (new) Add content-build + rust-verify steps once they exist (M1)
 - [x] (new) Fonts were inlined as data: URIs by Vite and blocked by the CSP; `assetsInlineLimit` now skips woff2
 - [~] Done-check: installable, offline-loading shell on mobile viewport; Lighthouse PWA checks pass
@@ -179,8 +181,8 @@ also works. CI doesn't need either.
   - [x] (new) CLI writes `ATTRIBUTIONS.md` only when building the repo's own `content/`
   - Note: shell commands (`cargo new`, `cargo run`) appear only in prose; nothing verifies them
 - [~] (new) App content loader `src/content/loader.ts` (manifest + cached section fetch); SW precaches bundles
-- [~] Done-check: complete real lessons offline; all snippets verified in CI
-  - Lessons play end to end from precached content; CI not yet run (no GitHub remote)
+- [x] Done-check: complete real lessons offline; all snippets verified in CI
+  - Lessons play end to end from precached content; CI verifies all snippets from a cold cache
 
 ## M2: Path + gamification (01 §9 M2)
 
@@ -412,3 +414,7 @@ also works. CI doesn't need either.
   M3 content complete. 3219 exercises, 4246 verified snippets, strict build clean; 51 unit tests, 15 build
   tests, 14 e2e pass. Fixed: placement crashed on sections ending in a project unit. Next: Build "Run it",
   M5 polish (accessibility, install prompt), Capacitor Android, CI (needs a GitHub remote), a playtest.
+- 2026-10-18: Repo published and CI green; Pages deploy live. A cold-cache CI run exposed a linker race
+  (identical snippets compiled at once in one directory), fixed by sharing one compile per key. M6 Android:
+  Capacitor project, reminders, native haptics; debug APK builds, not yet run on a device. Next: device test
+  of the APK, manual screen-reader pass, playtest.
