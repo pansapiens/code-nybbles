@@ -469,7 +469,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0499]
         options:
-          - { id: a, text: "Move `*a += 2;` up to just after line 5" }
+          - { id: a, text: "Move `*a += 2;` up to directly after line 5" }
           - { id: b, text: "Change line 5 to `let mut a = ...`", why: "`mut` on `a` doesn't change the borrow rules. Two `&mut` borrows of `hp` would still overlap." }
           - { id: c, text: "Change line 6 to `let b = hp.get(\"Bo\");`", why: "A shared borrow can't exist alongside `a`'s mutable one either, and `get` gives no `&mut` to change." }
         answer: a

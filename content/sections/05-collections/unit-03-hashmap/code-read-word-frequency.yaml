@@ -47,7 +47,7 @@ chunks:
         id: no-types
         prompt: "Line 5 must say what types the keys and values are, because the map starts empty."
         answer: false
-        explanation: "Rust works out the types from how the map is used later: `&str` keys from line 8 and integer values from `or_insert(0)`."
+        explanation: "Rust works out the types from how the map is used further down, where words go in as keys and numbers as values."
         concepts: [map.basics]
   - lines: 4
     exercises:

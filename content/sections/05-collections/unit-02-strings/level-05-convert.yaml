@@ -81,9 +81,9 @@ lessons:
           frames:
             - name: main
               vars:
-                - { name: owned, id: owned, points: h1 }
-                - { name: a, points: owned }
-                - { name: b, points: owned }
+                - { name: owned, points: h1 }
+                - { name: a, points: h1 }
+                - { name: b, points: h1 }
           heap:
             - { id: h1, value: '"plum"' }
         concepts: [string.convert]

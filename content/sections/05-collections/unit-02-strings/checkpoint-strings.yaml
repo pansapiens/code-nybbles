@@ -176,8 +176,8 @@ lessons:
           frames:
             - name: main
               vars:
-                - { name: name, id: name, points: h1 }
-                - { name: view, points: name }
+                - { name: name, points: h1 }
+                - { name: view, points: h1 }
           heap:
             - { id: h1, value: '"Hobart"' }
         answer: false

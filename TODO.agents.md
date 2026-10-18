@@ -214,8 +214,12 @@ also works. CI doesn't need either.
   - [x] Section 4 written: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); not yet QA-reviewed
   - [x] Section 5 written: Units 5.1-5.3, Code Read "Word frequency" (5.3), Section 5 checkpoint
     (`collections.hashmap.checkpoint`) ends the beginner course; not yet QA-reviewed. Unit 5.4 (Build) waits on M6
-    - [ ] (new) Section 5 QA pass. Beyond-brief items to judge: `+=` on String, `.chars().nth/rev()`, map
-      `keys/values/values_mut`, `push_front`; 5.1 level 5 snippets declare enums with no visible `fn main`
+    - [x] (new) Section 5 QA pass (13 fixes: methods used before a card introduced them, slice diagrams
+      pointing at the variable instead of the heap, ambiguous spot-bug prompts, a 44-column parsons line)
+    - [ ] (new) Judgement calls: snippets with items but no visible `fn main` (about 50 across Sections 4-5;
+      a course-wide choice); tuple sort order used but not taught (`predict-tiles-sorted`); a `&str` map key
+      drawn as a heap label because diagrams can't draw arrows from heap boxes; four near-identical
+      borrow-then-push items in 5.1 level 4 lesson 1; a non-compiling `format!` fragment in the 5.2 guidebook
     - [ ] (new) Error codes used without concepts: E0507, E0596, E0597, E0515, E0433, E0368
     - [x] (new) HashMap output order: every `verify: run` HashMap program rebuilt uncached 3 times, stable
   - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists

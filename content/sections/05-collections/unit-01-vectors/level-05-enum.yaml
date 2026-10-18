@@ -12,7 +12,7 @@ lessons:
         markdown: |
           **A `Vec` holds one type, so you can't mix numbers and text directly.** The compiler takes the type from the first element and expects the rest to match: **E0308**.
 
-          But a row of a spreadsheet, say, really does mix numbers and text. The next card shows the fix.
+          But a row of a spreadsheet, say, really does mix numbers and text. Coming up: how an enum fixes this.
         code:
           rust: |
             let row = vec![3, "apples"]; // E0308

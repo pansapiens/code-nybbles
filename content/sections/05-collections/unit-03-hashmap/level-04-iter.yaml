@@ -13,6 +13,8 @@ lessons:
           **`for (key, value) in &map` visits every entry**, giving you a reference to each key and value.
 
           A `HashMap` doesn't keep any order. The order can change from one run to the next, so never rely on it.
+
+          `map.keys()` and `map.values()` loop over only the keys or only the values.
         code:
           rust: |
             use std::collections::HashMap;
@@ -103,7 +105,7 @@ lessons:
         markdown: |
           **A `BTreeMap` works like a `HashMap`, but keeps its keys sorted.** Looping over it always visits keys in order, so the output is the same every run.
 
-          It has the same `insert`, `get`, `entry` and `remove` methods.
+          It has the same `insert`, `get`, `entry` and `remove` methods. With a `HashMap`, you can instead copy the keys into a `Vec` and call `sort()` on it.
         code:
           rust: |
             use std::collections::BTreeMap;
@@ -160,7 +162,7 @@ lessons:
           "1": { answer: ["BTreeMap"] }
           "2": { answer: ["&"] }
         bank: ["BTreeMap", "HashMap", "&", "Vec", "get"]
-        explanation: "`BTreeMap` sorts the keys, so `ant` comes first. Looping over `&legs` borrows the map instead of using it up."
+        explanation: "`legs` is made with `BTreeMap::new()`, so the `use` line must bring in `BTreeMap`. It sorts the keys, so `ant` comes first, and looping over `&legs` borrows the map instead of using it up."
         concepts: [map.iter]
 
       - type: compiles
@@ -250,7 +252,7 @@ lessons:
 
       - type: spot-bug
         id: spot-shared-loop
-        prompt: Tap the line with the mistake
+        prompt: "This should add 1 to every price. Tap the line to change"
         code:
           rust: |
             use std::collections::HashMap;

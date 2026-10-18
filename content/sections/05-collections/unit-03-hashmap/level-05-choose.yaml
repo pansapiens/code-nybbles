@@ -95,7 +95,7 @@ lessons:
         markdown: |
           **A `VecDeque` is a list you can add to and take from at both ends.** For a queue, add at the back with `push_back` and take from the front with `pop_front`.
 
-          `pop_front` returns an `Option`: `None` once the queue is empty.
+          `pop_front` returns an `Option`: `None` once the queue is empty. `push_front` and `pop_back` work at the other ends.
         code:
           rust: |
             use std::collections::VecDeque;

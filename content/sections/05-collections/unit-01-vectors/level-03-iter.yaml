@@ -220,7 +220,7 @@ lessons:
 
       - type: spot-bug
         id: spot-assign-shared
-        prompt: Tap the line with the mistake
+        prompt: "This should switch every light to 0. Tap the line with the mistake."
         code:
           rust: |
             fn main() {
@@ -310,7 +310,7 @@ lessons:
 
       - type: mcq
         id: mcq-loop-choice
-        prompt: "You want to print every name in `guests` and then call `guests.len()`. Which loop header fits?"
+        prompt: "You want to print every name in `guests` and then call `guests.len()`. Which loop header fits best?"
         options:
           - { id: a, code: "for g in &guests {" }
           - { id: b, code: "for g in guests {", why: "That moves `guests` into the loop, so `guests.len()` afterwards is E0382." }
