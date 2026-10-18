@@ -1,0 +1,557 @@
+id: collections.vectors.iter
+title: Looping over a Vec
+icon: repeat
+concepts: [vec.iter]
+reviewConcepts: [vec.basics, vec.access, own.iter-ref, own.copy, own.move, own.scope-drop, err.E0382, borrow.shared, borrow.mut, borrow.nll, method.auto-ref, ctrl.for, range.basics, var.mut, types.as-cast, err.E0308, mem.stack-heap]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-for-ref
+        title: Read each element
+        markdown: |
+          **`for x in &v` borrows the vector and gives you each element as a reference.** For a `Vec<i32>`, `x` is a `&i32`. The vector is still yours after the loop.
+        code:
+          rust: |
+            let goals = vec![3, 5, 2];
+            let mut total = 0;
+            for g in &goals {
+                total += g;
+            }
+            println!("{total} of {}", goals.len());
+          verify: run
+          expectStdout: "10 of 3\n"
+        concepts: [vec.iter]
+
+      - type: predict-output
+        id: predict-print-each
+        code:
+          rust: |
+            let pets = vec!["cat", "dog", "emu"];
+            for p in &pets {
+                print!("{p} ");
+            }
+            println!("{}", pets.len());
+          verify: run
+        options:
+          - { id: a, text: "cat dog emu 3" }
+          - { id: b, text: "emu dog cat 3", why: "A `for` loop goes from the first element to the last." }
+          - { id: c, text: "cat dog emu 0", why: "Borrowing with `&pets` doesn't remove anything. The vector still has 3 elements." }
+        answer: a
+        explanation: "The loop visits the elements in order. It only borrowed `pets`, so `pets.len()` still works afterwards."
+        concepts: [vec.iter]
+
+      - type: mcq
+        id: mcq-type-of-x
+        prompt: "`temps` is a `Vec<i32>`. Inside `for t in &temps`, what type is `t`?"
+        options:
+          - { id: a, code: "&i32" }
+          - { id: b, code: "i32", why: "That's what `for t in temps` gives you, which moves the vector into the loop." }
+          - { id: c, code: "&Vec<i32>", why: "That's the type of `&temps`. The loop hands you one element at a time." }
+        answer: a
+        explanation: "Looping over `&temps` gives a shared reference to each element in turn."
+        concepts: [vec.iter, borrow.shared]
+
+      - type: concept
+        id: concept-for-mut
+        title: Change each element
+        markdown: |
+          **`for x in &mut v` gives you a `&mut` to each element.** Write through it with `*`: `*x += 1` changes the element inside the vector. The vector itself needs `let mut`.
+        code:
+          rust: |
+            let mut prices = vec![10, 20];
+            for p in &mut prices {
+                *p += 5;
+            }
+            println!("{prices:?}");
+          verify: run
+          expectStdout: "[15, 25]\n"
+        diagram:
+          caption: "During the loop, p is a &mut into the heap block"
+          frames:
+            - name: main
+              vars:
+                - { name: prices.ptr, points: h1 }
+                - { name: prices.len, value: "2" }
+                - { name: p, points: h1 }
+          heap:
+            - { id: h1, value: "[15, 20]" }
+        concepts: [vec.iter, borrow.mut]
+
+      - type: predict-output
+        id: predict-double
+        code:
+          rust: |
+            let mut sizes = vec![1, 2, 3];
+            for s in &mut sizes {
+                *s *= 2;
+            }
+            println!("{sizes:?}");
+          verify: run
+        options:
+          - { id: a, text: "[2, 4, 6]" }
+          - { id: b, text: "[1, 2, 3]", why: "`s` is a `&mut` to each element, so `*s *= 2` changes the vector itself." }
+          - { id: c, text: "[2, 4, 6, 1, 2, 3]", why: "Changing an element doesn't add a new one. The length stays 3." }
+        answer: a
+        explanation: "Each pass doubles one element through the `&mut` reference."
+        concepts: [vec.iter]
+
+      - type: compiles
+        id: compiles-missing-star
+        code:
+          rust: |
+            let mut ages = vec![30, 41];
+            for a in &mut ages {
+                a += 1;
+            }
+            println!("{ages:?}");
+          verify: compile-fail
+          expectErrors: [E0368]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`a` is a `&mut i32`. Change the number it points at with `*a += 1`" }
+            - { id: b, text: "`ages` needs to be declared `mut`", why: "It already is. The problem is inside the loop." }
+            - { id: c, text: "You can't change elements inside a loop", why: "You can, with `&mut`. You need `*` to reach the number." }
+          answer: a
+        explanation: "`+=` works on the `i32`, not on the reference to it. The error is E0368: binary assignment operation `+=` cannot be applied to type `&mut {integer}`."
+        concepts: [vec.iter, borrow.mut]
+
+      - type: concept
+        id: concept-for-move
+        title: Loop over the Vec itself
+        markdown: |
+          **`for x in v` moves the vector into the loop.** Each `x` is an owned element, and the vector is gone afterwards: using `v` again is **E0382**.
+
+          This happens even for a `Vec<i32>`. An array of `i32` is `Copy`, but a `Vec` never is.
+        code:
+          rust: |
+            let nums = vec![1, 2, 3];
+            for n in nums {
+                println!("{n}");
+            }
+            println!("{}", nums.len()); // E0382
+          verify: compile-fail
+          expectErrors: [E0382]
+        concepts: [vec.iter, err.E0382]
+
+      - type: compiles
+        id: compiles-vec-i32-moves
+        code:
+          rust: |
+            let marks = vec![7, 9];
+            for m in marks {
+                println!("{m}");
+            }
+            println!("{marks:?}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `marks`" }
+            - { id: b, text: "E0596: cannot borrow `marks` as mutable", why: "Nothing changes `marks`. The loop takes it." }
+            - { id: c, text: "E0308: mismatched types", why: "All the types fit. The problem is ownership." }
+          answer: a
+        explanation: "`for m in marks` moves the `Vec` into the loop. A `Vec<i32>` isn't `Copy`, even though its elements are. Loop over `&marks` instead."
+        concepts: [vec.iter, err.E0382, own.copy]
+
+      - type: true-false
+        id: tf-ref-loop-keeps
+        prompt: "After `for x in &v { }`, you can still push to `v` (if it's `mut`)."
+        code:
+          rust: |
+            let mut v = vec![1];
+            for x in &v {
+                println!("{x}");
+            }
+            v.push(2);
+            println!("{v:?}");
+          verify: run
+          expectStdout: "1\n[1, 2]\n"
+        answer: true
+        explanation: "The loop's borrow ends when the loop does, so `v` is free to change afterwards."
+        concepts: [vec.iter, borrow.nll]
+
+      - type: fill-tokens
+        id: fill-reset
+        prompt: "Fill the blanks so the program prints `[0, 0]`"
+        code:
+          rust: |
+            let mut counts = vec![4, 9];
+            for c in ___1___ counts {
+                ___2___c = 0;
+            }
+            println!("{counts:?}");
+          verify: run
+          expectStdout: "[0, 0]\n"
+        blanks:
+          "1": { answer: ["&mut"] }
+          "2": { answer: ["*"] }
+        bank: ["&mut", "&", "*", "mut", "let"]
+        explanation: "`&mut counts` lends each element mutably, and `*c = 0` writes through the reference into the vector."
+        concepts: [vec.iter]
+
+  - id: l2
+    exercises:
+      - type: decode-error
+        id: decode-add-star
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut stock = vec![3, 8];
+                for s in &mut stock {
+                    s -= 1;
+                }
+                println!("{stock:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0368]
+        options:
+          - { id: a, code: "*s -= 1;" }
+          - { id: b, code: "&s -= 1;", why: "`&s` would borrow the reference again. `*` follows a reference to the value." }
+          - { id: c, code: "for s in stock {", why: "Then `s` is an owned copy of the number, so the vector wouldn't change, and `stock` would be moved before line 6." }
+        answer: a
+        explanation: "`s` is a `&mut i32`. `*s` is the number in the vector, which `-= 1` can change."
+        concepts: [vec.iter, borrow.mut]
+
+      - type: spot-bug
+        id: spot-assign-shared
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut lights = vec![1, 1, 0];
+                for l in &lights {
+                    *l = 0;
+                }
+                println!("{lights:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 3
+        explanation: "The error is reported on line 4, but the loop on line 3 only borrows with `&`, which can't change anything. Write `for l in &mut lights`."
+        concepts: [vec.iter, borrow.shared]
+
+      - type: predict-output
+        id: predict-mut-strings
+        code:
+          rust: |
+            let mut words = vec![
+                String::from("hi"),
+                String::from("yo"),
+            ];
+            for w in &mut words {
+                w.push_str("!");
+            }
+            println!("{words:?}");
+          verify: run
+        options:
+          - { id: a, text: "[\"hi!\", \"yo!\"]" }
+          - { id: b, text: "[\"hi\", \"yo\"]", why: "`w` is a `&mut String`, so `push_str` changes the `String` inside the vector." }
+          - { id: c, text: "[\"hi\", \"yo\", \"!\"]", why: "`push_str` adds text to each `String`. It doesn't add an element to the vector." }
+        answer: a
+        explanation: "Method calls follow the reference for you, so `w.push_str(\"!\")` works without `*`. Each `String` in the vector gets a `!`."
+        concepts: [vec.iter, method.auto-ref]
+
+      - type: compiles
+        id: compiles-mut-loop-no-mut
+        code:
+          rust: |
+            let scores = vec![5, 6];
+            for s in &mut scores {
+                *s += 1;
+            }
+            println!("{scores:?}");
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`&mut scores` needs `let mut scores`" }
+            - { id: b, text: "`*s += 1` should be `s += 1`", why: "`*` is needed to reach the number behind the `&mut`. That part is right." }
+            - { id: c, text: "You can't use `&mut` in a `for` loop", why: "You can. That's how you change every element." }
+          answer: a
+        explanation: "You can only borrow a variable mutably if it's declared `mut`. The error is E0596."
+        concepts: [vec.iter, var.mut]
+
+      - type: match-pairs
+        id: pairs-loop-forms
+        prompt: "`v` is a `Vec<String>`. Match each loop to what `x` is."
+        pairs:
+          - ["for x in &v", "&String"]
+          - ["for x in &mut v", "&mut String"]
+          - ["for x in v", "String"]
+          - ["for x in 0..v.len()", "usize"]
+        concepts: [vec.iter, range.basics]
+
+      - type: predict-output
+        id: predict-tiles-count
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let temps = vec![31, 18, 35, 22];
+            let mut hot = 0;
+            for t in &temps {
+                if *t > 30 {
+                    hot += 1;
+                }
+            }
+            println!("{hot} of {}", temps.len());
+          verify: run
+        tiles: ["2", "of", "4", "3", "66", "0"]
+        answer: "2 of 4"
+        explanation: "Only 31 and 35 are above 30, so `hot` counts to 2. The vector still has 4 elements."
+        concepts: [vec.iter]
+
+      - type: mcq
+        id: mcq-loop-choice
+        prompt: "You want to print every name in `guests` and then call `guests.len()`. Which loop header fits?"
+        options:
+          - { id: a, code: "for g in &guests {" }
+          - { id: b, code: "for g in guests {", why: "That moves `guests` into the loop, so `guests.len()` afterwards is E0382." }
+          - { id: c, code: "for g in &mut guests {", why: "It works if `guests` is `mut`, but you only read the names, so a shared borrow is enough." }
+        answer: a
+        explanation: "Reading only needs `&`. The vector is still usable after the loop."
+        concepts: [vec.iter]
+
+      - type: true-false
+        id: tf-move-frees
+        prompt: "After `for name in names { }` where `names` is a `Vec<String>`, every `String` has been freed."
+        code:
+          rust: |
+            let names = vec![
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            for name in names {
+                println!("{name}");
+            }
+          verify: run
+          expectStdout: "Ann\nBo\n"
+        answer: true
+        explanation: "Each pass, `name` owns one `String` and drops it at the end of the pass. The vector's own heap block is freed when the loop ends."
+        concepts: [vec.iter, own.scope-drop]
+
+      - type: decode-error
+        id: decode-loop-moved
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let laps = vec![61, 59, 60];
+                let mut best = 100;
+                for t in laps {
+                    if t < best {
+                        best = t;
+                    }
+                }
+                println!("{best} {}", laps.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Loop over `&laps` and compare with `*t`" }
+          - { id: b, text: "Write `let mut laps`", why: "`mut` doesn't stop the loop moving the vector." }
+          - { id: c, text: "Change line 9 to `laps[0]`", why: "Any use of `laps` after the move fails, including indexing." }
+        answer: a
+        explanation: "Borrowing leaves `laps` usable on line 9. With `t: &i32`, write `if *t < best { best = *t; }`."
+        concepts: [vec.iter, err.E0382]
+
+      - type: predict-output
+        id: predict-index-loop
+        code:
+          rust: |
+            let mut v = vec![1, 2, 3];
+            for i in 0..v.len() {
+                v[i] = v[i] * 10 + i;
+            }
+            println!("{v:?}");
+          verify: run
+        options:
+          - { id: a, text: "[10, 21, 32]" }
+          - { id: b, text: "[10, 20, 30]", why: "Each element also gets its index added: `+ i`." }
+          - { id: c, text: "[11, 22, 33]", why: "Indexes start at 0, so the first element gets `+ 0`." }
+        answer: a
+        explanation: "For index 0: 1 * 10 + 0 = 10. For 1: 2 * 10 + 1 = 21. For 2: 3 * 10 + 2 = 32."
+        concepts: [vec.iter, vec.access]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-add-bonus
+        prompt: "Arrange the lines so the program prints `[15, 25]`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut scores = vec![10, 20];" }
+          - { id: l3, text: "    for s in &mut scores {" }
+          - { id: l4, text: "        *s += 5;" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: '    println!("{scores:?}");' }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    for s in &scores {" }
+          - { id: d2, text: "        s += 5;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "[15, 25]\n"
+        explanation: "To change elements, loop over `&mut scores` and write through the reference with `*s`."
+        concepts: [vec.iter]
+
+      - type: compiles
+        id: compiles-compare-ref
+        code:
+          rust: |
+            let heights = vec![150, 172, 165];
+            let mut tallest = 0;
+            for h in &heights {
+                if h > tallest {
+                    tallest = *h;
+                }
+            }
+            println!("{tallest}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`h` is a `&i32` and `tallest` an `i32`, so `h > tallest` compares different types" }
+            - { id: b, text: "`tallest = *h` moves the number out of the vector", why: "`i32` is `Copy`, so `*h` copies it. That line is fine." }
+            - { id: c, text: "`tallest` needs `mut`", why: "It has `mut`. The problem is on line 4." }
+          answer: a
+        explanation: "Comparisons need both sides to be the same type. Write `*h > tallest` to compare the numbers."
+        concepts: [vec.iter, err.E0308]
+
+      - type: fill-tokens
+        id: fill-sum-then-len
+        prompt: "Fill the blanks so the program prints `avg 4`"
+        code:
+          rust: |
+            let goals = vec![3, 5, 4];
+            let mut sum = 0;
+            for g in ___1___ {
+                sum += ___2___;
+            }
+            let n = goals.len() as i32;
+            println!("avg {}", sum / n);
+          verify: run
+          expectStdout: "avg 4\n"
+        blanks:
+          "1": { answer: ["&goals"] }
+          "2": { answer: ["*g", "g"] }
+        bank: ["&goals", "goals", "*g", "&mut goals", "&g"]
+        explanation: "The loop must borrow, because `goals.len()` is used afterwards. `sum += *g` adds the number; `sum += g` also works, because adding a `&i32` to an `i32` is allowed."
+        concepts: [vec.iter, types.as-cast]
+
+      - type: spot-bug
+        id: spot-total-moved
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let names = vec![
+                    String::from("Ann"),
+                    String::from("Bo"),
+                ];
+                let mut total = 0;
+                for n in names {
+                    total += n.len();
+                }
+                println!("{total} {}", names.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 7
+        explanation: "The compiler reports line 10, but the mistake is on line 7: the loop moves `names`. `for n in &names` only borrows it."
+        concepts: [vec.iter, err.E0382]
+
+      - type: predict-output
+        id: predict-tiles-mut-then-ref
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let mut v = vec![1, 2, 3];
+            for x in &mut v {
+                *x = *x * *x;
+            }
+            for x in &v {
+                print!("{x} ");
+            }
+            println!();
+          verify: run
+        tiles: ["1", "4", "9", "2", "6", "3"]
+        answer: "1 4 9"
+        explanation: "The first loop squares each element in place. The second loop reads the changed vector."
+        concepts: [vec.iter]
+
+      - type: mcq
+        id: mcq-diagram-which-loop
+        prompt: "Which loop header gives this diagram?"
+        diagram:
+          caption: "First pass of the loop"
+          frames:
+            - name: main
+              vars:
+                - { name: names, moved: true }
+                - { name: n, points: h1 }
+          heap:
+            - { id: h1, value: '"Ann"' }
+            - { id: h2, value: '"Bo"' }
+        options:
+          - { id: a, code: "for n in names {" }
+          - { id: b, code: "for n in &names {", why: "A borrowing loop leaves `names` in place, not greyed out as moved." }
+          - { id: c, code: "for n in &mut names {", why: "That borrows too, so `names` wouldn't show as moved." }
+        answer: a
+        explanation: "`names` is marked moved, and `n` points straight at the heap text: `n` owns that `String`. Only `for n in names` does that."
+        concepts: [vec.iter, own.move]
+
+      - type: fill-tokens
+        id: fill-clamp
+        prompt: "Fill the blanks so every reading above 100 becomes 100, printing `[90, 100, 100]`"
+        code:
+          rust: |
+            let mut readings = vec![90, 130, 101];
+            for r in &mut readings {
+                if ___1___ > 100 {
+                    ___2___ = 100;
+                }
+            }
+            println!("{readings:?}");
+          verify: run
+          expectStdout: "[90, 100, 100]\n"
+        blanks:
+          "1": { answer: ["*r"] }
+          "2": { answer: ["*r"] }
+        bank: ["*r", "r", "&r", "readings"]
+        explanation: "`r` is a `&mut i32`. Both reading and writing the number need `*r`. Comparing `r` itself with `100` mixes a reference and a number."
+        concepts: [vec.iter, borrow.mut]
+
+      - type: true-false
+        id: tf-mut-loop-length
+        prompt: "`for x in &mut v` lets you change the elements, but not push new ones inside the loop."
+        answer: true
+        explanation: "The loop holds a borrow of `v` the whole time, so `v.push(..)` inside it is a borrow error. Level 4 looks at why."
+        concepts: [vec.iter, vec.basics]
+
+      - type: compiles
+        id: compiles-two-ref-loops
+        code:
+          rust: |
+            let sides = vec!['x', 'o'];
+            for a in &sides {
+                for b in &sides {
+                    print!("{a}{b} ");
+                }
+            }
+            println!("{}", sides.len());
+          verify: run
+          expectStdout: "xx xo ox oo 2\n"
+        answer: true
+        explanation: "Both loops take shared borrows of `sides`, and any number of shared borrows can be alive at once."
+        concepts: [vec.iter, borrow.shared]

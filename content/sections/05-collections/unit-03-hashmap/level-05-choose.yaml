@@ -1,0 +1,516 @@
+id: collections.hashmap.choose
+title: Picking the right collection
+icon: compass
+concepts: [collections.choose]
+reviewConcepts: [map.basics, map.entry, map.iter, vec.basics, vec.access, string.iter, match.if-let, option.basics, ctrl.while, types.bool]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-hashset
+        title: "HashSet: each value once"
+        markdown: |
+          **A `HashSet` stores values with no duplicates.** It's like a `HashMap` with keys only.
+
+          `insert` returns `true` if the value was new and `false` if it was already there. `contains` checks for a value.
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let mut visitors = HashSet::new();
+            println!("{}", visitors.insert("Ana"));
+            println!("{}", visitors.insert("Ana"));
+            println!("{}", visitors.len());
+          verify: run
+          expectStdout: "true\nfalse\n1\n"
+        concepts: [collections.choose]
+
+      - type: predict-output
+        id: predict-set-len
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let mut seen = HashSet::new();
+            for n in [3, 1, 3, 3, 2, 1] {
+                seen.insert(n);
+            }
+            println!("{}", seen.len());
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "6", why: "Inserting a value that's already in the set doesn't add it again." }
+          - { id: c, text: "1", why: "Every distinct value is kept once: 1, 2 and 3." }
+        answer: a
+        explanation: "A set keeps each value once, so only 1, 2 and 3 are stored."
+        concepts: [collections.choose]
+
+      - type: predict-output
+        id: predict-set-insert-bool
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let mut tags = HashSet::new();
+            let a = tags.insert("rust");
+            let b = tags.insert("code");
+            let c = tags.insert("rust");
+            println!("{a} {b} {c}");
+          verify: run
+        tiles: ["true", "true", "false", "false", "None"]
+        answer: "true true false"
+        explanation: "`insert` returns `true` for a new value. The second `\"rust\"` is already there, so it returns `false`."
+        concepts: [collections.choose]
+
+      - type: true-false
+        id: tf-set-pairs
+        prompt: "A `HashSet` stores key-value pairs, like a `HashMap`."
+        answer: false
+        explanation: "A `HashSet` stores single values. Use it when you only need to know whether something is present."
+        concepts: [collections.choose]
+
+      - type: fill-tokens
+        id: fill-set
+        prompt: "Fill the blanks so the program prints `true`"
+        code:
+          rust: |
+            use std::collections::___1___;
+
+            let mut banned = HashSet::new();
+            banned.insert("spam");
+            println!("{}", banned.___2___("spam"));
+          verify: run
+          expectStdout: "true\n"
+        blanks:
+          "1": { answer: ["HashSet"] }
+          "2": { answer: ["contains"] }
+        bank: ["HashSet", "HashMap", "contains", "get", "contains_key"]
+        explanation: "`HashSet` comes from `std::collections`, and `contains` answers whether a value is in the set."
+        concepts: [collections.choose]
+
+      - type: concept
+        id: concept-vecdeque
+        title: "VecDeque: a queue"
+        markdown: |
+          **A `VecDeque` is a list you can add to and take from at both ends.** For a queue, add at the back with `push_back` and take from the front with `pop_front`.
+
+          `pop_front` returns an `Option`: `None` once the queue is empty.
+        code:
+          rust: |
+            use std::collections::VecDeque;
+
+            let mut queue = VecDeque::new();
+            queue.push_back("Ana");
+            queue.push_back("Bo");
+            println!("{:?}", queue.pop_front());
+            println!("{:?}", queue);
+          verify: run
+          expectStdout: "Some(\"Ana\")\n[\"Bo\"]\n"
+        concepts: [collections.choose]
+
+      - type: predict-output
+        id: predict-queue-order
+        code:
+          rust: |
+            use std::collections::VecDeque;
+
+            let mut line = VecDeque::new();
+            line.push_back(1);
+            line.push_back(2);
+            line.push_back(3);
+            line.pop_front();
+            println!("{:?}", line.pop_front());
+          verify: run
+        options:
+          - { id: a, text: "Some(2)" }
+          - { id: b, text: "Some(3)", why: "`pop_front` takes from the front, not the back. The first call removed 1." }
+          - { id: c, text: "Some(1)", why: "The first `pop_front` already removed 1, even though its result wasn't printed." }
+        answer: a
+        explanation: "Items leave the front in the order they joined the back: first 1, then 2."
+        concepts: [collections.choose]
+
+      - type: mcq
+        id: mcq-queue-choice
+        prompt: "Print jobs must be handled in the order they arrive. Which collection fits best?"
+        options:
+          - { id: a, text: "`VecDeque`, with `push_back` and `pop_front`" }
+          - { id: b, text: "`Vec`, with `push` and `pop`", why: "`pop` takes the newest item, so the last job sent would print first." }
+          - { id: c, text: "`HashSet`", why: "A set has no order and would merge two identical jobs into one." }
+        answer: a
+        explanation: "First in, first out is a queue. `VecDeque` adds at the back and removes from the front efficiently."
+        concepts: [collections.choose]
+
+      - type: match-pairs
+        id: pairs-collections
+        prompt: "Match each collection to what it's for"
+        pairs:
+          - ["Vec", "items in order, by position"]
+          - ["HashMap", "values looked up by key"]
+          - ["BTreeMap", "key lookup, keys kept sorted"]
+          - ["HashSet", "unique values"]
+          - ["VecDeque", "a queue: in at back, out at front"]
+        explanation: "Each collection is good at one kind of job. Choosing well keeps your code short."
+        concepts: [collections.choose]
+
+      - type: compiles
+        id: compiles-set-index
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let mut ids = HashSet::new();
+            ids.insert(42);
+            println!("{}", ids[0]);
+          verify: compile-fail
+          expectErrors: [E0608]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "A `HashSet` has no positions, so it can't be indexed" }
+            - { id: b, text: "The index should be `ids[1]`", why: "No index works. A set's values aren't stored in positions." }
+            - { id: c, text: "`ids` needs `.get(0)` instead", why: "A `HashSet` has no `get(index)` either. You check values with `contains`." }
+          answer: a
+        explanation: "A set isn't ordered, so there's no first element to index. The error is E0608: cannot index into a `HashSet`."
+        concepts: [collections.choose]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-choose
+        title: Which collection?
+        markdown: |
+          **Start with a `Vec`.** Reach for something else when the job asks for it:
+
+          - look up by key: `HashMap`
+          - look up by key, sorted output: `BTreeMap`
+          - only "have I seen this?": `HashSet`
+          - take from the front: `VecDeque`
+        concepts: [collections.choose]
+
+      - type: mcq
+        id: mcq-unique-visitors
+        prompt: "A website counts how many different people visited today. Each visit gives a user name. Which collection fits?"
+        options:
+          - { id: a, text: "`HashSet<String>`" }
+          - { id: b, text: "`Vec<String>`", why: "A `Vec` keeps every visit, so repeat visitors would be counted again." }
+          - { id: c, text: "`VecDeque<String>`", why: "A queue keeps every visit in order. Order doesn't matter here, only uniqueness." }
+        answer: a
+        explanation: "A set ignores repeats, so its `len()` is the number of different visitors."
+        concepts: [collections.choose]
+
+      - type: mcq
+        id: mcq-leaderboard
+        prompt: "You need each player's score, printed in alphabetical order of names. Which collection fits?"
+        options:
+          - { id: a, text: "`BTreeMap<String, u32>`" }
+          - { id: b, text: "`HashMap<String, u32>`", why: "It stores scores by name, but loops in no fixed order, so you'd need to sort the names yourself." }
+          - { id: c, text: "`HashSet<String>`", why: "A set holds names only, with nowhere to store the scores." }
+        answer: a
+        explanation: "A `BTreeMap` looks up scores by name and keeps the names sorted for printing."
+        concepts: [collections.choose]
+
+      - type: mcq
+        id: mcq-price-lookup
+        prompt: "A shop looks up prices by product code thousands of times, and never needs them in order. Which collection fits?"
+        options:
+          - { id: a, text: "`HashMap<u32, f64>`" }
+          - { id: b, text: "`Vec<f64>`", why: "Product codes aren't positions 0, 1, 2, ..., so a `Vec` would have to be searched." }
+          - { id: c, text: "`VecDeque<f64>`", why: "A queue is for taking items from the front, not for looking them up by code." }
+        answer: a
+        explanation: "Lookup by key with no need for order is exactly what a `HashMap` is for."
+        concepts: [collections.choose]
+
+      - type: predict-output
+        id: predict-unique-words
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let text = "to be or not to be";
+            let mut words = HashSet::new();
+            for w in text.split_whitespace() {
+                words.insert(w);
+            }
+            println!("{}", words.len());
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "6", why: "`to` and `be` appear twice, but a set stores each word once." }
+          - { id: c, text: "2", why: "That's how many words repeat. The set keeps every distinct word: to, be, or, not." }
+        answer: a
+        explanation: "The distinct words are `to`, `be`, `or` and `not`."
+        concepts: [collections.choose, string.iter]
+
+      - type: predict-output
+        id: predict-drain-queue
+        code:
+          rust: |
+            use std::collections::VecDeque;
+
+            let mut q = VecDeque::new();
+            q.push_back("wash");
+            q.push_back("dry");
+            q.push_front("sort");
+            while let Some(job) = q.pop_front() {
+                print!("{job} ");
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "sort wash dry" }
+          - { id: b, text: "wash dry sort", why: "`push_front` puts `\"sort\"` ahead of the others." }
+          - { id: c, text: "dry wash sort", why: "`pop_front` takes from the front each time, not the back." }
+        answer: a
+        explanation: "`push_front` adds `\"sort\"` at the front, so the queue is `sort, wash, dry`. The loop stops when `pop_front` returns `None`."
+        concepts: [collections.choose, match.if-let]
+
+      - type: true-false
+        id: tf-pop-empty
+        prompt: "Calling `pop_front` on an empty `VecDeque` panics."
+        answer: false
+        explanation: "It returns `None`. That's why `while let Some(x) = q.pop_front()` stops cleanly."
+        concepts: [collections.choose, option.basics]
+
+      - type: spot-bug
+        id: spot-vec-queue
+        prompt: "Customers should be served in the order they arrived, but `Cy` is served first. Tap the line with the mistake"
+        code:
+          rust: |
+            fn main() {
+                let mut line = Vec::new();
+                line.push("Ana");
+                line.push("Bo");
+                line.push("Cy");
+                while let Some(c) = line.pop() {
+                    println!("serving {c}");
+                }
+            }
+          verify: run
+          expectStdout: "serving Cy\nserving Bo\nserving Ana\n"
+        answer: 6
+        explanation: "`pop` takes the last item, so the newest customer goes first. A `VecDeque` with `pop_front` serves them in order."
+        concepts: [collections.choose, vec.basics]
+
+      - type: match-pairs
+        id: pairs-methods
+        prompt: "Match each call to the collection it belongs to"
+        pairs:
+          - ["push_back", "VecDeque"]
+          - ["contains_key", "HashMap"]
+          - ["insert returning bool", "HashSet"]
+          - ["push", "Vec"]
+        explanation: "`push_back` and `pop_front` belong to `VecDeque`. A set's `insert` reports whether the value was new."
+        concepts: [collections.choose]
+
+      - type: predict-output
+        id: predict-btree-first
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            let mut times = BTreeMap::new();
+            times.insert("Zoe", 31);
+            times.insert("Abe", 29);
+            times.insert("Max", 35);
+            for (name, _) in &times {
+                print!("{name} ");
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "Abe Max Zoe" }
+          - { id: b, text: "Zoe Abe Max", why: "A `BTreeMap` doesn't keep insertion order. It sorts by key." }
+          - { id: c, text: "Abe Zoe Max", why: "That's sorted by time (29, 31, 35). A `BTreeMap` sorts by key, the name." }
+        answer: a
+        explanation: "A `BTreeMap` loops in key order, and the keys are the names."
+        concepts: [collections.choose, map.iter]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-queue
+        prompt: "Arrange the lines so the program prints `Some(\"Ana\")`"
+        lines:
+          - { id: l1, text: "use std::collections::VecDeque;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let mut queue = VecDeque::new();" }
+          - { id: l4, text: "    queue.push_back(\"Ana\");" }
+          - { id: l5, text: "    queue.push_back(\"Bo\");" }
+          - { id: l6, text: "    println!(\"{:?}\", queue.pop_front());" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    println!(\"{:?}\", queue.pop_back());" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "Some(\"Ana\")\n"
+        explanation: "`\"Ana\"` joins the back first, so she's at the front when `pop_front` runs. `pop_back` would give `\"Bo\"`."
+        concepts: [collections.choose]
+
+      - type: fill-tokens
+        id: fill-first-repeat
+        prompt: "Fill the blanks so the program prints `repeat: red`"
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let picks = ["red", "blue", "red"];
+            let mut seen = HashSet::new();
+            for p in picks {
+                if ___1___seen.___2___(p) {
+                    println!("repeat: {p}");
+                }
+            }
+          verify: run
+          expectStdout: "repeat: red\n"
+        blanks:
+          "1": { answer: ["!"] }
+          "2": { answer: ["insert"] }
+        bank: ["!", "&", "insert", "contains", "remove"]
+        explanation: "`insert` returns `false` when the value was already in the set. `!` turns that into `true`, so the repeat is printed."
+        concepts: [collections.choose, types.bool]
+
+      - type: predict-output
+        id: predict-tiles-queue
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::VecDeque;
+
+            let mut q = VecDeque::new();
+            q.push_back(10);
+            q.push_back(20);
+            let a = q.pop_front();
+            q.push_back(30);
+            let b = q.pop_front();
+            println!("{a:?} {b:?} {}", q.len());
+          verify: run
+        tiles: ["Some(10)", "Some(20)", "Some(30)", "1", "2"]
+        answer: "Some(10) Some(20) 1"
+        explanation: "10 leaves first, then 30 joins the back, then 20 leaves. Only 30 is left."
+        concepts: [collections.choose]
+
+      - type: compiles
+        id: compiles-pop-display
+        code:
+          rust: |
+            use std::collections::VecDeque;
+
+            let mut q = VecDeque::new();
+            q.push_back("Ana");
+            let next = q.pop_front();
+            println!("{next}");
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`next` is an `Option<&str>`, which `{}` can't print" }
+            - { id: b, text: "`pop_front` only works on a `Vec`", why: "`pop_front` is a `VecDeque` method. `Vec` doesn't have it." }
+            - { id: c, text: "`q` was moved by `push_back`", why: "`push_back` borrows `q` mutably; it doesn't move it." }
+          answer: a
+        explanation: "`pop_front` returns an `Option` because the queue might be empty. Print it with `{next:?}` or take the value out with `if let`."
+        concepts: [collections.choose, option.basics]
+
+      - type: decode-error
+        id: decode-set-index
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            fn main() {
+                let mut guests = HashSet::new();
+                guests.insert("Ana");
+                if guests[0] == "Ana" {
+                    println!("Ana is coming");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0608]
+        options:
+          - { id: a, text: "Change line 6 to `if guests.contains(\"Ana\") {`" }
+          - { id: b, text: "Change line 6 to `if guests.get(0) == \"Ana\" {`", why: "A set has no positions, so there's nothing at index 0 to get." }
+          - { id: c, text: "Change line 4 to `let mut guests = HashSet::new(1);`", why: "`new` takes no size, and a size wouldn't make the set indexable." }
+        answer: a
+        explanation: "A `HashSet` answers \"is this value in the set?\" with `contains`. It has no order, so it can't be indexed."
+        concepts: [collections.choose]
+
+      - type: mcq
+        id: mcq-undo
+        prompt: "An editor's undo feature always takes back the most recent change first. Which is the simplest fit?"
+        options:
+          - { id: a, text: "`Vec`, with `push` and `pop`" }
+          - { id: b, text: "`VecDeque`, with `push_back` and `pop_front`", why: "`pop_front` would undo the oldest change first." }
+          - { id: c, text: "`HashSet`", why: "A set has no order, so it can't tell which change was most recent." }
+        answer: a
+        explanation: "Last in, first out is a stack, and a `Vec`'s `push` and `pop` work at the same end. Use `VecDeque` when you take from the other end."
+        concepts: [collections.choose, vec.basics]
+
+      - type: predict-output
+        id: predict-set-contains
+        code:
+          rust: |
+            use std::collections::HashSet;
+
+            let mut done = HashSet::new();
+            done.insert(3);
+            done.insert(5);
+            let mut todo = 0;
+            for task in 1..=5 {
+                if !done.contains(&task) {
+                    todo += 1;
+                }
+            }
+            println!("{todo}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "That's how many tasks are done. The loop counts the ones that aren't: 1, 2 and 4." }
+          - { id: c, text: "5", why: "Tasks 3 and 5 are in `done`, so they're skipped." }
+        answer: a
+        explanation: "Of 1 to 5, only 3 and 5 are in the set, so 1, 2 and 4 are counted."
+        concepts: [collections.choose, range.basics]
+
+      - type: true-false
+        id: tf-btree-same-api
+        prompt: "Changing `HashMap::new()` to `BTreeMap::new()` (and the `use` line) is often all it takes to get sorted output."
+        answer: true
+        explanation: "The two maps share `insert`, `get`, `entry`, `remove` and looping. The `BTreeMap` keeps its keys sorted."
+        concepts: [collections.choose, map.iter]
+
+      - type: mcq
+        id: mcq-insert-false
+        prompt: "`seen` is a `HashSet<&str>`. What does `seen.insert(\"kiwi\")` returning `false` tell you?"
+        options:
+          - { id: a, text: "`\"kiwi\"` was already in the set" }
+          - { id: b, text: "The insert failed and the program should stop", why: "Nothing failed. The set already had `\"kiwi\"`, so there was nothing to add." }
+          - { id: c, text: "The set is full", why: "Sets grow as needed. `false` only means the value was there already." }
+        answer: a
+        explanation: "`insert` returns whether the value was new. `false` means it was a duplicate, and the set is unchanged."
+        concepts: [collections.choose]
+
+      - type: fill-tokens
+        id: fill-queue
+        prompt: "Fill the blanks so the program prints `serving Ana`"
+        code:
+          rust: |
+            use std::collections::VecDeque;
+
+            let mut line = VecDeque::new();
+            line.___1___("Ana");
+            line.push_back("Bo");
+            if let Some(c) = line.___2___() {
+                println!("serving {c}");
+            }
+          verify: run
+          expectStdout: "serving Ana\n"
+        blanks:
+          "1": { answer: ["push_back"] }
+          "2": { answer: ["pop_front"] }
+        bank: ["push_back", "push", "pop_front", "pop_back", "pop"]
+        explanation: "`push_back` joins the queue at the back and `pop_front` takes from the front, so the first to join is served first."
+        concepts: [collections.choose]

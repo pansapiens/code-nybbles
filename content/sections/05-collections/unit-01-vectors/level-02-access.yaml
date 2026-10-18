@@ -1,0 +1,498 @@
+id: collections.vectors.access
+title: Reading an element
+icon: search
+concepts: [vec.access]
+reviewConcepts: [vec.basics, types.array-bounds, panic.index, option.basics, option.methods, match.enum, match.if-let, match.let-else, borrow.shared, own.move, types.as-cast, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-index
+        title: Indexing with []
+        markdown: |
+          **`v[i]` reads the element at position `i`**, counting from 0, the same as an array. The last element is at `v.len() - 1`.
+
+          The index must be a `usize`. A plain number like `1` becomes a `usize` automatically.
+        code:
+          rust: |
+            let scores = vec![10, 20, 30];
+            println!("{}", scores[0]);
+            println!("{}", scores[2]);
+          verify: run
+          expectStdout: "10\n30\n"
+        concepts: [vec.access]
+
+      - type: predict-output
+        id: predict-index
+        code:
+          rust: |
+            let days = vec!["Mon", "Tue", "Wed"];
+            println!("{}", days[1]);
+          verify: run
+        options:
+          - { id: a, text: "Tue" }
+          - { id: b, text: "Mon", why: "Indexes start at 0, so `days[0]` is `Mon` and `days[1]` is the second element." }
+          - { id: c, text: "Wed", why: "Indexes start at 0. `Wed` is at index 2." }
+        answer: a
+        explanation: "Index 0 is the first element, so index 1 is the second: `Tue`."
+        concepts: [vec.access]
+
+      - type: true-false
+        id: tf-last-index
+        prompt: "In a `Vec` with 4 elements, the last one is `v[4]`."
+        answer: false
+        explanation: "Indexes run from 0 to `len() - 1`, so the last of 4 elements is `v[3]`. `v[4]` is out of range."
+        concepts: [vec.access]
+
+      - type: mcq
+        id: mcq-out-of-range
+        prompt: "What happens when you run this?"
+        code:
+          rust: |
+            let scores = vec![10, 20, 30];
+            println!("{}", scores[10]);
+          verify: run
+          expectPanic: "index out of bounds: the len is 3 but the index is 10"
+        options:
+          - { id: a, text: "It compiles, then panics: index out of bounds" }
+          - { id: b, text: "It doesn't compile", why: "With an array, a constant index past the end is caught at compile time. A `Vec`'s length is only known while the program runs, so the check happens then." }
+          - { id: c, text: "It prints `0`", why: "Rust never makes up a value for a missing element." }
+        answer: a
+        explanation: "`v[i]` checks the index when it runs. Index 10 is past the end of a 3-element vector, so the program panics with `index out of bounds: the len is 3 but the index is 10`."
+        concepts: [vec.access, panic.index]
+
+      - type: concept
+        id: concept-get
+        title: get returns an Option
+        markdown: |
+          **`v.get(i)` never panics.** It returns `Some(&element)` if `i` is in range and `None` if it isn't.
+
+          You get a reference, `Option<&T>`, because the element stays in the vector. `{:?}` prints `Some(20)`.
+        code:
+          rust: |
+            let scores = vec![10, 20, 30];
+            println!("{:?}", scores.get(1));
+            println!("{:?}", scores.get(10));
+          verify: run
+          expectStdout: "Some(20)\nNone\n"
+        concepts: [vec.access, option.basics]
+
+      - type: predict-output
+        id: predict-get
+        code:
+          rust: |
+            let seats = vec![4, 2];
+            let a = seats.get(0);
+            let b = seats.get(2);
+            println!("{a:?} {b:?}");
+          verify: run
+        options:
+          - { id: a, text: "Some(4) None" }
+          - { id: b, text: "Some(4) Some(2)", why: "`seats` has 2 elements, at indexes 0 and 1. Index 2 is out of range." }
+          - { id: c, text: "4 None", why: "`get` wraps the element in `Some`, and `{:?}` shows that." }
+        answer: a
+        explanation: "Index 0 is in range, so `get` gives `Some(4)`. Index 2 is past the end, so it gives `None` instead of panicking."
+        concepts: [vec.access]
+
+      - type: compiles
+        id: compiles-const-index
+        prompt: "Does this compile?"
+        code:
+          rust: |
+            let ids = vec![7, 8, 9];
+            let x = ids[3];
+            println!("{x}");
+          verify: compile
+        answer: true
+        explanation: "It compiles, then panics when it runs. Unlike an array, a `Vec` can change length, so the compiler doesn't check indexes against it."
+        concepts: [vec.access, types.array-bounds]
+
+      - type: concept
+        id: concept-choose
+        title: "[] or get?"
+        markdown: |
+          **Use `v[i]` when the index must be in range**, for example `i` from `0..v.len()`. If it isn't, that's a bug and a panic is fair.
+
+          **Use `v.get(i)` when the index might be out of range**, for example a position someone typed in. Then handle `None`.
+        code:
+          rust: |
+            let menu = vec!["tea", "coffee"];
+            let choice = 5;
+            match menu.get(choice) {
+                Some(item) => println!("{item}"),
+                None => println!("no such item"),
+            }
+          verify: run
+          expectStdout: "no such item\n"
+        concepts: [vec.access]
+
+      - type: mcq
+        id: mcq-choose
+        prompt: "A player types a slot number to pick from `inventory`. They might type any number. Which is the better way to read the slot?"
+        options:
+          - { id: a, code: "inventory.get(slot)" }
+          - { id: b, code: "inventory[slot]", why: "If the player types a number past the end, this panics and the game stops." }
+          - { id: c, code: "inventory.pop()", why: "`pop` removes the last element. It ignores the slot number." }
+        answer: a
+        explanation: "The number comes from outside your program, so it may be out of range. `get` gives `None` for that case, which you can handle."
+        concepts: [vec.access]
+
+      - type: fill-tokens
+        id: fill-if-let-get
+        prompt: "Fill the blanks so the program prints `found 30`"
+        code:
+          rust: |
+            let temps = vec![25, 30];
+            if let ___1___(t) = temps.___2___(1) {
+                println!("found {t}");
+            }
+          verify: run
+          expectStdout: "found 30\n"
+        blanks:
+          "1": { answer: ["Some"] }
+          "2": { answer: ["get"] }
+        bank: ["Some", "None", "get", "pop", "len"]
+        explanation: "`temps.get(1)` is `Some(&30)`, and `if let Some(t)` takes the value out. `pop` would also give `Some(30)`, but it takes no index and removes the element."
+        concepts: [vec.access, match.if-let]
+
+  - id: l2
+    exercises:
+      - type: spot-bug
+        id: spot-loop-past-end
+        prompt: "This prints three lines, then panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let marks = vec![9, 7, 8];
+                for i in 0..=marks.len() {
+                    println!("{}", marks[i]);
+                }
+            }
+          verify: run
+          expectPanic: "index out of bounds: the len is 3 but the index is 3"
+        answer: 3
+        explanation: "The panic happens on line 4, but the mistake is the range on line 3. `0..=3` includes 3, which is past the end. Use `0..marks.len()`."
+        concepts: [vec.access, panic.index]
+
+      - type: predict-output
+        id: predict-match-get
+        code:
+          rust: |
+            let names = vec!["Ann", "Bo"];
+            for i in 1..4 {
+                match names.get(i) {
+                    Some(n) => print!("{n} "),
+                    None => print!("- "),
+                }
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "Bo - - " }
+          - { id: b, text: "Ann Bo - ", why: "The loop starts at 1, so the first element looked up is `Bo`." }
+          - { id: c, text: "Bo", why: "`get` doesn't panic or stop the loop. Out-of-range indexes give `None`, which prints `- `." }
+        answer: a
+        explanation: "`1..4` gives 1, 2 and 3. Only index 1 is in range. The others give `None`."
+        concepts: [vec.access, match.enum]
+
+      - type: compiles
+        id: compiles-move-out-index
+        code:
+          rust: |
+            let names = vec![
+                String::from("Ann"),
+                String::from("Bo"),
+            ];
+            let first = names[0];
+            println!("{first}");
+          verify: compile-fail
+          expectErrors: [E0507]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`names[0]` would move the `String` out of the vector, which isn't allowed" }
+            - { id: b, text: "Index 0 might be out of range", why: "Range is checked when the program runs, not by the compiler. The problem is ownership." }
+            - { id: c, text: "`names` needs `mut`", why: "Reading doesn't need `mut`. The problem is taking ownership of an element." }
+          answer: a
+        explanation: "A `String` isn't `Copy`, so `let first = names[0];` would move it and leave a hole in the vector. The error is E0507: cannot move out of index. Borrow it with `&names[0]`."
+        concepts: [vec.access, own.move]
+
+      - type: decode-error
+        id: decode-move-out-fix
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let cities = vec![
+                    String::from("Perth"),
+                    String::from("Hobart"),
+                ];
+                let home = cities[1];
+                println!("{home} {}", cities.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        options:
+          - { id: a, code: "let home = &cities[1];" }
+          - { id: b, code: "let mut home = cities[1];", why: "`mut` doesn't change ownership. It still tries to move the `String` out." }
+          - { id: c, code: "let home = cities.pop();", why: "That removes `Hobart`, so the length printed would be 1, and `home` would be an `Option`." }
+        answer: a
+        explanation: "`&cities[1]` borrows the element instead of moving it. The vector keeps its `String`s, so `cities.len()` still works."
+        concepts: [vec.access, borrow.shared]
+
+      - type: compiles
+        id: compiles-unwrap-or-ref
+        code:
+          rust: |
+            let stock = vec![3, 0, 5];
+            let n = stock.get(7).unwrap_or(0);
+            println!("{n}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`get` gives `Option<&i32>`, so the default must be a reference: `&0`" }
+            - { id: b, text: "`unwrap_or` doesn't work on what `get` returns", why: "It does. The default has to be the same type as what's inside the `Some`." }
+            - { id: c, text: "Index 7 is out of range", why: "`get` handles that by returning `None`. The compiler never checks the index." }
+          answer: a
+        explanation: "The `Some` holds a `&i32`, so `unwrap_or` needs a `&i32` too. `stock.get(7).unwrap_or(&0)` compiles and prints 0."
+        concepts: [vec.access, option.methods, err.E0308]
+
+      - type: true-false
+        id: tf-get-never-panics
+        prompt: "`v.get(i)` can't panic, whatever value `i` has."
+        answer: true
+        explanation: "An out-of-range `i` gives `None`. That's the point of `get`."
+        concepts: [vec.access]
+
+      - type: match-pairs
+        id: pairs-access
+        prompt: "`v` is `vec![5, 6]`. Match each expression to its result."
+        pairs:
+          - ["v[1]", "6"]
+          - ["v.get(1)", "Some(&6)"]
+          - ["v.get(2)", "None"]
+          - ["v[2]", "panic"]
+          - ["v.len()", "2"]
+        concepts: [vec.access]
+
+      - type: predict-output
+        id: predict-tiles-access
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let laps = vec![62, 58, 60];
+            let best = laps[1];
+            let gap = laps.get(3).unwrap_or(&0);
+            println!("{best} {gap} {}", laps.len());
+          verify: run
+        tiles: ["58", "0", "3", "62", "60", "None"]
+        answer: "58 0 3"
+        explanation: "`laps[1]` is 58. Index 3 is past the end, so `get` gives `None` and `unwrap_or(&0)` gives 0. The vector still has 3 elements."
+        concepts: [vec.access, option.methods]
+
+      - type: mcq
+        id: mcq-get-type
+        prompt: "`names` is a `Vec<String>`. What type is `names.get(0)`?"
+        options:
+          - { id: a, code: "Option<&String>" }
+          - { id: b, code: "Option<String>", why: "`get` doesn't take the `String` out of the vector. It lends you a reference to it." }
+          - { id: c, code: "&String", why: "`get` wraps the result in an `Option`, because index 0 might not exist." }
+          - { id: d, code: "String", why: "That's neither borrowed nor wrapped in an `Option`. `get` does both." }
+        answer: a
+        explanation: "`get` returns a reference to the element, inside an `Option` for the out-of-range case."
+        concepts: [vec.access]
+
+      - type: compiles
+        id: compiles-i32-index
+        code:
+          rust: |
+            let scores = vec![10, 20, 30];
+            let pos: i32 = 1;
+            println!("{}", scores[pos]);
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "Indexes must be `usize`, and `pos` is an `i32`" }
+            - { id: b, text: "`pos` must be a literal number, not a variable", why: "Variables work fine as indexes, as long as they're `usize`." }
+            - { id: c, text: "`scores` needs to be borrowed with `&`", why: "Indexing works on the vector directly. The index type is the problem." }
+          answer: a
+        explanation: "The error says the vector `cannot be indexed by i32`. Declare `pos` as `usize`, or write `scores[pos as usize]`."
+        concepts: [vec.access]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-let-else
+        prompt: "Arrange the lines into a function that returns the price at `slot`, or 0 if there's no such slot"
+        lines:
+          - { id: l1, text: "fn price(list: &[u32], slot: usize) -> u32 {" }
+          - { id: l2, text: "    let Some(p) = list.get(slot) else {" }
+          - { id: l3, text: "        return 0;" }
+          - { id: l4, text: "    };" }
+          - { id: l5, text: "    *p" }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let p = list[slot] else {" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                let prices = vec![4, 9];
+                println!("{} {}", price(&prices, 1), price(&prices, 5));
+            }
+          mode: run
+          expectStdout: "9 0\n"
+        explanation: "`let ... else` needs a pattern that can fail, like `Some(p)`. `p` is a `&u32`, so `*p` gives the number to return."
+        concepts: [vec.access, match.let-else]
+
+      - type: fill-tokens
+        id: fill-safe-default
+        prompt: "Fill the blanks so the program prints `20 0`"
+        code:
+          rust: |
+            let costs = vec![10, 20];
+            let a = costs[___1___];
+            let b = costs.get(9).unwrap_or(___2___);
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "20 0\n"
+        blanks:
+          "1": { answer: ["1"] }
+          "2": { answer: ["&0"] }
+        bank: ["1", "2", "&0", "0", "None"]
+        explanation: "`costs[1]` is the second element, 20. `get` gives an `Option<&i32>`, so the default for `unwrap_or` is `&0`, not `0`."
+        concepts: [vec.access, option.methods]
+
+      - type: decode-error
+        id: decode-index-type
+        prompt: Which change makes this compile and print `20`?
+        code:
+          rust: |
+            fn main() {
+                let scores = vec![10, 20, 30];
+                let pos: i32 = 1;
+                println!("{}", scores[pos]);
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Change line 3 to `let pos: usize = 1;`" }
+          - { id: b, text: "Change line 4 to `scores.get(pos)`", why: "`get` also needs a `usize`, and it would print an `Option` anyway." }
+          - { id: c, text: "Change line 2 to `let scores: Vec<usize> = vec![10, 20, 30];`", why: "The element type doesn't matter. The index has to be a `usize`." }
+        answer: a
+        explanation: "Vectors are indexed by `usize`, the type Rust uses for positions and lengths. With `pos: usize`, `scores[pos]` is 20."
+        concepts: [vec.access]
+
+      - type: predict-output
+        id: predict-pop-then-get
+        code:
+          rust: |
+            let mut queue = vec![3, 6, 9];
+            queue.pop();
+            let x = queue.get(2);
+            let y = queue[1];
+            println!("{x:?} {y}");
+          verify: run
+        options:
+          - { id: a, text: "None 6" }
+          - { id: b, text: "Some(9) 6", why: "`pop` removed the 9, so index 2 no longer exists." }
+          - { id: c, text: "None 9", why: "After the `pop`, `queue` is `[3, 6]`, so index 1 is 6." }
+        answer: a
+        explanation: "After `pop`, `queue` is `[3, 6]`. Index 2 is now out of range, so `get` gives `None`; index 1 is 6."
+        concepts: [vec.access, vec.basics]
+
+      - type: spot-bug
+        id: spot-last-index
+        prompt: "This panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let mut path = vec![1, 4];
+                path.push(9);
+                let n = path.len();
+                let last = path[n];
+                println!("{last}");
+            }
+          verify: run
+          expectPanic: "index out of bounds: the len is 3 but the index is 3"
+        answer: 5
+        explanation: "The length is 3, but indexes only go up to 2. The last element is `path[n - 1]`."
+        concepts: [vec.access, panic.index]
+
+      - type: mcq
+        id: mcq-diagram-ref
+        prompt: "Which line could give this diagram?"
+        diagram:
+          caption: "pick is a reference into the heap block"
+          frames:
+            - name: main
+              vars:
+                - { name: team.ptr, points: h1 }
+                - { name: team.len, value: "2" }
+                - { name: team.cap, value: "2" }
+                - { name: pick, points: h1 }
+          heap:
+            - { id: h1, value: "[7, 11]" }
+        options:
+          - { id: a, code: "let pick = &team[1];" }
+          - { id: b, code: "let pick = team[1];", why: "That copies the `i32` into `pick`, so `pick` would hold the value `11` itself, with no arrow." }
+          - { id: c, code: "let pick = team.len();", why: "That's a plain number, 2. It doesn't point anywhere." }
+        answer: a
+        explanation: "`&team[1]` borrows an element. The element lives in the vector's heap block, so the reference points there."
+        concepts: [vec.access, borrow.shared]
+
+      - type: true-false
+        id: tf-index-copy
+        prompt: "For a `Vec<i32>`, `let x = v[0];` copies the number, and `v` still holds it."
+        code:
+          rust: |
+            let v = vec![5, 6];
+            let x = v[0];
+            println!("{x} {v:?}");
+          verify: run
+          expectStdout: "5 [5, 6]\n"
+        answer: true
+        explanation: "`i32` is `Copy`, so reading an element copies it. Only non-`Copy` elements like `String` need `&v[0]`."
+        concepts: [vec.access, own.move]
+
+      - type: fill-tokens
+        id: fill-match-get
+        prompt: "Fill the blanks so the program prints `no seat 5`"
+        code:
+          rust: |
+            let seats = vec!["A1", "A2"];
+            let n = 5;
+            match seats.___1___(n) {
+                Some(s) => println!("{s}"),
+                ___2___ => println!("no seat {n}"),
+            }
+          verify: run
+          expectStdout: "no seat 5\n"
+        blanks:
+          "1": { answer: ["get"] }
+          "2": { answer: ["None"] }
+        bank: ["get", "[n]", "None", "Some(s)", "Err"]
+        explanation: "`get` returns an `Option`, so the arms are `Some(s)` and `None`. Index 5 is out of range, so the `None` arm runs."
+        concepts: [vec.access, match.enum]
+
+      - type: compiles
+        id: compiles-get-then-add
+        code:
+          rust: |
+            let points = vec![4, 8];
+            if let Some(p) = points.get(1) {
+                println!("{}", p + 1);
+            }
+          verify: run
+          expectStdout: "9\n"
+        answer: true
+        explanation: "`p` is a `&i32`. Adding a number to a `&i32` works, so this prints 9."
+        concepts: [vec.access, match.if-let]

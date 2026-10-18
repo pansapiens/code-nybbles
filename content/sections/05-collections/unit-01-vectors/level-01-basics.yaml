@@ -1,0 +1,498 @@
+id: collections.vectors.basics
+title: A list that grows
+icon: list
+concepts: [vec.basics]
+reviewConcepts: [types.array, types.inference, var.mut, fmt.debug, option.basics, option.methods, mem.stack-heap, own.move, err.E0382, err.E0308, match.if-let]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-vec-macro
+        title: A growable list
+        markdown: |
+          **A `Vec` holds any number of values of one type.** An array has a fixed length; a `Vec` (vector) can grow and shrink while the program runs.
+
+          The `vec!` macro makes one from a list of values. `{:?}` prints the whole thing, and `len()` counts the elements.
+        code:
+          rust: |
+            let scores = vec![10, 20, 30];
+            println!("{scores:?}");
+            println!("{}", scores.len());
+          verify: run
+          expectStdout: "[10, 20, 30]\n3\n"
+        concepts: [vec.basics]
+
+      - type: predict-output
+        id: predict-len
+        code:
+          rust: |
+            let temps = vec![18, 21, 25, 19];
+            println!("{}", temps.len());
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "`len()` counts the elements, and there are four. Indexes go up to 3, but the length is 4." }
+          - { id: c, text: "83", why: "`len()` counts the elements. It doesn't add them up." }
+        answer: a
+        explanation: "`temps` holds four numbers, so `temps.len()` is 4."
+        concepts: [vec.basics]
+
+      - type: mcq
+        id: mcq-vec-vs-array
+        prompt: "What can a `Vec<i32>` do that an array `[i32; 3]` can't?"
+        options:
+          - { id: a, text: "Change how many elements it holds while the program runs" }
+          - { id: b, text: "Hold values of different types, like `1` and `\"two\"`", why: "Both need every element to have the same type." }
+          - { id: c, text: "Tell you its length with `len()`", why: "Arrays have `len()` too." }
+        answer: a
+        explanation: "An array's length is part of its type and never changes. A `Vec` can grow and shrink."
+        concepts: [vec.basics, types.array]
+
+      - type: concept
+        id: concept-new-push
+        title: Start empty, then push
+        markdown: |
+          **`Vec::new()` makes an empty vector, and `push` adds a value to the end.** Pushing changes the vector, so the variable needs `mut`.
+
+          With nothing inside yet, Rust can't tell the element type from `Vec::new()` alone. Here the annotation `Vec<i32>` tells it.
+        code:
+          rust: |
+            let mut scores: Vec<i32> = Vec::new();
+            scores.push(10);
+            scores.push(20);
+            println!("{scores:?}");
+          verify: run
+          expectStdout: "[10, 20]\n"
+        concepts: [vec.basics]
+
+      - type: compiles
+        id: compiles-push-no-mut
+        code:
+          rust: |
+            let names = vec!["Ann"];
+            names.push("Bo");
+            println!("{names:?}");
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`names` isn't `mut`, so it can't be changed with `push`" }
+            - { id: b, text: "`vec!` vectors have a fixed length", why: "A `Vec` made with `vec!` can grow like any other. The variable needs `mut`." }
+            - { id: c, text: "`push` only works on `Vec::new()` vectors", why: "`push` works on any `Vec`, as long as the variable is `mut`." }
+          answer: a
+        explanation: "`push` changes the vector, and variables are immutable by default. The error is E0596: cannot borrow `names` as mutable. Write `let mut names`."
+        concepts: [vec.basics, var.mut]
+
+      - type: fill-tokens
+        id: fill-new-push
+        prompt: "Fill the blanks so the program prints `[3, 7]`"
+        code:
+          rust: |
+            let ___1___ wins: Vec<i32> = Vec::new();
+            wins.___2___(3);
+            wins.___2___(7);
+            println!("{wins:?}");
+          verify: run
+          expectStdout: "[3, 7]\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["push"] }
+        bank: ["mut", "push", "push_str", "add", "const"]
+        explanation: "`push` adds one value to the end of a `Vec`, and the variable needs `mut` for that. `push_str` is for adding text to a `String`."
+        concepts: [vec.basics]
+
+      - type: true-false
+        id: tf-same-type
+        prompt: "Every element of a `Vec` must have the same type."
+        answer: true
+        explanation: "A `Vec<i32>` holds only `i32`s, and a `Vec<String>` holds only `String`s. Level 5 shows how to keep different kinds of value in one `Vec`."
+        concepts: [vec.basics]
+
+      - type: concept
+        id: concept-layout
+        title: Where a Vec lives
+        markdown: |
+          **A `Vec` is three numbers on the stack and its elements on the heap**, like a `String`:
+          - a pointer to the elements
+          - the length: how many elements there are
+          - the capacity: how many fit before it needs a bigger heap block
+        code:
+          rust: |
+            let scores = vec![10, 20, 30];
+            println!("{}", scores.len());
+          verify: run
+          expectStdout: "3\n"
+        diagram:
+          caption: "After let scores = vec![10, 20, 30];"
+          frames:
+            - name: main
+              vars:
+                - { name: scores.ptr, points: h1 }
+                - { name: scores.len, value: "3" }
+                - { name: scores.cap, value: "3" }
+          heap:
+            - { id: h1, value: "[10,20,30]" }
+        concepts: [vec.basics, mem.stack-heap]
+
+      - type: mcq
+        id: mcq-diagram-len
+        prompt: "In this diagram, which part tells you how many elements `ages` holds?"
+        diagram:
+          caption: "A Vec with room to spare"
+          frames:
+            - name: main
+              vars:
+                - { name: ages.ptr, points: h1 }
+                - { name: ages.len, value: "2" }
+                - { name: ages.cap, value: "4" }
+          heap:
+            - { id: h1, value: "[30, 41]" }
+        options:
+          - { id: a, code: "ages.len" }
+          - { id: b, code: "ages.cap", why: "The capacity is how many elements fit in the heap block before it has to grow. Only 2 are in use." }
+          - { id: c, code: "ages.ptr", why: "The pointer says where the elements are, not how many there are." }
+        answer: a
+        explanation: "The length counts the elements in use, 2 here. The capacity, 4, is room reserved for later pushes."
+        concepts: [vec.basics, mem.stack-heap]
+
+      - type: predict-output
+        id: predict-tiles-push
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let mut laps = vec![61, 59];
+            laps.push(58);
+            println!("{} {laps:?}", laps.len());
+          verify: run
+        tiles: ["3", "[61, 59, 58]", "2", "[58, 61, 59]", "[61, 59]"]
+        answer: "3 [61, 59, 58]"
+        explanation: "`push` adds `58` at the end, so the vector has 3 elements, in the order they were added."
+        concepts: [vec.basics]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-pop
+        title: Taking the last one off
+        markdown: |
+          **`pop` removes the last element and returns it as an `Option`.** It returns `Some(value)`, or `None` if the vector is empty. An empty vector isn't an error, so there's no crash.
+
+          `is_empty()` is `true` when the length is 0.
+        code:
+          rust: |
+            let mut stack = vec![1, 2];
+            println!("{:?}", stack.pop());
+            println!("{:?}", stack.pop());
+            println!("{:?}", stack.pop());
+            println!("{}", stack.is_empty());
+          verify: run
+          expectStdout: "Some(2)\nSome(1)\nNone\ntrue\n"
+        concepts: [vec.basics, option.basics]
+
+      - type: predict-output
+        id: predict-pop
+        code:
+          rust: |
+            let mut plates = vec![4, 5, 6];
+            let top = plates.pop();
+            println!("{top:?} {plates:?}");
+          verify: run
+        options:
+          - { id: a, text: "Some(6) [4, 5]" }
+          - { id: b, text: "Some(4) [5, 6]", why: "`pop` takes from the end, the most recently pushed value, not the front." }
+          - { id: c, text: "6 [4, 5]", why: "`pop` returns an `Option`, so `{:?}` shows `Some(6)`." }
+          - { id: d, text: "Some(6) [4, 5, 6]", why: "`pop` removes the value from the vector as well as returning it." }
+        answer: a
+        explanation: "`pop` removes the last element, 6, and hands it back wrapped in `Some`. Two elements remain."
+        concepts: [vec.basics, option.basics]
+
+      - type: compiles
+        id: compiles-new-no-type
+        code:
+          rust: |
+            let names = Vec::new();
+            println!("{}", names.len());
+          verify: compile-fail
+          expectErrors: [E0282]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0282: type annotations needed for `Vec<_>`" }
+            - { id: b, text: "E0596: cannot borrow `names` as mutable", why: "Nothing changes `names`, so it doesn't need `mut`." }
+            - { id: c, text: "E0308: mismatched types", why: "There are no two types to mismatch. Rust has no type at all for the elements." }
+          answer: a
+        explanation: "Nothing is ever pushed, so Rust can't work out what `names` holds. Write `let names: Vec<String> = Vec::new();` or similar."
+        concepts: [vec.basics, types.inference]
+
+      - type: true-false
+        id: tf-pop-empty
+        prompt: "Calling `pop` on an empty `Vec` makes the program crash."
+        answer: false
+        explanation: "`pop` returns `None` when there's nothing to remove. That's why it returns an `Option`."
+        concepts: [vec.basics, option.basics]
+
+      - type: compiles
+        id: compiles-push-infers
+        code:
+          rust: |
+            let mut names = Vec::new();
+            names.push(String::from("Ann"));
+            println!("{}", names.len());
+          verify: run
+          expectStdout: "1\n"
+        answer: true
+        explanation: "Rust looks at the `push` on line 2 and works out that `names` is a `Vec<String>`. An annotation is only needed when nothing tells Rust the type."
+        concepts: [vec.basics, types.inference]
+
+      - type: spot-bug
+        id: spot-push-text
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let mut scores = vec![10, 20];
+                scores.push(30);
+                scores.push("40");
+                println!("{scores:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 4
+        explanation: "`scores` is a vector of integers, and `\"40\"` is text (`&str`). Every element must have the same type."
+        concepts: [vec.basics, err.E0308]
+
+      - type: decode-error
+        id: decode-annotate
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let queue = Vec::new();
+                println!("{}", queue.is_empty());
+            }
+          verify: compile-fail
+          expectErrors: [E0282]
+        options:
+          - { id: a, code: "let queue: Vec<u32> = Vec::new();" }
+          - { id: b, code: "let mut queue = Vec::new();", why: "`mut` lets the vector change. It still doesn't tell Rust the element type." }
+          - { id: c, code: "let queue = Vec::new(u32);", why: "`Vec::new()` takes no arguments. The type goes in an annotation." }
+        answer: a
+        explanation: "The compiler needs to know the element type. An annotation like `Vec<u32>` gives it."
+        concepts: [vec.basics, types.inference]
+
+      - type: mcq
+        id: mcq-diagram-grow
+        prompt: "`tags` was `vec![1, 2, 3]` with capacity 3. Then `tags.push(4)` ran. Why does the old heap block show as freed?"
+        diagram:
+          caption: "After tags.push(4);"
+          frames:
+            - name: main
+              vars:
+                - { name: tags.ptr, points: h2 }
+                - { name: tags.len, value: "4" }
+                - { name: tags.cap, value: "6" }
+          heap:
+            - { id: h1, value: "[1, 2, 3]", freed: true }
+            - { id: h2, value: "[1,2,3,4]" }
+        options:
+          - { id: a, text: "It was full, so the `Vec` copied the elements to a bigger block and freed the old one" }
+          - { id: b, text: "`push` always makes a new block", why: "Only when the capacity is used up. With spare room, `push` writes into the same block." }
+          - { id: c, text: "The old block was moved to the stack", why: "Elements always stay on the heap. Only the pointer, length and capacity are on the stack." }
+        answer: a
+        explanation: "With length equal to capacity, there's no room for a 4th element. The `Vec` gets a bigger block, copies the elements across, frees the old block and updates its pointer."
+        concepts: [vec.basics, mem.stack-heap]
+
+      - type: match-pairs
+        id: pairs-vec-calls
+        pairs:
+          - ["vec![1, 2]", "a Vec holding 1 and 2"]
+          - ["Vec::new()", "an empty Vec"]
+          - ["v.push(5)", "adds 5 at the end"]
+          - ["v.pop()", "Some(last) or None"]
+          - ["v.len()", "how many elements"]
+        concepts: [vec.basics]
+
+      - type: predict-output
+        id: predict-while-let-pop
+        code:
+          rust: |
+            let mut todo = vec![1, 2, 3];
+            while let Some(job) = todo.pop() {
+                print!("{job} ");
+            }
+            println!("{}", todo.len());
+          verify: run
+        options:
+          - { id: a, text: "3 2 1 0" }
+          - { id: b, text: "1 2 3 0", why: "`pop` takes from the end each time, so the jobs come out last first." }
+          - { id: c, text: "3 2 1 3", why: "Each `pop` removes an element, so the vector ends up empty." }
+        answer: a
+        explanation: "`while let` keeps going while `pop` returns `Some`. It removes 3, 2, then 1, then `pop` gives `None` and the loop stops with the vector empty."
+        concepts: [vec.basics, match.if-let]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-build-list
+        prompt: "Arrange the lines so the program prints `[\"milk\", \"eggs\"] 2`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let mut list = Vec::new();" }
+          - { id: l3, text: '    list.push("milk");' }
+          - { id: l4, text: '    list.push("eggs");' }
+          - { id: l5, text: '    println!("{list:?} {}", list.len());' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let list = Vec::new();" }
+          - { id: d2, text: '    list.pop("eggs");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "[\"milk\", \"eggs\"] 2\n"
+        explanation: "The vector needs `let mut` because `push` changes it. Elements stay in the order they were pushed. `pop` takes no argument; it removes the last element."
+        concepts: [vec.basics]
+
+      - type: compiles
+        id: compiles-push-moves
+        code:
+          rust: |
+            let mut names = Vec::new();
+            let first = String::from("Ann");
+            names.push(first);
+            println!("{first}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `first`" }
+            - { id: b, text: "E0596: cannot borrow `names` as mutable", why: "`names` is declared with `let mut`, so `push` is fine." }
+            - { id: c, text: "E0282: type annotations needed", why: "The `push` tells Rust that `names` is a `Vec<String>`." }
+          answer: a
+        explanation: "`push` takes ownership of the value. The `String` moves into the vector, so `first` can't be used afterwards."
+        concepts: [vec.basics, own.move, err.E0382]
+
+      - type: fill-tokens
+        id: fill-pop-or
+        prompt: "Fill the blanks so the program prints `5 0`"
+        code:
+          rust: |
+            let mut lives = vec![5];
+            let a = lives.___1___().___2___(0);
+            let b = lives.___1___().___2___(0);
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "5 0\n"
+        blanks:
+          "1": { answer: ["pop"] }
+          "2": { answer: ["unwrap_or"] }
+        bank: ["pop", "push", "unwrap_or", "len", "is_some"]
+        explanation: "The first `pop` gives `Some(5)` and the second gives `None`, because the vector is empty by then. `unwrap_or(0)` turns `None` into 0."
+        concepts: [vec.basics, option.methods]
+
+      - type: decode-error
+        id: decode-no-mut
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let scores = Vec::new();
+                scores.push(12);
+                println!("{scores:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - { id: a, text: "`push` needs to change `scores`, but `scores` was declared without `mut`" }
+          - { id: b, text: "`Vec::new()` needs a type annotation", why: "The `push(12)` lets Rust work out the type. The problem is the missing `mut`." }
+          - { id: c, text: "`scores` can't be printed with `{:?}`", why: "A `Vec` of numbers prints fine with `{:?}`. The error is on line 3." }
+        answer: a
+        explanation: "Calling `push` borrows `scores` mutably, which needs `let mut scores`. The compiler's help suggests exactly that."
+        concepts: [vec.basics, var.mut]
+
+      - type: predict-output
+        id: predict-tiles-mixed
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let mut v = vec![2, 4];
+            v.push(6);
+            v.pop();
+            v.pop();
+            v.push(8);
+            println!("{v:?}");
+          verify: run
+        tiles: ["[2, 8]", "[2, 4, 8]", "[8]", "[2, 4, 6, 8]"]
+        answer: "[2, 8]"
+        explanation: "Step by step: `[2, 4, 6]`, then two pops leave `[2]`, then the push gives `[2, 8]`."
+        concepts: [vec.basics]
+
+      - type: mcq
+        id: mcq-type-of-vec
+        prompt: "What type is `cities`?"
+        code:
+          rust: |
+            let cities = vec!["Perth", "Darwin"];
+            println!("{}", cities.len());
+          verify: run
+          expectStdout: "2\n"
+        options:
+          - { id: a, code: "Vec<&str>" }
+          - { id: b, code: "Vec<String>", why: "String literals are `&str`. You'd need `String::from` for a `Vec<String>`." }
+          - { id: c, code: "[&str; 2]", why: "That's an array. `vec!` makes a `Vec`." }
+          - { id: d, code: "Vec<&str; 2>", why: "A `Vec`'s length isn't part of its type, because it can change." }
+        answer: a
+        explanation: "The elements are string literals, which are `&str`, so this is a `Vec<&str>`."
+        concepts: [vec.basics]
+
+      - type: true-false
+        id: tf-vec-repeat
+        prompt: "`vec![0; 3]` makes a `Vec` holding `[0, 0, 0]`, like the array syntax `[0; 3]`."
+        code:
+          rust: |
+            let counts = vec![0; 3];
+            println!("{counts:?}");
+          verify: run
+          expectStdout: "[0, 0, 0]\n"
+        answer: true
+        explanation: "`vec![value; n]` repeats `value` `n` times. It's a handy way to start with a vector of zeros."
+        concepts: [vec.basics, types.array]
+
+      - type: spot-bug
+        id: spot-pop-type
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            fn main() {
+                let mut ids = vec![7, 8];
+                let last: i32 = ids.pop();
+                println!("{last}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 3
+        explanation: "`pop` returns `Option<i32>`, not `i32`, because the vector might be empty. Use `ids.pop().unwrap_or(0)` or match on the `Option`."
+        concepts: [vec.basics, option.basics, err.E0308]
+
+      - type: fill-tokens
+        id: fill-empty-check
+        prompt: "Fill the blanks so the program prints `empty`"
+        code:
+          rust: |
+            let mut queue = vec![1];
+            queue.___1___();
+            if queue.___2___() {
+                println!("empty");
+            }
+          verify: run
+          expectStdout: "empty\n"
+        blanks:
+          "1": { answer: ["pop"] }
+          "2": { answer: ["is_empty"] }
+        bank: ["pop", "is_empty", "len", "push", "is_none"]
+        explanation: "`pop` removes the only element, and `is_empty()` returns `true` for a vector of length 0. `len()` is a number, which `if` won't accept."
+        concepts: [vec.basics]

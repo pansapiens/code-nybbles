@@ -1,0 +1,557 @@
+id: collections.hashmap.basics
+title: Looking things up by key
+icon: key
+concepts: [map.basics]
+reviewConcepts: [option.basics, option.methods, option.type-safety, match.enum, match.if-let, match.let-else, var.mut, vec.basics, vec.borrow, err.E0308, err.E0502]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-hashmap
+        title: Keys and values
+        markdown: |
+          **A `HashMap` stores values under keys.** You look a value up by its key instead of by position.
+
+          `HashMap` isn't loaded automatically, so bring it in with `use`. `insert(key, value)` adds an entry; `get(key)` looks one up.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut scores = HashMap::new();
+            scores.insert("Ana", 10);
+            scores.insert("Bo", 7);
+            println!("{:?}", scores.get("Bo"));
+          verify: run
+          expectStdout: "Some(7)\n"
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-get-some
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut ages = HashMap::new();
+            ages.insert("Mia", 31);
+            ages.insert("Leo", 28);
+            println!("{:?}", ages.get("Mia"));
+          verify: run
+        options:
+          - { id: a, text: "Some(31)" }
+          - { id: b, text: "31", why: "The key might not be there, so `get` wraps the value in an `Option`." }
+          - { id: c, text: "Some(28)", why: "`get` finds the value stored under the key `\"Mia\"`, not the last one inserted." }
+        answer: a
+        explanation: "`get` returns `Some(value)` when the key is in the map. `\"Mia\"` was stored with 31."
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-get-none
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut prices = HashMap::new();
+            prices.insert("tea", 4);
+            println!("{:?}", prices.get("coffee"));
+          verify: run
+        options:
+          - { id: a, text: "None" }
+          - { id: b, text: "0", why: "A missing key isn't treated as zero. `get` tells you it's missing with `None`." }
+          - { id: c, text: "Some(4)", why: "`get` only finds the exact key. `\"coffee\"` was never inserted." }
+        answer: a
+        explanation: "There's no `\"coffee\"` key, so `get` returns `None` instead of panicking."
+        concepts: [map.basics, option.basics]
+
+      - type: mcq
+        id: mcq-get-type
+        prompt: "`stock` is a `HashMap<&str, u32>`. What type does `stock.get(\"pens\")` return?"
+        options:
+          - { id: a, code: "Option<&u32>" }
+          - { id: b, code: "u32", why: "The key might be missing, so `get` can't promise a plain `u32`." }
+          - { id: c, code: "Option<u32>", why: "Close, but `get` lends you the value inside the map: you get a reference, `&u32`." }
+          - { id: d, code: "bool", why: "That's what `contains_key` returns. `get` gives you the value, if there is one." }
+        answer: a
+        explanation: "`get` returns `Some(&value)` or `None`. The value stays in the map, so you get a reference to it."
+        concepts: [map.basics, option.basics]
+
+      - type: fill-tokens
+        id: fill-use-new
+        prompt: "Fill the blanks so the program prints `Some(3)`"
+        code:
+          rust: |
+            use std::collections::___1___;
+
+            let mut stock = HashMap::___2___();
+            stock.insert("pens", 3);
+            println!("{:?}", stock.get("pens"));
+          verify: run
+          expectStdout: "Some(3)\n"
+        blanks:
+          "1": { answer: ["HashMap"] }
+          "2": { answer: ["new"] }
+        bank: ["HashMap", "Vec", "new", "create", "from"]
+        explanation: "`use std::collections::HashMap;` brings the type into scope, and `HashMap::new()` makes an empty map."
+        concepts: [map.basics]
+
+      - type: compiles
+        id: compiles-no-use
+        code:
+          rust: |
+            fn main() {
+                let mut ages = HashMap::new();
+                ages.insert("Mia", 31);
+                println!("{}", ages.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0433]
+        answer: false
+        followUp:
+          prompt: What's missing?
+          options:
+            - { id: a, text: "`use std::collections::HashMap;` at the top" }
+            - { id: b, text: "A type annotation like `HashMap<&str, i32>`", why: "Rust works out the types from the `insert` call. It can't find the name `HashMap` at all." }
+            - { id: c, text: "`vec!` around the values", why: "`vec!` makes a `Vec`. The problem is that `HashMap` isn't in scope." }
+          answer: a
+        explanation: "Unlike `Vec` and `String`, `HashMap` isn't in scope by default. Without the `use` line, the compiler reports E0433: it can't find `HashMap`."
+        concepts: [map.basics]
+
+      - type: concept
+        id: concept-insert-overwrites
+        title: One value per key
+        markdown: |
+          **Each key holds one value.** Inserting with a key that's already there replaces the old value.
+
+          `insert` returns the old value as an `Option`: `Some(old)` if it replaced something, `None` if the key was new.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut best = HashMap::new();
+            println!("{:?}", best.insert("Al", 10));
+            println!("{:?}", best.insert("Al", 25));
+            println!("{:?}", best.get("Al"));
+          verify: run
+          expectStdout: "None\nSome(10)\nSome(25)\n"
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-overwrite
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut scores = HashMap::new();
+            scores.insert("Bo", 7);
+            scores.insert("Bo", 12);
+            println!("{:?}", scores.get("Bo"));
+          verify: run
+        options:
+          - { id: a, text: "Some(12)" }
+          - { id: b, text: "Some(7)", why: "The second `insert` replaces the value stored under `\"Bo\"`." }
+          - { id: c, text: "Some(19)", why: "`insert` doesn't add to the old value. It replaces it." }
+        answer: a
+        explanation: "A key holds one value, so inserting `\"Bo\"` again overwrites 7 with 12."
+        concepts: [map.basics]
+
+      - type: true-false
+        id: tf-duplicate-keys
+        prompt: "A `HashMap` can hold two separate entries with the same key."
+        answer: false
+        explanation: "Keys are unique. Inserting an existing key replaces its value, so the map still has one entry for it."
+        concepts: [map.basics]
+
+      - type: match-pairs
+        id: pairs-methods
+        prompt: "Match each call on a `HashMap<&str, i32>` to what it returns"
+        pairs:
+          - ["insert(k, v)", "Option<i32>: the old value"]
+          - ["get(k)", "Option<&i32>"]
+          - ["contains_key(k)", "bool"]
+          - ["len()", "usize"]
+        explanation: "`insert` hands back the value it replaced, `get` lends you the current one, and `len` counts entries."
+        concepts: [map.basics]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-contains-remove
+        title: Checking and removing
+        markdown: |
+          **`contains_key(key)` answers with a `bool`. `remove(key)` takes an entry out** and returns its value as an `Option`.
+
+          `len()` counts the entries.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut stock = HashMap::new();
+            stock.insert("pens", 3);
+            stock.insert("pads", 8);
+            let has = stock.contains_key("pens");
+            println!("{has}");
+            println!("{:?}", stock.remove("pens"));
+            println!("{}", stock.len());
+          verify: run
+          expectStdout: "true\nSome(3)\n1\n"
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-len-duplicate
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut colours = HashMap::new();
+            colours.insert("sky", "blue");
+            colours.insert("grass", "green");
+            colours.insert("sky", "grey");
+            println!("{}", colours.len());
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "3", why: "The third `insert` reuses the key `\"sky\"`, so it replaces a value instead of adding an entry." }
+          - { id: c, text: "1", why: "`\"sky\"` and `\"grass\"` are different keys, so both stay." }
+        answer: a
+        explanation: "There are two distinct keys. Inserting `\"sky\"` again changes its value from `\"blue\"` to `\"grey\"`."
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-remove-twice
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut seats = HashMap::new();
+            seats.insert("A1", "Ana");
+            println!("{:?}", seats.remove("A1"));
+            println!("{:?}", seats.remove("A1"));
+          verify: run
+        tiles: ["Some(\"Ana\")", "None", "Some(\"A1\")", "\"Ana\""]
+        answer: "Some(\"Ana\")\nNone"
+        explanation: "The first `remove` takes the entry out and returns its value. The second finds nothing, so it returns `None`."
+        concepts: [map.basics]
+
+      - type: mcq
+        id: mcq-fallback
+        prompt: "`fees` is a `HashMap<&str, i32>`. Which line gives `fee` the fee for `\"gym\"`, or 0 if it's missing?"
+        options:
+          - { id: a, code: "let fee = fees.get(\"gym\").unwrap_or(&0);" }
+          - { id: b, code: "let fee = fees.get(\"gym\").unwrap_or(0);", why: "`get` returns `Option<&i32>`, so the fallback must be a `&i32` too. `0` is a plain `i32`, which is E0308." }
+          - { id: c, code: "let fee = fees.get(\"gym\", 0);", why: "`get` takes only the key. The fallback comes from an `Option` method." }
+        answer: a
+        explanation: "`get` gives `Option<&i32>`, so `unwrap_or` needs a `&i32` fallback: `&0`."
+        concepts: [map.basics, option.methods]
+
+      - type: decode-error
+        id: decode-unwrap-or
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut ages = HashMap::new();
+                ages.insert("Mia", 31);
+                let age = ages.get("Leo");
+                println!("{}", age.unwrap_or(0));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Change `unwrap_or(0)` to `unwrap_or(&0)`" }
+          - { id: b, text: "Change `get(\"Leo\")` to `get(Leo)`", why: "Without quotes, `Leo` is a variable name, and there's no such variable. The keys are `&str`." }
+          - { id: c, text: "Insert `\"Leo\"` before line 6", why: "The types still wouldn't match. The compiler checks types, not which keys exist." }
+        answer: a
+        explanation: "`get` returns `Option<&i32>`, so the fallback must be a reference too. `&0` is a `&i32`."
+        concepts: [map.basics, option.methods, err.E0308]
+
+      - type: compiles
+        id: compiles-get-plain
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut ages = HashMap::new();
+                ages.insert("Mia", 31);
+                let age: i32 = ages.get("Mia");
+                println!("{age}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0308: mismatched types" }
+            - { id: b, text: "E0382: borrow of moved value", why: "Nothing is moved here. `get` returns an `Option<&i32>`, and the annotation says `i32`." }
+            - { id: c, text: "E0433: cannot find type `HashMap`", why: "The `use` line is there, so `HashMap` is in scope." }
+          answer: a
+        explanation: "`get` returns `Option<&i32>`, not `i32`. You have to handle the `None` case, for example with `if let` or `unwrap_or`."
+        concepts: [map.basics, option.type-safety, err.E0308]
+
+      - type: predict-output
+        id: predict-if-let
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut prices = HashMap::new();
+            prices.insert("tea", 4);
+            if let Some(p) = prices.get("milk") {
+                println!("milk: {p}");
+            } else {
+                println!("no milk");
+            }
+          verify: run
+        options:
+          - { id: a, text: "no milk" }
+          - { id: b, text: "milk: 0", why: "A missing key gives `None`, so the `if let` pattern doesn't match and the `else` runs." }
+          - { id: c, text: "milk: 4", why: "4 is stored under `\"tea\"`. `\"milk\"` isn't in the map." }
+        answer: a
+        explanation: "`get(\"milk\")` is `None`, so `Some(p)` doesn't match and the `else` branch prints."
+        concepts: [map.basics, match.if-let]
+
+      - type: spot-bug
+        id: spot-value-type
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut stock = HashMap::new();
+                stock.insert("pens", 3);
+                stock.insert("pads", "eight");
+                println!("{}", stock.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 6
+        explanation: "The first `insert` fixes the value type as an integer. Every value in one map has the same type, so `\"eight\"` doesn't fit."
+        concepts: [map.basics, err.E0308]
+
+      - type: true-false
+        id: tf-insert-returns
+        prompt: "`insert` returns `None` when the key wasn't in the map before."
+        answer: true
+        explanation: "`insert` returns the value it replaced. For a new key nothing was replaced, so you get `None`."
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-contains
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut ages = HashMap::new();
+            ages.insert("Mia", 31);
+            ages.remove("Mia");
+            let found = ages.contains_key("Mia");
+            println!("{found}");
+          verify: run
+        options:
+          - { id: a, text: "false" }
+          - { id: b, text: "true", why: "`remove` takes the whole entry out, key and value." }
+          - { id: c, text: "None", why: "`contains_key` returns a `bool`, not an `Option`." }
+        answer: a
+        explanation: "After `remove`, the key is gone, so `contains_key` is `false`."
+        concepts: [map.basics]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-lookup
+        prompt: "Arrange the lines so the program prints `Some(4)`"
+        lines:
+          - { id: l1, text: "use std::collections::HashMap;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let mut prices = HashMap::new();" }
+          - { id: l4, text: "    prices.insert(\"tea\", 4);" }
+          - { id: l5, text: "    println!(\"{:?}\", prices.get(\"tea\"));" }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let prices = HashMap::new();" }
+          - { id: d2, text: "    println!(\"{:?}\", prices.get(4));" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Some(4)\n"
+        explanation: "Bring `HashMap` into scope, create the map with `let mut` so it can change, insert, then look up by key."
+        concepts: [map.basics]
+
+      - type: compiles
+        id: compiles-no-mut
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let scores = HashMap::new();
+                scores.insert("Ana", 10);
+                println!("{}", scores.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`scores` needs `let mut`, because `insert` changes the map" }
+            - { id: b, text: "`HashMap::new()` needs the key and value types", why: "Rust works out the types from the `insert` call." }
+            - { id: c, text: "`len` doesn't work on maps", why: "`len` counts a map's entries. The problem is the missing `mut`." }
+          answer: a
+        explanation: "`insert` borrows the map mutably, which needs `let mut scores`. The error is E0596: cannot borrow as mutable."
+        concepts: [map.basics, var.mut]
+
+      - type: fill-tokens
+        id: fill-contains-remove
+        prompt: "Fill the blanks so the program prints `true` then `1`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut stock = HashMap::new();
+            stock.insert("pens", 3);
+            stock.insert("pads", 8);
+            let has = stock.___1___("pads");
+            println!("{has}");
+            stock.___2___("pads");
+            println!("{}", stock.len());
+          verify: run
+          expectStdout: "true\n1\n"
+        blanks:
+          "1": { answer: ["contains_key"] }
+          "2": { answer: ["remove"] }
+        bank: ["contains_key", "get", "remove", "insert", "pop"]
+        explanation: "`contains_key` returns a `bool`. `remove` takes the entry out, leaving one."
+        concepts: [map.basics]
+
+      - type: predict-output
+        id: predict-insert-print
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut level = HashMap::new();
+            let a = level.insert("Ana", 1);
+            let b = level.insert("Ana", 2);
+            println!("{a:?} {b:?}");
+          verify: run
+        tiles: ["None", "Some(1)", "Some(2)", "1", "2"]
+        answer: "None Some(1)"
+        explanation: "The first `insert` adds a new key, so it returns `None`. The second replaces 1, so it returns `Some(1)`."
+        concepts: [map.basics]
+
+      - type: mcq
+        id: mcq-when-map
+        prompt: "Which task suits a `HashMap` better than a `Vec`?"
+        options:
+          - { id: a, text: "Finding a phone number by a person's name" }
+          - { id: b, text: "Keeping the last ten temperatures in order", why: "Order matters there, and you'd read them by position. That's a `Vec`'s job." }
+          - { id: c, text: "Storing the numbers 1 to 100", why: "Those are naturally numbered by position, so a `Vec` or a range is simpler." }
+        answer: a
+        explanation: "A `HashMap` is for looking values up by a key like a name. A `Vec` keeps items in order by position."
+        concepts: [map.basics, vec.basics]
+
+      - type: compiles
+        id: compiles-borrow-insert
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut ages = HashMap::new();
+                ages.insert("Mia", 31);
+                let mia = ages.get("Mia");
+                ages.insert("Leo", 28);
+                println!("{mia:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `ages` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0382: borrow of moved value", why: "`get` doesn't move anything out of the map. It lends a reference." }
+            - { id: c, text: "E0596: cannot borrow as mutable", why: "`ages` is declared `mut`, so `insert` is allowed on its own." }
+          answer: a
+        explanation: "`mia` is a reference into `ages`, and it's still used on line 8. While that borrow is alive, `insert` can't change the map, the same rule as with a `Vec`."
+        concepts: [map.basics, err.E0502, vec.borrow]
+
+      - type: true-false
+        id: tf-get-moves
+        prompt: "After `let v = scores.get(\"Ana\");` the value is no longer in `scores`."
+        answer: false
+        explanation: "`get` lends you a reference and leaves the entry in the map. `remove` is the method that takes it out."
+        concepts: [map.basics]
+
+      - type: fill-tokens
+        id: fill-let-else
+        prompt: "Fill the blanks so the program prints `Mia is 31`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut ages = HashMap::new();
+            ages.insert("Mia", 31);
+            let found = ages.get("Mia");
+            let ___1___(age) = found ___2___ {
+                return;
+            };
+            println!("Mia is {age}");
+          verify: run
+          expectStdout: "Mia is 31\n"
+        blanks:
+          "1": { answer: ["Some"] }
+          "2": { answer: ["else"] }
+        bank: ["Some", "None", "Ok", "else", "if", "match"]
+        explanation: "`let Some(age) = ... else { ... };` takes the value out of the `Option` or leaves the function when it's `None`."
+        concepts: [map.basics, match.let-else]
+
+      - type: predict-output
+        id: predict-match-get
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut stock = HashMap::new();
+            stock.insert("pens", 0);
+            match stock.get("pens") {
+                Some(0) => println!("sold out"),
+                Some(n) => println!("{n} left"),
+                None => println!("not stocked"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "sold out" }
+          - { id: b, text: "not stocked", why: "`\"pens\"` is in the map; its value is 0. `None` is only for missing keys." }
+          - { id: c, text: "0 left", why: "Arms are checked top to bottom, and `Some(0)` matches first." }
+        answer: a
+        explanation: "`get` returns `Some(&0)`, and the pattern `Some(0)` matches it, so the first arm runs."
+        concepts: [map.basics, match.enum]
+
+      - type: decode-error
+        id: decode-key-type
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut rooms = HashMap::new();
+                rooms.insert(101, "Ana");
+                println!("{:?}", rooms.get("101"));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "The keys are integers, so you must look up `&101`, not the text `\"101\"`" }
+          - { id: b, text: "Room 101 isn't in the map", why: "It is, but that's a runtime question. This is a type error found at compile time." }
+          - { id: c, text: "`get` can't be used inside `println!`", why: "It can. The key you pass has the wrong type." }
+        answer: a
+        explanation: "The first `insert` fixes the key type as an integer. `\"101\"` is a `&str`, which can't be compared with integer keys."
+        concepts: [map.basics, err.E0308]

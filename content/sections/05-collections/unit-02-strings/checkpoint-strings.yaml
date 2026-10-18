@@ -1,0 +1,283 @@
+id: collections.strings.checkpoint
+title: "Checkpoint: Strings"
+icon: flag
+concepts: []
+reviewConcepts:
+  - string.build
+  - string.utf8
+  - string.iter
+  - string.methods
+  - string.convert
+  - slice.str
+  - slice.str-param
+  - borrow.exclusive
+  - err.E0502
+  - own.move
+  - vec.basics
+  - vec.iter
+  - option.methods
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-build-mix
+        code:
+          rust: |
+            let a = String::from("ice");
+            let b = String::from("cream");
+            let mut c = a + " " + &b;
+            c.push('!');
+            let d = format!("{b}/{c}");
+            println!("{d}");
+          verify: run
+        options:
+          - { id: a, text: "cream/ice cream!" }
+          - { id: b, text: "ice/ice cream!", why: "The `format!` uses `b` first, which is still `\"cream\"`. Only `a` moved." }
+          - { id: c, text: "cream/ice cream", why: "`c.push('!')` runs before `format!`, so the `!` is part of `c`." }
+        answer: a
+        explanation: "`c` becomes `\"ice cream\"`, then `\"ice cream!\"`. `format!` borrows `b` and `c` to build `\"cream/ice cream!\"`."
+        concepts: [string.build]
+
+      - type: compiles
+        id: compiles-trim-then-push
+        code:
+          rust: |
+            fn main() {
+                let mut text = String::from(" hi ");
+                let clean = text.trim();
+                text.push_str("!");
+                println!("{clean}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `text` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0308: mismatched types", why: "The types are fine: `clean` is a `&str` and `push_str` gets a `&str`." }
+            - { id: c, text: "E0382: borrow of moved value: `text`", why: "`trim` borrows `text`; it doesn't move it." }
+          answer: a
+        explanation: "`clean` is a slice of `text` and is used on line 5, so `text` can't be changed on line 4. Moving the `println!` above the `push_str` fixes it."
+        concepts: [string.methods, err.E0502]
+
+      - type: decode-error
+        id: decode-second-char
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("éclair");
+                let second = word[1];
+                println!("{second}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Use `word.chars().nth(1).unwrap_or('?')` to get the second character" }
+          - { id: b, text: "Use `&word[1..2]`", why: "`é` takes bytes 0 and 1, so byte 1 is in the middle of it. This compiles but panics." }
+          - { id: c, text: "Use `word.as_bytes()[1]`", why: "That's byte 1, which is the second half of `é`, not the character `c`." }
+        answer: a
+        explanation: "Text can't be indexed with a number (E0277). `.chars().nth(1)` counts whole characters, so it finds `c` even though `é` is 2 bytes."
+        concepts: [string.utf8, option.methods]
+
+      - type: predict-output
+        id: predict-gruesse
+        code:
+          rust: |
+            let word = "Grüße";
+            let bytes = word.len();
+            let chars = word.chars().count();
+            println!("{bytes} {chars}");
+          verify: run
+        options:
+          - { id: a, text: "7 5" }
+          - { id: b, text: "5 5", why: "`ü` and `ß` take 2 bytes each, so there are 2 more bytes than characters." }
+          - { id: c, text: "5 7", why: "Bytes come first in the `println!`, and there are more bytes than characters." }
+          - { id: d, text: "6 5", why: "Both `ü` and `ß` take 2 bytes, not only one of them." }
+        answer: a
+        explanation: "`G`, `r` and `e` are 1 byte each; `ü` and `ß` are 2 each. That's 7 bytes and 5 characters."
+        concepts: [string.utf8]
+
+      - type: spot-bug
+        id: spot-lines-words
+        prompt: "This should print `4`, the number of words, but prints `2`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let text = "red green\nblue gold";
+                let mut words = 0;
+                for _ in text.lines() {
+                    words += 1;
+                }
+                println!("{words}");
+            }
+          verify: run
+          expectStdout: "2\n"
+        answer: 4
+        explanation: "`.lines()` gives one item per line, and there are 2 lines. `split_whitespace()` splits at spaces and newlines, giving 4 words."
+        concepts: [string.iter]
+
+      - type: fill-tokens
+        id: fill-acronym
+        prompt: "Fill the blanks so the program prints `PNG`"
+        code:
+          rust: |
+            let name = "portable network graphics";
+            let mut short = String::new();
+            for w in name.___1___() {
+                let c = w.chars().nth(0);
+                short.___2___(c.unwrap_or('?'));
+            }
+            println!("{}", short.___3___());
+          verify: run
+          expectStdout: "PNG\n"
+        blanks:
+          "1": { answer: ["split_whitespace"] }
+          "2": { answer: ["push"] }
+          "3": { answer: ["to_uppercase"] }
+        bank: ["split_whitespace", "lines", "push", "push_str", "to_uppercase", "trim"]
+        explanation: "`split_whitespace` gives each word, `push` adds each word's first `char`, and `to_uppercase` turns `png` into `PNG`."
+        concepts: [string.iter, string.build, string.methods]
+
+      - type: parsons
+        id: parsons-count-char
+        prompt: "Arrange the lines so `count(\"banana\", 'a')` returns `3`"
+        lines:
+          - { id: l1, text: "fn count(s: &str, t: char) -> u32 {" }
+          - { id: l2, text: "    let mut n = 0;" }
+          - { id: l3, text: "    for c in s.chars() {" }
+          - { id: l4, text: "        if c == t {" }
+          - { id: l5, text: "            n += 1;" }
+          - { id: l6, text: "        }" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: "    n" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "    for c in s.bytes() {" }
+          - { id: d2, text: "    for c in s {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{}", count("banana", 'a'));
+            }
+          mode: run
+          expectStdout: "3\n"
+        explanation: "`.chars()` gives `char`s to compare with `t`. `.bytes()` would give `u8`s, and a `&str` can't be looped over directly."
+        concepts: [string.iter]
+
+      - type: true-false
+        id: tf-view-copy
+        prompt: "This is memory after `let view = name.as_str();`. `name` and `view` each own a copy of the text."
+        diagram:
+          caption: "After let view = name.as_str();"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+                - { name: view, points: name }
+          heap:
+            - { id: h1, value: '"Hobart"' }
+        answer: false
+        explanation: "There's only one copy of the text, owned by `name`. `view` is a `&str` that borrows it."
+        concepts: [string.convert]
+
+      - type: decode-error
+        id: decode-add-strs
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn join(a: &str, b: &str) -> String {
+                a + b
+            }
+
+            fn main() {
+                println!("{}", join("ice", "berg"));
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        options:
+          - { id: a, code: "a.to_string() + b" }
+          - { id: b, code: "a + &b", why: "The left side is still a `&str`. `+` needs an owned `String` on the left." }
+          - { id: c, code: "&a + b", why: "That's a `&&str` on the left, which `+` can't use either." }
+        answer: a
+        explanation: "`+` needs an owned `String` on its left (E0369 for `&str + &str`). `a.to_string()` makes one; `format!(\"{a}{b}\")` also works."
+        concepts: [string.build, string.convert]
+
+      - type: predict-output
+        id: predict-replace-contains
+        code:
+          rust: |
+            let raw = " Hello, World ";
+            let s = raw.trim().replace(",", "");
+            let gap = s.contains(' ');
+            println!("{s} {gap}");
+          verify: run
+        options:
+          - { id: a, text: "Hello World true" }
+          - { id: b, text: "HelloWorld false", why: "`replace` only removes the comma. The space in the middle stays." }
+          - { id: c, text: " Hello World  true", why: "`trim` runs first and removes the spaces at both ends." }
+        answer: a
+        explanation: "`trim` removes the outer spaces, `replace` removes the comma, and the middle space is still there, so `contains(' ')` is `true`."
+        concepts: [string.methods]
+
+      - type: match-pairs
+        id: pairs-return-types
+        prompt: Match each call on a `String` `s` to the type it returns
+        pairs:
+          - ["s.trim()", "&str"]
+          - ["s.to_lowercase()", "String"]
+          - ['s.starts_with("a")', "bool"]
+          - ["s.chars().count()", "usize"]
+          - ["s.as_bytes()", "&[u8]"]
+        concepts: [string.methods, string.utf8]
+
+      - type: mcq
+        id: mcq-param
+        prompt: "`describe` stores the name in a struct field of type `String`. Which signature avoids an extra copy when the caller already has a `String` to give away?"
+        options:
+          - { id: a, code: "fn describe(name: String)" }
+          - { id: b, code: "fn describe(name: &str)", why: "With `&str`, the function must copy the text (`to_string`) to store it, even if the caller didn't need theirs." }
+          - { id: c, code: "fn describe(name: &String)", why: "This borrows too, so storing the name still needs a copy, and literals can't be passed." }
+        answer: a
+        explanation: "A function that keeps the text needs to own it. Taking `String` lets the caller move theirs in. Read-only functions should take `&str` instead."
+        concepts: [string.convert, slice.str-param]
+
+      - type: predict-output
+        id: predict-vec-join
+        code:
+          rust: |
+            let words = vec!["to", "be"];
+            let mut out = String::new();
+            for w in &words {
+                out.push_str(w);
+                out.push(' ');
+            }
+            println!("[{}]", out.trim());
+          verify: run
+        options:
+          - { id: a, text: "[to be]" }
+          - { id: b, text: "[to be ]", why: "`trim` removes the space added after the last word." }
+          - { id: c, text: "[tobe]", why: "A space is pushed after each word, and only the trailing one is trimmed." }
+        answer: a
+        explanation: "`out` becomes `\"to be \"`, and `trim` removes the trailing space before printing."
+        concepts: [string.build, string.methods, vec.iter]
+
+      - type: compiles
+        id: compiles-borrow-after-plus
+        code:
+          rust: |
+            fn main() {
+                let a = String::from("rain");
+                let mut b = String::from("bow");
+                let c = a + &b;
+                b.push('s');
+                println!("{b} {c}");
+            }
+          verify: run
+          expectStdout: "bows rainbow\n"
+        answer: true
+        explanation: "`+` only borrows `b` while it runs, so `b` can be changed afterwards. It prints `bows rainbow`."
+        concepts: [string.build, borrow.nll]

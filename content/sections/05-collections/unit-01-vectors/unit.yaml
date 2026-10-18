@@ -1,0 +1,19 @@
+id: collections.vectors
+title: Vectors
+description: Keep a growable list of values in a Vec, read it safely, loop over it and borrow it.
+colour: purple
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch08-01-vectors.html
+sources:
+  - name: The Rust Programming Language, ch. 8.1
+    url: https://doc.rust-lang.org/book/ch08-01-vectors.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-basics
+  - level: level-02-access
+  - level: level-03-iter
+  - chest
+  - level: level-04-borrow
+  - level: level-05-enum
+  - checkpoint: checkpoint-vectors

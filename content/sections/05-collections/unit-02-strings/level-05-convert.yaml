@@ -1,0 +1,503 @@
+id: collections.strings.convert
+title: String and &str
+icon: arrow-right
+concepts: [string.convert]
+reviewConcepts: [string.build, string.methods, slice.str, slice.str-param, own.param-choice, struct.define, struct.ownership, vec.basics, match.intro, borrow.dangling, err.E0106, err.E0308]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-to-string
+        title: "&str to String"
+        markdown: |
+          **Three ways to make an owned `String` from a `&str`:** `String::from(text)`, `text.to_string()` and `text.to_owned()`. All three copy the text into a new `String`.
+
+          `.to_string()` also works on numbers and anything else `{}` can print.
+        code:
+          rust: |
+            let a = String::from("hi");
+            let b = "hi".to_string();
+            let c = "hi".to_owned();
+            let d = 42.to_string();
+            println!("{a} {b} {c} {d}");
+          verify: run
+          expectStdout: "hi hi hi 42\n"
+        concepts: [string.convert]
+
+      - type: compiles
+        id: compiles-literal-string
+        code:
+          rust: |
+            fn main() {
+                let name: String = "Ferris";
+                println!("{name}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's the fix?
+          options:
+            - { id: a, text: "`let name: String = \"Ferris\".to_string();`" }
+            - { id: b, text: "`let name: String = &\"Ferris\";`", why: "That's a reference to a `&str`, still not an owned `String`." }
+            - { id: c, text: "`let mut name: String = \"Ferris\";`", why: "`mut` doesn't change the type. A literal is a `&str`." }
+          answer: a
+        explanation: "A literal is a `&str` (E0308). `.to_string()`, `.to_owned()` or `String::from` makes the `String`."
+        concepts: [string.convert, err.E0308]
+
+      - type: predict-output
+        id: predict-number-string
+        code:
+          rust: |
+            let mut label = 7.to_string();
+            label.push_str(" days");
+            println!("{label} {}", label.len());
+          verify: run
+        options:
+          - { id: a, text: "7 days 6" }
+          - { id: b, text: "7 days 5", why: "`label` is `\"7 days\"`: the digit, a space and four letters make 6 bytes." }
+          - { id: c, text: "7 days 1", why: "`push_str` added to `label`, so `.len()` counts the whole text." }
+        answer: a
+        explanation: "`7.to_string()` gives the `String` `\"7\"`, which can grow like any other `String`."
+        concepts: [string.convert, string.build]
+
+      - type: concept
+        id: concept-as-str
+        title: "String to &str"
+        markdown: |
+          **Borrow a `String` as a `&str` with `&s` or `s.as_str()`.** Nothing is copied: the `&str` points at the `String`'s text.
+
+          Where a `&str` is expected, `&s` is turned into one for you.
+        code:
+          rust: |
+            let owned = String::from("plum");
+            let a: &str = &owned;
+            let b = owned.as_str();
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "plum plum\n"
+        diagram:
+          caption: "a and b both borrow owned's text"
+          frames:
+            - name: main
+              vars:
+                - { name: owned, id: owned, points: h1 }
+                - { name: a, points: owned }
+                - { name: b, points: owned }
+          heap:
+            - { id: h1, value: '"plum"' }
+        concepts: [string.convert]
+
+      - type: true-false
+        id: tf-as-str-copies
+        prompt: "`s.as_str()` copies the text of `s` into new memory."
+        answer: false
+        explanation: "`as_str` returns a `&str` that borrows the `String`'s own text. Copying is what `to_string` and `to_owned` do."
+        concepts: [string.convert]
+
+      - type: mcq
+        id: mcq-not-string
+        prompt: "`owned` is a `String`. Which expression is NOT a `String`?"
+        options:
+          - { id: a, code: "owned.as_str()" }
+          - { id: b, code: "owned.to_owned()", why: "`to_owned` on a `String` makes a new owned copy, a `String`." }
+          - { id: c, code: "owned.to_uppercase()", why: "`to_uppercase` always builds a new `String`." }
+          - { id: d, code: "owned.clone()", why: "Cloning a `String` gives another `String`." }
+        answer: a
+        explanation: "`as_str` borrows the text as a `&str`. The others all build a new `String`."
+        concepts: [string.convert, string.methods]
+
+      - type: fill-tokens
+        id: fill-field
+        prompt: "Fill the blank so the program prints `Ada`"
+        code:
+          rust: |
+            struct Player {
+                name: String,
+            }
+
+            fn main() {
+                let p = Player {
+                    name: "Ada".___1___(),
+                };
+                println!("{}", p.name);
+            }
+          verify: run
+          expectStdout: "Ada\n"
+        blanks:
+          "1": { answer: ["to_string", "to_owned"] }
+        bank: ["to_string", "as_str", "trim", "len"]
+        explanation: "The field is a `String`, and `\"Ada\"` is a `&str`. `.to_string()` makes the owned `String`."
+        concepts: [string.convert, struct.ownership]
+
+      - type: match-pairs
+        id: pairs-convert
+        prompt: Match each expression to the conversion it does
+        pairs:
+          - ['"hi".to_string()', "&str to String"]
+          - ["s.as_str()", "String to &str"]
+          - ["42.to_string()", "number to String"]
+          - ["s.as_bytes()", "String to &[u8]"]
+        concepts: [string.convert]
+
+      - type: predict-output
+        id: predict-compare
+        code:
+          rust: |
+            let answer = String::from("yes");
+            let same = answer == "yes";
+            let other = answer.as_str() == "no";
+            println!("{same} {other}");
+          verify: run
+        options:
+          - { id: a, text: "true false" }
+          - { id: b, text: "false false", why: "`==` compares the text, so a `String` holding `yes` equals the literal `\"yes\"`." }
+          - { id: c, text: "true true", why: "`answer` holds `yes`, not `no`." }
+        answer: a
+        explanation: "You can compare a `String` with a `&str` directly. `==` checks whether the text is the same."
+        concepts: [string.convert]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-params
+        title: Take &str, return String
+        markdown: |
+          **A parameter that only reads text should be `&str`.** It accepts literals, slices and `&String`.
+
+          **Return a `String` when the function makes new text**, so the caller owns it.
+        code:
+          rust: |
+            fn shout(text: &str) -> String {
+                text.to_uppercase() + "!"
+            }
+
+            fn main() {
+                let name = String::from("kim");
+                println!("{}", shout(&name));
+                println!("{}", shout("hey"));
+            }
+          verify: run
+          expectStdout: "KIM!\nHEY!\n"
+        concepts: [string.convert, slice.str-param]
+
+      - type: compiles
+        id: compiles-string-param
+        code:
+          rust: |
+            fn greet(name: &String) {
+                println!("Hi, {name}");
+            }
+
+            fn main() {
+                greet("Ferris");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's the best fix?
+          options:
+            - { id: a, text: "Change the parameter to `name: &str`" }
+            - { id: b, text: "Change the parameter to `name: String`", why: "A literal is still a `&str`, not a `String`, so the call fails the same way." }
+            - { id: c, text: "Call `greet(&\"Ferris\")`", why: "That's a `&&str`, not a `&String`." }
+          answer: a
+        explanation: "A `&String` parameter rejects literals (E0308). `&str` accepts literals and `&String` both."
+        concepts: [string.convert, slice.str-param]
+
+      - type: predict-output
+        id: predict-three-callers
+        code:
+          rust: |
+            fn first_two(s: &str) -> &str {
+                &s[..2]
+            }
+
+            fn main() {
+                let city = String::from("Perth");
+                println!("{}", first_two(&city));
+                println!("{}", first_two("Darwin"));
+            }
+          verify: run
+        options:
+          - { id: a, text: "Pe\nDa" }
+          - { id: b, text: "Per\nDar", why: "`..2` stops before index 2, so it covers bytes 0 and 1." }
+          - { id: c, text: "Pe", why: "The second call compiles too: a literal is a `&str`." }
+        answer: a
+        explanation: "`&city` is turned into a `&str`, and the literal already is one. Both calls work."
+        concepts: [string.convert, slice.str-param]
+
+      - type: decode-error
+        id: decode-match-string
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let cmd = String::from("stop");
+                match cmd {
+                    "go" => println!("going"),
+                    "stop" => println!("stopping"),
+                    _ => println!("unknown"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "match cmd.as_str() {" }
+          - { id: b, code: "match &cmd {", why: "That's a `&String`, and the patterns are `&str`. It's still E0308." }
+          - { id: c, code: "match cmd.to_string() {", why: "That's another `String`, so the patterns still don't match its type." }
+        answer: a
+        explanation: "String literal patterns are `&str`, so the value being matched must be a `&str` too. `as_str()` borrows `cmd` as one."
+        concepts: [string.convert, match.intro, err.E0308]
+
+      - type: mcq
+        id: mcq-signature
+        prompt: "`count_vowels` only reads the text. Which signature lets you call it with a literal and with a `&String`?"
+        options:
+          - { id: a, code: "fn count_vowels(text: &str) -> u32" }
+          - { id: b, code: "fn count_vowels(text: String) -> u32", why: "This takes ownership, and a literal isn't a `String`." }
+          - { id: c, code: "fn count_vowels(text: &String) -> u32", why: "A literal can't be passed where a `&String` is expected." }
+        answer: a
+        explanation: "`&str` accepts literals, slices and `&String`, and only borrows. It's the usual choice for read-only text."
+        concepts: [string.convert, own.param-choice]
+
+      - type: spot-bug
+        id: spot-vec-push
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut crew: Vec<String> = vec![];
+                crew.push(String::from("Ada"));
+                crew.push("Grace");
+                println!("{}", crew.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 4
+        explanation: "The vector holds `String`s, and `\"Grace\"` is a `&str` (E0308). Write `\"Grace\".to_string()`."
+        concepts: [string.convert, vec.basics]
+
+      - type: predict-output
+        id: predict-match-as-str
+        code:
+          rust: |
+            let reply = String::from("Yes");
+            let lower = reply.to_lowercase();
+            match lower.as_str() {
+                "yes" | "y" => println!("ok"),
+                "no" => println!("cancel"),
+                _ => println!("what?"),
+            }
+          verify: run
+        options:
+          - { id: a, text: "ok" }
+          - { id: b, text: "what?", why: "The match uses `lower`, which is `\"yes\"`, not `reply`." }
+          - { id: c, text: "Yes", why: "Each arm prints a fixed word. `reply` itself isn't printed." }
+        answer: a
+        explanation: "`lower` is `\"yes\"`, and `as_str()` lets it be matched against the `&str` patterns."
+        concepts: [string.convert, string.methods]
+
+      - type: true-false
+        id: tf-compare-mixed
+        prompt: "`name == \"Ada\"` compiles when `name` is a `String`."
+        code:
+          rust: |
+            let name = String::from("Ada");
+            println!("{}", name == "Ada");
+          verify: run
+          expectStdout: "true\n"
+        answer: true
+        explanation: "A `String` can be compared with a `&str` directly. Converting first isn't needed."
+        concepts: [string.convert]
+
+      - type: fill-tokens
+        id: fill-signature
+        prompt: "Fill the blanks so `tag` takes any text and returns a new owned `String`"
+        code:
+          rust: |
+            fn tag(text: ___1___) -> ___2___ {
+                format!("#{text}")
+            }
+
+            fn main() {
+                let word = String::from("rust");
+                println!("{}", tag(&word));
+                println!("{}", tag("code"));
+            }
+          verify: run
+          expectStdout: "#rust\n#code\n"
+        blanks:
+          "1": { answer: ["&str"] }
+          "2": { answer: ["String"] }
+        bank: ["&str", "String", "&String", "char"]
+        explanation: "`&str` accepts `&word` and the literal. `format!` makes a new `String`, so that's the return type."
+        concepts: [string.convert, own.param-choice]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-label
+        prompt: "Arrange the lines so `label(\"Ada\", 7)` returns `\"Ada: 7\"`"
+        lines:
+          - { id: l1, text: "fn label(name: &str, n: u32) -> String {" }
+          - { id: l2, text: "    let mut out = name.to_string();" }
+          - { id: l3, text: '    out.push_str(": ");' }
+          - { id: l4, text: "    out.push_str(&n.to_string());" }
+          - { id: l5, text: "    out" }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let mut out = name;" }
+          - { id: d2, text: "    out.push_str(n);" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{}", label("Ada", 7));
+            }
+          mode: run
+          expectStdout: "Ada: 7\n"
+        explanation: "`to_string` makes an owned `String` that can grow. `push_str` needs a `&str`, so the number is converted and borrowed with `&`."
+        concepts: [string.convert, string.build]
+
+      - type: compiles
+        id: compiles-return-str
+        code:
+          rust: |
+            fn greet(name: &str) -> &str {
+                let s = format!("Hi, {name}");
+                &s
+            }
+
+            fn main() {
+                println!("{}", greet("Kim"));
+            }
+          verify: compile-fail
+          expectErrors: [E0515]
+        answer: false
+        followUp:
+          prompt: What's the best fix?
+          options:
+            - { id: a, text: "Return `String` and end the function with `s`" }
+            - { id: b, text: "End the function with `s.as_str()`", why: "That's still a reference to `s`, which is dropped when the function ends." }
+            - { id: c, text: "Make the parameter `name: String`", why: "The parameter isn't the problem. The function returns a borrow of a local `String`." }
+          answer: a
+        explanation: "`s` is created inside the function and dropped when it returns, so a `&str` pointing at it would dangle. Return the `String` itself to hand over ownership."
+        concepts: [string.convert, borrow.dangling]
+
+      - type: decode-error
+        id: decode-struct-field
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            struct City {
+                name: String,
+            }
+
+            fn main() {
+                let c = City { name: "Cairns" };
+                println!("{}", c.name);
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "The field needs a `String`, but `\"Cairns\"` is a `&str`. Write `\"Cairns\".to_string()`." }
+          - { id: b, text: "Structs can't hold text", why: "They can. The field's type is `String`, so it needs an owned `String`." }
+          - { id: c, text: "`c` needs `mut` to set its field", why: "Fields are set when the struct is created. No `mut` is needed." }
+        answer: a
+        explanation: "Mismatched types (E0308): a literal is a `&str`. `to_string`, `to_owned` or `String::from` turns it into the `String` the field needs."
+        concepts: [string.convert, struct.ownership, err.E0308]
+
+      - type: mcq
+        id: mcq-which-fails
+        prompt: "`owned` is a `String`. Which line does NOT compile?"
+        options:
+          - { id: a, code: "let c: String = &owned;" }
+          - { id: b, code: "let a: &str = &owned;", why: "Where a `&str` is expected, `&owned` is turned into one for you." }
+          - { id: c, code: "let b: &str = owned.as_str();", why: "`as_str` returns a `&str`, which matches." }
+          - { id: d, code: "let d: String = owned.clone();", why: "A clone of a `String` is a `String`." }
+        answer: a
+        explanation: "`&owned` is a borrow, not an owned `String`. Getting a `String` from a borrow needs a copy, such as `owned.clone()` or `owned.to_string()`."
+        concepts: [string.convert]
+
+      - type: true-false
+        id: tf-same-result
+        prompt: "`\"hi\".to_string()`, `\"hi\".to_owned()` and `String::from(\"hi\")` all produce the same `String`."
+        answer: true
+        explanation: "All three copy the text into a new `String`. Which one you use is a matter of style."
+        concepts: [string.convert]
+
+      - type: spot-bug
+        id: spot-push-number
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut log = String::new();
+                let count = 3;
+                log.push_str("count: ");
+                log.push_str(count);
+                println!("{log}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "`push_str` needs a `&str`, and `count` is a number (E0308). Write `log.push_str(&count.to_string());`."
+        concepts: [string.convert, string.build]
+
+      - type: fill-tokens
+        id: fill-match-as-str
+        prompt: "Fill the blank so the program prints `going`"
+        code:
+          rust: |
+            let cmd = String::from("go");
+            match cmd.___1___() {
+                "go" => println!("going"),
+                _ => println!("unknown"),
+            }
+          verify: run
+          expectStdout: "going\n"
+        blanks:
+          "1": { answer: ["as_str"] }
+        bank: ["as_str", "to_string", "to_owned", "len"]
+        explanation: "`as_str()` gives a `&str`, which can be matched against string literal patterns. `to_string` and `to_owned` give a `String`, which can't (E0308)."
+        concepts: [string.convert]
+
+      - type: predict-output
+        id: predict-owned-borrowed
+        code:
+          rust: |
+            let s = String::from("ab");
+            let t: &str = &s;
+            let u = t.to_owned() + "c";
+            println!("{s} {t} {u}");
+          verify: run
+        options:
+          - { id: a, text: "ab ab abc" }
+          - { id: b, text: "abc abc abc", why: "`to_owned` made a separate `String`. Adding to it doesn't change `s`." }
+          - { id: c, text: "ab abc abc", why: "`t` borrows `s`, which still holds `ab`." }
+        answer: a
+        explanation: "`t.to_owned()` copies `ab` into a new `String`, and `+ \"c\"` adds to that copy. `s` and `t` are unchanged."
+        concepts: [string.convert, string.build]
+
+      - type: predict-output
+        id: predict-tiles-shout
+        prompt: Build the output
+        code:
+          rust: |
+            fn loud(word: &str) -> String {
+                word.to_uppercase()
+            }
+
+            fn main() {
+                let name = String::from("ada");
+                let big = loud(&name);
+                let small = loud("hi");
+                println!("{name} {big} {small}");
+            }
+          verify: run
+        tiles: ["ada", "ADA", "HI", "hi", "Ada"]
+        answer: "ada ADA HI"
+        explanation: "`loud` borrows its input and returns a new `String`, so `name` is unchanged."
+        concepts: [string.convert, string.methods]

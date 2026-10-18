@@ -1,0 +1,460 @@
+id: collections.strings.iter
+title: Looping over text
+icon: loop
+concepts: [string.iter]
+reviewConcepts: [string.utf8, string.build, ctrl.for, ctrl.if, match.intro, pattern.guards, borrow.exclusive, err.E0502, types.char, fn.return, slice.str]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-chars
+        title: One char at a time
+        markdown: |
+          **`for c in text.chars()` runs the loop once per character.** Each `c` is a `char`, so multi-byte characters like `é` arrive whole.
+        code:
+          rust: |
+            let word = "café";
+            for c in word.chars() {
+                println!("{c}");
+            }
+          verify: run
+          expectStdout: "c\na\nf\né\n"
+        concepts: [string.iter]
+
+      - type: predict-output
+        id: predict-chars-dash
+        code:
+          rust: |
+            for c in "abc".chars() {
+                print!("{c}-");
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "a-b-c-" }
+          - { id: b, text: "abc-", why: "The loop body runs once for each character, so `-` is printed three times." }
+          - { id: c, text: "a-b-c", why: "The `-` comes after every character, including the last one." }
+        answer: a
+        explanation: "Each pass prints one character followed by `-`. `print!` doesn't end the line; the final `println!()` does."
+        concepts: [string.iter, macro.print-family]
+
+      - type: mcq
+        id: mcq-chars-type
+        prompt: "In `for c in name.chars()`, what is the type of `c`?"
+        options:
+          - { id: a, text: "`char`" }
+          - { id: b, text: "`&str`", why: "`.chars()` gives single characters, not pieces of text." }
+          - { id: c, text: "`u8`", why: "That's what `.bytes()` gives. `.chars()` gives whole characters." }
+          - { id: d, text: "`String`", why: "Nothing new is allocated. Each item is one `char` value." }
+        answer: a
+        explanation: "`.chars()` produces one `char` per character, so you compare with single-quoted values like `'a'`."
+        concepts: [string.iter, types.char]
+
+      - type: concept
+        id: concept-bytes
+        title: One byte at a time
+        markdown: |
+          **`for b in text.bytes()` runs once per byte.** Each `b` is a `u8`. A character that takes 2 bytes gives 2 passes.
+        code:
+          rust: |
+            for b in "Hé".bytes() {
+                println!("{b}");
+            }
+          verify: run
+          expectStdout: "72\n195\n169\n"
+        concepts: [string.iter, string.utf8]
+
+      - type: true-false
+        id: tf-same-count
+        prompt: "A `for` loop over `.bytes()` always runs the same number of times as a loop over `.chars()`."
+        answer: false
+        explanation: "They match only when every character is 1 byte. `\"Hé\"` gives 3 bytes but 2 `char`s."
+        concepts: [string.iter, string.utf8]
+
+      - type: fill-tokens
+        id: fill-count-spaces
+        prompt: "Fill the blanks so the program counts the spaces and prints `3`"
+        code:
+          rust: |
+            let text = "to be or not";
+            let mut spaces = 0;
+            for c in text.___1___() {
+                if c == ___2___ {
+                    spaces += 1;
+                }
+            }
+            println!("{spaces}");
+          verify: run
+          expectStdout: "3\n"
+        blanks:
+          "1": { answer: ["chars"] }
+          "2": { answer: ["' '"] }
+        bank: ["chars", "lines", "' '", '" "', "''"]
+        explanation: "`.chars()` gives each `char`, and a `char` is compared with another `char` in single quotes, `' '`."
+        concepts: [string.iter]
+
+      - type: compiles
+        id: compiles-loop-string
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("kiwi");
+                for c in word {
+                    println!("{c}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "A `String` isn't something to loop over directly. Use `word.chars()` or `word.bytes()`." }
+            - { id: b, text: "`c` needs a type: `for c: char in word`", why: "Loop variables get their type from what you loop over. The problem is `word` itself." }
+            - { id: c, text: "`word` needs `mut`", why: "Reading doesn't need `mut`. Rust needs you to choose characters or bytes." }
+          answer: a
+        explanation: "E0277: `String` is not an iterator. Rust makes you pick: `.chars()` for characters or `.bytes()` for bytes."
+        concepts: [string.iter]
+
+      - type: predict-output
+        id: predict-capitals
+        code:
+          rust: |
+            let name = "Ada King";
+            let mut capitals = 0;
+            for c in name.chars() {
+                match c {
+                    'A'..='Z' => capitals += 1,
+                    _ => {}
+                }
+            }
+            println!("{capitals}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "1", why: "Both `A` and `K` are in `'A'..='Z'`." }
+          - { id: c, text: "8", why: "Only the arm for `'A'..='Z'` adds 1. Lowercase letters and the space go to `_`." }
+        answer: a
+        explanation: "The loop sees all 8 characters, but only `A` and `K` match the range `'A'..='Z'`."
+        concepts: [string.iter, pattern.guards]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-split-whitespace
+        title: Word by word
+        markdown: |
+          **`.split_whitespace()` gives each word as a `&str`.** It skips spaces, tabs and newlines, however many there are in a row.
+        code:
+          rust: |
+            let text = "  red   green blue ";
+            for word in text.split_whitespace() {
+                println!("[{word}]");
+            }
+          verify: run
+          expectStdout: "[red]\n[green]\n[blue]\n"
+        concepts: [string.iter]
+
+      - type: predict-output
+        id: predict-count-words
+        prompt: Build the output
+        code:
+          rust: |
+            let text = "the cat  sat";
+            let mut words = 0;
+            for _ in text.split_whitespace() {
+                words += 1;
+            }
+            println!("{words} words");
+          verify: run
+        tiles: ["3", "4", "words", "2", "12"]
+        answer: "3 words"
+        explanation: "The double space doesn't make an extra word. `split_whitespace` gives `the`, `cat` and `sat`."
+        concepts: [string.iter]
+
+      - type: true-false
+        id: tf-empty-words
+        prompt: "`\"a  b\".split_whitespace()` gives three items: `\"a\"`, `\"\"` and `\"b\"`."
+        answer: false
+        explanation: "`split_whitespace` treats any run of whitespace as one gap, so it gives only `\"a\"` and `\"b\"`."
+        concepts: [string.iter]
+
+      - type: concept
+        id: concept-lines
+        title: Line by line
+        markdown: |
+          **`.lines()` gives each line as a `&str`, without the `\n`.** An empty line still counts: it arrives as `""`.
+        code:
+          rust: |
+            let list = "milk\neggs\nbread";
+            for item in list.lines() {
+                println!("- {item}");
+            }
+          verify: run
+          expectStdout: "- milk\n- eggs\n- bread\n"
+        concepts: [string.iter, string.literals]
+
+      - type: predict-output
+        id: predict-lines-number
+        code:
+          rust: |
+            let text = "apple\nbanana";
+            let mut n = 1;
+            for line in text.lines() {
+                println!("{n}: {line}");
+                n += 1;
+            }
+          verify: run
+        options:
+          - { id: a, text: "1: apple\n2: banana" }
+          - { id: b, text: "1: apple\nbanana", why: "`.lines()` splits at `\\n`, so the loop body runs once per line." }
+          - { id: c, text: "1: apple\n\n2: banana", why: "Each line comes without its `\\n`, so there's no extra blank line." }
+        answer: a
+        explanation: "`.lines()` gives `\"apple\"` then `\"banana\"`, and `n` counts the lines."
+        concepts: [string.iter]
+
+      - type: mcq
+        id: mcq-word-type
+        prompt: "In `for word in text.split_whitespace()`, what is `word`?"
+        options:
+          - { id: a, text: "A `&str` slice of `text`" }
+          - { id: b, text: "A new `String` for each word", why: "No new text is made. Each word is a slice that borrows part of `text`." }
+          - { id: c, text: "A `char`", why: "That's `.chars()`. `split_whitespace` gives whole words." }
+        answer: a
+        explanation: "Each word is a `&str` pointing into `text`, so nothing is copied."
+        concepts: [string.iter, slice.str]
+
+      - type: spot-bug
+        id: spot-compare-str
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let word = "banana";
+                let mut count = 0;
+                for c in word.chars() {
+                    if c == "a" {
+                        count += 1;
+                    }
+                }
+                println!("{count}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 5
+        explanation: "`c` is a `char`, but `\"a\"` is a `&str` (E0308). Compare with `'a'` in single quotes."
+        concepts: [string.iter, types.char]
+
+      - type: decode-error
+        id: decode-loop-string
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let text = String::from("one two");
+                for word in text {
+                    println!("{word}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, code: "for word in text.split_whitespace() {" }
+          - { id: b, code: "for word in &text {", why: "A `&String` isn't something to loop over either. You still have to choose words, chars or bytes." }
+          - { id: c, code: "for word in text.chars() {", why: "That compiles, but it prints one character per line, not one word." }
+        answer: a
+        explanation: "`String` is not an iterator (E0277). `split_whitespace()` says you want the words."
+        concepts: [string.iter]
+
+      - type: match-pairs
+        id: pairs-iters
+        prompt: Match each method to what a `for` loop gets from it
+        pairs:
+          - [".chars()", "char"]
+          - [".bytes()", "u8"]
+          - [".split_whitespace()", "&str per word"]
+          - [".lines()", "&str per line"]
+        concepts: [string.iter]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-count-words
+        prompt: "Arrange the lines into a function that counts the words in `text`"
+        lines:
+          - { id: l1, text: "fn count_words(text: &str) -> u32 {" }
+          - { id: l2, text: "    let mut count = 0;" }
+          - { id: l3, text: "    for _ in text.split_whitespace() {" }
+          - { id: l4, text: "        count += 1;" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: "    count" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    for _ in text.chars() {" }
+          - { id: d2, text: "    count;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                println!("{}", count_words("a  b c"));
+            }
+          mode: run
+          expectStdout: "3\n"
+        explanation: "`split_whitespace` gives one item per word. The function returns `count` with no `;`, because it's the last expression."
+        concepts: [string.iter, fn.return]
+
+      - type: fill-tokens
+        id: fill-reverse
+        prompt: "Fill the blanks so the program prints `tsur`"
+        code:
+          rust: |
+            let word = "rust";
+            let mut reversed = String::new();
+            for c in word.chars().___1___() {
+                reversed.___2___(c);
+            }
+            println!("{reversed}");
+          verify: run
+          expectStdout: "tsur\n"
+        blanks:
+          "1": { answer: ["rev"] }
+          "2": { answer: ["push"] }
+        bank: ["rev", "push", "push_str", "count", "bytes"]
+        explanation: "`.rev()` runs through the characters backwards, as it does for ranges. `push` adds each `char` to `reversed`."
+        concepts: [string.iter, string.build]
+
+      - type: predict-output
+        id: predict-empty-line
+        code:
+          rust: |
+            let text = "start\n\nend";
+            let mut count = 0;
+            for _ in text.lines() {
+                count += 1;
+            }
+            println!("{count}");
+          verify: run
+        options:
+          - { id: a, text: "3" }
+          - { id: b, text: "2", why: "The empty line between `start` and `end` is a line too. It arrives as `\"\"`." }
+          - { id: c, text: "10", why: "`.lines()` counts lines, not characters." }
+        answer: a
+        explanation: "`\\n\\n` means there's an empty line in the middle, so `.lines()` gives `\"start\"`, `\"\"` and `\"end\"`."
+        concepts: [string.iter]
+
+      - type: compiles
+        id: compiles-push-while-iter
+        code:
+          rust: |
+            fn main() {
+                let mut echo = String::from("hi");
+                for c in echo.chars() {
+                    echo.push(c);
+                }
+                println!("{echo}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `echo` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0382: borrow of moved value: `echo`", why: "`.chars()` borrows `echo`; it doesn't move it." }
+            - { id: c, text: "E0308: mismatched types", why: "`push` takes a `char`, and `c` is a `char`. The types are fine." }
+          answer: a
+        explanation: "`.chars()` borrows `echo` for the whole loop, so `push` can't borrow it mutably inside. Build into a second `String` instead."
+        concepts: [string.iter, err.E0502]
+
+      - type: spot-bug
+        id: spot-wrong-iter
+        prompt: "This should print `3`, the number of words, but prints `14`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let text = "red green blue";
+                let mut words = 0;
+                for _ in text.chars() {
+                    words += 1;
+                }
+                println!("{words}");
+            }
+          verify: run
+          expectStdout: "14\n"
+        answer: 4
+        explanation: "`.chars()` runs once per character. To count words, loop over `text.split_whitespace()`."
+        concepts: [string.iter]
+
+      - type: predict-output
+        id: predict-vowels
+        code:
+          rust: |
+            let city = "Melbourne";
+            let mut vowels = 0;
+            for c in city.chars() {
+                match c {
+                    'a' | 'e' | 'i' | 'o' | 'u' => {
+                        vowels += 1
+                    }
+                    _ => {}
+                }
+            }
+            println!("{vowels}");
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "Count again: `e`, `o`, `u`, and the final `e`." }
+          - { id: c, text: "9", why: "Only vowels match the first arm. The rest go to `_`, which does nothing." }
+        answer: a
+        explanation: "The vowels are `e`, `o`, `u` and `e`, so the count is 4."
+        concepts: [string.iter, pattern.guards]
+
+      - type: true-false
+        id: tf-words-borrow
+        prompt: "The words from `text.split_whitespace()` borrow from `text`, so `text` must stay valid while you use them."
+        answer: true
+        explanation: "Each word is a `&str` slice of `text`. Nothing is copied, so the borrow rules apply."
+        concepts: [string.iter, slice.str]
+
+      - type: mcq
+        id: mcq-longest
+        prompt: "Which loop body leaves the longest word in `best`?"
+        code:
+          rust: |
+            let text = "early sun rose";
+            let mut best = "";
+            for w in text.split_whitespace() {
+                // ???
+            }
+          verify: compile
+        options:
+          - { id: a, code: "if w.len() > best.len() { best = w; }" }
+          - { id: b, code: "best = w;", why: "That keeps the last word, `rose`, not the longest, `early`." }
+          - { id: c, code: "if w > best { best = w; }", why: "`>` on text compares alphabetically, so this finds `sun`, the word that comes last in the alphabet." }
+        answer: a
+        explanation: "Comparing `.len()` keeps whichever word is longer. With plain English words, bytes and characters agree."
+        concepts: [string.iter]
+
+      - type: decode-error
+        id: decode-byte-char
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let code = "A1B2";
+                for b in code.bytes() {
+                    if b == 'A' {
+                        println!("found");
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`b` is a `u8`, which can't be compared with the `char` `'A'`. Loop over `.chars()` instead." }
+          - { id: b, text: "`'A'` should be `\"A\"`", why: "That's a `&str`, which can't be compared with a `u8` either." }
+          - { id: c, text: "`code` needs to be a `String` to call `.bytes()`", why: "`.bytes()` works on a `&str` too. The problem is comparing a `u8` with a `char`." }
+        answer: a
+        explanation: "`.bytes()` gives numbers (`u8`), and Rust won't compare a number with a `char` (E0308). `.chars()` gives `char`s."
+        concepts: [string.iter, err.E0308]

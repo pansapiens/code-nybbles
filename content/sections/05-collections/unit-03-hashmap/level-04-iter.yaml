@@ -1,0 +1,622 @@
+id: collections.hashmap.iter
+title: Looping over a map
+icon: repeat
+concepts: [map.iter]
+reviewConcepts: [map.basics, map.entry, map.ownership, own.iter-ref, pattern.params, borrow.mut, err.E0382, err.E0502, vec.basics, vec.iter, ctrl.for, ctrl.if]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-for-map
+        title: Every entry, in no fixed order
+        markdown: |
+          **`for (key, value) in &map` visits every entry**, giving you a reference to each key and value.
+
+          A `HashMap` doesn't keep any order. The order can change from one run to the next, so never rely on it.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut sales = HashMap::new();
+            sales.insert("Mon", 5);
+            sales.insert("Tue", 8);
+            let mut total = 0;
+            for (_day, count) in &sales {
+                total += count;
+            }
+            println!("total: {total}");
+          verify: run
+          expectStdout: "total: 13\n"
+        concepts: [map.iter]
+
+      - type: true-false
+        id: tf-insertion-order
+        prompt: "Looping over a `HashMap` visits the entries in the order you inserted them."
+        answer: false
+        explanation: "A `HashMap` arranges entries by their hash, not by when they arrived. The order can differ between runs."
+        concepts: [map.iter]
+
+      - type: predict-output
+        id: predict-sum-values
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut cart = HashMap::new();
+            cart.insert("apple", 3);
+            cart.insert("pear", 2);
+            cart.insert("plum", 4);
+            let mut items = 0;
+            for (_, n) in &cart {
+                items += n;
+            }
+            println!("{items}");
+          verify: run
+        options:
+          - { id: a, text: "9" }
+          - { id: b, text: "3", why: "That's the number of entries. The loop adds up the values." }
+          - { id: c, text: "4", why: "`items` adds every value, not only the last one visited." }
+        answer: a
+        explanation: "The loop visits all three entries. Whatever the order, 3 + 2 + 4 is 9."
+        concepts: [map.iter]
+
+      - type: mcq
+        id: mcq-loop-types
+        prompt: "`ages` is a `HashMap<String, u32>`. In `for (name, age) in &ages`, what types are `name` and `age`?"
+        options:
+          - { id: a, code: "&String and &u32" }
+          - { id: b, code: "String and u32", why: "Looping over `&ages` borrows the map, so you get references, not owned values." }
+          - { id: c, code: "&String and Option<&u32>", why: "Every entry has a value, so there's no `Option` here. That's what `get` returns." }
+        answer: a
+        explanation: "Looping over a reference to the map lends you each key and value as references."
+        concepts: [map.iter, own.iter-ref]
+
+      - type: predict-output
+        id: predict-count-over
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut temps = HashMap::new();
+            temps.insert("Darwin", 33);
+            temps.insert("Hobart", 14);
+            temps.insert("Perth", 28);
+            let mut warm = 0;
+            for (_, t) in &temps {
+                if *t > 20 {
+                    warm += 1;
+                }
+            }
+            println!("{warm} warm");
+          verify: run
+        options:
+          - { id: a, text: "2 warm" }
+          - { id: b, text: "1 warm", why: "Both Darwin (33) and Perth (28) are above 20." }
+          - { id: c, text: "3 warm", why: "Hobart's 14 isn't above 20, so it isn't counted." }
+        answer: a
+        explanation: "Two of the three values are above 20. Counting doesn't depend on the order of the loop."
+        concepts: [map.iter, ctrl.if]
+
+      - type: concept
+        id: concept-btreemap
+        title: Sorted keys with BTreeMap
+        markdown: |
+          **A `BTreeMap` works like a `HashMap`, but keeps its keys sorted.** Looping over it always visits keys in order, so the output is the same every run.
+
+          It has the same `insert`, `get`, `entry` and `remove` methods.
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            let mut sales = BTreeMap::new();
+            sales.insert("Tue", 8);
+            sales.insert("Mon", 5);
+            for (day, n) in &sales {
+                println!("{day}: {n}");
+            }
+          verify: run
+          expectStdout: "Mon: 5\nTue: 8\n"
+        concepts: [map.iter]
+
+      - type: predict-output
+        id: predict-btree-loop
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            let mut ranks = BTreeMap::new();
+            ranks.insert("Cy", 3);
+            ranks.insert("Al", 1);
+            ranks.insert("Bo", 2);
+            for (name, _) in &ranks {
+                print!("{name} ");
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "Al Bo Cy" }
+          - { id: b, text: "Cy Al Bo", why: "A `BTreeMap` sorts by key, not by the order you inserted." }
+          - { id: c, text: "It changes from run to run", why: "That's true of a `HashMap`. A `BTreeMap` always visits keys in sorted order." }
+        answer: a
+        explanation: "`BTreeMap` keeps its `&str` keys in alphabetical order, so the loop visits `Al`, `Bo`, `Cy`."
+        concepts: [map.iter]
+
+      - type: fill-tokens
+        id: fill-btree-loop
+        prompt: "Fill the blanks so the program prints `ant: 6` then `bee: 4`, every time"
+        code:
+          rust: |
+            use std::collections::___1___;
+
+            let mut legs = BTreeMap::new();
+            legs.insert("bee", 4);
+            legs.insert("ant", 6);
+            for (bug, n) in ___2___legs {
+                println!("{bug}: {n}");
+            }
+          verify: run
+          expectStdout: "ant: 6\nbee: 4\n"
+        blanks:
+          "1": { answer: ["BTreeMap"] }
+          "2": { answer: ["&"] }
+        bank: ["BTreeMap", "HashMap", "&", "Vec", "get"]
+        explanation: "`BTreeMap` sorts the keys, so `ant` comes first. Looping over `&legs` borrows the map instead of using it up."
+        concepts: [map.iter]
+
+      - type: compiles
+        id: compiles-consume-loop
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut ages = HashMap::new();
+                ages.insert("Mia", 31);
+                for (name, age) in ages {
+                    println!("{name} {age}");
+                }
+                println!("{}", ages.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: What's the fix?
+          options:
+            - { id: a, text: "Loop over `&ages` instead of `ages`" }
+            - { id: b, text: "Loop over `ages.len()`", why: "`len()` is a single number, not something to loop over." }
+            - { id: c, text: "Declare `ages` without `mut`", why: "`mut` isn't the problem. The `for` loop takes ownership of `ages`." }
+          answer: a
+        explanation: "Looping over `ages` itself moves the map into the loop, the same as with a `Vec`. `&ages` borrows it, so it's still usable afterwards."
+        concepts: [map.iter, err.E0382, own.iter-ref]
+
+      - type: match-pairs
+        id: pairs-loop-forms
+        prompt: "Match each loop to what it gives you"
+        pairs:
+          - ["for (k, v) in &map", "&K and &V, map kept"]
+          - ["for (k, v) in &mut map", "&K and &mut V"]
+          - ["for (k, v) in map", "K and V, map used up"]
+          - ["for k in map.keys()", "only the keys"]
+          - ["for v in map.values()", "only the values"]
+        explanation: "The same three forms as with a `Vec`: borrow, borrow mutably, or take ownership. `keys` and `values` give one half of each entry."
+        concepts: [map.iter]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-mut-loop
+        title: Changing every value
+        markdown: |
+          **Loop over `&mut map` to change values in place.** Each value comes as `&mut V`, so use `*` to change it. Keys can't be changed: they decide where an entry is stored.
+
+          `map.values_mut()` gives only the `&mut` values.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut prices = HashMap::new();
+            prices.insert("tea", 4);
+            prices.insert("cake", 6);
+            for (_, p) in &mut prices {
+                *p += 1;
+            }
+            println!("{:?}", prices.get("tea"));
+          verify: run
+          expectStdout: "Some(5)\n"
+        concepts: [map.iter, borrow.mut]
+
+      - type: predict-output
+        id: predict-values-mut
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut hp = HashMap::new();
+            hp.insert("orc", 10);
+            hp.insert("elf", 7);
+            for h in hp.values_mut() {
+                *h *= 2;
+            }
+            println!("{:?}", hp.get("elf"));
+          verify: run
+        options:
+          - { id: a, text: "Some(14)" }
+          - { id: b, text: "Some(7)", why: "`values_mut` gives `&mut` references, so `*h *= 2` changes the values inside the map." }
+          - { id: c, text: "Some(20)", why: "That's the orc's doubled value. `\"elf\"` started at 7." }
+        answer: a
+        explanation: "Every value is doubled in place, so `\"elf\"` goes from 7 to 14."
+        concepts: [map.iter]
+
+      - type: spot-bug
+        id: spot-shared-loop
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut prices = HashMap::new();
+                prices.insert("tea", 4);
+                for (_, p) in &prices {
+                    *p += 1;
+                }
+                println!("{:?}", prices.get("tea"));
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 6
+        explanation: "The error is reported on line 7, but the cause is line 6: `&prices` lends only shared references. Loop over `&mut prices` to change the values."
+        concepts: [map.iter, borrow.mut]
+
+      - type: compiles
+        id: compiles-insert-in-loop
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut stock = HashMap::new();
+                stock.insert("pens", 0);
+                for (item, n) in &stock {
+                    if *n == 0 {
+                        stock.insert("order", 1);
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `stock` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0382: borrow of moved value: `stock`", why: "The loop is over `&stock`, which borrows the map instead of moving it." }
+            - { id: c, text: "E0594: cannot assign to `*n`", why: "`n` is only read here. The problem is changing the map while it's being looped over." }
+          answer: a
+        explanation: "The loop borrows `stock` for its whole length, so you can't `insert` into it inside the loop. Collect what to add, then insert after the loop."
+        concepts: [map.iter, err.E0502]
+
+      - type: predict-output
+        id: predict-keys-count
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut pets = HashMap::new();
+            pets.insert("Rex", "dog");
+            pets.insert("Tom", "cat");
+            pets.insert("Bella", "dog");
+            let mut dogs = 0;
+            for kind in pets.values() {
+                if *kind == "dog" {
+                    dogs += 1;
+                }
+            }
+            println!("{dogs}");
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "3", why: "`values()` gives each pet's kind, and only two of them are `\"dog\"`." }
+          - { id: c, text: "1", why: "Two different keys can hold the same value. Rex and Bella are both dogs." }
+        answer: a
+        explanation: "Keys must be unique, but values can repeat. Two values are `\"dog\"`."
+        concepts: [map.iter]
+
+      - type: decode-error
+        id: decode-consumed
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut wins = HashMap::new();
+                wins.insert("Kites", 3);
+                let mut total = 0;
+                for (_, w) in wins {
+                    total += w;
+                }
+                println!("{total} {}", wins.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 7 to `for (_, w) in &wins {`" }
+          - { id: b, text: "Change line 8 to `total += *w;`", why: "`w` is already an owned `i32` here. The map was moved into the loop, which is the real problem." }
+          - { id: c, text: "Change line 10 to `println!(\"{total}\");`", why: "That compiles, but drops the entry count you wanted to print. Borrowing the map keeps both." }
+        answer: a
+        explanation: "`for ... in wins` moves the map into the loop. Looping over `&wins` borrows it, and `total += w` still works with `w: &i32`."
+        concepts: [map.iter, err.E0382]
+
+      - type: mcq
+        id: mcq-unpredictable
+        prompt: "Which program's output can change from one run to the next?"
+        options:
+          - { id: a, text: "Printing each `key: value` of a `HashMap` in a `for` loop" }
+          - { id: b, text: "Printing each `key: value` of a `BTreeMap` in a `for` loop", why: "A `BTreeMap` always visits keys in sorted order." }
+          - { id: c, text: "Adding up all the values of a `HashMap`", why: "Addition gives the same total in any order." }
+          - { id: d, text: "Printing `map.len()` of a `HashMap`", why: "The number of entries doesn't depend on order." }
+        answer: a
+        explanation: "Only the visiting order of a `HashMap` is unspecified. Totals, counts and lookups by key are the same every run."
+        concepts: [map.iter]
+
+      - type: predict-output
+        id: predict-best
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut scores = HashMap::new();
+            scores.insert("Ana", 72);
+            scores.insert("Bo", 95);
+            scores.insert("Cy", 81);
+            let mut best = ("", 0);
+            for (name, s) in &scores {
+                if *s > best.1 {
+                    best = (name, *s);
+                }
+            }
+            println!("{}", best.0);
+          verify: run
+        options:
+          - { id: a, text: "Bo" }
+          - { id: b, text: "Cy", why: "Cy's 81 is beaten by Bo's 95, whatever order the loop visits them in." }
+          - { id: c, text: "Ana", why: "Ana is inserted first, but a `HashMap` doesn't loop in insertion order, and 72 isn't the highest anyway." }
+        answer: a
+        explanation: "The loop keeps the highest score seen so far. Bo's 95 is the highest, so the order doesn't matter."
+        concepts: [map.iter, types.tuple]
+
+      - type: true-false
+        id: tf-btree-debug
+        prompt: "`println!(\"{:?}\", map)` shows the entries in sorted key order when `map` is a `BTreeMap`."
+        answer: true
+        explanation: "A `BTreeMap` always keeps its keys sorted, including when printed with `{:?}`. A `HashMap` gives no such promise."
+        concepts: [map.iter]
+
+      - type: predict-output
+        id: predict-btree-debug
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            let mut grid = BTreeMap::new();
+            grid.insert(3, 'c');
+            grid.insert(1, 'a');
+            grid.insert(2, 'b');
+            println!("{grid:?}");
+          verify: run
+        options:
+          - { id: a, text: "{1: 'a', 2: 'b', 3: 'c'}" }
+          - { id: b, text: "{3: 'c', 1: 'a', 2: 'b'}", why: "A `BTreeMap` sorts by key. Insertion order isn't kept." }
+          - { id: c, text: "['a', 'b', 'c']", why: "Debug output of a map shows keys and values, inside `{}`." }
+        answer: a
+        explanation: "Maps print as `{key: value, ...}` in Debug format. A `BTreeMap` lists the keys in order."
+        concepts: [map.iter, fmt.debug]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-btree-print
+        prompt: "Arrange the lines so the program prints `fig 2` then `kiwi 5`"
+        lines:
+          - { id: l1, text: "use std::collections::BTreeMap;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let mut fruit = BTreeMap::new();" }
+          - { id: l4, text: "    fruit.insert(\"kiwi\", 5);" }
+          - { id: l5, text: "    fruit.insert(\"fig\", 2);" }
+          - { id: l6, text: "    for (name, n) in &fruit {" }
+          - { id: l7, text: "        println!(\"{name} {n}\");" }
+          - { id: l8, text: "    }" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "    let mut fruit = HashMap::new();" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        alternatives:
+          - [l1, l2, l3, l5, l4, l6, l7, l8, l9]
+        verify:
+          mode: run
+          expectStdout: "fig 2\nkiwi 5\n"
+        explanation: "The `BTreeMap` sorts its keys, so `fig` prints before `kiwi` whichever you insert first. The `use` line only brings in `BTreeMap`."
+        concepts: [map.iter]
+
+      - type: fill-tokens
+        id: fill-sort-keys
+        prompt: "Fill the blanks so the names print in alphabetical order"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut ages = HashMap::new();
+            ages.insert("Mia", 31);
+            ages.insert("Leo", 28);
+            let mut names = Vec::new();
+            for name in ages.___1___() {
+                names.push(name);
+            }
+            names.___2___();
+            println!("{names:?}");
+          verify: run
+          expectStdout: "[\"Leo\", \"Mia\"]\n"
+        blanks:
+          "1": { answer: ["keys"] }
+          "2": { answer: ["sort"] }
+        bank: ["keys", "values", "sort", "clear", "push"]
+        explanation: "Copy the keys into a `Vec`, then `sort()` it: the `Vec` has a fixed order that the `HashMap` doesn't."
+        concepts: [map.iter, vec.basics]
+
+      - type: predict-output
+        id: predict-tiles-sorted
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut votes = HashMap::new();
+            votes.insert("tea", 4);
+            votes.insert("coffee", 9);
+            votes.insert("milo", 2);
+            let mut rows = Vec::new();
+            for (drink, n) in &votes {
+                rows.push((n, drink));
+            }
+            rows.sort();
+            for (n, drink) in rows {
+                print!("{drink} ");
+            }
+          verify: run
+        tiles: ["milo", "tea", "coffee", "2", "4", "9"]
+        answer: "milo tea coffee"
+        explanation: "Each row puts the count first, so `sort` orders the rows by count: 2, 4, 9. Only the drinks are printed."
+        concepts: [map.iter, vec.basics]
+
+      - type: spot-bug
+        id: spot-hash-order
+        prompt: "This should print the words in alphabetical order, but the order changes between runs. Tap the line to change"
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut seen = HashMap::new();
+                for w in ["pear", "fig", "apple"] {
+                    seen.insert(w, w.len());
+                }
+                for (w, n) in &seen {
+                    println!("{w} {n}");
+                }
+            }
+          verify: compile
+        answer: 5
+        explanation: "A `HashMap` has no fixed order. Making `seen` a `BTreeMap::new()` keeps the words sorted, so the loop prints them alphabetically."
+        concepts: [map.iter]
+
+      - type: compiles
+        id: compiles-values-mut
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut lives = HashMap::new();
+            lives.insert("Ana", 3);
+            for v in lives.values_mut() {
+                *v -= 1;
+            }
+            println!("{:?}", lives.get("Ana"));
+          verify: run
+          expectStdout: "Some(2)\n"
+        answer: true
+        explanation: "`values_mut` lends each value as `&mut`, and `*v -= 1` changes it in the map. It prints `Some(2)`."
+        concepts: [map.iter, borrow.mut]
+
+      - type: mcq
+        id: mcq-sorted-report
+        prompt: "You're printing a report of word counts, sorted by word. Which choice is simplest?"
+        options:
+          - { id: a, text: "Count into a `BTreeMap` and loop over it" }
+          - { id: b, text: "Count into a `HashMap` and loop over it", why: "A `HashMap`'s loop order isn't sorted and can change between runs." }
+          - { id: c, text: "Count into a `HashMap` and print it with `{:?}`", why: "Debug printing a `HashMap` uses the same unpredictable order as looping." }
+        answer: a
+        explanation: "A `BTreeMap` counts with the same `entry` API and always loops in key order."
+        concepts: [map.iter, map.entry]
+
+      - type: predict-output
+        id: predict-category-total
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            let spend = [
+                ("tea", 12), ("bus", 5), ("tea", 8),
+            ];
+            let mut sums = BTreeMap::new();
+            for (kind, n) in spend {
+                *sums.entry(kind).or_insert(0) += n;
+            }
+            for (kind, total) in &sums {
+                println!("{kind}: {total}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "bus: 5\ntea: 20" }
+          - { id: b, text: "tea: 20\nbus: 5", why: "A `BTreeMap` sorts its keys, and `bus` comes before `tea` alphabetically." }
+          - { id: c, text: "bus: 5\ntea: 8", why: "`+=` adds each amount to the running total, so tea is 12 + 8." }
+        answer: a
+        explanation: "The entry API adds up each kind, and the `BTreeMap` prints them in key order."
+        concepts: [map.iter, map.entry, pattern.params]
+
+      - type: true-false
+        id: tf-change-keys
+        prompt: "Looping over `&mut map` lets you change both the keys and the values."
+        answer: false
+        explanation: "You get `&K` and `&mut V`. Changing a key would change where its entry belongs, so keys stay read-only."
+        concepts: [map.iter]
+
+      - type: decode-error
+        id: decode-shared-loop
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut hp = HashMap::new();
+                hp.insert("orc", 10);
+                for h in hp.values() {
+                    *h -= 3;
+                }
+                println!("{:?}", hp.get("orc"));
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        options:
+          - { id: a, text: "Change line 6 to `for h in hp.values_mut() {`" }
+          - { id: b, text: "Change line 7 to `h -= 3;`", why: "`h` is a reference. Without `*` you'd be subtracting from the reference, which fails too." }
+          - { id: c, text: "Change line 4 to `let mut hp: HashMap<&str, i32> = HashMap::new();`", why: "The map is already mutable and the types are fine. The loop's `h` is a shared reference." }
+        answer: a
+        explanation: "`values()` lends shared `&` references, which can't change anything. `values_mut()` lends `&mut` references."
+        concepts: [map.iter, borrow.mut]
+
+      - type: fill-tokens
+        id: fill-mut-loop
+        prompt: "Fill the blanks so every score gets a 5-point bonus"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut scores = HashMap::new();
+            scores.insert("Ana", 10);
+            scores.insert("Bo", 20);
+            for (_, s) in ___1___ scores {
+                ___2___s += 5;
+            }
+            println!("{:?}", scores.get("Bo"));
+          verify: run
+          expectStdout: "Some(25)\n"
+        blanks:
+          "1": { answer: ["&mut"] }
+          "2": { answer: ["*"] }
+        bank: ["&mut", "&", "*", "mut"]
+        explanation: "`&mut scores` lends each value as `&mut`, and `*s += 5` changes the value it points to."
+        concepts: [map.iter, borrow.mut]

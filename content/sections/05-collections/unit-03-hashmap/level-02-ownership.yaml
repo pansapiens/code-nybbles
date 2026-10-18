@@ -1,0 +1,583 @@
+id: collections.hashmap.ownership
+title: Who owns the keys?
+icon: lock
+concepts: [map.ownership]
+reviewConcepts: [map.basics, own.move, err.E0382, own.clone, own.copy, own.fn-move, borrow.shared, borrow.mut, own.param-choice, err.E0502, err.E0308, string.convert, struct.define, option.basics]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-insert-moves
+        title: The map takes ownership
+        markdown: |
+          **Inserting a `String` moves it into the map.** The map now owns it, and the old variable can't be used.
+
+          Values like `i32` are `Copy`, so they're copied in and the original stays usable.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let name = String::from("Ana");
+            let mut scores = HashMap::new();
+            scores.insert(name, 3);
+            println!("{}", scores.len());
+          verify: run
+          expectStdout: "1\n"
+        diagram:
+          caption: "After `scores.insert(name, 3);`"
+          frames:
+            - name: main
+              vars:
+                - { name: name, moved: true }
+                - { name: scores, points: h1 }
+          heap:
+            - { id: h1, value: '{"Ana": 3}' }
+        concepts: [map.ownership]
+
+      - type: compiles
+        id: compiles-use-after-insert
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let city = String::from("Hobart");
+                let mut visits = HashMap::new();
+                visits.insert(city, 2);
+                println!("{city}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `city`" }
+            - { id: b, text: "E0502: cannot borrow as immutable", why: "Nothing is borrowed from `visits` here. `city` itself was moved." }
+            - { id: c, text: "E0308: mismatched types", why: "The types are fine. `city` no longer owns its text." }
+          answer: a
+        explanation: "`insert(city, 2)` moves the `String` into `visits`, so `city` can't be printed afterwards."
+        concepts: [map.ownership, err.E0382]
+
+      - type: predict-output
+        id: predict-clone-key
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let city = String::from("Hobart");
+            let mut visits = HashMap::new();
+            visits.insert(city.clone(), 2);
+            println!("{city} {}", visits.len());
+          verify: run
+        options:
+          - { id: a, text: "Hobart 1" }
+          - { id: b, text: "Hobart 2", why: "`len` counts entries, not the value stored. There's one entry." }
+          - { id: c, text: "1", why: "Every `{}` is filled in. `city` still owns its text, so it prints." }
+        answer: a
+        explanation: "The map gets its own copy from `clone`, so `city` stays usable. The map has one entry."
+        concepts: [map.ownership, own.clone]
+
+      - type: mcq
+        id: mcq-diagram-moved
+        prompt: "Which code produces this diagram?"
+        diagram:
+          frames:
+            - name: main
+              vars:
+                - { name: pet, moved: true }
+                - { name: owners, points: h1 }
+          heap:
+            - { id: h1, value: '{"Rex": "Jo"}' }
+        options:
+          - { id: a, code: "owners.insert(pet, \"Jo\");" }
+          - { id: b, code: "owners.insert(pet.clone(), \"Jo\");", why: "A clone leaves `pet` valid. In the diagram `pet` is greyed out as moved." }
+          - { id: c, code: "owners.get(&pet);", why: "`get` only borrows `pet` for the lookup, and it doesn't add an entry." }
+        answer: a
+        explanation: "`pet` is greyed out and the map holds `\"Rex\"`, so `pet` was moved in by `insert`."
+        concepts: [map.ownership, own.move]
+
+      - type: true-false
+        id: tf-copy-value
+        prompt: "After `let level = 5; ranks.insert(\"Ana\", level);` you can still print `level`."
+        answer: true
+        explanation: "`i32` is `Copy`, so the map gets a copy of 5 and `level` keeps its own."
+        concepts: [map.ownership, own.copy]
+
+      - type: concept
+        id: concept-get-borrow
+        title: Looking up a String key
+        markdown: |
+          **`get` borrows the key you pass in.** For a map with `String` keys, pass `&name`, or a text literal like `"Ana"`.
+
+          Passing `name` itself is a type error: `get` wants a reference.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut ages = HashMap::new();
+            ages.insert(String::from("Ana"), 30);
+            let name = String::from("Ana");
+            println!("{:?}", ages.get(&name));
+            println!("{:?}", ages.get("Ana"));
+          verify: run
+          expectStdout: "Some(30)\nSome(30)\n"
+        concepts: [map.ownership]
+
+      - type: decode-error
+        id: decode-get-owned
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut ages = HashMap::new();
+                let key = String::from("Ana");
+                ages.insert(key.clone(), 30);
+                println!("{:?}", ages.get(key));
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "Change `get(key)` to `get(&key)`" }
+          - { id: b, text: "Change `get(key)` to `get(key.clone())`", why: "A clone is still an owned `String`. `get` needs a reference." }
+          - { id: c, text: "Remove the `.clone()` on line 6", why: "Then `key` would be moved into the map and couldn't be used on line 7 at all." }
+        answer: a
+        explanation: "`get` takes a reference to the key. `&key` lends it for the lookup, and `key` stays yours."
+        concepts: [map.ownership, err.E0308]
+
+      - type: predict-output
+        id: predict-string-values
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut capitals = HashMap::new();
+            let wa = String::from("WA");
+            let city = String::from("Perth");
+            capitals.insert(wa, city);
+            println!("{:?}", capitals.get("WA"));
+          verify: run
+        options:
+          - { id: a, text: "Some(\"Perth\")" }
+          - { id: b, text: "None", why: "`get(\"WA\")` matches the `String` key `\"WA\"`; the text is what's compared." }
+          - { id: c, text: "Some(Perth)", why: "Debug formatting shows text with quotes, inside `Some` too." }
+        answer: a
+        explanation: "A `&str` literal can look up a `String` key with the same text. Debug shows the value as `Some(\"Perth\")`."
+        concepts: [map.ownership, map.basics]
+
+      - type: fill-tokens
+        id: fill-keep-key
+        prompt: "Fill the blanks so the program compiles and prints `Some(4)`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let team = String::from("Kites");
+            let mut wins = HashMap::new();
+            wins.insert(team.___1___(), 4);
+            println!("{:?}", wins.get(___2___team));
+          verify: run
+          expectStdout: "Some(4)\n"
+        blanks:
+          "1": { answer: ["clone"] }
+          "2": { answer: ["&"] }
+        bank: ["clone", "len", "&", "*", "mut"]
+        explanation: "Inserting a clone keeps `team` usable, and `&team` lends it to `get` for the lookup."
+        concepts: [map.ownership, own.clone]
+
+      - type: match-pairs
+        id: pairs-ownership
+        prompt: "Match each line to what happens to `name` (a `String`)"
+        pairs:
+          - ["map.insert(name, 1)", "moved into the map"]
+          - ["map.insert(name.clone(), 1)", "still usable, map has a copy"]
+          - ["map.get(&name)", "borrowed for the lookup"]
+          - ["map.contains_key(&name)", "borrowed, answers with a bool"]
+        explanation: "Passing a `String` by value moves it. Passing `&name` only lends it."
+        concepts: [map.ownership]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-ref-keys
+        title: Keys that borrow
+        markdown: |
+          **If you insert references, the map borrows instead of owning.** The original stays usable, but it must live as long as the map does.
+
+          Text literals like `"Ana"` live for the whole program, so they're always safe keys.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let name = String::from("Ana");
+            let mut scores = HashMap::new();
+            scores.insert(name.as_str(), 3);
+            println!("{name} {}", scores.len());
+          verify: run
+          expectStdout: "Ana 1\n"
+        concepts: [map.ownership, string.convert]
+
+      - type: compiles
+        id: compiles-short-lived-key
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut scores = HashMap::new();
+                {
+                    let name = String::from("Ana");
+                    scores.insert(name.as_str(), 3);
+                }
+                println!("{}", scores.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0597]
+        answer: false
+        followUp:
+          prompt: What's the problem?
+          options:
+            - { id: a, text: "`name` is dropped at the `}` while `scores` still borrows it" }
+            - { id: b, text: "`name` was moved into `scores`", why: "`as_str()` gives a `&str`, so nothing is moved. The map holds a borrow." }
+            - { id: c, text: "`scores` can't be used outside the braces", why: "`scores` was created outside the block, so it's still in scope." }
+          answer: a
+        explanation: "The map holds a `&str` pointing into `name`, but `name` is dropped at the end of the block. Rust reports E0597: `name` does not live long enough."
+        concepts: [map.ownership, borrow.shared]
+
+      - type: spot-bug
+        id: spot-push-after-insert
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut notes = HashMap::new();
+                let mut text = String::from("buy");
+                notes.insert(1, text);
+                text.push_str(" milk");
+                println!("{}", notes.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 7
+        explanation: "Line 6 moves `text` into `notes`. After that, `text` can't be changed with `push_str`."
+        concepts: [map.ownership, err.E0382]
+
+      - type: mcq
+        id: mcq-keep-both
+        prompt: "`title` is a `String`. Which line adds it to `books` and keeps `title` usable afterwards?"
+        options:
+          - { id: a, code: "books.insert(title.clone(), 1);" }
+          - { id: b, code: "books.insert(title, 1);", why: "That moves `title` into the map." }
+          - { id: c, code: "books.insert(*title, 1);", why: "`*` dereferences a reference. `title` is an owned `String`, not a reference." }
+        answer: a
+        explanation: "`clone` makes a second `String` for the map, so `title` still owns the first one."
+        concepts: [map.ownership, own.clone]
+
+      - type: predict-output
+        id: predict-remove-owned
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut lost = HashMap::new();
+            lost.insert(7, String::from("hat"));
+            let item = lost.remove(&7);
+            println!("{} {item:?}", lost.len());
+          verify: run
+        options:
+          - { id: a, text: "0 Some(\"hat\")" }
+          - { id: b, text: "1 Some(\"hat\")", why: "`remove` takes the entry out, so the map is empty afterwards." }
+          - { id: c, text: "0 None", why: "Key 7 was in the map, so `remove` returns its value in `Some`." }
+        answer: a
+        explanation: "`remove` hands the owned `String` back to you inside `Some`, and the map is left with no entries."
+        concepts: [map.ownership, map.basics]
+
+      - type: true-false
+        id: tf-remove-owns
+        prompt: "`remove` gives you ownership of the value, while `get` only lends it."
+        answer: true
+        explanation: "`remove` returns `Option<V>` because the value leaves the map. `get` returns `Option<&V>` because it stays."
+        concepts: [map.ownership]
+
+      - type: compiles
+        id: compiles-map-into-fn
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn count(
+                m: HashMap<String, u32>,
+            ) -> usize {
+                m.len()
+            }
+
+            fn main() {
+                let mut shop = HashMap::new();
+                shop.insert(String::from("pen"), 3);
+                println!("{}", count(shop));
+                println!("{}", shop.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: What's the best change?
+          options:
+            - { id: a, text: "Take `m: &HashMap<String, u32>` and call `count(&shop)`" }
+            - { id: b, text: "Take `m: &mut HashMap<String, u32>`", why: "`count` only reads the map, so a shared `&` borrow is enough." }
+            - { id: c, text: "Call `count(shop.clone())`", why: "That compiles, but copies the whole map to count it. Borrowing is cheaper." }
+          answer: a
+        explanation: "A whole map moves into a function like any other owned value. `count` only reads it, so it should borrow it."
+        concepts: [map.ownership, own.fn-move, own.param-choice]
+
+      - type: decode-error
+        id: decode-moved-key
+        prompt: Which change makes this compile and print `Kites 1`?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let team = String::from("Kites");
+                let mut wins = HashMap::new();
+                wins.insert(team, 1);
+                println!("{team} {}", wins.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 6 to `wins.insert(team.clone(), 1);`" }
+          - { id: b, text: "Swap lines 6 and 7", why: "Then `team` prints before it's moved, but `wins` is still empty at that point, so it prints `Kites 0`." }
+          - { id: c, text: "Change line 4 to `let mut team = ...`", why: "`mut` lets you change `team`, but it's still moved by `insert`." }
+        answer: a
+        explanation: "`insert(team, 1)` moves `team`. Inserting a clone gives the map its own `String`, so `team` can still be printed."
+        concepts: [map.ownership, err.E0382, own.clone]
+
+      - type: predict-output
+        id: predict-get-string
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut nick = HashMap::new();
+            let short = String::from("Bob");
+            nick.insert("Robert", short);
+            if let Some(n) = nick.get("Robert") {
+                println!("{} letters", n.len());
+            }
+          verify: run
+        options:
+          - { id: a, text: "3 letters" }
+          - { id: b, text: "6 letters", why: "`n` is the value, `\"Bob\"`, not the key `\"Robert\"`." }
+          - { id: c, text: "Nothing is printed", why: "`\"Robert\"` is in the map, so `get` returns `Some` and the block runs." }
+        answer: a
+        explanation: "`get` lends `n: &String` pointing at `\"Bob\"`, and its `len()` is 3."
+        concepts: [map.ownership, match.if-let]
+
+      - type: true-false
+        id: tf-get-literal
+        prompt: "For a `HashMap<String, i32>`, `scores.get(\"Ana\")` compiles."
+        answer: true
+        explanation: "A `String` key can be looked up with a `&str`, such as a text literal, because they compare the same text."
+        concepts: [map.ownership]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-clone-insert
+        prompt: "Arrange the lines so the program prints `Ivy 1`"
+        lines:
+          - { id: l1, text: "use std::collections::HashMap;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let pet = String::from(\"Ivy\");" }
+          - { id: l4, text: "    let mut ages = HashMap::new();" }
+          - { id: l5, text: "    ages.insert(pet.clone(), 1);" }
+          - { id: l6, text: "    println!(\"{pet} {}\", ages.len());" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "    ages.insert(pet, 1);" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6, l7]
+        verify:
+          mode: run
+          expectStdout: "Ivy 1\n"
+        explanation: "Inserting `pet.clone()` keeps `pet` usable for the `println!`. Inserting `pet` itself would move it."
+        concepts: [map.ownership, own.clone]
+
+      - type: fill-tokens
+        id: fill-add-player
+        prompt: "Fill the blanks so the program prints `Some(0)`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn add(
+                m: &mut HashMap<String, u32>,
+                name: &str,
+            ) {
+                m.insert(name.___1___(), 0);
+            }
+
+            fn main() {
+                let mut scores = HashMap::new();
+                add(___2___ scores, "Ana");
+                println!("{:?}", scores.get("Ana"));
+            }
+          verify: run
+          expectStdout: "Some(0)\n"
+        blanks:
+          "1": { answer: ["to_string"] }
+          "2": { answer: ["&mut"] }
+        bank: ["to_string", "len", "&mut", "&", "as_str"]
+        explanation: "The map owns `String` keys, so `add` turns the borrowed `&str` into a new `String`. `add` changes the map, so it needs `&mut scores`."
+        concepts: [map.ownership, string.convert, borrow.mut]
+
+      - type: predict-output
+        id: predict-tiles-moves
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let a = String::from("red");
+            let b = String::from("blue");
+            let mut votes = HashMap::new();
+            votes.insert(a.clone(), 2);
+            votes.insert(b, 5);
+            println!("{a} {:?}", votes.get("blue"));
+          verify: run
+        tiles: ["red", "blue", "Some(5)", "Some(2)", "None"]
+        answer: "red Some(5)"
+        explanation: "`a` was cloned, so it's still usable. `b` moved into the map, and its key `\"blue\"` holds 5."
+        concepts: [map.ownership, own.clone]
+
+      - type: compiles
+        id: compiles-get-then-remove
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut jobs = HashMap::new();
+                jobs.insert(1, String::from("mow"));
+                let first = jobs.get(&1);
+                jobs.remove(&1);
+                println!("{first:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `jobs` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0382: borrow of moved value", why: "`get` lends a reference; it doesn't move the value out." }
+            - { id: c, text: "E0308: mismatched types", why: "The key types match: `&1` is a reference to an integer key." }
+          answer: a
+        explanation: "`first` borrows the value inside `jobs`, and it's used after `remove`. Removing would leave `first` pointing at nothing, so Rust refuses."
+        concepts: [map.ownership, err.E0502]
+
+      - type: mcq
+        id: mcq-key-type
+        prompt: "`names` is a `Vec<String>` you want to keep. Which map type lets you count them without moving or cloning the names?"
+        options:
+          - { id: a, code: "HashMap<&str, u32>" }
+          - { id: b, code: "HashMap<String, u32>", why: "`String` keys are owned, so each name would have to be moved or cloned into the map." }
+          - { id: c, code: "HashMap<u32, String>", why: "That uses numbers as keys and stores whole `String`s as values." }
+        answer: a
+        explanation: "`&str` keys borrow text owned by the `Vec`. The map must not outlive `names`."
+        concepts: [map.ownership, borrow.shared]
+
+      - type: true-false
+        id: tf-diagram-ref-key
+        prompt: "This diagram shows a map that owns its key."
+        diagram:
+          caption: "After `scores.insert(name.as_str(), 3);`"
+          frames:
+            - name: main
+              vars:
+                - { name: name, id: name, points: h1 }
+                - { name: scores, points: h2 }
+          heap:
+            - { id: h1, value: '"Ana"' }
+            - { id: h2, value: '{&name: 3}' }
+        answer: false
+        explanation: "`name` still owns `\"Ana\"`. The map's key is a `&str` borrowing it, so `name` must outlive `scores`."
+        concepts: [map.ownership, borrow.shared]
+
+      - type: spot-bug
+        id: spot-struct-move
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            use std::collections::HashMap;
+            struct Pet { name: String }
+
+            fn main() {
+                let rex = Pet {
+                    name: String::from("Rex"),
+                };
+                let mut pets = HashMap::new();
+                pets.insert(1, rex);
+                println!("{}", rex.name);
+                println!("{}", pets.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: 10
+        explanation: "`rex` was moved into `pets` on line 9, so reading `rex.name` on line 10 uses a moved value. Read it through the map instead."
+        concepts: [map.ownership, struct.define, err.E0382]
+
+      - type: predict-output
+        id: predict-shadow-key
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut ranks = HashMap::new();
+            let name = String::from("Ana");
+            ranks.insert(name, 1);
+            let name = String::from("Bo");
+            ranks.insert(name, 2);
+            println!("{}", ranks.len());
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "1", why: "The second `name` is a new `String` with different text, so it's a different key." }
+          - { id: c, text: "It doesn't compile", why: "The second `let` creates a new `name`, so nothing moved is used." }
+        answer: a
+        explanation: "Each `insert` moves a different `String` in. Shadowing `name` makes a fresh variable, so this compiles."
+        concepts: [map.ownership, var.shadowing]
+
+      - type: fill-tokens
+        id: fill-borrow-param
+        prompt: "Fill the blanks so the program prints `true` then `1`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn has(
+                m: ___1___HashMap<String, u32>,
+            ) -> bool {
+                m.___2___("pen")
+            }
+
+            fn main() {
+                let mut shop = HashMap::new();
+                shop.insert(String::from("pen"), 3);
+                println!("{}", has(&shop));
+                println!("{}", shop.len());
+            }
+          verify: run
+          expectStdout: "true\n1\n"
+        blanks:
+          "1": { answer: ["&"] }
+          "2": { answer: ["contains_key"] }
+        bank: ["&", "&mut", "contains_key", "get", "insert"]
+        explanation: "`has` only reads the map, so it takes `&HashMap`, matching the call `has(&shop)`. `contains_key` answers with the `bool` the function returns."
+        concepts: [map.ownership, own.param-choice]

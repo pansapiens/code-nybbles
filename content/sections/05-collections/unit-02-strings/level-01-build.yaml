@@ -1,0 +1,512 @@
+id: collections.strings.build
+title: Building strings
+icon: pencil
+concepts: [string.build]
+reviewConcepts: [string.string-vs-literal, own.move, err.E0382, own.clone, err.E0308, macro.print-family, types.char, ctrl.for, var.mut]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-push
+        title: Add a char or some text
+        markdown: |
+          **`.push(c)` adds one `char` to the end of a `String`.** `.push_str(text)` adds a `&str`.
+
+          A `char` uses single quotes, like `'!'`. Text uses double quotes, like `"!"`. Both methods change the `String`, so it needs `mut`.
+        code:
+          rust: |
+            let mut word = String::from("hi");
+            word.push('!');
+            word.push_str(" there");
+            println!("{word}");
+          verify: run
+          expectStdout: "hi! there\n"
+        concepts: [string.build]
+
+      - type: predict-output
+        id: predict-push-chars
+        code:
+          rust: |
+            let mut code = String::new();
+            code.push('R');
+            code.push('2');
+            code.push_str("D2");
+            println!("{code}");
+          verify: run
+        options:
+          - { id: a, text: "R2D2" }
+          - { id: b, text: "D2R2", why: "Each call adds to the end, so the text builds up in the order of the lines." }
+          - { id: c, text: "R 2 D2", why: "`push` adds exactly one character. It doesn't add a space." }
+        answer: a
+        explanation: "`String::new()` starts empty. `push` adds `R`, then `2`, and `push_str` adds `D2` at the end."
+        concepts: [string.build]
+
+      - type: mcq
+        id: mcq-which-push
+        prompt: "`tag` is a `mut String`. Which line adds a single `#` to its end?"
+        options:
+          - { id: a, code: "tag.push('#');" }
+          - { id: b, code: "tag.push(\"#\");", why: "`push` takes a `char` in single quotes. `\"#\"` is a `&str`, so this is E0308." }
+          - { id: c, code: "tag.push_str('#');", why: "`push_str` takes a `&str` in double quotes. Passing a `char` is E0308." }
+          - { id: d, code: "tag.add('#');", why: "There's no `add` method to call like this. Use `push` for a `char`." }
+        answer: a
+        explanation: "`push` takes one `char`, written in single quotes."
+        concepts: [string.build, types.char]
+
+      - type: compiles
+        id: compiles-push-str-arg
+        code:
+          rust: |
+            fn main() {
+                let mut reply = String::from("ok");
+                reply.push("!");
+                println!("{reply}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`push` expects a `char`, and `\"!\"` is a `&str`" }
+            - { id: b, text: "`reply` needs `mut`", why: "It already has `mut`. The problem is the argument's type." }
+            - { id: c, text: "`push` only works on a `Vec`", why: "`String` has its own `push`, which takes a `char`." }
+          answer: a
+        explanation: "Mismatched types (E0308): `push` wants a `char` like `'!'`. For a `&str`, use `push_str(\"!\")`."
+        concepts: [string.build, err.E0308]
+
+      - type: concept
+        id: concept-plus
+        title: Joining with +
+        markdown: |
+          **`s1 + &s2` joins two strings.** The left side must be a `String`, and `+` takes ownership of it. The right side is borrowed as a `&str`.
+
+          After the line, `s1` has moved into `s3` and can't be used. `s2` is unchanged.
+        code:
+          rust: |
+            let s1 = String::from("tic");
+            let s2 = String::from("tac");
+            let s3 = s1 + &s2;
+            println!("{s3} {s2}");
+          verify: run
+          expectStdout: "tictac tac\n"
+        diagram:
+          caption: "After let s3 = s1 + &s2;"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, moved: true }
+                - { name: s2, points: h2 }
+                - { name: s3, points: h1 }
+          heap:
+            - { id: h1, value: '"tictac"' }
+            - { id: h2, value: '"tac"' }
+        concepts: [string.build]
+
+      - type: predict-output
+        id: predict-plus-literal
+        code:
+          rust: |
+            let first = String::from("Ada");
+            let last = String::from("Byron");
+            let full = first + " " + &last;
+            println!("{full}");
+          verify: run
+        options:
+          - { id: a, text: "Ada Byron" }
+          - { id: b, text: "AdaByron", why: "The middle `\" \"` adds a space between the two names." }
+          - { id: c, text: "Ada + Byron", why: "`+` joins the text. It doesn't appear in the result." }
+        answer: a
+        explanation: "`first + \" \"` gives `\"Ada \"`, then `+ &last` adds `\"Byron\"`. A literal is already a `&str`, so it needs no `&`."
+        concepts: [string.build]
+
+      - type: true-false
+        id: tf-s2-usable
+        prompt: "After `let s3 = s1 + &s2;`, you can still print `s2`."
+        answer: true
+        explanation: "`+` only borrows the right side, so `s2` still owns its text. It's `s1` that has moved."
+        concepts: [string.build, own.move]
+
+      - type: fill-tokens
+        id: fill-plus
+        prompt: "Fill the blanks so the program prints `sunrise`"
+        code:
+          rust: |
+            let start = String::from("sun");
+            let end = String::from("rise");
+            let word = start ___1___ ___2___end;
+            println!("{word}");
+          verify: run
+          expectStdout: "sunrise\n"
+        blanks:
+          "1": { answer: ["+"] }
+          "2": { answer: ["&"] }
+        bank: ["+", "&", "-", "*", "&mut"]
+        explanation: "`+` takes the `String` on the left and a `&str` on the right. `&end` borrows `end` as a `&str`."
+        concepts: [string.build]
+
+      - type: compiles
+        id: compiles-use-after-plus
+        code:
+          rust: |
+            fn main() {
+                let s1 = String::from("ping");
+                let s2 = String::from("pong");
+                let s3 = s1 + &s2;
+                println!("{s1} {s3}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `s1`" }
+            - { id: b, text: "E0382: borrow of moved value: `s2`", why: "`s2` is only borrowed by `&s2`, so it's still valid." }
+            - { id: c, text: "E0308: mismatched types", why: "The types are fine: `String + &String` compiles. The problem is using `s1` afterwards." }
+          answer: a
+        explanation: "`+` takes ownership of `s1`, so `s1` can't be used after line 4. `s3` owns the joined text."
+        concepts: [string.build, err.E0382]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-format
+        title: format! borrows everything
+        markdown: |
+          **`format!` builds a new `String` the same way `println!` prints.** It only borrows the values it uses, so all of them stay valid.
+
+          For joining more than two pieces, `format!` is usually easier to read than a chain of `+`.
+        code:
+          rust: |
+            let city = String::from("Hobart");
+            let state = String::from("TAS");
+            let place = format!("{city}, {state}");
+            println!("{place} / {city}");
+          verify: run
+          expectStdout: "Hobart, TAS / Hobart\n"
+        concepts: [string.build, macro.print-family]
+
+      - type: predict-output
+        id: predict-format-keeps
+        code:
+          rust: |
+            let a = String::from("tic");
+            let b = String::from("tac");
+            let c = String::from("toe");
+            let s = format!("{a}-{b}-{c}");
+            println!("{s} {a}");
+          verify: run
+        options:
+          - { id: a, text: "tic-tac-toe tic" }
+          - { id: b, text: "tic-tac-toe", why: "There are two placeholders in the `println!`: `s` and then `a`." }
+          - { id: c, text: "tictactoe tic", why: "The `-` characters in the `format!` text are copied into the result." }
+        answer: a
+        explanation: "`format!` borrows `a`, `b` and `c`, so `a` is still valid and can be printed afterwards."
+        concepts: [string.build]
+
+      - type: compiles
+        id: compiles-format-then-use
+        code:
+          rust: |
+            let first = String::from("Grace");
+            let last = String::from("Hopper");
+            let full = format!("{first} {last}");
+            println!("{first} / {full}");
+          verify: run
+          expectStdout: "Grace / Grace Hopper\n"
+        answer: true
+        explanation: "`format!` only borrows `first` and `last`. Neither has moved, so printing `first` afterwards is fine."
+        concepts: [string.build]
+
+      - type: decode-error
+        id: decode-plus-string
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let s1 = String::from("left");
+                let s2 = String::from("right");
+                let s3 = s1 + s2;
+                println!("{s3}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "let s3 = s1 + &s2;" }
+          - { id: b, code: "let s3 = &s1 + &s2;", why: "The left side must be a `String` that `+` can take. `&String + &String` is E0369." }
+          - { id: c, code: "let s3 = s1 + s2.clone();", why: "A clone is still a `String`, and the right side must be a `&str`. Same error." }
+        answer: a
+        explanation: "The right side of `+` must be a `&str`. `&s2` borrows `s2`, and Rust turns the `&String` into a `&str` for you."
+        concepts: [string.build, err.E0308]
+
+      - type: mcq
+        id: mcq-why-move
+        prompt: "Why can't you use `s1` after `let s3 = s1 + &s2;`?"
+        options:
+          - { id: a, text: "`+` takes `s1` by value (ownership) and hands back the joined `String`" }
+          - { id: b, text: "`+` deletes `s1` once it has copied its text", why: "Nothing is deleted on purpose. `s1` moves into the `+`, which reuses it to build the result." }
+          - { id: c, text: "`&s2` borrows `s1` as well", why: "`&s2` only borrows `s2`. The left side is taken by value." }
+        answer: a
+        explanation: "The `+` operator takes ownership of the left `String`, adds a copy of the right side's text, and returns the result. So `s1` has moved."
+        concepts: [string.build, own.move]
+
+      - type: predict-output
+        id: predict-tiles-format
+        prompt: Build the output
+        code:
+          rust: |
+            let name = String::from("Mia");
+            let score = 42;
+            let msg = format!("{name} got {score}");
+            println!("{msg} today");
+          verify: run
+        tiles: ["Mia", "got", "42", "today", "name", "msg"]
+        answer: "Mia got 42 today"
+        explanation: "`format!` fills in the placeholders the same way `println!` does, and `msg` holds the result."
+        concepts: [string.build, macro.print-family]
+
+      - type: spot-bug
+        id: spot-push-str-char
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut tag = String::new();
+                tag.push('#');
+                tag.push_str('r');
+                tag.push_str("ust");
+                println!("{tag}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 4
+        explanation: "`push_str` takes a `&str`, but `'r'` is a `char`. Use `push('r')` or `push_str(\"r\")`."
+        concepts: [string.build, err.E0308]
+
+      - type: match-pairs
+        id: pairs-build
+        prompt: Match each way of building a string to what it does
+        pairs:
+          - ["s.push(c)", "adds one char"]
+          - ["s.push_str(t)", "adds a &str"]
+          - ["s1 + &s2", "takes s1, borrows s2"]
+          - ["format!(..)", "borrows all, makes a new String"]
+        concepts: [string.build]
+
+      - type: true-false
+        id: tf-push-str-owns
+        prompt: "`push_str` takes ownership of the text you pass it."
+        code:
+          rust: |
+            let mut s = String::from("foot");
+            let extra = "ball";
+            s.push_str(extra);
+            println!("{s} {extra}");
+          verify: run
+          expectStdout: "football ball\n"
+        answer: false
+        explanation: "`push_str` takes a `&str` and copies its text, so `extra` is still usable afterwards."
+        concepts: [string.build]
+
+      - type: predict-output
+        id: predict-clone-plus
+        code:
+          rust: |
+            let base = String::from("note");
+            let a = base.clone() + "s";
+            let b = base + "book";
+            println!("{a} {b}");
+          verify: run
+        options:
+          - { id: a, text: "notes notebook" }
+          - { id: b, text: "notes notesbook", why: "`a` was built from a clone. Adding `\"s\"` didn't change `base`." }
+          - { id: c, text: "notes book", why: "`base` still holds `\"note\"` when line 3 runs, so `b` is `\"notebook\"`." }
+        answer: a
+        explanation: "The clone is moved into the first `+`, leaving `base` untouched. The second `+` then takes `base` itself."
+        concepts: [string.build, own.clone]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-greeting
+        prompt: "Arrange the lines so the program prints `Hello, Ada!`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let mut msg = String::from("Hello");' }
+          - { id: l3, text: '    msg.push_str(", Ada");' }
+          - { id: l4, text: "    msg.push('!');" }
+          - { id: l5, text: '    println!("{msg}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: '    msg.push("!");' }
+          - { id: d2, text: '    let msg = String::from("Hello");' }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Hello, Ada!\n"
+        explanation: "`msg` needs `mut` to grow. `push_str` adds the `&str` `\", Ada\"`, and `push` adds the `char` `'!'`."
+        concepts: [string.build, var.mut]
+
+      - type: predict-output
+        id: predict-chain
+        code:
+          rust: |
+            let day = String::from("12");
+            let month = String::from("03");
+            let year = String::from("2026");
+            let date = day + "/" + &month
+                + "/" + &year;
+            println!("{date} {month}");
+          verify: run
+        options:
+          - { id: a, text: "12/03/2026 03" }
+          - { id: b, text: "12/03/2026", why: "The `println!` prints two values: `date`, then `month`, which was only borrowed." }
+          - { id: c, text: "2026/03/12 03", why: "The pieces are joined left to right, in the order written." }
+        answer: a
+        explanation: "Only `day` moves (into the first `+`). `month` and `year` are borrowed, so `month` still prints."
+        concepts: [string.build]
+
+      - type: compiles
+        id: compiles-two-literals
+        code:
+          rust: |
+            fn main() {
+                let word = "tic" + "-tac";
+                println!("{word}");
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "The left side of `+` must be an owned `String`, and `\"tic\"` is a `&str`" }
+            - { id: b, text: "`+` can't join text at all", why: "It can, as long as the left side is a `String`." }
+            - { id: c, text: "The right side needs `&`: `&\"-tac\"`", why: "A literal is already a `&str`. The left side is the problem." }
+          answer: a
+        explanation: "Error E0369: you can't add `&str` to `&str`. Write `String::from(\"tic\") + \"-tac\"`, or use `format!`."
+        concepts: [string.build, string.string-vs-literal]
+
+      - type: decode-error
+        id: decode-moved-left
+        prompt: "Which change makes this print `ping pingpong`?"
+        code:
+          rust: |
+            fn main() {
+                let s1 = String::from("ping");
+                let s2 = String::from("pong");
+                let s3 = s1 + &s2;
+                println!("{s1} {s3}");
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, code: 'let s3 = format!("{s1}{s2}");' }
+          - { id: b, code: "let s3 = &s1 + &s2;", why: "`+` needs an owned `String` on the left. `&String + &String` is E0369." }
+          - { id: c, code: "let s3 = s2 + &s1;", why: "This compiles, but `s3` becomes `\"pongping\"`, so it prints `ping pongping`." }
+        answer: a
+        explanation: "`format!` borrows both strings instead of taking `s1`, so `s1` can still be printed. `s1.clone() + &s2` would also work."
+        concepts: [string.build, err.E0382]
+
+      - type: fill-tokens
+        id: fill-format
+        prompt: "Fill the blanks so the program prints `23C in Perth` and then `Perth`"
+        code:
+          rust: |
+            let city = String::from("Perth");
+            let temp = 23;
+            let msg = ___1___("{temp}C in {city}");
+            println!("{msg}");
+            println!("{___2___}");
+          verify: run
+          expectStdout: "23C in Perth\nPerth\n"
+        blanks:
+          "1": { answer: ["format!"] }
+          "2": { answer: ["city"] }
+        bank: ["format!", "println!", "String::from", "city", "temp", "msg"]
+        explanation: "`format!` returns the text as a `String` instead of printing it. It only borrows `city`, so `city` can be printed afterwards."
+        concepts: [string.build, macro.print-family]
+
+      - type: predict-output
+        id: predict-push-loop
+        code:
+          rust: |
+            let mut bar = String::from("[");
+            for _ in 0..3 {
+                bar.push('#');
+            }
+            bar.push(']');
+            println!("{bar}");
+          verify: run
+        options:
+          - { id: a, text: "[###]" }
+          - { id: b, text: "[#]", why: "The loop body runs three times, once for each of 0, 1 and 2." }
+          - { id: c, text: "[####]", why: "`0..3` stops before 3, so there are three passes, not four." }
+        answer: a
+        explanation: "The loop pushes `#` three times, then `]` closes the bar."
+        concepts: [string.build, ctrl.for]
+
+      - type: spot-bug
+        id: spot-ref-left
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let first = String::from("Ada");
+                let last = String::from("King");
+                let full = &first + " " + &last;
+                println!("{full}");
+            }
+          verify: compile-fail
+          expectErrors: [E0369]
+        answer: 4
+        explanation: "The left side of `+` must be a `String` it can take, not `&first`. Write `first + \" \" + &last`, or use `format!` to keep `first`."
+        concepts: [string.build]
+
+      - type: true-false
+        id: tf-diagram-moved
+        prompt: "This is memory after `let s3 = s1 + &s2;`. You can still print `s1`."
+        diagram:
+          caption: "After let s3 = s1 + &s2;"
+          frames:
+            - name: main
+              vars:
+                - { name: s1, moved: true }
+                - { name: s2, points: h2 }
+                - { name: s3, points: h1 }
+          heap:
+            - { id: h1, value: '"bluebird"' }
+            - { id: h2, value: '"bird"' }
+        answer: false
+        explanation: "`s1` is greyed out because it moved into the `+`. Its text is now part of `s3`, which owns `\"bluebird\"`."
+        concepts: [string.build, own.move]
+
+      - type: mcq
+        id: mcq-best-join
+        prompt: "You need `\"Ada-Bo-Cy\"` from three `String`s `a`, `b`, `c`, and you need all three afterwards. Which is best?"
+        options:
+          - { id: a, code: 'let s = format!("{a}-{b}-{c}");' }
+          - { id: b, code: 'let s = a + "-" + &b + "-" + &c;', why: "This moves `a` into the first `+`, so `a` can't be used afterwards." }
+          - { id: c, code: 'let s = &a + "-" + &b + "-" + &c;', why: "The left side of `+` must be an owned `String`. This is E0369." }
+        answer: a
+        explanation: "`format!` borrows every value it uses, so `a`, `b` and `c` all stay valid."
+        concepts: [string.build]
+
+      - type: predict-output
+        id: predict-plus-assign
+        code:
+          rust: |
+            let mut path = String::from("home");
+            let user = String::from("kim");
+            path += "/";
+            path += &user;
+            println!("{path} {user}");
+          verify: run
+        options:
+          - { id: a, text: "home/kim kim" }
+          - { id: b, text: "home kim", why: "`+=` changes `path` in place, adding to the end of it." }
+          - { id: c, text: "home/kim", why: "`user` is only borrowed by `&user`, so the second placeholder prints `kim`." }
+        answer: a
+        explanation: "`path += text` appends a `&str` to `path`, like `push_str`. `path` needs `mut`, and `user` is only borrowed."
+        concepts: [string.build]

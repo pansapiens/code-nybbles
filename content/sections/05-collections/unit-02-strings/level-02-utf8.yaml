@@ -1,0 +1,436 @@
+id: collections.strings.utf8
+title: Bytes and characters
+icon: text
+concepts: [string.utf8]
+reviewConcepts: [string.build, slice.utf8, slice.str, option.basics, option.methods, types.char, types.int, fmt.debug]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-bytes
+        title: A String is UTF-8 bytes
+        markdown: |
+          **A `String` stores its text as UTF-8 bytes.** English letters take 1 byte each, but many characters take 2, 3 or 4.
+
+          **`.len()` counts bytes, not characters.** To count characters, use `.chars().count()`.
+        code:
+          rust: |
+            let hola = String::from("Hola");
+            let hi = String::from("Здравствуйте");
+            println!("{}", hola.len());
+            println!("{}", hi.len());
+            println!("{}", hi.chars().count());
+          verify: run
+          expectStdout: "4\n24\n12\n"
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-zoe-len
+        code:
+          rust: |
+            let name = String::from("Zoë");
+            println!("{}", name.len());
+          verify: run
+        options:
+          - { id: a, text: "4" }
+          - { id: b, text: "3", why: "That's the number of characters. `.len()` counts bytes, and `ë` takes 2 of them." }
+          - { id: c, text: "12", why: "A `char` variable is 4 bytes, but inside a `String` each character uses only the bytes UTF-8 needs." }
+        answer: a
+        explanation: "`Z` and `o` take 1 byte each and `ë` takes 2, so the `String` holds 4 bytes."
+        concepts: [string.utf8]
+
+      - type: true-false
+        id: tf-len-chars
+        prompt: "`s.len()` tells you how many characters are in the `String` `s`."
+        answer: false
+        explanation: "`.len()` is the number of bytes. It equals the number of characters only when every character is 1 byte, as in plain English text."
+        concepts: [string.utf8]
+
+      - type: concept
+        id: concept-no-index
+        title: "No s[0]"
+        markdown: |
+          **You can't index a string with a number.** Byte 0 might be only half of a character, so Rust makes you say what you want:
+
+          - `.chars().nth(i)` gives character `i` as an `Option<char>` (`None` past the end).
+          - `.as_bytes()[i]` gives byte `i` as a `u8`.
+        code:
+          rust: |
+            let word = String::from("Ñandú");
+            let c = word.chars().nth(0);
+            let b = word.as_bytes()[0];
+            println!("{c:?} {b}");
+          verify: run
+          expectStdout: "Some('Ñ') 195\n"
+        concepts: [string.utf8, option.basics]
+
+      - type: compiles
+        id: compiles-index
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("hello");
+                let first = word[0];
+                println!("{first}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0277: the type `str` cannot be indexed by `{integer}`" }
+            - { id: b, text: "E0382: borrow of moved value: `word`", why: "Nothing has moved. The problem is indexing text with a number." }
+            - { id: c, text: "None: it compiles because `hello` is all ASCII", why: "Rust checks the type, not the text. No `String` can be indexed with a number, whatever it holds." }
+          answer: a
+        explanation: "Strings can't be indexed with a single number, even when every character is 1 byte. Use `.chars().nth(0)` for a character."
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-naive
+        code:
+          rust: |
+            let word = "naïve";
+            let bytes = word.len();
+            let chars = word.chars().count();
+            println!("{chars} {bytes}");
+          verify: run
+        options:
+          - { id: a, text: "5 6" }
+          - { id: b, text: "5 5", why: "`ï` takes 2 bytes, so the byte count is one more than the character count." }
+          - { id: c, text: "6 5", why: "The `println!` prints `chars` first, then `bytes`." }
+        answer: a
+        explanation: "There are 5 characters. `ï` uses 2 bytes, so there are 6 bytes."
+        concepts: [string.utf8]
+
+      - type: mcq
+        id: mcq-why-no-index
+        prompt: "Why doesn't Rust let you write `s[0]` on a string?"
+        options:
+          - { id: a, text: "A character can take several bytes, so byte 0 might not be a whole character" }
+          - { id: b, text: "Strings are stored in reverse order", why: "They're stored first to last. The issue is that characters vary in size." }
+          - { id: c, text: "Strings are immutable, so they can't be read by position", why: "Reading doesn't change anything. The problem is what one position means." }
+          - { id: d, text: "Indexes start at 1 for strings", why: "Rust indexes from 0 everywhere. Strings can't be indexed by a number at all." }
+        answer: a
+        explanation: "In UTF-8, a character is 1 to 4 bytes. Returning a single byte would often give part of a character, so Rust doesn't allow it."
+        concepts: [string.utf8]
+
+      - type: match-pairs
+        id: pairs-bytes
+        prompt: Match each character to the bytes it takes in a String
+        pairs:
+          - ["'a'", "1 byte"]
+          - ["'é'", "2 bytes"]
+          - ["'€'", "3 bytes"]
+          - ["'🦀'", "4 bytes"]
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-as-bytes
+        code:
+          rust: |
+            let greeting = "Hi";
+            let bytes = greeting.as_bytes();
+            println!("{} {}", bytes[0], bytes[1]);
+          verify: run
+        options:
+          - { id: a, text: "72 105" }
+          - { id: b, text: "H i", why: "`as_bytes()` gives `u8` numbers, and numbers print as digits." }
+          - { id: c, text: "72 73", why: "`H` is 72 and `I` is 73, but this is lowercase `i`, which is 105." }
+        answer: a
+        explanation: "`as_bytes()` returns the raw bytes. `H` is stored as 72 and `i` as 105."
+        concepts: [string.utf8, types.int]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-graphemes
+        title: Bytes, chars and graphemes
+        markdown: |
+          **The same text can be seen three ways:** as bytes, as `char`s (Unicode scalar values), or as grapheme clusters, the letters a reader sees.
+
+          `é` can be one `char`, or `e` plus a combining accent: two `char`s that display as one letter. The standard library gives you bytes and `char`s. Grapheme clusters need an external crate.
+        code:
+          rust: |
+            let one = "é";
+            let two = "e\u{301}";
+            let a = one.chars().count();
+            let b = two.chars().count();
+            println!("{one} {a}");
+            println!("{two} {b}");
+          verify: run
+          expectStdout: "é 1\ne\u0301 2\n"
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-combining
+        code:
+          rust: |
+            let s = "e\u{301}";
+            let bytes = s.len();
+            let chars = s.chars().count();
+            println!("{s} {bytes} {chars}");
+          verify: run
+        options:
+          - { id: a, text: "e\u0301 3 2" }
+          - { id: b, text: "e\u0301 2 1", why: "This `é` is two `char`s: `e` (1 byte) and the combining accent (2 bytes)." }
+          - { id: c, text: "e\\u{301} 3 2", why: "The `\\u{301}` escape is turned into the accent character, so it prints as `é`." }
+        answer: a
+        explanation: "The text is `e` followed by a combining accent. That's 2 `char`s and 3 bytes, and it displays as one letter."
+        concepts: [string.utf8, string.literals]
+
+      - type: true-false
+        id: tf-graphemes-std
+        prompt: "The standard library has a method that splits a `String` into grapheme clusters."
+        answer: false
+        explanation: "The standard library works with bytes (`.bytes()`, `.len()`) and `char`s (`.chars()`). For grapheme clusters, you add a crate such as `unicode-segmentation`."
+        concepts: [string.utf8]
+
+      - type: decode-error
+        id: decode-index
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Oslo");
+                let initial: char = city[0];
+                println!("{initial}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - { id: a, text: "Text can't be indexed with a number. Use `city.chars().nth(0)` to get a character." }
+          - { id: b, text: "`initial` should be a `u8`, not a `char`", why: "Changing the type doesn't help. Indexing `str` with a number isn't allowed at all." }
+          - { id: c, text: "The index should be 1, because strings count from 1", why: "Rust counts from 0. No number works here." }
+        answer: a
+        explanation: "`str` doesn't support `[number]` indexing. You choose bytes (`as_bytes()`) or characters (`chars()`) instead."
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-nth
+        code:
+          rust: |
+            let word = "Ñandú";
+            println!("{:?}", word.chars().nth(1));
+            println!("{:?}", word.chars().nth(9));
+          verify: run
+        options:
+          - { id: a, text: "Some('a')\nNone" }
+          - { id: b, text: "Some('Ñ')\nNone", why: "`nth` counts from 0, like indexes. `nth(1)` is the second character." }
+          - { id: c, text: "Some('a')", why: "Asking past the end doesn't panic. `nth` returns `None`, which is printed too." }
+        answer: a
+        explanation: "`nth(1)` is the second character, `'a'`. There's no character 9, so `nth(9)` returns `None` instead of panicking."
+        concepts: [string.utf8, option.basics]
+
+      - type: spot-bug
+        id: spot-boundary
+        prompt: "This compiles but panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("Élan");
+                let n = word.chars().count();
+                let first = &word[0..1];
+                println!("{n} {first}");
+            }
+          verify: run
+          expectPanic: "is not a char boundary"
+        answer: 4
+        explanation: "`É` takes 2 bytes, so the slice `0..1` ends in the middle of it and panics. `&word[0..2]` would give `É`."
+        concepts: [string.utf8, slice.utf8]
+
+      - type: fill-tokens
+        id: fill-count
+        prompt: "Fill the blanks so the program prints `5`, the number of characters"
+        code:
+          rust: |
+            let name = "Zoë K";
+            let n = name.___1___().___2___();
+            println!("{n}");
+          verify: run
+          expectStdout: "5\n"
+        blanks:
+          "1": { answer: ["chars"] }
+          "2": { answer: ["count"] }
+        bank: ["chars", "bytes", "count", "len", "as_bytes"]
+        explanation: "`.chars()` goes through the characters and `.count()` counts them. `.bytes().count()` would give 6, because `ë` is 2 bytes."
+        concepts: [string.utf8]
+
+      - type: compiles
+        id: compiles-print-nth
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("kiwi");
+                let first = word.chars().nth(0);
+                println!("{first}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`first` is an `Option<char>`, which `{}` can't print" }
+            - { id: b, text: "`nth` doesn't exist on strings", why: "It's called on `word.chars()`, and that line is fine." }
+            - { id: c, text: "`word` has moved into `chars()`", why: "`.chars()` only borrows `word`." }
+          answer: a
+        explanation: "`nth` returns an `Option`, because there might be no such character. Print it with `{first:?}`, or unwrap it with `unwrap_or`."
+        concepts: [string.utf8, option.type-safety]
+
+      - type: mcq
+        id: mcq-first-char
+        prompt: "Which expression gives the first character of `word` as an `Option<char>`?"
+        options:
+          - { id: a, code: "word.chars().nth(0)" }
+          - { id: b, code: "word[0]", why: "Text can't be indexed with a number (E0277)." }
+          - { id: c, code: "word.as_bytes()[0]", why: "This is the first byte, a `u8`. For text that doesn't start with a 1-byte character, it's only part of a character." }
+          - { id: d, code: "&word[0..1]", why: "That's a `&str` of the first byte, and it panics if the first character takes more than 1 byte." }
+        answer: a
+        explanation: "`.chars()` walks through whole characters, and `.nth(0)` returns the first one wrapped in `Some`."
+        concepts: [string.utf8]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-count
+        prompt: "Arrange the lines so the program prints `5 4`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let word = "café";' }
+          - { id: l3, text: "    let bytes = word.len();" }
+          - { id: l4, text: "    let chars = word.chars().count();" }
+          - { id: l5, text: '    println!("{bytes} {chars}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let chars = word.len();" }
+          - { id: d2, text: "    let bytes = word[..].count();" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "5 4\n"
+        explanation: "`é` takes 2 bytes, so `len()` gives 5 while `chars().count()` gives 4."
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-tiles-euro
+        prompt: Build the output
+        code:
+          rust: |
+            let price = "€5";
+            let b = price.len();
+            let c = price.chars().count();
+            println!("{b} {c}");
+          verify: run
+        tiles: ["4", "2", "3", "5", "1"]
+        answer: "4 2"
+        explanation: "`€` takes 3 bytes and `5` takes 1, so there are 4 bytes but only 2 characters."
+        concepts: [string.utf8]
+
+      - type: true-false
+        id: tf-char-4-bytes
+        prompt: "Every character takes 4 bytes inside a `String`."
+        answer: false
+        explanation: "A `char` value on its own is 4 bytes, but a `String` stores UTF-8, which uses 1 to 4 bytes per character. ASCII letters take 1."
+        concepts: [string.utf8, types.char]
+
+      - type: decode-error
+        id: decode-chars-index
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let word = String::from("kiwi");
+                let third = word.chars()[2];
+                println!("{third}");
+            }
+          verify: compile-fail
+          expectErrors: [E0608]
+        options:
+          - { id: a, text: "Use `word.chars().nth(2)`, then `.unwrap_or('?')` to get a `char`" }
+          - { id: b, text: "Use `word[2]` instead", why: "Strings can't be indexed with a number either (E0277)." }
+          - { id: c, text: "Use `word.chars().nth(2)` on its own", why: "That compiles on line 3, but `third` is then an `Option<char>`, and `{third}` can't print an `Option`." }
+        answer: a
+        explanation: "`.chars()` can't be indexed with `[2]` (E0608). `nth(2)` gives an `Option<char>`, and `unwrap_or('?')` turns it into a `char`."
+        concepts: [string.utf8, option.methods]
+
+      - type: mcq
+        id: mcq-len-true
+        prompt: "`let s = String::from(\"日本\");` Which statement is true?"
+        options:
+          - { id: a, text: "`s.len()` is 6 and `s.chars().count()` is 2" }
+          - { id: b, text: "`s.len()` is 2 and `s.chars().count()` is 2", why: "`.len()` counts bytes, and each of these characters takes 3." }
+          - { id: c, text: "`s.len()` is 2 and `s.chars().count()` is 6", why: "It's the other way round: bytes outnumber characters." }
+        answer: a
+        explanation: "Each of these two characters takes 3 bytes in UTF-8, so there are 6 bytes and 2 `char`s."
+        concepts: [string.utf8]
+
+      - type: compiles
+        id: compiles-as-bytes
+        code:
+          rust: |
+            let word = String::from("Rust");
+            let first: u8 = word.as_bytes()[0];
+            println!("{first}");
+          verify: run
+          expectStdout: "82\n"
+        answer: true
+        explanation: "`as_bytes()` gives the bytes as a `&[u8]`, and a byte slice can be indexed. It prints `82`, the byte for `R`."
+        concepts: [string.utf8, slice.array]
+
+      - type: fill-tokens
+        id: fill-nth-unwrap
+        prompt: "Fill the blanks so the program prints `n` and then `?`"
+        code:
+          rust: |
+            let word = "Ñandú";
+            let c = word.chars().___1___(2);
+            println!("{}", c.___2___('?'));
+            let d = word.chars().nth(7);
+            println!("{}", d.unwrap_or('?'));
+          verify: run
+          expectStdout: "n\n?\n"
+        blanks:
+          "1": { answer: ["nth"] }
+          "2": { answer: ["unwrap_or"] }
+        bank: ["nth", "unwrap_or", "len", "count", "push"]
+        explanation: "`nth(2)` is the third character, `Some('n')`. `unwrap_or('?')` gives the `char` inside, or `'?'` for `None`."
+        concepts: [string.utf8, option.methods]
+
+      - type: spot-bug
+        id: spot-index
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut tag = String::from("rust");
+                tag.push('!');
+                let n = tag.len();
+                let last = tag[n - 1];
+                println!("{last}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        answer: 5
+        explanation: "Even with a computed position, text can't be indexed with a number (E0277). Use `.chars()` to work with characters instead."
+        concepts: [string.utf8]
+
+      - type: predict-output
+        id: predict-crab
+        code:
+          rust: |
+            let mut s = String::from("hi");
+            s.push('🦀');
+            let bytes = s.len();
+            let chars = s.chars().count();
+            println!("{bytes} {chars}");
+          verify: run
+        options:
+          - { id: a, text: "6 3" }
+          - { id: b, text: "3 3", why: "`push` adds one character, but `🦀` takes 4 bytes, so the byte count grows by 4." }
+          - { id: c, text: "6 6", why: "`.chars().count()` counts characters, and there are 3." }
+        answer: a
+        explanation: "`hi` is 2 bytes and `🦀` is 4, so 6 bytes and 3 characters."
+        concepts: [string.utf8, string.build]

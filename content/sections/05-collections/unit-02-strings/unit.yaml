@@ -1,0 +1,19 @@
+id: collections.strings
+title: Strings in Depth
+description: Build, inspect, search and convert text, and see why a String is a sequence of UTF-8 bytes.
+colour: teal
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch08-02-strings.html
+sources:
+  - name: The Rust Programming Language, ch. 8.2
+    url: https://doc.rust-lang.org/book/ch08-02-strings.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-build
+  - level: level-02-utf8
+  - level: level-03-iter
+  - chest
+  - level: level-04-methods
+  - level: level-05-convert
+  - checkpoint: checkpoint-strings

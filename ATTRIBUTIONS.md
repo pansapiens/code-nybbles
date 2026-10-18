@@ -24,3 +24,6 @@ draw on these sources, under the licences shown:
 - [The Rust Programming Language, ch. 6.1](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html), MIT OR Apache-2.0. Used in: Enums & Option.
 - [The Rust Programming Language, ch. 6.2-6.3](https://doc.rust-lang.org/book/ch06-02-match.html), MIT OR Apache-2.0. Used in: match & Control Flow.
 - [The Rust Programming Language, ch. 19](https://doc.rust-lang.org/book/ch19-00-patterns.html), MIT OR Apache-2.0. Used in: Patterns Deep-dive.
+- [The Rust Programming Language, ch. 8.1](https://doc.rust-lang.org/book/ch08-01-vectors.html), MIT OR Apache-2.0. Used in: Vectors.
+- [The Rust Programming Language, ch. 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html), MIT OR Apache-2.0. Used in: Strings in Depth.
+- [The Rust Programming Language, ch. 8.3](https://doc.rust-lang.org/book/ch08-03-hash-maps.html), MIT OR Apache-2.0. Used in: HashMap & Friends.

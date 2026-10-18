@@ -1,0 +1,123 @@
+id: collections.hashmap.code-read-word-frequency
+title: Word frequency counter
+concepts: []
+reviewConcepts: [map.entry, map.iter, map.ownership, collections.choose, string.iter, borrow.mut]
+program:
+  rust: |
+    use std::collections::BTreeMap;
+
+    fn main() {
+        let text = "the cat and the hat";
+        let mut wc = BTreeMap::new();
+
+        for w in text.split_whitespace() {
+            *wc.entry(w).or_insert(0) += 1;
+        }
+
+        let mut total = 0;
+        for (word, n) in &wc {
+            println!("{word}: {n}");
+            total += n;
+        }
+        println!("unique: {}", wc.len());
+        println!("total: {total}");
+    }
+  verify: run
+  expectStdout: |
+    and: 1
+    cat: 1
+    hat: 1
+    the: 2
+    unique: 4
+    total: 5
+chunks:
+  - lines: 6
+    exercises:
+      - type: mcq
+        id: why-btreemap
+        prompt: "Why does line 5 use a `BTreeMap` instead of a `HashMap`?"
+        options:
+          - { id: a, text: "So the words print in sorted order, the same every run" }
+          - { id: b, text: "Because `HashMap` can't count things", why: "A `HashMap` has the same `entry` API. Only its loop order is unpredictable." }
+          - { id: c, text: "Because the keys are `&str`", why: "A `HashMap` accepts `&str` keys too. The choice is about the output order." }
+        answer: a
+        explanation: "Both maps can count. A `BTreeMap` keeps its keys sorted, so the report comes out alphabetical every time."
+        concepts: [collections.choose, map.iter]
+      - type: true-false
+        id: no-types
+        prompt: "Line 5 must say what types the keys and values are, because the map starts empty."
+        answer: false
+        explanation: "Rust works out the types from how the map is used later: `&str` keys from line 8 and integer values from `or_insert(0)`."
+        concepts: [map.basics]
+  - lines: 4
+    exercises:
+      - type: mcq
+        id: key-type
+        prompt: "What type are the keys stored in `wc`?"
+        options:
+          - { id: a, text: "`&str`, borrowing from `text`" }
+          - { id: b, text: "`String`, copied out of `text`", why: "`split_whitespace` gives `&str` slices of `text`. Nothing makes a new `String`." }
+          - { id: c, text: "`char`", why: "The loop splits into words, not characters." }
+        answer: a
+        explanation: "Each `w` is a `&str` slice of `text`, and `entry(w)` stores it as the key."
+        concepts: [string.iter, map.ownership]
+      - type: mcq
+        id: the-count
+        prompt: "After the loop, what value is stored under `\"the\"`?"
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "1", why: "`or_insert(0)` only inserts the first time. The second `\"the\"` adds 1 to the existing count." }
+          - { id: c, text: "0", why: "`+= 1` runs every time, including the first, right after the 0 is inserted." }
+        answer: a
+        explanation: "The first `\"the\"` inserts 0 and adds 1. The second finds 1 and adds 1 again."
+        concepts: [map.entry]
+      - type: mcq
+        id: why-star
+        prompt: "Why does line 8 start with `*`?"
+        options:
+          - { id: a, text: "`or_insert` returns `&mut i32`, and `*` reaches the count it points to" }
+          - { id: b, text: "It multiplies the count by the word", why: "`*` in front of a value is a dereference, not multiplication." }
+          - { id: c, text: "It makes `wc` mutable", why: "`let mut wc` on line 5 already does that." }
+        answer: a
+        explanation: "`+= 1` has to change the number in the map, so the `&mut` reference is dereferenced with `*`."
+        concepts: [map.entry, borrow.mut]
+  - lines: 5
+    exercises:
+      - type: mcq
+        id: first-line
+        prompt: "What is the first line the loop on lines 12-15 prints?"
+        options:
+          - { id: a, text: "`and: 1`" }
+          - { id: b, text: "`the: 2`", why: "`\"the\"` came first in the text, but a `BTreeMap` visits keys in sorted order." }
+          - { id: c, text: "It's different on each run", why: "That would be true of a `HashMap`. A `BTreeMap` always starts at the smallest key." }
+        answer: a
+        explanation: "The keys in order are `and`, `cat`, `hat`, `the`, so `and: 1` comes first."
+        concepts: [map.iter]
+      - type: true-false
+        id: borrow-loop
+        prompt: "`wc` can still be used after the loop on lines 12-15."
+        answer: true
+        explanation: "The loop is over `&wc`, so it only borrows the map. Line 16 uses it again."
+        concepts: [map.iter]
+  - lines: 3
+    exercises:
+      - type: mcq
+        id: unique
+        prompt: "What does line 16 print?"
+        options:
+          - { id: a, text: "`unique: 4`" }
+          - { id: b, text: "`unique: 5`", why: "`len` counts keys, and `\"the\"` is one key with a count of 2." }
+          - { id: c, text: "`unique: 2`", why: "`len` is the number of entries, not the largest count." }
+        answer: a
+        explanation: "There are four different words, so the map has four entries."
+        concepts: [map.basics]
+      - type: mcq
+        id: total
+        prompt: "What does line 17 print?"
+        options:
+          - { id: a, text: "`total: 5`" }
+          - { id: b, text: "`total: 4`", why: "`total` adds every count, and `\"the\"` contributes 2." }
+          - { id: c, text: "`total: 2`", why: "`total` is the sum of all counts, not the last one visited." }
+        answer: a
+        explanation: "The counts 1 + 1 + 1 + 2 add up to 5, the number of words in `text`."
+        concepts: [map.iter]

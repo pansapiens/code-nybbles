@@ -1,0 +1,8 @@
+id: collections
+title: Collections & Strings
+description: Store many values with vectors, strings and hash maps, and pick the right collection for the job.
+colour: purple
+units:
+  - unit-01-vectors
+  - unit-02-strings
+  - unit-03-hashmap

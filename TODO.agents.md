@@ -212,7 +212,12 @@ also works. CI doesn't need either.
   - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
   - [x] Section 3 complete: Units 3.1-3.5 (3.5 ends with the Section 3 checkpoint), diagrams on every level
   - [x] Section 4 written: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); not yet QA-reviewed
-  - [~] Section 5 being written (briefs /tmp/cn-brief/unit-5.*.md; 5.3 ends with `collections.hashmap.checkpoint`); `section.yaml` and course entry added
+  - [x] Section 5 written: Units 5.1-5.3, Code Read "Word frequency" (5.3), Section 5 checkpoint
+    (`collections.hashmap.checkpoint`) ends the beginner course; not yet QA-reviewed. Unit 5.4 (Build) waits on M6
+    - [ ] (new) Section 5 QA pass. Beyond-brief items to judge: `+=` on String, `.chars().nth/rev()`, map
+      `keys/values/values_mut`, `push_front`; 5.1 level 5 snippets declare enums with no visible `fn main`
+    - [ ] (new) Error codes used without concepts: E0507, E0596, E0597, E0515, E0433, E0368
+    - [x] (new) HashMap output order: every `verify: run` HashMap program rebuilt uncached 3 times, stable
   - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists
     so agents only touch their own unit directory (briefs in the session log of 2026-10-17)
 - [x] Guidebooks per unit; checkpoints
@@ -260,6 +265,11 @@ also works. CI doesn't need either.
   plain identifiers in pattern positions are the common case (4.5 agent's script: /tmp/cn45tools/alts.py)
 - [ ] (new) Width check doesn't cover parsons `lines`, mcq `options[].code` or Code Read programs
 - [ ] (new) Shared prelude for snippets (struct definitions repeated across items in Section 4)
+- [ ] (new) Fill-tokens: each bank tile can be placed once, so two blanks with the same answer need the tile twice
+  in the bank; say so in plans/03 and have the build check the bank can spell the answer
+- [ ] (new) Authoring note: answers with combining characters (`e\u{301}`) must match the real output's code
+  points; a precomposed `é` looks the same but fails
+- [ ] (new) spot-bug: optional "line the compiler reports" field, for "mistake here, error there" items
 - [ ] (new) predict-output tiles join with spaces but the answer needs real newlines; document or normalise
 - [ ] (new) predict-output can't express "this panics"; panics are mcq + `expectPanic` for now
 - [ ] (new) Two items rely on rustc 1.98 not catching `a[a.len()]` at compile time (unit-04 level-04

@@ -1,0 +1,20 @@
+id: collections.hashmap
+title: HashMap & Friends
+description: Look values up by key with HashMap, count with the entry API, and pick between HashSet, BTreeMap and VecDeque.
+colour: orange
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch08-03-hash-maps.html
+sources:
+  - name: The Rust Programming Language, ch. 8.3
+    url: https://doc.rust-lang.org/book/ch08-03-hash-maps.html
+    licence: MIT OR Apache-2.0
+    adapted: false
+path:
+  - level: level-01-basics
+  - level: level-02-ownership
+  - level: level-03-entry
+  - chest
+  - level: level-04-iter
+  - level: level-05-choose
+  - code-read: code-read-word-frequency
+  - checkpoint: checkpoint-collections

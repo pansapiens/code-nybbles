@@ -1,0 +1,296 @@
+id: collections.vectors.checkpoint
+title: "Checkpoint: Vectors"
+icon: flag
+concepts: []
+reviewConcepts:
+  - vec.basics
+  - vec.access
+  - vec.iter
+  - vec.borrow
+  - vec.enum
+  - own.move
+  - err.E0382
+  - err.E0502
+  - err.E0499
+  - option.methods
+  - match.enum
+  - slice.array
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-stack-ops
+        code:
+          rust: |
+            let mut stack = vec![1, 2, 3];
+            stack.pop();
+            stack.push(9);
+            let a = stack.get(2);
+            let b = stack.get(3);
+            println!("{a:?} {b:?} {}", stack.len());
+          verify: run
+        options:
+          - { id: a, text: "Some(9) None 3" }
+          - { id: b, text: "Some(3) Some(9) 4", why: "`pop` removed the 3 before the 9 was pushed, so the vector is `[1, 2, 9]`." }
+          - { id: c, text: "9 None 3", why: "`get` returns an `Option`, so `{:?}` shows `Some(9)`." }
+          - { id: d, text: "Some(9) panic", why: "`get` never panics. An out-of-range index gives `None`." }
+        answer: a
+        explanation: "After `pop` and `push`, `stack` is `[1, 2, 9]`. Index 2 is 9 and index 3 is out of range."
+        concepts: [vec.basics, vec.access]
+
+      - type: compiles
+        id: compiles-sum-then-len
+        code:
+          rust: |
+            let scores = vec![4, 8, 6];
+            let mut total = 0;
+            for s in scores {
+                total += s;
+            }
+            let avg = total / scores.len();
+            println!("{avg}");
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `scores`" }
+            - { id: b, text: "E0308: mismatched types", why: "`scores` holds `usize` values here, inferred from the division by `scores.len()`, so the types fit. The problem is the loop." }
+            - { id: c, text: "E0502: cannot borrow `scores` as mutable", why: "Nothing borrows `scores` mutably. The loop moves it." }
+          answer: a
+        explanation: "`for s in scores` moves the vector, even though its elements are numbers. Loop over `&scores` to keep it."
+        concepts: [vec.iter, err.E0382]
+
+      - type: decode-error
+        id: decode-get-push
+        prompt: Which change makes this compile and print `Some(5) 3`?
+        code:
+          rust: |
+            fn main() {
+                let mut v = vec![5, 7];
+                let first = v.get(0);
+                v.push(9);
+                println!("{first:?} {}", v.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Move line 3 below line 4" }
+          - { id: b, text: "Change line 3 to `let first = &v.get(0);`", why: "That's still a borrow of `v`, alive across the `push`." }
+          - { id: c, text: "Change line 2 to `let v = vec![5, 7];`", why: "Then `push` isn't allowed at all, because `v` isn't `mut`." }
+        answer: a
+        explanation: "`first` holds a reference into `v`. Taking it after the `push` means no borrow is alive when `v` changes, and index 0 is still 5."
+        concepts: [vec.borrow, vec.access, err.E0502]
+
+      - type: spot-bug
+        id: spot-off-by-one
+        prompt: "This prints two lines, then panics. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let names = vec!["Ann", "Bo", "Cy"];
+                for i in 1..=names.len() {
+                    println!("{}", names[i]);
+                }
+            }
+          verify: run
+          expectPanic: "index out of bounds: the len is 3 but the index is 3"
+        answer: 3
+        explanation: "Indexes run from 0 to 2, but `1..=3` goes from 1 to 3. It skips `Ann` and panics at 3. Use `0..names.len()`, or `for n in &names`."
+        concepts: [vec.access, vec.iter]
+
+      - type: fill-tokens
+        id: fill-discount
+        prompt: "Fill the blanks so every price drops by 2, printing `[8, 18]`"
+        code:
+          rust: |
+            let mut prices = vec![10, 20];
+            for p in ___1___ prices {
+                ___2___ -= 2;
+            }
+            println!("{prices:?}");
+          verify: run
+          expectStdout: "[8, 18]\n"
+        blanks:
+          "1": { answer: ["&mut"] }
+          "2": { answer: ["*p"] }
+        bank: ["&mut", "&", "*p", "p", "prices"]
+        explanation: "`&mut prices` lends each element mutably, and `*p` is the number behind the reference. Without `*`, `-=` is applied to the reference itself (E0368)."
+        concepts: [vec.iter]
+
+      - type: predict-output
+        id: predict-cells
+        code:
+          rust: |
+            enum Cell { Num(i32), Blank }
+            let row = vec![
+                Cell::Num(3),
+                Cell::Blank,
+                Cell::Num(-1),
+            ];
+            for c in &row {
+                let s = match c {
+                    Cell::Num(n) if *n < 0 => "neg",
+                    Cell::Num(_) => "num",
+                    Cell::Blank => "-",
+                };
+                print!("{s} ");
+            }
+            println!("{}", row.len());
+          verify: run
+        options:
+          - { id: a, text: "num - neg 3" }
+          - { id: b, text: "num - num 3", why: "-1 is below zero, so the guarded arm `neg` runs first." }
+          - { id: c, text: "num neg 2", why: "`Blank` is an element too. It prints `-`, and the vector has 3 elements." }
+        answer: a
+        explanation: "Each element is matched in order. The loop borrowed `row`, so `row.len()` still works at the end."
+        concepts: [vec.enum, match.enum]
+
+      - type: mcq
+        id: mcq-which-ok
+        prompt: "`v` is a `mut` `Vec<String>`. Which of these compiles?"
+        options:
+          - { id: a, code: "let first = v[0].clone();\nv.push(String::new());\nprintln!(\"{first}\");" }
+          - { id: b, code: "let first = &v[0];\nv.push(String::new());\nprintln!(\"{first}\");", why: "`first` borrows `v` and is used after the `push`: E0502." }
+          - { id: c, code: "let first = v[0];\nv.push(String::new());\nprintln!(\"{first}\");", why: "A `String` can't be moved out of a vector by indexing: E0507." }
+        answer: a
+        explanation: "`clone()` gives `first` its own `String`, so nothing borrows `v` when `push` runs."
+        concepts: [vec.borrow, vec.access, own.clone]
+
+      - type: true-false
+        id: tf-new-infers
+        prompt: "`let mut log = Vec::new();` compiles without a type annotation if a later line pushes a value into `log`."
+        code:
+          rust: |
+            let mut log = Vec::new();
+            log.push('a');
+            println!("{log:?}");
+          verify: run
+          expectStdout: "['a']\n"
+        answer: true
+        explanation: "Rust looks ahead at the `push` and works out that `log` is a `Vec<char>`. Only a vector that never gets a value needs an annotation."
+        concepts: [vec.basics]
+
+      - type: parsons
+        id: parsons-count-above
+        prompt: "Arrange the lines into a function that counts the values above `min`"
+        lines:
+          - { id: l1, text: "fn above(v: &[i32], min: i32) -> u32 {" }
+          - { id: l2, text: "    let mut n = 0;" }
+          - { id: l3, text: "    for x in v {" }
+          - { id: l4, text: "        if *x > min {" }
+          - { id: l5, text: "            n += 1;" }
+          - { id: l6, text: "        }" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: "    n" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "        if x > min {" }
+          - { id: d2, text: "    n;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        verify:
+          harness: |
+            {{solution}}
+            fn main() {
+                let temps = vec![31, 18, 35];
+                println!("{}", above(&temps, 30));
+            }
+          mode: run
+          expectStdout: "2\n"
+        explanation: "`x` is a `&i32`, so compare `*x` with `min`. The last line `n` has no `;`, so it's the return value."
+        concepts: [vec.iter, slice.array]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: Match each mistake to its error code
+        pairs:
+          - ["push while &v[0] is in use", "E0502"]
+          - ["push inside for x in &mut v", "E0499"]
+          - ["use v after for x in v", "E0382"]
+          - ["let s = v[0]; on a Vec<String>", "E0507"]
+          - ["push to a Vec without mut", "E0596"]
+        concepts: [vec.borrow, vec.iter, vec.access, vec.basics]
+
+      - type: decode-error
+        id: decode-double-mut
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut queue = vec![1, 2];
+                for q in &mut queue {
+                    if *q == 2 {
+                        queue.push(3);
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "The loop holds a mutable borrow of `queue`, so `push` can't take a second one" }
+          - { id: b, text: "`*q == 2` compares a reference with a number", why: "`*q` is the number, so the comparison is fine." }
+          - { id: c, text: "`queue` was moved into the loop", why: "`&mut queue` borrows. A move would be `for q in queue`." }
+        answer: a
+        explanation: "Two mutable borrows of `queue` would be alive at once (E0499). Collect the new values in a second vector and add them after the loop."
+        concepts: [vec.borrow, err.E0499]
+
+      - type: predict-output
+        id: predict-tiles-get-enum
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Pick { Ace, Num(u8) }
+            let mut hand = vec![Pick::Num(7)];
+            hand.push(Pick::Ace);
+            for i in 0..3 {
+                match hand.get(i) {
+                    Some(Pick::Ace) => print!("A "),
+                    Some(p) => print!("{p:?} "),
+                    None => print!("end"),
+                }
+            }
+            println!();
+          verify: run
+        tiles: ["Num(7)", "A", "end", "7", "Ace", "None"]
+        answer: "Num(7) A end"
+        explanation: "Index 0 is `Num(7)`, which falls to the `Some(p)` arm and prints its Debug form. Index 1 is the ace, and index 2 is out of range."
+        concepts: [vec.enum, vec.access, match.enum]
+
+      - type: mcq
+        id: mcq-diagram-move
+        prompt: "Which line gives this diagram?"
+        diagram:
+          caption: "laps has been handed to another variable"
+          frames:
+            - name: main
+              vars:
+                - { name: laps, moved: true }
+                - { name: best.ptr, points: h1 }
+                - { name: best.len, value: "2" }
+                - { name: best.cap, value: "2" }
+          heap:
+            - { id: h1, value: "[58, 61]" }
+        options:
+          - { id: a, code: "let best = laps;" }
+          - { id: b, code: "let best = laps.clone();", why: "A clone makes a second heap block, and `laps` stays usable, not moved." }
+          - { id: c, code: "let best = &laps;", why: "A reference would point at `laps`, which would still own the heap block." }
+        answer: a
+        explanation: "Assigning a `Vec` moves it: the pointer, length and capacity are copied into `best`, and `laps` can't be used any more. The elements stay where they are."
+        concepts: [vec.basics, own.move]
+
+      - type: compiles
+        id: compiles-two-shared
+        code:
+          rust: |
+            let mut v = vec![3, 1, 2];
+            let first = &v[0];
+            let n = v.len();
+            println!("{first} of {n}");
+            v.push(4);
+          verify: run
+          expectStdout: "3 of 3\n"
+        answer: true
+        explanation: "`len()` only reads, so it's a second shared borrow, which is fine. `first` is last used before the `push`."
+        concepts: [vec.borrow, borrow.nll]

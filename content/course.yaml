@@ -7,3 +7,4 @@ sections:
   - 02-functions-control-flow
   - 03-ownership
   - 04-structs-enums
+  - 05-collections

@@ -1,0 +1,444 @@
+id: collections.strings.methods
+title: Useful string methods
+icon: wrench
+concepts: [string.methods]
+reviewConcepts: [string.build, string.iter, string.utf8, slice.str, borrow.dangling, err.E0308, types.char]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-trim
+        title: Trim the edges
+        markdown: |
+          **`.trim()` removes whitespace from both ends.** It returns a `&str` slice of the original text and leaves the original unchanged.
+        code:
+          rust: |
+            let input = String::from("  Ada  ");
+            let name = input.trim();
+            println!("[{name}] [{input}]");
+          verify: run
+          expectStdout: "[Ada] [  Ada  ]\n"
+        concepts: [string.methods]
+
+      - type: predict-output
+        id: predict-trim
+        code:
+          rust: |
+            let raw = "\tyes \n";
+            println!("[{}]", raw.trim());
+          verify: run
+        options:
+          - { id: a, text: "[yes]" }
+          - { id: b, text: "[\tyes ]", why: "Tabs and newlines are whitespace too, so `trim` removes them as well as spaces." }
+          - { id: c, text: "[yes \n]", why: "`trim` works on both ends, not only the start." }
+        answer: a
+        explanation: "`trim` removes every kind of whitespace (spaces, tabs, newlines) from the start and the end."
+        concepts: [string.methods]
+
+      - type: concept
+        id: concept-case
+        title: Change the case
+        markdown: |
+          **`.to_uppercase()` and `.to_lowercase()` build a new `String`.** The original text stays as it was, so keep the result in a variable.
+        code:
+          rust: |
+            let name = "Ada";
+            let loud = name.to_uppercase();
+            let quiet = name.to_lowercase();
+            println!("{name} {loud} {quiet}");
+          verify: run
+          expectStdout: "Ada ADA ada\n"
+        concepts: [string.methods]
+
+      - type: true-false
+        id: tf-upper-in-place
+        prompt: "After `city.to_uppercase();` on its own line, `city` holds the uppercase text."
+        answer: false
+        explanation: "`to_uppercase` returns a new `String` and doesn't change `city`. The compiler warns that the unused result must be used."
+        concepts: [string.methods]
+
+      - type: concept
+        id: concept-search
+        title: Questions with yes/no answers
+        markdown: |
+          **`contains`, `starts_with` and `ends_with` return a `bool`.** You can pass them a `&str` or a `char`. The match is exact, so case matters.
+        code:
+          rust: |
+            let file = "report.PDF";
+            println!("{}", file.contains("port"));
+            println!("{}", file.starts_with('r'));
+            println!("{}", file.ends_with(".pdf"));
+          verify: run
+          expectStdout: "true\ntrue\nfalse\n"
+        concepts: [string.methods]
+
+      - type: predict-output
+        id: predict-contains-case
+        code:
+          rust: |
+            let title = "Hello World";
+            let a = title.contains("world");
+            let b = title.starts_with("Hell");
+            println!("{a} {b}");
+          verify: run
+        options:
+          - { id: a, text: "false true" }
+          - { id: b, text: "true true", why: "`contains` is case-sensitive: `\"world\"` isn't the same as `\"World\"`." }
+          - { id: c, text: "false false", why: "`\"Hello World\"` does start with `\"Hell\"`. It doesn't need to be a whole word." }
+        answer: a
+        explanation: "Lowercase `world` doesn't appear, so `a` is `false`. The text starts with `Hell`, so `b` is `true`."
+        concepts: [string.methods]
+
+      - type: mcq
+        id: mcq-trim-type
+        prompt: "What type does `line.trim()` return?"
+        options:
+          - { id: a, text: "`&str`, borrowing from `line`" }
+          - { id: b, text: "`String`, a trimmed copy", why: "No copy is needed: the trimmed text is already inside `line`, so `trim` returns a slice of it." }
+          - { id: c, text: "`()`, because it trims `line` in place", why: "`trim` doesn't change `line`. It returns a view of the part without whitespace." }
+        answer: a
+        explanation: "The trimmed text is a part of the original, so `trim` returns a `&str` slice pointing into it."
+        concepts: [string.methods, slice.str]
+
+      - type: fill-tokens
+        id: fill-ends-with
+        prompt: "Fill the blanks so the program prints `Rust file`"
+        code:
+          rust: |
+            let file = "main.rs";
+            if file.___1___(___2___) {
+                println!("Rust file");
+            }
+          verify: run
+          expectStdout: "Rust file\n"
+        blanks:
+          "1": { answer: ["ends_with"] }
+          "2": { answer: ['".rs"'] }
+        bank: ["ends_with", "starts_with", "trim", '".rs"', '"rs."']
+        explanation: "`ends_with(\".rs\")` checks the last characters and returns `true` here, so the `if` body runs."
+        concepts: [string.methods]
+
+      - type: compiles
+        id: compiles-trim-string
+        code:
+          rust: |
+            fn main() {
+                let raw = String::from(" 42 ");
+                let clean: String = raw.trim();
+                println!("{clean}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`trim` returns a `&str`, not a `String`" }
+            - { id: b, text: "`trim` can't be called on a `String`", why: "It can. It's the type annotation that doesn't match." }
+            - { id: c, text: "`raw` needs `mut` to be trimmed", why: "`trim` doesn't change `raw`, so no `mut` is needed." }
+          answer: a
+        explanation: "E0308, mismatched types: `trim` returns a `&str` slice of `raw`. Drop the `: String`, or make a `String` with `String::from(raw.trim())`."
+        concepts: [string.methods, err.E0308]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-replace
+        title: Find and replace
+        markdown: |
+          **`.replace(from, to)` returns a new `String` with every match of `from` swapped for `to`.** The original is unchanged.
+        code:
+          rust: |
+            let date = "2026-10-18";
+            let slashes = date.replace("-", "/");
+            println!("{slashes} {date}");
+          verify: run
+          expectStdout: "2026/10/18 2026-10-18\n"
+        concepts: [string.methods]
+
+      - type: predict-output
+        id: predict-replace-all
+        code:
+          rust: |
+            let fruit = "banana";
+            println!("{}", fruit.replace("a", "o"));
+          verify: run
+        options:
+          - { id: a, text: "bonono" }
+          - { id: b, text: "bonana", why: "`replace` changes every match, not only the first." }
+          - { id: c, text: "banana", why: "The printed value is the new `String` that `replace` returns, which has the changes." }
+        answer: a
+        explanation: "All three `a`s are replaced with `o`."
+        concepts: [string.methods]
+
+      - type: predict-output
+        id: predict-chain
+        code:
+          rust: |
+            let raw = "  Hello World ";
+            let tidy = raw.trim().to_lowercase();
+            let id = tidy.replace(" ", "_");
+            println!("{id}");
+          verify: run
+        options:
+          - { id: a, text: "hello_world" }
+          - { id: b, text: "__hello_world_", why: "`trim` runs first and removes the outer spaces, so only the middle space is left to replace." }
+          - { id: c, text: "Hello_World", why: "`to_lowercase` runs before `replace`, so the capitals are gone." }
+        answer: a
+        explanation: "`trim` gives `\"Hello World\"`, `to_lowercase` gives `\"hello world\"`, and `replace` swaps the one space for `_`."
+        concepts: [string.methods]
+
+      - type: spot-bug
+        id: spot-unused-upper
+        prompt: "This should print `SYDNEY`, but prints `Sydney`. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let city = String::from("Sydney");
+                city.to_uppercase();
+                println!("{city}");
+            }
+          verify: run
+          expectStdout: "Sydney\n"
+        answer: 3
+        explanation: "`to_uppercase` returns a new `String`, which line 3 throws away. Write `let city = city.to_uppercase();`."
+        concepts: [string.methods]
+
+      - type: decode-error
+        id: decode-assign-trim
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut name = String::from(" Al ");
+                name = name.trim();
+                println!("[{name}]");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "name = String::from(name.trim());" }
+          - { id: b, code: "name = name.trim().len();", why: "That's a number, not a `String`, so the types still don't match." }
+          - { id: c, code: "name.trim();", why: "This compiles, but throws the result away. `name` keeps its spaces." }
+        answer: a
+        explanation: "`name` is a `String`, but `trim` returns a `&str` (E0308). `String::from` makes a new `String` from the trimmed text."
+        concepts: [string.methods, err.E0308]
+
+      - type: match-pairs
+        id: pairs-methods
+        prompt: Match each method to its result
+        pairs:
+          - ["trim()", "&str without outer spaces"]
+          - ["to_uppercase()", "new String in capitals"]
+          - ["replace(a, b)", "new String with a swapped for b"]
+          - ["contains(t)", "bool: is t anywhere?"]
+          - ["starts_with(t)", "bool: is t at the start?"]
+        concepts: [string.methods]
+
+      - type: compiles
+        id: compiles-contains-char
+        code:
+          rust: |
+            let email = "kim@example.com";
+            if email.contains('@') {
+                println!("looks ok");
+            }
+          verify: run
+          expectStdout: "looks ok\n"
+        answer: true
+        explanation: "`contains` accepts a `char` as well as a `&str`, so `'@'` works."
+        concepts: [string.methods, types.char]
+
+      - type: true-false
+        id: tf-trim-middle
+        prompt: "`\"a  b\".trim()` returns `\"a b\"`, with the double space reduced to one."
+        answer: false
+        explanation: "`trim` only touches the two ends. Whitespace in the middle stays as it is, so the result is still `\"a  b\"`."
+        concepts: [string.methods]
+
+      - type: mcq
+        id: mcq-changes
+        prompt: "`notes` is a `mut String`. Which call changes `notes` itself?"
+        options:
+          - { id: a, code: 'notes.push_str("!");' }
+          - { id: b, code: "notes.trim();", why: "`trim` returns a slice of `notes` and leaves `notes` unchanged." }
+          - { id: c, code: "notes.to_uppercase();", why: "`to_uppercase` returns a new `String`. `notes` stays as it was." }
+          - { id: d, code: 'notes.replace("a", "b");', why: "`replace` returns a new `String` too." }
+        answer: a
+        explanation: "`push_str` takes `&mut self` and adds to the `String`. `trim`, `to_uppercase` and `replace` only read it and return something new."
+        concepts: [string.methods, string.build]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-username
+        prompt: "Arrange the lines so the program prints `Ferris -> ferris`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: '    let input = "  Ferris ";' }
+          - { id: l3, text: "    let name = input.trim();" }
+          - { id: l4, text: "    let id = name.to_lowercase();" }
+          - { id: l5, text: '    println!("{name} -> {id}");' }
+          - { id: l6, text: "}" }
+        distractors:
+          - { id: d1, text: "    let id = input.to_lowercase();" }
+          - { id: d2, text: "    input.trim();" }
+        answer: [l1, l2, l3, l4, l5, l6]
+        verify:
+          mode: run
+          expectStdout: "Ferris -> ferris\n"
+        explanation: "`name` must exist before `id` is made from it. Lowercasing `input` instead would keep the spaces."
+        concepts: [string.methods]
+
+      - type: fill-tokens
+        id: fill-email
+        prompt: "Fill the blanks so the program prints `valid`"
+        code:
+          rust: |
+            let email = "sam@uni.edu.au";
+            let a = email.___1___('@');
+            let b = email.___2___(".au");
+            if a && b {
+                println!("valid");
+            }
+          verify: run
+          expectStdout: "valid\n"
+        blanks:
+          "1": { answer: ["contains"] }
+          "2": { answer: ["ends_with", "contains"] }
+        bank: ["contains", "ends_with", "starts_with", "replace", "trim"]
+        explanation: "`contains('@')` checks for an `@` anywhere, and `ends_with(\".au\")` checks the end. Both are `true`."
+        concepts: [string.methods]
+
+      - type: compiles
+        id: compiles-trim-outlives
+        code:
+          rust: |
+            fn main() {
+                let clean;
+                {
+                    let raw = String::from(" hi ");
+                    clean = raw.trim();
+                }
+                println!("{clean}");
+            }
+          verify: compile-fail
+          expectErrors: [E0597]
+        answer: false
+        followUp:
+          prompt: What's wrong?
+          options:
+            - { id: a, text: "`clean` borrows from `raw`, which is dropped at the inner `}`" }
+            - { id: b, text: "`trim` can't be called inside a block", why: "It can. The problem is using the result after `raw` is gone." }
+            - { id: c, text: "`clean` must be given a value on the line where it's declared", why: "Declaring first and assigning later is fine. The borrow is the problem." }
+          answer: a
+        explanation: "`trim` returns a slice of `raw`. `raw` is dropped at the end of the block, so `clean` would point at freed memory (E0597: does not live long enough)."
+        concepts: [string.methods, borrow.dangling]
+
+      - type: predict-output
+        id: predict-case-insensitive
+        code:
+          rust: |
+            let lang = "Rust";
+            let a = lang.contains("ru");
+            let lower = lang.to_lowercase();
+            let b = lower.contains("ru");
+            println!("{a} {b}");
+          verify: run
+        options:
+          - { id: a, text: "false true" }
+          - { id: b, text: "true true", why: "`\"Rust\"` has a capital `R`, so it doesn't contain lowercase `\"ru\"`." }
+          - { id: c, text: "false false", why: "`lower` is `\"rust\"`, which does contain `\"ru\"`." }
+        answer: a
+        explanation: "Searches are case-sensitive. Lowercasing first is a common way to search without caring about case."
+        concepts: [string.methods]
+
+      - type: spot-bug
+        id: spot-starts-ends
+        prompt: "This should print `image`, but prints nothing. Tap the line with the mistake."
+        code:
+          rust: |
+            fn main() {
+                let file = "photo.png";
+                let lower = file.to_lowercase();
+                if lower.starts_with(".png") {
+                    println!("image");
+                }
+            }
+          verify: run
+          expectStdout: ""
+        answer: 4
+        explanation: "`.png` is at the end of the name, so the check should be `ends_with(\".png\")`."
+        concepts: [string.methods]
+
+      - type: true-false
+        id: tf-upper-longer
+        prompt: "`to_uppercase` can return a `String` with more characters than the original."
+        code:
+          rust: |
+            let street = "straße";
+            let upper = street.to_uppercase();
+            println!("{upper}");
+          verify: run
+          expectStdout: "STRASSE\n"
+        answer: true
+        explanation: "German `ß` has no single capital form, so it becomes `SS`. That's one reason `to_uppercase` builds a new `String`."
+        concepts: [string.methods, string.utf8]
+
+      - type: predict-output
+        id: predict-lines-trim
+        code:
+          rust: |
+            let text = " milk \n  eggs";
+            for item in text.lines() {
+                println!("[{}]", item.trim());
+            }
+          verify: run
+        options:
+          - { id: a, text: "[milk]\n[eggs]" }
+          - { id: b, text: "[ milk ]\n[  eggs]", why: "Each line is trimmed before it's printed." }
+          - { id: c, text: "[milk eggs]", why: "`.lines()` gives each line separately, so there are two `println!`s." }
+        answer: a
+        explanation: "`.lines()` gives `\" milk \"` and `\"  eggs\"`, and `trim` removes the spaces around each."
+        concepts: [string.methods, string.iter]
+
+      - type: decode-error
+        id: decode-upper-str
+        prompt: "Which change makes this print `RUST BOOK`?"
+        code:
+          rust: |
+            fn main() {
+                let title = "rust book";
+                let up: &str = title.to_uppercase();
+                println!("{up}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, code: "let up = title.to_uppercase();" }
+          - { id: b, code: "let up: &str = title.trim();", why: "This compiles, but `trim` doesn't change the case, so it prints `rust book`." }
+          - { id: c, code: "let up: &str = title;", why: "This compiles, but `up` is the original lowercase text." }
+        answer: a
+        explanation: "`to_uppercase` returns a new `String`, not a `&str` (E0308). Without the annotation, `up` is a `String` holding `RUST BOOK`."
+        concepts: [string.methods, err.E0308]
+
+      - type: mcq
+        id: mcq-count-matches
+        prompt: "How many times does this print `found`?"
+        code:
+          rust: |
+            let text = "Cat cat CAT dog";
+            for word in text.split_whitespace() {
+                if word.to_lowercase() == "cat" {
+                    println!("found");
+                }
+            }
+          verify: run
+          expectStdout: "found\nfound\nfound\n"
+        options:
+          - { id: a, text: "3 times" }
+          - { id: b, text: "1 time", why: "Each word is lowercased before the comparison, so `Cat` and `CAT` match too." }
+          - { id: c, text: "4 times", why: "`dog` lowercased is still `dog`, which isn't `\"cat\"`." }
+        answer: a
+        explanation: "Lowercasing turns `Cat`, `cat` and `CAT` into `cat`, so three words match."
+        concepts: [string.methods, string.iter]

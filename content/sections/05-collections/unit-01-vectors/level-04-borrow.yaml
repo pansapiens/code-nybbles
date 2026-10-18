@@ -1,0 +1,541 @@
+id: collections.vectors.borrow
+title: Hold on, it might move
+icon: lock
+concepts: [vec.borrow]
+reviewConcepts: [vec.basics, vec.access, vec.iter, borrow.shared, borrow.mut, borrow.exclusive, err.E0502, err.E0499, borrow.nll, borrow.fixes, borrow.dangling, own.clone, own.copy, slice.array, own.param-choice, mem.stack-heap]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-e0502
+        title: No pushing while borrowed
+        markdown: |
+          **While a reference into a `Vec` is alive, you can't change the `Vec`.** Here `first` borrows an element and is used after the `push`, so the borrows overlap.
+
+          That's the rule from Section 3: many `&` **or** one `&mut`. `push` needs a `&mut`, so this is **E0502**.
+        code:
+          rust: |
+            let mut v = vec![1, 2, 3];
+            let first = &v[0];
+            v.push(4); // E0502
+            println!("{first}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        concepts: [vec.borrow, err.E0502]
+
+      - type: concept
+        id: concept-why-realloc
+        title: Why Rust says no
+        markdown: |
+          **`push` may move the elements.** If the heap block is full, the `Vec` copies everything to a bigger block and frees the old one.
+
+          A reference made before the `push` would then point at freed memory. Rust can't know in advance whether there's room, so it forbids the overlap.
+        diagram:
+          caption: "If Rust allowed it: after v.push(4)"
+          frames:
+            - name: main
+              vars:
+                - { name: v.ptr, points: h2 }
+                - { name: v.len, value: "4" }
+                - { name: v.cap, value: "6" }
+                - { name: first, points: h1 }
+          heap:
+            - { id: h1, value: "[1, 2, 3]", freed: true }
+            - { id: h2, value: "[1,2,3,4]" }
+        concepts: [vec.borrow, mem.stack-heap]
+
+      - type: compiles
+        id: compiles-push-while-borrowed
+        code:
+          rust: |
+            let mut names = vec!["Ann"];
+            let top = &names[0];
+            names.push("Bo");
+            println!("{top}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `names` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0499: cannot borrow `names` as mutable more than once at a time", why: "`top` is a shared `&` borrow, not a `&mut`. Shared plus mutable is E0502." }
+            - { id: c, text: "E0382: borrow of moved value: `names`", why: "Nothing moves `names`. It's borrowed, and then `push` needs to borrow it mutably." }
+          answer: a
+        explanation: "`top` borrows `names` and is used on line 4, after the `push`. The shared borrow and the `push`'s mutable borrow overlap."
+        concepts: [vec.borrow, err.E0502]
+
+      - type: mcq
+        id: mcq-why-forbidden
+        prompt: "Why does Rust reject `let first = &v[0]; v.push(9);` when `first` is used afterwards?"
+        options:
+          - { id: a, text: "`push` might move the elements to a new heap block, leaving `first` pointing at freed memory" }
+          - { id: b, text: "`push` changes `v[0]`", why: "`push` adds at the end. It never changes existing elements' values. The danger is that it may move them." }
+          - { id: c, text: "References to elements can't be made from a `mut` vector", why: "They can. The problem is changing the vector while one is still in use." }
+        answer: a
+        explanation: "If the vector is full, `push` reallocates. The borrow checker stops any reference into the old block from being used after that."
+        concepts: [vec.borrow]
+
+      - type: true-false
+        id: tf-spare-capacity
+        prompt: "If the `Vec` has spare capacity, the compiler allows `push` while a reference to an element is still in use."
+        answer: false
+        explanation: "The capacity is only known while the program runs. The compiler checks the borrow rules without it, so the overlap is always an error."
+        concepts: [vec.borrow]
+
+      - type: predict-output
+        id: predict-nll-order
+        prompt: "This compiles. What does it print?"
+        code:
+          rust: |
+            let mut v = vec![5, 6];
+            let first = &v[0];
+            println!("{first}");
+            v.push(7);
+            println!("{v:?}");
+          verify: run
+        options:
+          - { id: a, text: "5\n[5, 6, 7]" }
+          - { id: b, text: "5\n[5, 6]", why: "The `push` runs before the second `println!`, so 7 is in the vector." }
+          - { id: c, text: "7\n[5, 6, 7]", why: "`first` borrows index 0, which is 5. It's printed before the `push`." }
+        answer: a
+        explanation: "`first` is last used on line 3, so its borrow ends there. The `push` on line 4 doesn't overlap it."
+        concepts: [vec.borrow, borrow.nll]
+
+      - type: fill-tokens
+        id: fill-copy-fix
+        prompt: "Fill the blank so the program compiles and prints `1 [1, 2, 3, 4]`"
+        code:
+          rust: |
+            let mut v = vec![1, 2, 3];
+            let first = ___1___;
+            v.push(4);
+            println!("{first} {v:?}");
+          verify: run
+          expectStdout: "1 [1, 2, 3, 4]\n"
+        blanks:
+          "1": { answer: ["v[0]"] }
+        bank: ["v[0]", "&v[0]", "&mut v[0]", "v.get(0)"]
+        explanation: "`v[0]` copies the `i32` into `first`, so no borrow is left alive at the `push`. The other choices are all borrows that `first` holds on to."
+        concepts: [vec.borrow, own.copy]
+
+      - type: decode-error
+        id: decode-best-fix
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut v = vec![1, 2, 3];
+                let first = &v[0];
+                v.push(4);
+                println!("{first}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, code: "let first = v[0];" }
+          - { id: b, code: "let first = &mut v[0];", why: "Still a borrow alive across `push`. Now it's two mutable borrows, E0499." }
+          - { id: c, code: "v.clone().push(4);", why: "Compiles, but it pushes onto a temporary copy that's thrown away. `v` is unchanged." }
+        answer: a
+        explanation: "`i32` is `Copy`, so `v[0]` copies the number and no borrow remains when `push` runs."
+        concepts: [vec.borrow, err.E0502, borrow.fixes]
+
+      - type: spot-bug
+        id: spot-borrow-then-push
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut queue = vec![3, 4];
+                let head = &queue[0];
+                queue.push(5);
+                println!("{head}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 4
+        explanation: "`head` borrows `queue` from line 3 until it's printed on line 5. Pushing in between needs a mutable borrow, which isn't allowed while `head` is alive."
+        concepts: [vec.borrow, err.E0502]
+
+      - type: mcq
+        id: mcq-diagram-dangling
+        prompt: "This diagram shows what would happen if Rust allowed the `push`. What's wrong with `first`?"
+        diagram:
+          caption: "If Rust allowed it: after scores.push(9)"
+          frames:
+            - name: main
+              vars:
+                - { name: scores.ptr, points: h2 }
+                - { name: scores.len, value: "3" }
+                - { name: scores.cap, value: "4" }
+                - { name: first, points: h1 }
+          heap:
+            - { id: h1, value: "[4, 7]", freed: true }
+            - { id: h2, value: "[4, 7, 9]" }
+        options:
+          - { id: a, text: "It points at a heap block that has been freed" }
+          - { id: b, text: "It points at the wrong element of the new block", why: "`first` doesn't point at the new block at all. It still points at the old, freed one." }
+          - { id: c, text: "Nothing: it still reads 4", why: "Reading freed memory might give 4, or anything else. That's exactly what Rust rules out." }
+        answer: a
+        explanation: "The `Vec` moved its elements to a new block and freed the old one. `first` would be a dangling reference, so the borrow checker rejects the `push`."
+        concepts: [vec.borrow, borrow.dangling]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-fixes
+        title: Ways out
+        markdown: |
+          **Make the borrow end before the change.** Common fixes:
+          - copy the value: `let first = v[0];` (for `Copy` types)
+          - `.clone()` it, for `String`s and other non-`Copy` values
+          - use the reference before the `push`
+          - keep the index and read `v[i]` again afterwards
+        code:
+          rust: |
+            let mut names = vec![
+                String::from("Ann"),
+            ];
+            let first = names[0].clone();
+            names.push(String::from("Bo"));
+            println!("{first} {}", names.len());
+          verify: run
+          expectStdout: "Ann 2\n"
+        concepts: [vec.borrow, borrow.fixes, own.clone]
+
+      - type: compiles
+        id: compiles-get-then-push
+        code:
+          rust: |
+            let mut v = vec![10, 20];
+            let first = v.get(0);
+            v.push(30);
+            println!("{first:?}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`get` returns `Option<&i32>`, which still borrows `v` across the `push`" }
+            - { id: b, text: "`get` moves the element out of `v`", why: "`get` lends a reference. It never moves anything out." }
+            - { id: c, text: "`first` is an `Option`, which can't be printed", why: "`{:?}` prints an `Option`. The problem is the borrow." }
+          answer: a
+        explanation: "The `Some` holds a reference into `v`. While `first` is still used, `v` can't be changed (E0502)."
+        concepts: [vec.borrow, vec.access, err.E0502]
+
+      - type: compiles
+        id: compiles-push-in-ref-loop
+        code:
+          rust: |
+            let mut nums = vec![1, 2];
+            for n in &nums {
+                nums.push(*n);
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `nums` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0382: borrow of moved value: `nums`", why: "`for n in &nums` borrows. It doesn't move `nums`." }
+            - { id: c, text: "E0596: cannot borrow `nums` as mutable", why: "`nums` is declared with `let mut`." }
+          answer: a
+        explanation: "The loop borrows `nums` for its whole run. Pushing inside it would change the vector being read, and could move its elements."
+        concepts: [vec.borrow, vec.iter, err.E0502]
+
+      - type: compiles
+        id: compiles-push-in-mut-loop
+        code:
+          rust: |
+            let mut nums = vec![1, 2];
+            for n in &mut nums {
+                *n += 1;
+                nums.push(0);
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0499: cannot borrow `nums` as mutable more than once at a time" }
+            - { id: b, text: "E0502: cannot borrow `nums` as mutable because it is also borrowed as immutable", why: "This loop borrows with `&mut`, not `&`. Two mutable borrows is E0499." }
+            - { id: c, text: "E0368: binary assignment operation `+=` cannot be applied", why: "Line 3 uses `*n`, which is right." }
+          answer: a
+        explanation: "The loop's `&mut nums` is alive for the whole loop, and `push` needs a second `&mut`. Two mutable borrows at once is E0499."
+        concepts: [vec.borrow, vec.iter, err.E0499]
+
+      - type: true-false
+        id: tf-other-element
+        prompt: "While `let r = &v[0];` is still in use, `v[1] = 5;` is allowed, because it changes a different element."
+        code:
+          rust: |
+            fn main() {
+                let mut v = vec![1, 2, 3];
+                let r = &v[0];
+                v[1] = 5;
+                println!("{r}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        explanation: "`&v[0]` borrows the whole vector as far as the compiler is concerned. Any change to `v` while `r` is alive is E0502."
+        concepts: [vec.borrow, err.E0502]
+
+      - type: predict-output
+        id: predict-fn-mut-vec
+        code:
+          rust: |
+            fn add_bonus(v: &mut Vec<i32>) {
+                v.push(10);
+            }
+
+            fn main() {
+                let mut pts = vec![1];
+                add_bonus(&mut pts);
+                add_bonus(&mut pts);
+                println!("{pts:?}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "[1, 10, 10]" }
+          - { id: b, text: "[1]", why: "`add_bonus` gets a `&mut` to the real vector, so its pushes change `pts`." }
+          - { id: c, text: "[1, 10]", why: "It's called twice, and each call pushes once." }
+        answer: a
+        explanation: "A function that grows a vector takes `&mut Vec<i32>`. Each call borrows `pts` mutably, and the borrow ends when the call returns."
+        concepts: [vec.borrow, own.param-choice]
+
+      - type: match-pairs
+        id: pairs-fixes
+        prompt: "Match each value you want to keep across a `push` to a fix"
+        pairs:
+          - ["an i32 element", "copy it: v[0]"]
+          - ["a String element", "clone it: v[0].clone()"]
+          - ["its position", "store i, read v[i] later"]
+          - ["a reference only printed once", "print before the push"]
+        concepts: [vec.borrow, borrow.fixes]
+
+      - type: decode-error
+        id: decode-string-clone
+        prompt: Which change makes this compile?
+        code:
+          rust: |
+            fn main() {
+                let mut team = vec![
+                    String::from("Ann"),
+                ];
+                let captain = &team[0];
+                team.push(String::from("Bo"));
+                println!("{captain}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "Change line 5 to `let captain = team[0].clone();`" }
+          - { id: b, text: "Change line 5 to `let captain = team[0];`", why: "A `String` isn't `Copy`, so this tries to move it out of the vector (E0507)." }
+          - { id: c, text: "Change line 2 to `let team = ...`", why: "Without `mut`, the `push` on line 6 wouldn't be allowed at all." }
+        answer: a
+        explanation: "`clone()` makes `captain` its own `String`, so it no longer borrows `team` and the `push` is fine."
+        concepts: [vec.borrow, own.clone, borrow.fixes]
+
+      - type: predict-output
+        id: predict-tiles-index-kept
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            let mut v = vec![8, 3];
+            let i = 1;
+            v.push(5);
+            v[i] += 1;
+            println!("{} {:?}", v[i], v);
+          verify: run
+        tiles: ["4", "[8, 4, 5]", "3", "[8, 3, 5]", "9"]
+        answer: "4 [8, 4, 5]"
+        explanation: "`i` is a plain number, not a borrow, so the `push` is fine. Afterwards `v[1]` is changed from 3 to 4."
+        concepts: [vec.borrow, vec.access]
+
+      - type: mcq
+        id: mcq-slice-param
+        prompt: "A function only adds up the numbers in a vector. Which parameter type fits best?"
+        options:
+          - { id: a, code: "fn total(v: &[i32]) -> i32" }
+          - { id: b, code: "fn total(v: &mut Vec<i32>) -> i32", why: "`&mut` lets it change the vector, which it doesn't need, and blocks other borrows while it runs." }
+          - { id: c, code: "fn total(v: Vec<i32>) -> i32", why: "That takes ownership, so the caller loses the vector." }
+        answer: a
+        explanation: "Reading only needs a shared borrow. A slice `&[i32]` accepts `&v` from a `Vec` and from an array."
+        concepts: [vec.borrow, slice.array, own.param-choice]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-new-vec
+        prompt: "Arrange the lines so the program builds a second vector while reading the first, printing `[2, 4, 6]`"
+        lines:
+          - { id: l1, text: "fn main() {" }
+          - { id: l2, text: "    let nums = vec![1, 2, 3];" }
+          - { id: l3, text: "    let mut doubled = Vec::new();" }
+          - { id: l4, text: "    for n in &nums {" }
+          - { id: l5, text: "        doubled.push(n * 2);" }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: '    println!("{doubled:?}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "        nums.push(n * 2);" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l1, l3, l2, l4, l5, l6, l7, l8]
+        verify:
+          mode: run
+          expectStdout: "[2, 4, 6]\n"
+        explanation: "Reading `nums` while pushing to a different vector is fine. Pushing to `nums` inside its own loop is E0502."
+        concepts: [vec.borrow, vec.iter]
+
+      - type: fill-tokens
+        id: fill-two-vecs
+        prompt: "Fill the blanks so the program prints `[7, 9]`"
+        code:
+          rust: |
+            let readings = vec![3, 7, 9, 1];
+            let mut high = Vec::new();
+            for r in ___1___ {
+                if *r > 5 {
+                    ___2___.push(*r);
+                }
+            }
+            println!("{high:?}");
+          verify: run
+          expectStdout: "[7, 9]\n"
+        blanks:
+          "1": { answer: ["&readings"] }
+          "2": { answer: ["high"] }
+        bank: ["&readings", "readings", "high", "&mut readings"]
+        explanation: "The loop borrows `readings` and pushes to `high`, a different vector. `*r` gives the number, because `r` is a `&i32`."
+        concepts: [vec.borrow, vec.iter]
+
+      - type: spot-bug
+        id: spot-push-in-loop
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let mut tasks = vec![1, 2];
+                for t in &tasks {
+                    if *t == 2 {
+                        tasks.push(3);
+                    }
+                }
+                println!("{tasks:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: 5
+        explanation: "The loop borrows `tasks` while it runs, so line 5 can't push to it. Push to a second vector, or push after the loop."
+        concepts: [vec.borrow, err.E0502]
+
+      - type: decode-error
+        id: decode-loop-push
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            fn main() {
+                let mut v = vec![1, 2];
+                for x in &mut v {
+                    *x *= 10;
+                    v.push(0);
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "The loop already holds a `&mut v`, so `push` can't take another one" }
+          - { id: b, text: "`*x *= 10` isn't allowed inside a loop", why: "Changing elements through `x` is fine. The trouble is the `push` on line 5." }
+          - { id: c, text: "`v` needs a type annotation", why: "`vec![1, 2]` tells Rust the type. The error is about borrows." }
+        answer: a
+        explanation: "Only one mutable borrow can be alive at a time (E0499). The loop has one for its whole run, and `push` wants a second."
+        concepts: [vec.borrow, err.E0499]
+
+      - type: compiles
+        id: compiles-use-ref-first
+        code:
+          rust: |
+            let mut log = vec![
+                String::from("start"),
+            ];
+            let first = &log[0];
+            println!("first: {first}");
+            log.push(String::from("stop"));
+            println!("{}", log.len());
+          verify: run
+          expectStdout: "first: start\n2\n"
+        answer: true
+        explanation: "`first` is last used on line 5, so its borrow ends before the `push`. The borrows don't overlap."
+        concepts: [vec.borrow, borrow.nll]
+
+      - type: mcq
+        id: mcq-which-compiles
+        prompt: "`v` is a `mut` `Vec<i32>`. Which of these compiles?"
+        options:
+          - { id: a, code: "let n = v.len();\nv.push(n as i32);" }
+          - { id: b, code: "let r = &v[0];\nv.push(1);\nprintln!(\"{r}\");", why: "`r` is still alive when `push` runs: E0502." }
+          - { id: c, code: "for x in &v {\n    v.push(*x);\n}", why: "The loop borrows `v` for its whole run, so `push` inside it is E0502." }
+        answer: a
+        explanation: "`v.len()` returns a plain `usize`, not a borrow, so nothing is borrowed when `push` runs."
+        concepts: [vec.borrow, types.as-cast]
+
+      - type: predict-output
+        id: predict-copy-then-change
+        code:
+          rust: |
+            let mut v = vec![2, 4];
+            let first = v[0];
+            v[0] = 100;
+            v.push(6);
+            println!("{first} {v:?}");
+          verify: run
+        options:
+          - { id: a, text: "2 [100, 4, 6]" }
+          - { id: b, text: "100 [100, 4, 6]", why: "`first` is a copy made before `v[0]` changed. It doesn't follow the vector." }
+          - { id: c, text: "2 [2, 4, 6]", why: "`v[0] = 100` changes the element in the vector." }
+        answer: a
+        explanation: "`first` holds its own copy of 2. Changing `v` afterwards doesn't affect it, and no borrow gets in the way."
+        concepts: [vec.borrow, own.copy]
+
+      - type: true-false
+        id: tf-shared-many
+        prompt: "Two shared references into the same `Vec`, like `&v[0]` and `&v[1]`, can be alive at the same time."
+        code:
+          rust: |
+            let v = vec![1, 2];
+            let a = &v[0];
+            let b = &v[1];
+            println!("{a} {b}");
+          verify: run
+          expectStdout: "1 2\n"
+        answer: true
+        explanation: "Any number of shared borrows can be alive at once. Only a change, like `push`, has to wait for them to end."
+        concepts: [vec.borrow, borrow.exclusive]
+
+      - type: fill-tokens
+        id: fill-param-mut
+        prompt: "Fill the blanks so `add_guest` can grow the list, printing `[\"Ann\", \"Bo\"]`"
+        code:
+          rust: |
+            fn add_guest(list: ___1___ Vec<&str>) {
+                list.___2___("Bo");
+            }
+
+            fn main() {
+                let mut guests = vec!["Ann"];
+                add_guest(&mut guests);
+                println!("{guests:?}");
+            }
+          verify: run
+          expectStdout: "[\"Ann\", \"Bo\"]\n"
+        blanks:
+          "1": { answer: ["&mut"] }
+          "2": { answer: ["push"] }
+        bank: ["&mut", "&", "mut", "push", "push_str"]
+        explanation: "To push, the function needs a mutable borrow of the vector: `&mut Vec<&str>`. `push` adds one element; `push_str` is a `String` method."
+        concepts: [vec.borrow, borrow.mut]

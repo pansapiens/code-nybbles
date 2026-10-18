@@ -1,0 +1,357 @@
+id: collections.hashmap.checkpoint
+title: "Checkpoint: Collections & Strings"
+icon: flag
+concepts: []
+reviewConcepts:
+  - map.basics
+  - map.ownership
+  - map.entry
+  - map.iter
+  - collections.choose
+  - vec.basics
+  - vec.access
+  - vec.iter
+  - vec.borrow
+  - vec.enum
+  - string.build
+  - string.iter
+  - string.methods
+  - string.convert
+  - own.move
+  - own.clone
+  - err.E0382
+  - err.E0502
+  - borrow.mut
+  - method.self
+  - struct.define
+  - enum.data
+  - match.enum
+  - option.methods
+lessons:
+  - id: l1
+    exercises:
+      - type: predict-output
+        id: predict-tally
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let votes = vec!["no", "yes", "yes"];
+            let mut seen = HashMap::new();
+            for v in &votes {
+                *seen.entry(*v).or_insert(0) += 1;
+            }
+            let yes = seen.get("yes").unwrap_or(&0);
+            println!("{yes} of {}", votes.len());
+          verify: run
+        options:
+          - { id: a, text: "2 of 3" }
+          - { id: b, text: "2 of 2", why: "`votes.len()` counts the items in the `Vec`, which is 3. The map has 2 keys." }
+          - { id: c, text: "1 of 3", why: "`or_insert(0)` only inserts once per key, so the second `yes` adds to the same count." }
+        answer: a
+        explanation: "The map counts 2 `yes` votes. Looping over `&votes` only borrows the `Vec`, so its `len()` is still 3."
+        concepts: [map.entry, vec.iter]
+
+      - type: compiles
+        id: compiles-vec-push-borrow
+        code:
+          rust: |
+            let mut line = vec!["Ana".to_string()];
+            let first = &line[0];
+            line.push(String::from("Bo"));
+            println!("{first}");
+          verify: compile-fail
+          expectErrors: [E0502]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `line` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "E0382: borrow of moved value", why: "`&line[0]` borrows the first `String`; it doesn't move it." }
+            - { id: c, text: "E0499: two mutable borrows", why: "`first` is a shared borrow, and `push` needs a mutable one: that's E0502." }
+          answer: a
+        explanation: "`push` may move the `Vec`'s items to a bigger buffer, which would leave `first` dangling. So it can't run while `first` is still in use."
+        concepts: [vec.borrow, err.E0502]
+
+      - type: decode-error
+        id: decode-roster
+        prompt: Which change makes this compile and print `Ana 1`?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let name = String::from("Ana");
+                let mut roster = HashMap::new();
+                roster.insert(name, 1);
+                println!("{name} {}", roster.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        options:
+          - { id: a, text: "Change line 6 to `roster.insert(name.clone(), 1);`" }
+          - { id: b, text: "Change line 7 to `println!(\"{&name} {}\", roster.len());`", why: "Inline format arguments must be plain names, and `name` would still have been moved." }
+          - { id: c, text: "Change line 5 to `let roster = HashMap::new();`", why: "Without `mut`, `insert` couldn't change the map, and `name` would still be moved." }
+        answer: a
+        explanation: "`insert(name, 1)` moves the `String` into the map. Inserting a clone leaves `name` usable for the `println!`."
+        concepts: [map.ownership, own.clone, err.E0382]
+
+      - type: predict-output
+        id: predict-string-map
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut nick = HashMap::new();
+            nick.insert("Robert", "Bob");
+            let full = "Robert";
+            let short = nick.get(full)
+                .unwrap_or(&full);
+            let msg = format!("Hi, {short}!");
+            println!("{}", msg.to_uppercase());
+          verify: run
+        options:
+          - { id: a, text: "HI, BOB!" }
+          - { id: b, text: "Hi, Bob!", why: "`to_uppercase` returns an upper-case copy, and that copy is what's printed." }
+          - { id: c, text: "HI, ROBERT!", why: "`\"Robert\"` is in the map, so `get` finds `\"Bob\"` and the fallback isn't used." }
+        answer: a
+        explanation: "`get` finds `\"Bob\"`, `format!` builds `Hi, Bob!`, and `to_uppercase` gives `HI, BOB!`."
+        concepts: [map.basics, string.build, string.methods]
+
+      - type: spot-bug
+        id: spot-vec-index
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            fn main() {
+                let scores = vec![70, 85, 92];
+                let mut total = 0;
+                for s in &scores {
+                    total += s;
+                }
+                let last = scores[3];
+                println!("{total} {last}");
+            }
+          verify: run
+          expectPanic: "index out of bounds"
+        answer: 7
+        explanation: "A `Vec` of 3 items has indexes 0 to 2, so `scores[3]` panics at run time. Use `scores[2]`, or `scores.get(3)` to get an `Option` instead."
+        concepts: [vec.access]
+
+      - type: fill-tokens
+        id: fill-group
+        prompt: "Fill the blanks so the program prints `Some([\"Ana\", \"Cy\"])`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let pupils = [
+                ("red", "Ana"),
+                ("blue", "Bo"),
+                ("red", "Cy"),
+            ];
+            let mut teams = HashMap::new();
+            for (team, name) in pupils {
+                teams.entry(team)
+                    .or_insert(___1___)
+                    .___2___(name);
+            }
+            println!("{:?}", teams.get("red"));
+          verify: run
+          expectStdout: "Some([\"Ana\", \"Cy\"])\n"
+        blanks:
+          "1": { answer: ["Vec::new()"] }
+          "2": { answer: ["push"] }
+        bank: ["Vec::new()", "0", "push", "insert", "push_str"]
+        explanation: "Each team starts with an empty `Vec` the first time it's seen, and every name is pushed onto its team's `Vec`."
+        concepts: [map.entry, vec.basics]
+
+      - type: mcq
+        id: mcq-choose-tags
+        prompt: "A photo app stores each photo's tags. A tag must not appear twice on the same photo, and the app often asks \"does this photo have tag X?\". What should each photo hold?"
+        options:
+          - { id: a, text: "`HashSet<String>`" }
+          - { id: b, text: "`Vec<String>`", why: "A `Vec` allows duplicates, and checking for a tag means looking through every item." }
+          - { id: c, text: "`HashMap<String, String>`", why: "There's no value to look up by tag, only whether the tag is there." }
+          - { id: d, text: "`VecDeque<String>`", why: "A queue is for taking items from the front in order. Tags have no order." }
+        answer: a
+        explanation: "A set stores each tag once and answers `contains` directly."
+        concepts: [collections.choose]
+
+      - type: predict-output
+        id: predict-enum-vec
+        code:
+          rust: |
+            enum Item { Coin(u32), Key }
+
+            let bag = vec![
+                Item::Coin(5),
+                Item::Key,
+                Item::Coin(20),
+            ];
+            let mut gold = 0;
+            for item in &bag {
+                if let Item::Coin(n) = item {
+                    gold += n;
+                }
+            }
+            let count = bag.len();
+            println!("{gold} gold, {count} items");
+          verify: run
+        options:
+          - { id: a, text: "25 gold, 3 items" }
+          - { id: b, text: "25 gold, 2 items", why: "`len` counts every item in the `Vec`, including the `Key`." }
+          - { id: c, text: "20 gold, 3 items", why: "Both coins match `Item::Coin(n)`, so 5 and 20 are added." }
+        answer: a
+        explanation: "An enum lets one `Vec` hold different kinds of item. Only the two `Coin`s add gold."
+        concepts: [vec.enum, match.if-let]
+
+      - type: true-false
+        id: tf-get-same
+        prompt: "`Vec::get(i)` and `HashMap::get(&k)` both return an `Option` holding a reference."
+        answer: true
+        explanation: "Both return `Some(&value)` if it's there and `None` if not, so a missing item never panics."
+        concepts: [vec.access, map.basics]
+
+      - type: parsons
+        id: parsons-total
+        prompt: "Arrange the lines to make a function that adds up every value in a map, without taking ownership of it"
+        lines:
+          - { id: l1, text: "fn sum(m: &HashMap<&str, u32>) -> u32 {" }
+          - { id: l2, text: "    let mut total = 0;" }
+          - { id: l3, text: "    for (_, n) in m {" }
+          - { id: l4, text: "        total += n;" }
+          - { id: l5, text: "    }" }
+          - { id: l6, text: "    total" }
+          - { id: l7, text: "}" }
+        distractors:
+          - { id: d1, text: "fn sum(m: HashMap<&str, u32>) -> u32 {" }
+          - { id: d2, text: "    total;" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            use std::collections::HashMap;
+            {{solution}}
+            fn main() {
+                let mut m = HashMap::new();
+                m.insert("a", 2);
+                m.insert("b", 5);
+                println!("{} {}", sum(&m), m.len());
+            }
+          mode: run
+          expectStdout: "7 2\n"
+        explanation: "Taking `&HashMap` borrows the map, and looping over `m` (already a reference) gives `&u32` values. The last line `total` with no `;` is the return value."
+        concepts: [map.iter, own.param-choice, fn.return]
+
+      - type: compiles
+        id: compiles-struct-map
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            struct Shop {
+                stock: HashMap<String, u32>,
+            }
+
+            impl Shop {
+                fn add(&mut self, item: &str) {
+                    let n = self.stock
+                        .entry(item.to_string())
+                        .or_insert(0);
+                    *n += 1;
+                }
+            }
+          verify: compile
+          wrap: none
+          hidden:
+            after: "fn main() {}"
+        answer: true
+        explanation: "`&mut self` lets `add` change `self.stock`. The `&str` is turned into an owned `String`, which the map's keys need."
+        concepts: [map.entry, map.ownership, method.self, string.convert]
+
+      - type: predict-output
+        id: predict-tiles-queue-set
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashSet;
+            use std::collections::VecDeque;
+
+            let mut q = VecDeque::new();
+            for job in ["a", "b", "a", "c"] {
+                q.push_back(job);
+            }
+            let mut done = HashSet::new();
+            while let Some(job) = q.pop_front() {
+                if done.insert(job) {
+                    print!("{job} ");
+                }
+            }
+          verify: run
+        tiles: ["a", "b", "c", "a", "d"]
+        answer: "a b c"
+        explanation: "Jobs leave the queue in order. The second `\"a\"` makes `insert` return `false`, so it isn't printed again."
+        concepts: [collections.choose]
+
+      - type: match-pairs
+        id: pairs-errors
+        prompt: "Match each error to a line that causes it"
+        pairs:
+          - ["E0382", "using a String after inserting it"]
+          - ["E0502", "v.push(x) while &v[0] is in use"]
+          - ["E0499", "two live entry(..).or_insert(..)"]
+          - ["E0608", "set[0] on a HashSet"]
+          - ["E0368", "count += 1 on a &mut i32"]
+        explanation: "Each of these came up in this section: moves, borrow conflicts, and using references and collections the wrong way."
+        concepts: [map.ownership, vec.borrow, map.entry, collections.choose]
+
+      - type: decode-error
+        id: decode-mut-loop
+        prompt: What's the best fix?
+        code:
+          rust: |
+            fn main() {
+                let mut names = vec![
+                    String::from("ana"),
+                    String::from("bo"),
+                ];
+                for n in &names {
+                    n.push('!');
+                }
+                println!("{names:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - { id: a, text: "Change line 6 to `for n in &mut names {`" }
+          - { id: b, text: "Change line 7 to `n.push_str('!');`", why: "`push_str` takes a `&str`, not a `char`, and `n` would still be a shared reference." }
+          - { id: c, text: "Change line 6 to `for n in names {`", why: "Then `n` is an owned but immutable `String`, and `names` is moved, so line 9 fails." }
+        answer: a
+        explanation: "`&names` lends shared references that can't change anything. `&mut names` lends each `String` mutably, so `push` works."
+        concepts: [vec.iter, borrow.mut]
+
+      - type: predict-output
+        id: predict-btree-letters
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            let word = "letter";
+            let mut seen = BTreeMap::new();
+            for c in word.chars() {
+                *seen.entry(c).or_insert(0) += 1;
+            }
+            for (c, n) in &seen {
+                if *n > 1 {
+                    print!("{c}{n} ");
+                }
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "e2 t2" }
+          - { id: b, text: "t2 e2", why: "A `BTreeMap` visits keys in sorted order, and `'e'` comes before `'t'`." }
+          - { id: c, text: "e2 l1 r1 t2", why: "The `if` only prints letters that appear more than once." }
+        answer: a
+        explanation: "`e` and `t` each appear twice. The `BTreeMap` visits `e`, `l`, `r`, `t` in order, and only the repeats print."
+        concepts: [map.entry, map.iter, string.iter]

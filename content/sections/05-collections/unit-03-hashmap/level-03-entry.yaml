@@ -1,0 +1,566 @@
+id: collections.hashmap.entry
+title: Counting with entry
+icon: plus
+concepts: [map.entry]
+reviewConcepts: [map.basics, map.ownership, string.iter, string.convert, borrow.mut, borrow.nll, err.E0499, err.E0308, vec.basics, ctrl.for, ctrl.if-expr, pattern.params]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-or-insert
+        title: Insert only if missing
+        markdown: |
+          **`entry(key).or_insert(default)` inserts `default` only when the key is missing.** If the key is already there, its value is left alone.
+
+          Either way, you get back a mutable reference to the value stored under that key.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut stock = HashMap::new();
+            stock.insert("pens", 5);
+            stock.entry("pens").or_insert(0);
+            stock.entry("pads").or_insert(0);
+            println!("{:?}", stock.get("pens"));
+            println!("{:?}", stock.get("pads"));
+          verify: run
+          expectStdout: "Some(5)\nSome(0)\n"
+        concepts: [map.entry]
+
+      - type: predict-output
+        id: predict-or-insert-existing
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut lives = HashMap::new();
+            lives.insert("Ana", 3);
+            lives.entry("Ana").or_insert(9);
+            println!("{:?}", lives.get("Ana"));
+          verify: run
+        options:
+          - { id: a, text: "Some(3)" }
+          - { id: b, text: "Some(9)", why: "`or_insert` only inserts when the key is missing. `\"Ana\"` already has 3." }
+          - { id: c, text: "Some(12)", why: "`or_insert` never adds to the old value. It either inserts or leaves it alone." }
+        answer: a
+        explanation: "`\"Ana\"` is already in the map, so `or_insert(9)` does nothing to it."
+        concepts: [map.entry]
+
+      - type: true-false
+        id: tf-or-insert-overwrites
+        prompt: "`map.entry(k).or_insert(v)` behaves like `map.insert(k, v)`: it always stores `v`."
+        answer: false
+        explanation: "`insert` always overwrites. `or_insert` stores `v` only when `k` isn't in the map yet."
+        concepts: [map.entry]
+
+      - type: concept
+        id: concept-deref-count
+        title: Changing the value in place
+        markdown: |
+          **`or_insert` returns `&mut V`**, a mutable reference into the map. Change the value through it with `*`.
+
+          This is the usual way to count things: start at 0 if missing, then add 1.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut votes = HashMap::new();
+            let n = votes.entry("yes").or_insert(0);
+            *n += 1;
+            *votes.entry("yes").or_insert(0) += 1;
+            println!("{:?}", votes.get("yes"));
+          verify: run
+          expectStdout: "Some(2)\n"
+        concepts: [map.entry, borrow.mut]
+
+      - type: mcq
+        id: mcq-or-insert-type
+        prompt: "`votes` is a `HashMap<&str, i32>`. What type is `votes.entry(\"yes\").or_insert(0)`?"
+        options:
+          - { id: a, code: "&mut i32" }
+          - { id: b, code: "i32", why: "You get a reference into the map, so changes go to the stored value, not a copy." }
+          - { id: c, code: "Option<&i32>", why: "That's `get`. `or_insert` makes sure the key exists, so there's no `None` case." }
+          - { id: d, code: "Option<i32>", why: "That's what `insert` returns: the old value. `or_insert` gives you access to the current one." }
+        answer: a
+        explanation: "After `or_insert` the key always exists, so you get a `&mut i32` to the value itself."
+        concepts: [map.entry]
+
+      - type: compiles
+        id: compiles-missing-star
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut votes = HashMap::new();
+            let n = votes.entry("no").or_insert(0);
+            n += 1;
+            println!("{:?}", votes.get("no"));
+          verify: compile-fail
+          expectErrors: [E0368]
+        answer: false
+        followUp:
+          prompt: What's wrong with `n += 1`?
+          options:
+            - { id: a, text: "`n` is a `&mut` reference, so it needs `*n += 1`" }
+            - { id: b, text: "`n` needs to be declared `let mut n`", why: "`n` itself doesn't change; the value it points to does. That takes `*`." }
+            - { id: c, text: "`+=` doesn't work on numbers stored in a map", why: "It does, once you dereference: `*n += 1`." }
+          answer: a
+        explanation: "You can't add 1 to a reference. `*n` reaches the `i32` it points to. The error is E0368: `+=` cannot be applied to `&mut {integer}`."
+        concepts: [map.entry, borrow.mut]
+
+      - type: predict-output
+        id: predict-count-array
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let rolls = [6, 2, 6, 6, 1];
+            let mut seen = HashMap::new();
+            for r in rolls {
+                *seen.entry(r).or_insert(0) += 1;
+            }
+            println!("{:?}", seen.get(&6));
+          verify: run
+        options:
+          - { id: a, text: "Some(3)" }
+          - { id: b, text: "Some(1)", why: "`or_insert(0)` only inserts the first time. The later 6s add to the same count." }
+          - { id: c, text: "Some(18)", why: "Each 6 adds 1 to the count, not 6." }
+        answer: a
+        explanation: "6 appears three times. The first `or_insert` starts it at 0 and each pass adds 1."
+        concepts: [map.entry, ctrl.for]
+
+      - type: fill-tokens
+        id: fill-count-colour
+        prompt: "Fill the blanks so the program prints `Some(2)`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let cars = ["red", "blue", "red"];
+            let mut tally = HashMap::new();
+            for c in cars {
+                let n = tally.entry(c).___2___(0);
+                ___1___n += 1;
+            }
+            println!("{:?}", tally.get("red"));
+          verify: run
+          expectStdout: "Some(2)\n"
+        blanks:
+          "1": { answer: ["*"] }
+          "2": { answer: ["or_insert"] }
+        bank: ["*", "&", "or_insert", "insert", "get"]
+        explanation: "`or_insert(0)` gives a `&mut` to the count, and `*` lets `+= 1` change the number it points to."
+        concepts: [map.entry]
+
+      - type: match-pairs
+        id: pairs-insert-vs-entry
+        prompt: "Match each call to what it does when the key already exists"
+        pairs:
+          - ["insert(k, v)", "replaces the value"]
+          - ["entry(k).or_insert(v)", "keeps the value"]
+          - ["get(k)", "lends the value"]
+          - ["remove(k)", "takes the value out"]
+        explanation: "Only `insert` overwrites. `or_insert` leaves an existing value as it is."
+        concepts: [map.entry, map.basics]
+
+      - type: predict-output
+        id: predict-or-insert-start
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut bank = HashMap::new();
+            *bank.entry("Ana").or_insert(100) -= 30;
+            *bank.entry("Ana").or_insert(100) -= 30;
+            println!("{:?}", bank.get("Ana"));
+          verify: run
+        options:
+          - { id: a, text: "Some(40)" }
+          - { id: b, text: "Some(70)", why: "The second line finds `\"Ana\"` already there, so it subtracts from 70 instead of starting again at 100." }
+          - { id: c, text: "Some(100)", why: "`-= 30` changes the stored value through the `&mut` reference." }
+        answer: a
+        explanation: "The first line inserts 100 and subtracts 30. The second finds 70 and subtracts 30 again."
+        concepts: [map.entry]
+
+  - id: l2
+    exercises:
+      - type: concept
+        id: concept-word-count
+        title: Counting words
+        markdown: |
+          **Split the text with `split_whitespace`, then count each word with `entry`.** Each word is a `&str` that borrows the text, so the map's keys borrow it too.
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let text = "the cat saw the dog";
+            let mut freq = HashMap::new();
+            for word in text.split_whitespace() {
+                *freq.entry(word).or_insert(0) += 1;
+            }
+            println!("{:?}", freq.get("the"));
+            println!("{}", freq.len());
+          verify: run
+          expectStdout: "Some(2)\n4\n"
+        concepts: [map.entry, string.iter]
+
+      - type: predict-output
+        id: predict-word-len
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let song = "la la la hey la";
+            let mut counts = HashMap::new();
+            for w in song.split_whitespace() {
+                *counts.entry(w).or_insert(0) += 1;
+            }
+            println!("{}", counts.len());
+          verify: run
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "5", why: "`len` counts distinct keys. Repeated words share one entry." }
+          - { id: c, text: "4", why: "That's how many times `la` appears. `len` counts the keys: `la` and `hey`." }
+        answer: a
+        explanation: "There are two different words, `la` and `hey`, so the map has two entries."
+        concepts: [map.entry, string.iter]
+
+      - type: spot-bug
+        id: spot-missing-deref
+        prompt: Tap the line with the mistake
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let text = "go go stop";
+                let mut freq = HashMap::new();
+                for w in text.split_whitespace() {
+                    freq.entry(w).or_insert(0) += 1;
+                }
+                println!("{:?}", freq.get("go"));
+            }
+          verify: compile-fail
+          expectErrors: [E0368]
+        answer: 7
+        explanation: "`or_insert` returns a `&mut` reference, so the line needs `*` in front to add 1 to the count."
+        concepts: [map.entry]
+
+      - type: predict-output
+        id: predict-letters
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut letters = HashMap::new();
+            for c in "banana".chars() {
+                *letters.entry(c).or_insert(0) += 1;
+            }
+            println!("{:?}", letters.get(&'a'));
+          verify: run
+        options:
+          - { id: a, text: "Some(3)" }
+          - { id: b, text: "Some(2)", why: "That's the count for `'n'`. \"banana\" has three `'a'`s." }
+          - { id: c, text: "None", why: "The keys are `char`s, and `&'a'` looks up the `char` `'a'`, which is there." }
+        answer: a
+        explanation: "Each `char` of \"banana\" is counted. `'a'` appears three times."
+        concepts: [map.entry, string.iter]
+
+      - type: compiles
+        id: compiles-entry-str-for-string
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut tally: HashMap<String, u32> =
+                HashMap::new();
+            *tally.entry("yes").or_insert(0) += 1;
+            println!("{}", tally.len());
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`entry` takes the key by value, so it needs a `String`, not a `&str`" }
+            - { id: b, text: "`or_insert(0)` must be `or_insert(0u32)`", why: "Rust infers `0` as a `u32` from the map's type. The key is the problem." }
+            - { id: c, text: "`entry` can't be used with `+=`", why: "It can, with `*` in front, as written here." }
+          answer: a
+        explanation: "Unlike `get`, `entry` may store the key, so it takes an owned `String`. Write `entry(String::from(\"yes\"))`."
+        concepts: [map.entry, map.ownership, err.E0308]
+
+      - type: decode-error
+        id: decode-e0368
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut hits = HashMap::new();
+                let n = hits.entry(1).or_insert(0);
+                n += 1;
+                println!("{:?}", hits.get(&1));
+            }
+          verify: compile-fail
+          expectErrors: [E0368]
+        options:
+          - { id: a, text: "Change line 6 to `*n += 1;`" }
+          - { id: b, text: "Change line 5 to `let mut n = ...`", why: "Then you could point `n` somewhere else, but you still can't add 1 to a reference." }
+          - { id: c, text: "Change line 6 to `n = n + 1;`", why: "Adding to a reference fails the same way. You need the value behind it: `*n`." }
+        answer: a
+        explanation: "`n` is a `&mut i32`. `*n` is the `i32` it points to, which `+= 1` can change."
+        concepts: [map.entry, borrow.mut]
+
+      - type: mcq
+        id: mcq-entry-vs-insert
+        prompt: "You want to add 1 to `\"Bo\"`'s score, starting from 0 if `\"Bo\"` isn't in `scores` yet. Which line does it?"
+        options:
+          - { id: a, code: "*scores.entry(\"Bo\").or_insert(0) += 1;" }
+          - { id: b, code: "scores.insert(\"Bo\", 1);", why: "That sets the score to 1 every time, throwing away the old score." }
+          - { id: c, code: "*scores.get(\"Bo\") += 1;", why: "`get` returns an `Option` of a shared reference. You can't change a value through it." }
+        answer: a
+        explanation: "`or_insert(0)` handles the missing case, then `+= 1` changes the stored value."
+        concepts: [map.entry]
+
+      - type: predict-output
+        id: predict-group-vec
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let words = ["ant", "bee", "fly", "ox"];
+            let mut by_len = HashMap::new();
+            for w in words {
+                by_len.entry(w.len())
+                    .or_insert(Vec::new())
+                    .push(w);
+            }
+            println!("{:?}", by_len.get(&3));
+          verify: run
+        options:
+          - { id: a, text: "Some([\"ant\", \"bee\", \"fly\"])" }
+          - { id: b, text: "Some([\"fly\"])", why: "`or_insert` creates the `Vec` only once. Later words of length 3 are pushed onto the same one." }
+          - { id: c, text: "Some(3)", why: "The values are `Vec`s of words, not counts." }
+        answer: a
+        explanation: "The first three-letter word creates an empty `Vec`. Each one, including the first, is pushed onto it; \"ox\" goes under 2."
+        concepts: [map.entry, vec.basics]
+
+      - type: true-false
+        id: tf-entry-moves-key
+        prompt: "`counts.entry(word)` takes ownership of `word` when it's a `String`, even if that key is already in the map."
+        answer: true
+        explanation: "`entry` takes its key by value, so a `String` is moved into the call. If the key already exists, the map keeps its old key and the new `String` is dropped."
+        concepts: [map.entry, map.ownership]
+
+      - type: compiles
+        id: compiles-two-entries
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut pts = HashMap::new();
+            let a = pts.entry("Ana").or_insert(0);
+            let b = pts.entry("Bo").or_insert(0);
+            *a += 1;
+            *b += 1;
+            println!("{}", pts.len());
+          verify: compile-fail
+          expectErrors: [E0499]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0499: cannot borrow `pts` as mutable more than once at a time" }
+            - { id: b, text: "E0368: `+=` cannot be applied to `&mut {integer}`", why: "The `*` is there, so `+=` is fine." }
+            - { id: c, text: "E0382: use of moved value", why: "Nothing is moved. Both `a` and `b` are `&mut` borrows of `pts`." }
+          answer: a
+        explanation: "`a` and `b` are both `&mut` borrows of `pts`, and `a` is still used after `b` is made. Finish with one before taking the next."
+        concepts: [map.entry, err.E0499]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-word-count
+        prompt: "Arrange the lines so the program prints `Some(2)`"
+        lines:
+          - { id: l1, text: "use std::collections::HashMap;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let text = \"up up down\";" }
+          - { id: l4, text: "    let mut wc = HashMap::new();" }
+          - { id: l5, text: "    for w in text.split_whitespace() {" }
+          - { id: l6, text: "        *wc.entry(w).or_insert(0) += 1;" }
+          - { id: l7, text: "    }" }
+          - { id: l8, text: "    println!(\"{:?}\", wc.get(\"up\"));" }
+          - { id: l9, text: "}" }
+        distractors:
+          - { id: d1, text: "        wc.insert(w, 1);" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6, l7, l8, l9]
+        verify:
+          mode: run
+          expectStdout: "Some(2)\n"
+        explanation: "Count inside the loop with `entry`, and print after it. `insert(w, 1)` would reset the count to 1 each time."
+        concepts: [map.entry, string.iter]
+
+      - type: fill-tokens
+        id: fill-score-board
+        prompt: "Fill the blanks so the program prints `Some(15)`"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let goals = [
+                ("Ana", 5), ("Bo", 3), ("Ana", 10),
+            ];
+            let mut totals = HashMap::new();
+            for (name, pts) in goals {
+                let t = totals.___1___(name)
+                    .or_insert(0);
+                ___2___t += pts;
+            }
+            println!("{:?}", totals.get("Ana"));
+          verify: run
+          expectStdout: "Some(15)\n"
+        blanks:
+          "1": { answer: ["entry"] }
+          "2": { answer: ["*"] }
+        bank: ["entry", "get", "insert", "*", "&"]
+        explanation: "`entry(name).or_insert(0)` gives a `&mut` total, and `*t += pts` adds to it. Ana's total is 5 + 10."
+        concepts: [map.entry, pattern.params]
+
+      - type: predict-output
+        id: predict-tiles-counts
+        prompt: Build the output
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut c = HashMap::new();
+            let text = "a b a c a";
+            for w in text.split_whitespace() {
+                *c.entry(w).or_insert(0) += 1;
+            }
+            let a = c.get("a").unwrap_or(&0);
+            let z = c.get("z").unwrap_or(&0);
+            println!("{a} {z} {}", c.len());
+          verify: run
+        tiles: ["3", "0", "3", "1", "5"]
+        answer: "3 0 3"
+        explanation: "`\"a\"` appears 3 times. `\"z\"` is missing, so the fallback 0 is used. There are 3 distinct words."
+        concepts: [map.entry, map.basics]
+
+      - type: decode-error
+        id: decode-e0499
+        prompt: What's the best fix?
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut hp = HashMap::new();
+                let a = hp.entry("Al").or_insert(0);
+                let b = hp.entry("Bo").or_insert(0);
+                *a += 2;
+                *b += 1;
+                println!("{}", hp.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0499]
+        options:
+          - { id: a, text: "Move `*a += 2;` up to just after line 5" }
+          - { id: b, text: "Change line 5 to `let mut a = ...`", why: "`mut` on `a` doesn't change the borrow rules. Two `&mut` borrows of `hp` would still overlap." }
+          - { id: c, text: "Change line 6 to `let b = hp.get(\"Bo\");`", why: "A shared borrow can't exist alongside `a`'s mutable one either, and `get` gives no `&mut` to change." }
+        answer: a
+        explanation: "Once `a`'s last use comes before `b` is created, the two mutable borrows no longer overlap."
+        concepts: [map.entry, err.E0499, borrow.nll]
+
+      - type: spot-bug
+        id: spot-insert-resets
+        prompt: "This should print `Some(3)`, but prints `Some(1)`. Tap the line with the mistake"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            fn main() {
+                let mut seen = HashMap::new();
+                for n in [4, 4, 4] {
+                    seen.insert(n, 1);
+                }
+                println!("{:?}", seen.get(&4));
+            }
+          verify: run
+          expectStdout: "Some(1)\n"
+        answer: 6
+        explanation: "`insert` overwrites the count with 1 every time. `*seen.entry(n).or_insert(0) += 1;` keeps a running count."
+        concepts: [map.entry, map.basics]
+
+      - type: true-false
+        id: tf-default-once
+        prompt: "In a loop, `*m.entry(k).or_insert(0) += 1;` sets the count back to 0 each time `k` comes up again."
+        answer: false
+        explanation: "`or_insert(0)` only runs its insert the first time `k` is seen. After that it returns the existing count."
+        concepts: [map.entry]
+
+      - type: predict-output
+        id: predict-entry-if
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let temps = [31, 18, 35, 22, 40];
+            let mut days = HashMap::new();
+            for t in temps {
+                let kind = if t > 30 {
+                    "hot"
+                } else {
+                    "mild"
+                };
+                *days.entry(kind).or_insert(0) += 1;
+            }
+            println!("{:?}", days.get("hot"));
+          verify: run
+        options:
+          - { id: a, text: "Some(3)" }
+          - { id: b, text: "Some(2)", why: "31, 35 and 40 are all above 30: three hot days." }
+          - { id: c, text: "Some(106)", why: "Each hot day adds 1, not its temperature." }
+        answer: a
+        explanation: "Each temperature picks a key, and the key's count goes up by 1. Three are above 30."
+        concepts: [map.entry, ctrl.if-expr]
+
+      - type: mcq
+        id: mcq-why-star
+        prompt: "Why does `*counts.entry(w).or_insert(0) += 1;` start with `*`?"
+        options:
+          - { id: a, text: "`or_insert` returns a `&mut` reference, and `*` reaches the number it points to" }
+          - { id: b, text: "`*` multiplies the count", why: "`*` before a value is a dereference. Multiplication needs two operands, like `a * b`." }
+          - { id: c, text: "`*` makes the map mutable", why: "The map is made mutable by `let mut counts`. `*` follows a reference." }
+        answer: a
+        explanation: "`+=` works on the `i32` itself, not on a reference to it, so the reference is dereferenced with `*`."
+        concepts: [map.entry, borrow.mut]
+
+      - type: fill-tokens
+        id: fill-string-key
+        prompt: "Fill the blanks so the program prints `Some(2)`, keeping `String` keys"
+        code:
+          rust: |
+            use std::collections::HashMap;
+
+            let mut tally: HashMap<String, u32> =
+                HashMap::new();
+            for v in ["yes", "no", "yes"] {
+                let key = v.___1___();
+                let n = tally.entry(___2___)
+                    .or_insert(0);
+                *n += 1;
+            }
+            println!("{:?}", tally.get("yes"));
+          verify: run
+          expectStdout: "Some(2)\n"
+        blanks:
+          "1": { answer: ["to_string"] }
+          "2": { answer: ["key"] }
+        bank: ["to_string", "len", "key", "&key", "v"]
+        explanation: "The map owns `String` keys, so convert each `&str` with `to_string` and move the `String` into `entry`."
+        concepts: [map.entry, map.ownership, string.convert]

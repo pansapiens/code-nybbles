@@ -1,0 +1,562 @@
+id: collections.vectors.enum
+title: Mixed values, one Vec
+icon: layers
+concepts: [vec.enum]
+reviewConcepts: [vec.basics, vec.access, vec.iter, vec.borrow, enum.define, enum.data, enum.impl, match.enum, match.exhaustive, err.E0004, match.bind, match.if-let, macro.matches, pattern.guards, derive.debug, own.move, err.E0382, err.E0308, types.as-cast]
+lessons:
+  - id: l1
+    exercises:
+      - type: concept
+        id: concept-one-type
+        title: One type per Vec
+        markdown: |
+          **A `Vec` holds one type, so you can't mix numbers and text directly.** The compiler takes the type from the first element and expects the rest to match: **E0308**.
+
+          But a row of a spreadsheet, say, really does mix numbers and text. The next card shows the fix.
+        code:
+          rust: |
+            let row = vec![3, "apples"]; // E0308
+          verify: compile-fail
+          expectErrors: [E0308]
+        concepts: [vec.enum, err.E0308]
+
+      - type: compiles
+        id: compiles-mixed-vec
+        code:
+          rust: |
+            let reading = vec![21.5, 19];
+            println!("{reading:?}");
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: false
+        followUp:
+          prompt: Why not?
+          options:
+            - { id: a, text: "`21.5` is a float and `19` is an integer: two different types in one `Vec`" }
+            - { id: b, text: "`{:?}` can't print a `Vec`", why: "It can, if the `Vec` compiles in the first place." }
+            - { id: c, text: "A `Vec` needs at least three elements", why: "Any number of elements is fine, including none." }
+          answer: a
+        explanation: "Rust doesn't convert `19` to `19.0` for you. Every element must have the same type, so write `19.0`."
+        concepts: [vec.enum, err.E0308]
+
+      - type: concept
+        id: concept-enum-wrapper
+        title: Wrap each kind in a variant
+        markdown: |
+          **Define an enum with one variant per kind of value.** Each element of the `Vec` is then the same type, `Cell`, while the variants carry different data.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Cell {
+                Int(i32),
+                Float(f64),
+                Text(String),
+            }
+            let row = vec![
+                Cell::Int(3),
+                Cell::Text(String::from("blue")),
+                Cell::Float(10.12),
+            ];
+            println!("{row:?}");
+          verify: run
+          expectStdout: "[Int(3), Text(\"blue\"), Float(10.12)]\n"
+        concepts: [vec.enum, enum.data]
+
+      - type: mcq
+        id: mcq-row-type
+        prompt: "`row` is `vec![Cell::Int(3), Cell::Float(10.12)]`, where `Cell` is an enum. What type is `row`?"
+        options:
+          - { id: a, code: "Vec<Cell>" }
+          - { id: b, code: "Vec<i32, String, f64>", why: "A `Vec` has exactly one element type. The variety is inside the enum." }
+          - { id: c, code: "Vec<Cell::Int>", why: "`Cell::Int` is a variant, not a type. Every variant has the type `Cell`." }
+        answer: a
+        explanation: "Every element is a `Cell`, whichever variant it is, so the vector is a `Vec<Cell>`."
+        concepts: [vec.enum]
+
+      - type: concept
+        id: concept-match-each
+        title: Match on each element
+        markdown: |
+          **Loop over the `Vec` and `match` on each element** to handle every kind. Looping over `&row` gives a `&Cell`, and the bindings like `n` are references too.
+        code:
+          rust: |
+            enum Cell { Int(i32), Text(String) }
+            let row = vec![
+                Cell::Int(3),
+                Cell::Text(String::from("hi")),
+            ];
+            for c in &row {
+                match c {
+                    Cell::Int(n) => print!("{n} "),
+                    Cell::Text(t) => print!("{t} "),
+                }
+            }
+          verify: run
+          expectStdout: "3 hi "
+        concepts: [vec.enum, match.enum]
+
+      - type: predict-output
+        id: predict-pet-loop
+        code:
+          rust: |
+            enum Pet { Cat, Dog(u32) }
+            let pets = vec![
+                Pet::Dog(3), Pet::Cat, Pet::Dog(9),
+            ];
+            for p in &pets {
+                match p {
+                    Pet::Cat => print!("meow "),
+                    Pet::Dog(a) => print!("d{a} "),
+                }
+            }
+            println!();
+          verify: run
+        options:
+          - { id: a, text: "d3 meow d9 " }
+          - { id: b, text: "meow d3 d9 ", why: "The loop goes through the vector in order, and the first element is `Dog(3)`." }
+          - { id: c, text: "d meow d ", why: "The `Dog` arm binds the number as `a` and prints it." }
+        answer: a
+        explanation: "Each element is matched in turn. `Dog` variants print their age, and `Cat` prints `meow`."
+        concepts: [vec.enum, match.bind]
+
+      - type: true-false
+        id: tf-same-type-enum
+        prompt: "In a `Vec<Cell>`, `Cell::Int(3)` and `Cell::Text(..)` count as the same type."
+        answer: true
+        explanation: "Both are values of the enum `Cell`. That's why they can sit in the same vector."
+        concepts: [vec.enum, enum.define]
+
+      - type: fill-tokens
+        id: fill-push-variant
+        prompt: "Fill the blanks so the program prints `2 items`"
+        code:
+          rust: |
+            enum Item { Coin(u32), Key(String) }
+            let mut bag: ___1___ = Vec::new();
+            bag.push(Item::Coin(5));
+            bag.push(___2___(String::from("A")));
+            println!("{} items", bag.len());
+          verify: run
+          expectStdout: "2 items\n"
+        blanks:
+          "1": { answer: ["Vec<Item>"] }
+          "2": { answer: ["Item::Key"] }
+        bank: ["Vec<Item>", "Vec<Coin>", "Item::Key", "Key", "Item::Coin"]
+        explanation: "The vector holds `Item`s, so its type is `Vec<Item>`. The text goes in the `Key` variant, written `Item::Key`."
+        concepts: [vec.enum, enum.data]
+
+      - type: match-pairs
+        id: pairs-enum-vec
+        prompt: "Match each piece of the enum-in-a-Vec pattern"
+        pairs:
+          - ["enum Cell { Int(i32), Text(String) }", "one type with several kinds"]
+          - ["Vec<Cell>", "a list of cells"]
+          - ["Cell::Int(3)", "one element"]
+          - ["match c { .. }", "handle each kind"]
+        concepts: [vec.enum]
+
+  - id: l2
+    exercises:
+      - type: compiles
+        id: compiles-missing-arm
+        code:
+          rust: |
+            enum Shape { Dot, Disc(f64) }
+            let shapes = vec![Shape::Dot];
+            for s in &shapes {
+                match s {
+                    Shape::Disc(r) => print!("{r}"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0004: non-exhaustive patterns: `&Shape::Dot` not covered" }
+            - { id: b, text: "E0308: mismatched types", why: "All the types fit. The `match` misses a variant." }
+            - { id: c, text: "E0382: borrow of moved value: `shapes`", why: "The loop borrows `shapes` with `&`. Nothing moves." }
+          answer: a
+        explanation: "A `match` must cover every variant, even ones no element happens to use yet. Add a `Shape::Dot` arm."
+        concepts: [vec.enum, match.exhaustive, err.E0004]
+
+      - type: decode-error
+        id: decode-add-variant
+        prompt: What's the best fix?
+        code:
+          rust: |
+            enum Cell { Int(i32), Float(f64) }
+
+            fn main() {
+                let row = vec![Cell::Int(1)];
+                match &row[0] {
+                    Cell::Int(n) => println!("{n}"),
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0004]
+        options:
+          - { id: a, code: "Cell::Float(f) => println!(\"{f}\")," }
+          - { id: b, code: "let row = vec![Cell::Float(2.0)];", why: "The `match` would still have no `Float` arm. The compiler checks the variants, not what's in the vector." }
+          - { id: c, code: "match row[0] {", why: "Matching the value instead of a reference doesn't add the missing `Float` arm." }
+        answer: a
+        explanation: "Adding an arm for `Cell::Float` covers every variant, so the `match` is exhaustive."
+        concepts: [vec.enum, match.exhaustive]
+
+      - type: predict-output
+        id: predict-sum-ints
+        code:
+          rust: |
+            enum Cell { Int(i32), Text(String) }
+            let row = vec![
+                Cell::Int(4),
+                Cell::Text(String::from("x")),
+                Cell::Int(6),
+            ];
+            let mut sum = 0;
+            for c in &row {
+                if let Cell::Int(n) = c {
+                    sum += n;
+                }
+            }
+            println!("{sum} of {}", row.len());
+          verify: run
+        options:
+          - { id: a, text: "10 of 3" }
+          - { id: b, text: "10 of 2", why: "`row.len()` counts every element, including the `Text` one." }
+          - { id: c, text: "4 of 3", why: "`if let` runs for every `Int` in the loop, so both 4 and 6 are added." }
+        answer: a
+        explanation: "`if let` only matches the `Int` elements, adding 4 and 6. The vector still has 3 elements."
+        concepts: [vec.enum, match.if-let]
+
+      - type: spot-bug
+        id: spot-wrong-variant-type
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            enum Entry { Score(u32), Name(String) }
+
+            fn main() {
+                let mut log = Vec::new();
+                log.push(Entry::Score(10));
+                log.push(Entry::Name("Ann"));
+                println!("{}", log.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        answer: 6
+        explanation: "`Name` holds a `String`, but `\"Ann\"` is a `&str`. Write `Entry::Name(String::from(\"Ann\"))`."
+        concepts: [vec.enum, err.E0308]
+
+      - type: mcq
+        id: mcq-count-matches
+        prompt: "What does this print?"
+        code:
+          rust: |
+            enum Tile { Wall, Floor, Door }
+
+            fn main() {
+                let map = vec![
+                    Tile::Wall, Tile::Floor,
+                    Tile::Floor, Tile::Door,
+                ];
+                let mut n = 0;
+                for t in &map {
+                    if matches!(t, Tile::Floor) {
+                        n += 1;
+                    }
+                }
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "2\n"
+        options:
+          - { id: a, text: "2" }
+          - { id: b, text: "4", why: "`matches!` is only `true` for `Floor` tiles." }
+          - { id: c, text: "1", why: "There are two `Floor` tiles, and the loop checks every element." }
+        answer: a
+        explanation: "`matches!(t, Tile::Floor)` is `true` for the two `Floor` tiles, so `n` counts to 2."
+        concepts: [vec.enum, macro.matches]
+
+      - type: compiles
+        id: compiles-text-after-loop
+        code:
+          rust: |
+            enum Msg { Ping, Say(String) }
+
+            fn main() {
+                let inbox = vec![
+                    Msg::Say(String::from("hi")),
+                    Msg::Ping,
+                ];
+                for m in inbox {
+                    if let Msg::Say(text) = m {
+                        println!("{text}");
+                    }
+                }
+                println!("{}", inbox.len());
+            }
+          verify: compile-fail
+          expectErrors: [E0382]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0382: borrow of moved value: `inbox`" }
+            - { id: b, text: "E0004: non-exhaustive patterns", why: "`if let` doesn't need to cover every variant. Only `match` does." }
+            - { id: c, text: "E0308: mismatched types", why: "The types fit. The loop moved `inbox`." }
+          answer: a
+        explanation: "`for m in inbox` moves the vector into the loop, so line 13 can't use it. Loop over `&inbox` instead."
+        concepts: [vec.enum, vec.iter, err.E0382]
+
+      - type: predict-output
+        id: predict-guard
+        code:
+          rust: |
+            enum Temp { C(i32), Missing }
+            let log = vec![
+                Temp::C(31),
+                Temp::Missing,
+                Temp::C(12),
+            ];
+            for t in &log {
+                let s = match t {
+                    Temp::C(c) if *c > 30 => "hot",
+                    Temp::C(_) => "ok",
+                    Temp::Missing => "?",
+                };
+                print!("{s} ");
+            }
+          verify: run
+        options:
+          - { id: a, text: "hot ? ok " }
+          - { id: b, text: "hot ? hot ", why: "The guard `if *c > 30` fails for 12, so the plain `Temp::C(_)` arm runs." }
+          - { id: c, text: "ok ? ok ", why: "Arms are tried top to bottom. 31 passes the guard, so the first arm runs." }
+        answer: a
+        explanation: "31 matches the guarded arm, `Missing` gives `?`, and 12 fails the guard and falls through to the plain `Temp::C(_)` arm."
+        concepts: [vec.enum, pattern.guards]
+
+      - type: true-false
+        id: tf-new-variant
+        prompt: "If you add a new variant to the enum, every `match` over the elements that doesn't use `_` stops compiling until you handle it."
+        answer: true
+        explanation: "Matches must be exhaustive, so the compiler points to every place that needs a new arm (E0004). That's a big help when the list of kinds grows."
+        concepts: [vec.enum, match.exhaustive]
+
+      - type: fill-tokens
+        id: fill-match-arms
+        prompt: "Fill the blanks so the program prints `5 coins, 1 keys`"
+        code:
+          rust: |
+            enum Item { Coin(u32), Key }
+            let mut bag = vec![Item::Key];
+            bag.push(Item::Coin(5));
+            let (mut coins, mut keys) = (0, 0);
+            for item in &bag {
+                match item {
+                    Item::Coin(n) => coins += ___1___,
+                    ___2___ => keys += 1,
+                }
+            }
+            println!("{coins} coins, {keys} keys");
+          verify: run
+          expectStdout: "5 coins, 1 keys\n"
+        blanks:
+          "1": { answer: ["*n"] }
+          "2": { answer: ["Item::Key"] }
+        bank: ["*n", "Item::Key", "Item::Coin", "&n", "Key(n)"]
+        explanation: "`n` is a `&u32`, so the `Coin` arm adds `*n`, the amount it holds. The second arm matches the `Key` variant, written `Item::Key`."
+        concepts: [vec.enum, match.bind]
+
+  - id: l3
+    exercises:
+      - type: parsons
+        id: parsons-total-cells
+        prompt: "`row` is a `Vec<Cell>` that's used again later. Arrange the lines to add up its `Int` cells."
+        lines:
+          - { id: l1, text: "    let mut sum = 0;" }
+          - { id: l2, text: "    for c in &row {" }
+          - { id: l3, text: "        if let Cell::Int(n) = c {" }
+          - { id: l4, text: "            sum += n;" }
+          - { id: l5, text: "        }" }
+          - { id: l6, text: "    }" }
+          - { id: l7, text: '    println!("{sum}");' }
+        distractors:
+          - { id: d1, text: "    for c in row {" }
+          - { id: d2, text: "        if Cell::Int(n) == c {" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            enum Cell { Int(i32), Text(String) }
+
+            fn main() {
+                let row = vec![
+                    Cell::Int(5),
+                    Cell::Text(String::from("x")),
+                    Cell::Int(2),
+                ];
+            {{solution}}
+                println!("{}", row.len());
+            }
+          mode: run
+          expectStdout: "7\n3\n"
+        explanation: "Loop over `&row`, because `row` is used afterwards. `if let Cell::Int(n) = c` picks out the `Int` cells; `==` can't take a value apart into `n`."
+        concepts: [vec.enum, match.if-let]
+
+      - type: fill-tokens
+        id: fill-get-nested
+        prompt: "Fill the blanks so the program prints `name Ann`"
+        code:
+          rust: |
+            enum Field { Age(u32), Name(String) }
+            let form = vec![
+                Field::Age(30),
+                Field::Name(String::from("Ann")),
+            ];
+            match form.get(___1___) {
+                ___2___(Field::Name(n)) => {
+                    println!("name {n}");
+                }
+                _ => println!("no name"),
+            }
+          verify: run
+          expectStdout: "name Ann\n"
+        blanks:
+          "1": { answer: ["1"] }
+          "2": { answer: ["Some"] }
+        bank: ["1", "0", "Some", "None", "Ok"]
+        explanation: "`form.get(1)` is `Some(&Field::Name(..))`, so the pattern nests the variant inside `Some`. Index 0 holds the `Age` field, which would print `no name`."
+        concepts: [vec.enum, vec.access, pattern.destructure]
+
+      - type: decode-error
+        id: decode-borrowed-push
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            enum Job { Print(String), Stop }
+
+            fn main() {
+                let mut jobs = vec![Job::Stop];
+                for j in &jobs {
+                    if let Job::Stop = j {
+                        jobs.push(Job::Stop);
+                    }
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0502]
+        options:
+          - { id: a, text: "The loop borrows `jobs`, so it can't push to `jobs` inside the loop" }
+          - { id: b, text: "`Job::Stop` can't be pushed because it holds no data", why: "Variants without data are values like any other. The error is about borrowing." }
+          - { id: c, text: "`if let` needs an `else` branch", why: "`else` is optional with `if let`." }
+        answer: a
+        explanation: "The vector rules from level 4 still apply with enums. The loop's shared borrow overlaps the `push`'s mutable borrow: E0502."
+        concepts: [vec.enum, vec.borrow, err.E0502]
+
+      - type: predict-output
+        id: predict-tiles-impl
+        prompt: "What does this print? Build the output from the tiles."
+        code:
+          rust: |
+            enum Coin { Dime, Gold(u32) }
+            impl Coin {
+                fn cents(&self) -> u32 {
+                    match self {
+                        Coin::Dime => 10,
+                        Coin::Gold(g) => g * 100,
+                    }
+                }
+            }
+            let mut purse = vec![Coin::Dime];
+            purse.push(Coin::Gold(2));
+            for c in &purse {
+                print!("{} ", c.cents());
+            }
+            println!("{}", purse.len());
+          verify: run
+        tiles: ["10", "200", "2", "100", "1", "0"]
+        answer: "10 200 2"
+        explanation: "The loop calls `cents` on each coin in order: 10 for the dime, then 2 * 100 for the gold coin. The loop only borrowed `purse`, so it still has 2 coins."
+        concepts: [vec.enum, enum.impl]
+
+      - type: compiles
+        id: compiles-struct-variant
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Event {
+                Click { x: i32, y: i32 },
+                Key(char),
+            }
+            let mut log = Vec::new();
+            log.push(Event::Key('q'));
+            log.push(Event::Click { x: 3, y: 4 });
+            println!("{log:?}");
+          verify: run
+          expectStdout: "[Key('q'), Click { x: 3, y: 4 }]\n"
+        answer: true
+        explanation: "Struct-like and tuple-like variants are all `Event`s, so they fit in one `Vec<Event>`. The pushes tell Rust the type."
+        concepts: [vec.enum, enum.data, derive.debug]
+
+      - type: mcq
+        id: mcq-why-enum
+        prompt: "A to-do app stores tasks that are either a plain note or a note with a due day. What's a good way to keep them all in one list?"
+        options:
+          - { id: a, code: "enum Task {\n    Note(String),\n    Due(String, u32),\n}\nlet tasks: Vec<Task> = Vec::new();" }
+          - { id: b, code: "let tasks = vec![String::new(), 3];", why: "A `Vec` can't hold a `String` and an integer side by side. That's E0308." }
+          - { id: c, code: "let notes: Vec<String> = Vec::new();\nlet days: Vec<u32> = Vec::new();", why: "Two separate vectors lose track of which day belongs to which note, and of the order of tasks." }
+        answer: a
+        explanation: "One enum with a variant per kind of task keeps every task in one `Vec<Task>`, in order, with its own data."
+        concepts: [vec.enum]
+
+      - type: spot-bug
+        id: spot-move-text-out
+        prompt: Tap the line that stops this program compiling
+        code:
+          rust: |
+            enum Cell { Int(i32), Text(String) }
+
+            fn main() {
+                let row = vec![
+                    Cell::Text(String::from("hi")),
+                    Cell::Int(1),
+                ];
+                let first: Cell = row[0];
+                if let Cell::Text(s) = first {
+                    println!("{s}");
+                }
+            }
+          verify: compile-fail
+          expectErrors: [E0507]
+        answer: 8
+        explanation: "`row[0]` would move the `Cell` out of the vector, which isn't allowed (E0507). Borrow it with `&row[0]` and match on the reference."
+        concepts: [vec.enum, vec.access]
+
+      - type: true-false
+        id: tf-match-ref-binding
+        prompt: "In `for c in &row { match c { Cell::Text(s) => .. } }`, `s` is a `&String`, so the `String` stays in the vector."
+        answer: true
+        explanation: "Matching on a reference gives references to the data inside. Nothing is moved out of `row`."
+        concepts: [vec.enum, match.bind]
+
+      - type: predict-output
+        id: predict-pop-enum
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Step { Up, Down(u32) }
+            let mut path = vec![Step::Up];
+            path.push(Step::Down(2));
+            while let Some(s) = path.pop() {
+                print!("{s:?} ");
+            }
+            println!("{}", path.len());
+          verify: run
+        options:
+          - { id: a, text: "Down(2) Up 0" }
+          - { id: b, text: "Up Down(2) 0", why: "`pop` takes from the end, so `Down(2)` comes out first." }
+          - { id: c, text: "Down(2) Up 2", why: "Each `pop` removes an element, so the vector ends up empty." }
+        answer: a
+        explanation: "`pop` gives `Some(Step::Down(2))`, then `Some(Step::Up)`, then `None`. The vector is empty at the end."
+        concepts: [vec.enum, vec.basics]
