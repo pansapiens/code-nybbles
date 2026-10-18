@@ -44,6 +44,9 @@ jobs:
           restore-keys: rust-verify-${{ hashFiles('tools/rust-verify/rust-toolchain.toml') }}-
       - name: Unit tests
         run: pnpm test
+      - name: Content build tests
+        working-directory: tools/content-build
+        run: node --test build.test.ts
       - name: Content build + rust-verify
         run: pnpm content:build --strict # warnings fail CI too
       - name: Build
