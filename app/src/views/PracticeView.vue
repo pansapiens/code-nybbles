@@ -24,6 +24,8 @@
       <DuoButton :disabled="!mistakeCount" @click="start('mistakes')">Start</DuoButton>
     </article>
 
+    <RouterLink class="link" :to="{ name: 'playground' }"><AppIcon name="book" /> Playground</RouterLink>
+
     <section class="stack" aria-labelledby="code-reads">
       <h2 id="code-reads">Code Reads</h2>
       <p v-if="!codeReads.length" class="note">Code Reads you reach on the path will appear here.</p>

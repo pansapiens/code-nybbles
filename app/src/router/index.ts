@@ -21,6 +21,7 @@ const router = createRouter({
       props: true,
       meta: { fullscreen: true },
     },
+    { path: '/playground', name: 'playground', component: () => import('@/views/PlaygroundView.vue') },
     { path: '/shop', name: 'shop', component: () => import('@/views/ShopView.vue') },
     { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },

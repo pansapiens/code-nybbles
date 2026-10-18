@@ -130,3 +130,15 @@ test.describe('placement test', () => {
     await expect(page.getByRole('list', { name: `${unit21.title} path` }).getByRole('button', { name: /, up next$/ })).toBeVisible()
   })
 })
+
+test('playground runs the default program from the practice hub', async ({ page }) => {
+  await page.route('https://play.rust-lang.org/execute', (route) =>
+    route.fulfill({ json: { success: true, stdout: 'Hello, Nybbles!\n', stderr: '' } }),
+  )
+  await onboard(page)
+  await page.goto('./practice')
+  await page.getByRole('link', { name: 'Playground' }).click()
+  await expect(page.getByRole('heading', { name: 'Playground', level: 1 })).toBeVisible()
+  await page.getByRole('button', { name: 'RUN' }).click()
+  await expect(page.getByLabel('Output')).toContainText('Hello, Nybbles!')
+})
