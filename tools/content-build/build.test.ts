@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { stringify } from 'yaml'
-import { buildContent } from './build.ts'
+import { buildContent, textCodes } from './build.ts'
 
 /** Write a one-level course to a temp dir; `exercises` replace the default valid one. */
 function fixture(exercises: unknown[]): string {
@@ -202,4 +202,16 @@ test('a build compiles to a level with one lesson per step and generated cards',
   assert.match((await buildContent({ contentDir: root })).issues.list.map((i) => i.message).join('\n'), /1 exercises \(expected 3-8\)/)
   write([{ ...step('one', one, 'hi\n'), file: { rust: one, verify: 'compile' } }])
   assert.match((await buildContent({ contentDir: root })).issues.errors.map((i) => i.message).join('\n'), /must be `verify: run`/)
+})
+
+test('error codes in learner text are found, except in code and lookup spans', () => {
+  const ex = {
+    type: 'mcq',
+    prompt: 'What does `rustc --explain E0382` show? Compare `error[E0499]`.',
+    options: [{ id: 'a', text: 'E0502: cannot borrow', code: 'x; // E0596' }],
+    explanation: 'Like E0308.\n```text\nE0277\n```',
+    code: { rust: 'let a = 1; // E0384', expectErrors: ['E0384'] },
+    concepts: ['err.E0425'],
+  }
+  assert.deepEqual(textCodes(ex as never), ['E0502', 'E0308'])
 })

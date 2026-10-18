@@ -336,6 +336,22 @@ function checkOptions(where: string, options: Option[], answer: string, issues: 
   if (!ids.includes(answer)) issues.error(where, `answer "${answer}" is not an option id`)
 }
 
+/**
+ * Error codes named in learner-facing text. Codes are lookup keys for `rustc --explain`, not facts to memorise, so
+ * text names the problem or quotes the message. Code, fenced blocks and `error[...]` / `--explain` spans don't count.
+ */
+export function textCodes(ex: Exercise): string[] {
+  const out = new Set<string>()
+  const walk = (v: unknown, key: string): void => {
+    if (key === 'code' || key === 'concepts') return
+    if (typeof v === 'string')
+      for (const m of v.replace(/```[\s\S]*?```|`[^`]*(error\[|--explain)[^`]*`/g, '').match(/\bE\d{4}\b/g) ?? []) out.add(m)
+    else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, Array.isArray(v) ? key : k)
+  }
+  walk(ex, '')
+  return [...out]
+}
+
 const words = (s: string) => s.trim().split(/\s+/).join(' ')
 
 /** Can distinct tiles, joined by spaces, spell the answer? Mirrors the app's predict-output tiles grader. */
@@ -360,6 +376,9 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
     const words = prose.split(/\s+/).filter(Boolean).length
     if (words > 60) issues.warn(where, `concept card has ${words} words (aim for at most 60)`)
   }
+
+  const named = textCodes(ex)
+  if (named.length) issues.warn(where, `text names ${named.join(', ')}; describe the problem or quote the message (codes are for \`rustc --explain\`)`)
 
   const code = 'code' in ex ? ex.code : undefined
   // Registered error codes are concepts, so review can track them.
