@@ -101,7 +101,7 @@ import {
   startRun,
   summarise,
 } from '@/domain/lesson-planner'
-import { JUMP_PASS, nodesUpTo, placementItems, placementScore, sectionCheckpoints } from '@/domain/placement'
+import { JUMP_PASS, nodesUpTo, placementItems, placementScore, sectionEnds } from '@/domain/placement'
 import { type PracticeKind, exercisePool, planPractice } from '@/domain/practice'
 import { type Grade, grade, solution } from '@/exercises/grade'
 import { checksItself, isGraded, rendererFor } from '@/exercises/registry'
@@ -232,7 +232,7 @@ async function finishTest(r: LessonRun, accuracy: number): Promise<Screen[]> {
   }
   const { passed } = placementScore(firstTries(r), sections.length)
   if (!passed) return [{ kind: 'message', title: 'Start from the beginning', text: 'Section 1 is the best place to start. You can retake the test from Settings.' }]
-  await game.finishPlacement({ source: 'placement', ...nodesUpTo(sections, sectionCheckpoints(sections)[passed - 1]!) })
+  await game.finishPlacement({ source: 'placement', ...nodesUpTo(sections, sectionEnds(sections)[passed - 1]!) })
   return passed < sections.length
     ? [{ kind: 'message', title: `You've placed into Section ${passed + 1}`, text: `${sections[passed]!.title}. Everything before it is unlocked.` }]
     : [{ kind: 'message', title: 'You know your stuff!', text: 'You passed every section, so the whole course is unlocked.' }]

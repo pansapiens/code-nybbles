@@ -1,6 +1,6 @@
 import type { CompiledSection } from '@code-nybbles/content-build/schema'
 import { expect, it } from 'vitest'
-import { nodesUpTo, placementItems, placementScore, sectionCheckpoints } from '../placement'
+import { nodesUpTo, placementItems, placementScore, sectionCheckpoints, sectionEnds } from '../placement'
 
 const level = (id: string, n = 1) => ({ id, lessons: Array.from({ length: n }, (_, i) => ({ id: `l${i}`, exercises: [{ type: 'mcq', id: 'q1' }, { type: 'mcq', id: 'q2' }, { type: 'mcq', id: 'q3' }, { type: 'mcq', id: 'q4' }, { type: 'concept', id: 'c' }] })) })
 const unit = (id: string, extra: string[] = []) => {
@@ -17,7 +17,9 @@ const unit = (id: string, extra: string[] = []) => {
     ],
   }
 }
-const sections = [{ units: [unit('s1.u1'), unit('s1.u2')] }, { units: [unit('s2.u1')] }] as unknown as CompiledSection[]
+// s2.u2 is a project unit like Unit 2.4: only a Build, no checkpoint.
+const project = { id: 's2.u2', levels: { 's2.u2.build': level('s2.u2.build') }, path: [{ kind: 'build', levelId: 's2.u2.build' }] }
+const sections = [{ units: [unit('s1.u1'), unit('s1.u2')] }, { units: [unit('s2.u1'), project] }] as unknown as CompiledSection[]
 
 it('lists levels and chests up to and including a checkpoint, skipping practice nodes', () => {
   expect(nodesUpTo(sections, 's1.u1.cp')).toEqual({
@@ -28,6 +30,8 @@ it('lists levels and chests up to and including a checkpoint, skipping practice 
   expect(all.levels).toHaveLength(9)
   expect(all.chests).toHaveLength(3)
   expect(sectionCheckpoints(sections)).toEqual(['s1.u2.cp', 's2.u1.cp'])
+  expect(sectionEnds(sections)).toEqual(['s1.u2.cp', 's2.u2.build'])
+  expect(nodesUpTo(sections, 's2.u2.build').levels.pop()).toEqual({ id: 's2.u2.build', lessons: 1 })
 })
 
 it('draws 3 gradable questions from each section checkpoint, in section order', () => {

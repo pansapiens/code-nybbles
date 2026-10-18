@@ -21,9 +21,12 @@ export function nodesUpTo(sections: CompiledSection[], checkpointLevelId: string
   return out
 }
 
-/** The checkpoint level of each section's last unit: the question pool, and the unlock point, for that section. */
+/** The last checkpoint level of each section: the question pool for that section. A project unit (Unit 2.4) has none. */
 export const sectionCheckpoints = (sections: CompiledSection[]): string[] =>
-  sections.map((s) => unitNodes(s.units[s.units.length - 1]!).find((n) => n.kind === 'checkpoint')!.id)
+  sections.map((s) => s.units.flatMap(unitNodes).filter((n) => n.kind === 'checkpoint').pop()!.id)
+
+/** The last node of each section: passing a section's placement questions completes everything up to here, Builds included. */
+export const sectionEnds = (sections: CompiledSection[]): string[] => sections.map((s) => s.units.flatMap(unitNodes).pop()!.id)
 
 /** PER_SECTION random gradable questions from each section's checkpoint, Section 1 first. */
 export function placementItems(sections: CompiledSection[], random = Math.random): PoolItem[] {

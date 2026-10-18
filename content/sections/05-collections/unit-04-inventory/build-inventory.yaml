@@ -1,0 +1,1281 @@
+id: collections.inventory.build-inventory
+title: Inventory
+icon: box
+concepts: [practice.inventory]
+reviewConcepts: [enum.define, struct.define, struct.ownership, derive.debug, fmt.debug, types.int, err.E0063, err.E0277, method.self, method.associated, style.new, err.E0596, pattern.params, string.convert, vec.basics, vec.iter, option.basics, borrow.shared, borrow.mut, borrow.exclusive, slice.str-param, err.E0106, err.E0502, err.E0594, map.entry, map.iter, collections.choose]
+steps:
+  # ---------------------------------------------------------------- step 1
+  - id: items
+    title: Describe an item
+    goal: |
+      **You're building a stock tracker for a small hardware shop.** Every item has a name, a quantity in stock and a category.
+
+      The category can only be one of a fixed set, so it's an `enum`. The item groups three values, so it's a `struct`. `#[derive(Debug)]` on both lets you print an item with `{:?}`.
+    file:
+      rust: |
+        #[derive(Debug)]
+        enum Category { Tool, Food, Part }
+
+        #[derive(Debug)]
+        struct Item {
+            name: String,
+            qty: u32,
+            category: Category,
+        }
+
+        fn main() {
+            let hammer = Item {
+                name: String::from("hammer"),
+                qty: 3,
+                category: Category::Tool,
+            };
+            println!("{hammer:?}");
+        }
+      verify: run
+      expectStdout: "Item { name: \"hammer\", qty: 3, category: Tool }\n"
+    exercises:
+      - type: fill-tokens
+        id: fill-item-types
+        prompt: Fill the blanks to define the category and the item
+        code:
+          rust: |
+            #[derive(Debug)]
+            ___1___ Category { Tool, Food, Part }
+
+            #[derive(Debug)]
+            ___2___ Item {
+                name: String,
+                qty: u32,
+                category: ___3___,
+            }
+          verify: run
+          wrap: none
+          hidden:
+            after: |
+              fn main() {
+                  let saw = Item {
+                      name: String::from("saw"),
+                      qty: 2,
+                      category: Category::Tool,
+                  };
+                  println!("{saw:?}");
+              }
+          expectStdout: "Item { name: \"saw\", qty: 2, category: Tool }\n"
+        blanks:
+          "1": { answer: ["enum"] }
+          "2": { answer: ["struct"] }
+          "3": { answer: ["Category"] }
+        bank: ["enum", "struct", "Category", "String", "Tool", "impl"]
+        explanation: "A category is exactly one of `Tool`, `Food` or `Part`, so it's an `enum`. An item holds a name, a quantity and a category together, so it's a `struct`, and its `category` field has the type `Category`."
+        concepts: [practice.inventory, enum.define, struct.define]
+
+      - type: predict-output
+        id: predict-debug-item
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Category { Tool, Food }
+            #[derive(Debug)]
+            struct Item {
+                name: String,
+                category: Category,
+            }
+
+            fn main() {
+                let rice = Item {
+                    name: String::from("rice"),
+                    category: Category::Food,
+                };
+                println!("{rice:?}");
+            }
+          verify: run
+        options:
+          - id: a
+            text: 'Item { name: "rice", category: Food }'
+          - id: b
+            text: 'Item { name: rice, category: Food }'
+            why: "Debug output shows text with its quotes, so a `String` field prints as `\"rice\"`."
+          - id: c
+            text: 'Item { name: "rice", category: Category::Food }'
+            why: "Debug prints an enum variant by its name alone, without the `Category::` path."
+        answer: a
+        explanation: "The derived Debug format prints the struct name, then each field as `name: value`. Strings keep their quotes and enum variants print as their bare names."
+        concepts: [derive.debug, fmt.debug]
+
+      - type: decode-error
+        id: decode-missing-derive
+        prompt: What's the best fix?
+        code:
+          rust: |
+            enum Category { Tool, Food }
+
+            #[derive(Debug)]
+            struct Item {
+                name: String,
+                category: Category,
+            }
+
+            fn main() {
+                let saw = Item {
+                    name: String::from("saw"),
+                    category: Category::Tool,
+                };
+                println!("{saw:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - id: a
+            code: "#[derive(Debug)]\nenum Category { Tool, Food }"
+          - id: b
+            code: "struct Item {"
+            why: "Removing `#[derive(Debug)]` from `Item` means `Item` can't be printed with `{:?}` either, so the `println!` fails."
+          - id: c
+            code: 'println!("{saw}");'
+            why: "`{}` needs the Display format, which `Item` doesn't have, and Display can't be derived."
+        answer: a
+        explanation: "To print an `Item` with `{:?}`, Rust must be able to print every field with `{:?}`. The `category` field is a `Category`, so `Category` needs `#[derive(Debug)]` too."
+        concepts: [derive.debug, err.E0277]
+
+      - type: mcq
+        id: mcq-name-string
+        prompt: "Why is the field `name: String` rather than `name: &str`?"
+        options:
+          - id: a
+            text: "The item owns its name, so the name lasts as long as the item does"
+          - id: b
+            text: "A `&str` can't hold a word like `hammer`"
+            why: "`\"hammer\"` is a `&str`. The difference is ownership: a `&str` borrows text that something else owns."
+          - id: c
+            text: "A `String` uses less memory than a `&str`"
+            why: "A `String` stores its text on the heap and can grow. That's about owning the text, not saving memory."
+        answer: a
+        explanation: "A struct that owns all its data is simple to keep and pass around. A `&str` field would borrow text owned somewhere else, and Rust would need to know how long that text lives."
+        concepts: [struct.ownership]
+
+      - type: true-false
+        id: tf-qty-unsigned
+        prompt: "With `qty: u32`, an item's quantity can never be negative."
+        answer: true
+        explanation: "`u32` is an unsigned integer: it holds 0 up to about 4 billion. That suits a stock count, which can't go below zero."
+        concepts: [types.int]
+
+      - type: compiles
+        id: compiles-missing-field
+        code:
+          rust: |
+            #[derive(Debug)]
+            struct Item {
+                name: String,
+                qty: u32,
+            }
+
+            fn main() {
+                let saw = Item {
+                    name: String::from("saw"),
+                };
+                println!("{saw:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0063]
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0063: missing field `qty`" }
+            - id: b
+              text: "E0277: `Item` doesn't implement `Debug`"
+              why: "`Item` has `#[derive(Debug)]`, so it can be printed."
+            - id: c
+              text: "E0308: mismatched types"
+              why: "`name` gets a `String`, which is the right type. The problem is the field that's missing."
+          answer: a
+        explanation: "Creating a struct needs a value for every field. `qty` has no value and Rust doesn't fill in a default, so this is E0063."
+        concepts: [struct.define, err.E0063]
+
+  # ---------------------------------------------------------------- step 2
+  - id: inventory
+    title: Keep a list of items
+    goal: |
+      **One item isn't a shop.** Next, an `Inventory` struct holds a `Vec<Item>`.
+
+      It gets two methods: `new` makes an empty inventory, and `add` pushes an item onto the list. `main` adds three items from an array and prints how many there are.
+    file:
+      rust: |
+        #[derive(Debug)]
+        enum Category { Tool, Food, Part }
+
+        #[derive(Debug)]
+        struct Item {
+            name: String,
+            qty: u32,
+            category: Category,
+        }
+
+        struct Inventory { items: Vec<Item> }
+
+        impl Inventory {
+            fn new() -> Self {
+                Inventory { items: Vec::new() }
+            }
+
+            fn add(&mut self, item: Item) {
+                self.items.push(item);
+            }
+        }
+
+        fn main() {
+            let mut inv = Inventory::new();
+            for (name, qty, category) in [
+                ("hammer", 3, Category::Tool),
+                ("rice", 5, Category::Food),
+                ("bolts", 40, Category::Part),
+            ] {
+                inv.add(Item {
+                    name: name.to_string(),
+                    qty,
+                    category,
+                });
+            }
+            let n = inv.items.len();
+            println!("{n} items");
+        }
+      verify: run
+      expectStdout: "3 items\n"
+    exercises:
+      - type: concept
+        id: concept-tuple-loop
+        title: Adding items from a list
+        markdown: |
+          `main` loops over an array of tuples. The pattern `(name, qty, category)` takes each tuple apart into three variables.
+
+          `name.to_string()` turns the `&str` into the `String` the field needs. `qty,` on its own is shorthand for `qty: qty,`.
+        code:
+          rust: |
+            for (name, qty) in [
+                ("saw", 2),
+                ("rice", 5),
+            ] {
+                let label = name.to_string();
+                println!("{label}: {qty}");
+            }
+          verify: run
+          expectStdout: "saw: 2\nrice: 5\n"
+        concepts: [pattern.params, string.convert]
+
+      - type: fill-tokens
+        id: fill-inventory-impl
+        prompt: Fill the blanks to finish `new` and `add`
+        code:
+          rust: |
+            struct Inventory { items: Vec<Item> }
+
+            impl Inventory {
+                fn new() -> ___1___ {
+                    Inventory { items: Vec::new() }
+                }
+
+                fn add(___2___, item: Item) {
+                    self.items.___3___(item);
+                }
+            }
+          verify: run
+          wrap: none
+          hidden:
+            before: |
+              struct Item {
+                  name: String,
+              }
+            after: |
+              fn main() {
+                  let mut inv = Inventory::new();
+                  let name = String::from("saw");
+                  inv.add(Item { name });
+                  let name = String::from("rice");
+                  inv.add(Item { name });
+                  println!("{}", inv.items.len());
+                  println!("{}", inv.items[1].name);
+              }
+          expectStdout: "2\nrice\n"
+        blanks:
+          "1": { answer: ["Self"] }
+          "2": { answer: ["&mut self"] }
+          "3": { answer: ["push"] }
+        bank: ["Self", "&mut self", "push", "&self", "Item", "insert"]
+        explanation: "`new` returns `Self`, which means `Inventory` inside this `impl`. `add` changes `self.items`, so it takes `&mut self`, and `push` adds the item to the end of the `Vec`."
+        concepts: [style.new, method.self, vec.basics]
+
+      - type: decode-error
+        id: decode-inv-not-mut
+        prompt: What's the best fix?
+        code:
+          rust: |
+            struct Inventory {
+                items: Vec<String>,
+            }
+
+            impl Inventory {
+                fn add(&mut self, name: String) {
+                    self.items.push(name);
+                }
+            }
+
+            fn main() {
+                let items = Vec::new();
+                let inv = Inventory { items };
+                inv.add(String::from("saw"));
+            }
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - id: a
+            code: "let mut inv = Inventory { items };"
+          - id: b
+            code: "fn add(&self, name: String) {"
+            why: "Then `push` inside `add` fails instead, because it can't change `self.items` through a shared `&self`."
+          - id: c
+            code: "let mut items = Vec::new();"
+            why: "`items` is moved into the struct. It's `inv` that `add` borrows mutably, so `inv` needs `mut`."
+        answer: a
+        explanation: "Calling a `&mut self` method borrows `inv` mutably, and you can only do that to a variable declared with `let mut`."
+        concepts: [method.self, err.E0596]
+
+      - type: predict-output
+        id: predict-duplicate-push
+        code:
+          rust: |
+            fn main() {
+                let mut inv = Inventory::new();
+                for (name, qty) in [
+                    ("saw", 2),
+                    ("rice", 5),
+                    ("saw", 1),
+                ] {
+                    let name = name.to_string();
+                    inv.add(Item { name, qty });
+                }
+                let n = inv.items.len();
+                println!("{n} items");
+            }
+          verify: run
+          hidden:
+            before: |
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+
+              struct Inventory { items: Vec<Item> }
+
+              impl Inventory {
+                  fn new() -> Self {
+                      Inventory { items: Vec::new() }
+                  }
+
+                  fn add(&mut self, item: Item) {
+                      self.items.push(item);
+                  }
+              }
+        options:
+          - { id: a, text: "3 items" }
+          - id: b
+            text: "2 items"
+            why: "`add` only calls `push`, so the second `saw` becomes a separate entry. Merging repeats is a later step."
+          - id: c
+            text: "1 items"
+            why: "Each pass of the loop adds one item, and the loop runs three times."
+        answer: a
+        explanation: "`add` pushes every item it gets, even one with a name that's already there. Three calls make three entries."
+        concepts: [practice.inventory, vec.basics]
+
+      - type: mcq
+        id: mcq-why-mut-self
+        prompt: "Why does `add` take `&mut self`?"
+        options:
+          - id: a
+            text: "It changes the inventory by pushing onto `self.items`"
+          - id: b
+            text: "`&self` would be enough, because `add` only reads `item`"
+            why: "`add` writes to `self.items`. Changing data through a reference needs `&mut`."
+          - id: c
+            text: "Every method needs `&mut self` to be called on a variable"
+            why: "Methods that only read take `&self`. Use `&mut self` only when the method changes `self`."
+        answer: a
+        explanation: "`push` changes the `Vec`, so `add` needs write access to `self`. `&mut self` gives that without taking ownership, so you can keep using the inventory afterwards."
+        concepts: [method.self, borrow.mut]
+
+      - type: parsons
+        id: parsons-build-inventory
+        prompt: Arrange the lines to make an inventory, add a saw and print the count
+        lines:
+          - { id: l1, text: "let mut inv = Inventory::new();" }
+          - { id: l2, text: "let name = String::from(\"saw\");" }
+          - { id: l3, text: "inv.add(Item { name, qty: 2 });" }
+          - { id: l4, text: "let n = inv.items.len();" }
+          - { id: l5, text: "println!(\"{n} items\");" }
+        distractors:
+          - { id: d1, text: "let inv = Inventory::new();" }
+        answer: [l1, l2, l3, l4, l5]
+        alternatives:
+          - [l2, l1, l3, l4, l5]
+        verify:
+          harness: |
+            struct Item {
+                name: String,
+                qty: u32,
+            }
+            struct Inventory { items: Vec<Item> }
+            impl Inventory {
+                fn new() -> Self {
+                    Inventory { items: Vec::new() }
+                }
+                fn add(&mut self, item: Item) {
+                    self.items.push(item);
+                }
+            }
+            fn main() {
+            {{solution}}
+            }
+          mode: run
+          expectStdout: "1 items\n"
+        explanation: "The inventory must exist, and be `mut`, before `add` can change it. Count the items after adding, or you'd count an empty list."
+        concepts: [practice.inventory, style.new, method.self]
+
+      - type: true-false
+        id: tf-self-type
+        prompt: "Inside `impl Inventory`, the return type `Self` means `Inventory`."
+        answer: true
+        explanation: "`Self` names the type the `impl` block is for. `fn new() -> Self` and `fn new() -> Inventory` mean the same thing here."
+        concepts: [method.associated, style.new]
+
+  # ---------------------------------------------------------------- step 3
+  - id: find
+    title: Look an item up
+    goal: |
+      **Customers ask: do you have any rice?** The new `find` method loops over the items and returns the first one with that name.
+
+      It returns `Option<&Item>`: `Some` with a reference to the item, or `None` if no item has that name. The item stays in the inventory; the caller borrows it.
+    file:
+      rust: |
+        #[derive(Debug)]
+        enum Category { Tool, Food, Part }
+
+        #[derive(Debug)]
+        struct Item {
+            name: String,
+            qty: u32,
+            category: Category,
+        }
+
+        struct Inventory { items: Vec<Item> }
+
+        impl Inventory {
+            fn new() -> Self {
+                Inventory { items: Vec::new() }
+            }
+
+            fn add(&mut self, item: Item) {
+                self.items.push(item);
+            }
+
+            fn find(&self, name: &str)
+                -> Option<&Item> {
+                for item in &self.items {
+                    if item.name == name {
+                        return Some(item);
+                    }
+                }
+                None
+            }
+        }
+
+        fn main() {
+            let mut inv = Inventory::new();
+            for (name, qty, category) in [
+                ("hammer", 3, Category::Tool),
+                ("rice", 5, Category::Food),
+                ("bolts", 40, Category::Part),
+            ] {
+                inv.add(Item {
+                    name: name.to_string(),
+                    qty,
+                    category,
+                });
+            }
+            let n = inv.items.len();
+            println!("{n} items");
+            println!("{:?}", inv.find("rice"));
+            println!("{:?}", inv.find("glue"));
+        }
+      verify: run
+      expectStdout: "3 items\nSome(Item { name: \"rice\", qty: 5, category: Food })\nNone\n"
+    exercises:
+      - type: fill-tokens
+        id: fill-find
+        prompt: Fill the blanks to finish `find`
+        code:
+          rust: |
+            impl Inventory {
+                fn find(&self, name: &str)
+                    -> Option<&Item> {
+                    for item in ___1___ self.items {
+                        if item.name == name {
+                            return ___2___(item);
+                        }
+                    }
+                    ___3___
+                }
+            }
+          verify: run
+          wrap: none
+          hidden:
+            before: |
+              #[derive(Debug)]
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+              struct Inventory { items: Vec<Item> }
+            after: |
+              fn main() {
+                  let saw = Item { name: String::from("saw"), qty: 2 };
+                  let inv = Inventory { items: vec![saw] };
+                  println!("{:?}", inv.find("saw"));
+                  println!("{:?}", inv.find("rice"));
+              }
+          expectStdout: "Some(Item { name: \"saw\", qty: 2 })\nNone\n"
+        blanks:
+          "1": { answer: ["&"] }
+          "2": { answer: ["Some"] }
+          "3": { answer: ["None"] }
+        bank: ["&", "Some", "None", "&mut", "Ok", "Err"]
+        explanation: "`&self.items` loops over references, so nothing moves out of the inventory. A match is returned as `Some(item)`; if the loop finishes without one, the result is `None`."
+        concepts: [practice.inventory, option.basics, vec.iter]
+
+      - type: predict-output
+        id: predict-find-missing
+        code:
+          rust: |
+            fn main() {
+                let name = String::from("saw");
+                let item = Item { name, qty: 2 };
+                let items = vec![item];
+                let inv = Inventory { items };
+                let found = inv.find("glue");
+                if let Some(item) = found {
+                    println!("{} left", item.qty);
+                } else {
+                    println!("no glue");
+                }
+            }
+          verify: run
+          hidden:
+            before: |
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+                  fn find(&self, name: &str) -> Option<&Item> {
+                      for item in &self.items {
+                          if item.name == name {
+                              return Some(item);
+                          }
+                      }
+                      None
+                  }
+              }
+        options:
+          - { id: a, text: "no glue" }
+          - id: b
+            text: "0 left"
+            why: "`find` doesn't make up an item with quantity 0. It returns `None`, so the `if let` doesn't match."
+          - id: c
+            text: "It panics"
+            why: "Nothing here panics. A missing name is an ordinary `None`, which the `else` branch handles."
+        answer: a
+        explanation: "No item is called `glue`, so `find` returns `None`. `if let Some(item)` doesn't match `None`, so the `else` branch runs."
+        concepts: [practice.inventory, option.basics]
+
+      - type: predict-output
+        id: predict-find-debug
+        code:
+          rust: |
+            fn main() {
+                let name = String::from("saw");
+                let item = Item { name, qty: 2 };
+                let items = vec![item];
+                let inv = Inventory { items };
+                println!("{:?}", inv.find("saw"));
+            }
+          verify: run
+          hidden:
+            before: |
+              #[derive(Debug)]
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+                  fn find(&self, name: &str) -> Option<&Item> {
+                      for item in &self.items {
+                          if item.name == name {
+                              return Some(item);
+                          }
+                      }
+                      None
+                  }
+              }
+        options:
+          - id: a
+            text: 'Some(Item { name: "saw", qty: 2 })'
+          - id: b
+            text: 'Item { name: "saw", qty: 2 }'
+            why: "`find` returns an `Option`, and Debug prints the `Some( )` around the item."
+          - id: c
+            text: 'Some("saw")'
+            why: "`find` returns the whole item, not only its name."
+        answer: a
+        explanation: "The result is `Some` holding a reference to the item. Debug prints a reference the same way as the value it points to, so you see `Some(Item { ... })`."
+        concepts: [option.basics, fmt.debug]
+
+      - type: mcq
+        id: mcq-why-option-ref
+        prompt: "Why does `find` return `Option<&Item>` instead of `Option<Item>`?"
+        options:
+          - id: a
+            text: "Returning `Item` would move it out of the inventory; a reference only lets the caller look at it"
+          - id: b
+            text: "`Option` can only hold references"
+            why: "`Option` can hold any type, such as `Option<u32>` or `Option<String>`."
+          - id: c
+            text: "A reference is needed so the caller can change the quantity"
+            why: "`&Item` is a shared reference: it allows reading, not changing. Changing would need `&mut`."
+        answer: a
+        explanation: "`find` only borrows the inventory (`&self`), so it can't give away an item it doesn't own. It hands back a borrow of the item, which stays in the `Vec`."
+        concepts: [borrow.shared, option.basics]
+
+      - type: decode-error
+        id: decode-find-lifetime
+        prompt: What's the best fix?
+        code:
+          rust: |
+            struct Item {
+                name: String,
+            }
+
+            fn find(items: &Vec<Item>, name: &str)
+                -> Option<&Item> {
+                for item in items {
+                    if item.name == name {
+                        return Some(item);
+                    }
+                }
+                None
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrors: [E0106]
+        options:
+          - id: a
+            text: "Make it a method on a struct holding the items, `fn find(&self, name: &str)`: then the result borrows from `self`"
+          - id: b
+            text: "Return `Option<Item>` and keep the parameters as they are"
+            why: "Then `Some(item)` would try to return a `&Item` where an `Item` is expected, and you can't move an item out of a borrowed `Vec`."
+          - id: c
+            text: "Take `items: Vec<Item>` instead of `&Vec<Item>`"
+            why: "The function would then own the items and drop them at its end, so a reference to one can't be returned."
+        answer: a
+        explanation: "With two reference parameters, Rust can't tell whether the returned `&Item` borrows from `items` or from `name`. In a method with `&self`, Rust assumes the result borrows from `self`, which is what `find` needs."
+        concepts: [borrow.dangling, err.E0106, method.self]
+
+      - type: true-false
+        id: tf-find-string-arg
+        prompt: "If `wanted` is a `String`, `inv.find(&wanted)` compiles, even though `find` takes `name: &str`."
+        code:
+          rust: |
+            let wanted = String::from("saw");
+            let found = inv.find(&wanted);
+          verify: run
+          hidden:
+            before: |
+              struct Item {
+                  name: String,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+                  fn find(&self, name: &str) -> Option<&Item> {
+                      for item in &self.items {
+                          if item.name == name {
+                              return Some(item);
+                          }
+                      }
+                      None
+                  }
+              }
+              fn main() {
+              let inv = Inventory { items: vec![Item { name: String::from("saw") }] };
+            after: |
+              println!("{}", found.is_some());
+              }
+          wrap: none
+          expectStdout: "true\n"
+        answer: true
+        explanation: "A `&String` is turned into a `&str` automatically when the parameter is `&str`. That's why `&str` parameters accept both string literals and borrowed `String`s."
+        concepts: [slice.str-param]
+
+  # ---------------------------------------------------------------- step 4
+  - id: restock
+    title: Restock instead of repeating
+    goal: |
+      **A delivery of rice shouldn't add a second rice entry.** Now `add` first looks for an item with the same name. If it finds one, it adds to that item's quantity and returns.
+
+      To change items inside the `Vec`, the loop borrows them with `&mut`. Only a new name gets pushed.
+    file:
+      rust: |
+        #[derive(Debug)]
+        enum Category { Tool, Food, Part }
+
+        #[derive(Debug)]
+        struct Item {
+            name: String,
+            qty: u32,
+            category: Category,
+        }
+
+        struct Inventory { items: Vec<Item> }
+
+        impl Inventory {
+            fn new() -> Self {
+                Inventory { items: Vec::new() }
+            }
+
+            fn add(&mut self, item: Item) {
+                for old in &mut self.items {
+                    if old.name == item.name {
+                        old.qty += item.qty;
+                        return;
+                    }
+                }
+                self.items.push(item);
+            }
+
+            fn find(&self, name: &str)
+                -> Option<&Item> {
+                for item in &self.items {
+                    if item.name == name {
+                        return Some(item);
+                    }
+                }
+                None
+            }
+        }
+
+        fn main() {
+            let mut inv = Inventory::new();
+            for (name, qty, category) in [
+                ("hammer", 3, Category::Tool),
+                ("rice", 5, Category::Food),
+                ("bolts", 40, Category::Part),
+                ("rice", 10, Category::Food),
+            ] {
+                inv.add(Item {
+                    name: name.to_string(),
+                    qty,
+                    category,
+                });
+            }
+            let n = inv.items.len();
+            println!("{n} items");
+            println!("{:?}", inv.find("rice"));
+            println!("{:?}", inv.find("glue"));
+        }
+      verify: run
+      expectStdout: "3 items\nSome(Item { name: \"rice\", qty: 15, category: Food })\nNone\n"
+    exercises:
+      - type: fill-tokens
+        id: fill-restock
+        prompt: Fill the blanks so a repeated name adds to the existing item
+        code:
+          rust: |
+            fn add(&mut self, item: Item) {
+                for old in ___1___ self.items {
+                    if old.name == item.name {
+                        old.qty ___2___ item.qty;
+                        ___3___;
+                    }
+                }
+                self.items.push(item);
+            }
+          verify: run
+          wrap: none
+          hidden:
+            before: |
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+            after: |
+              }
+              fn main() {
+                  let mut inv = Inventory { items: Vec::new() };
+                  for (name, qty) in [("rice", 5), ("saw", 2), ("rice", 10)] {
+                      inv.add(Item { name: name.to_string(), qty });
+                  }
+                  println!("{} {}", inv.items.len(), inv.items[0].qty);
+              }
+          expectStdout: "2 15\n"
+        blanks:
+          "1": { answer: ["&mut"] }
+          "2": { answer: ["+="] }
+          "3": { answer: ["return"] }
+        bank: ["&mut", "+=", "return", "&", "=", "break"]
+        explanation: "`&mut self.items` lets the loop change each item. `+=` adds the delivery to the stock, and `return` ends `add` so the item isn't pushed as well."
+        concepts: [practice.inventory, vec.iter, borrow.mut]
+
+      - type: predict-output
+        id: predict-restock-count
+        code:
+          rust: |
+            fn main() {
+                let mut inv = Inventory::new();
+                for (name, qty) in [
+                    ("rice", 5),
+                    ("saw", 2),
+                    ("rice", 10),
+                ] {
+                    let name = name.to_string();
+                    inv.add(Item { name, qty });
+                }
+                let n = inv.items.len();
+                println!("{n} items");
+            }
+          verify: run
+          hidden:
+            before: |
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+                  fn new() -> Self {
+                      Inventory { items: Vec::new() }
+                  }
+                  fn add(&mut self, item: Item) {
+                      for old in &mut self.items {
+                          if old.name == item.name {
+                              old.qty += item.qty;
+                              return;
+                          }
+                      }
+                      self.items.push(item);
+                  }
+              }
+        options:
+          - { id: a, text: "2 items" }
+          - id: b
+            text: "3 items"
+            why: "That was the old `add`. Now the second `rice` finds the first one and adds to its quantity instead of being pushed."
+          - id: c
+            text: "1 items"
+            why: "Only items with the same name are merged. `saw` and `rice` stay separate."
+        answer: a
+        explanation: "The second `rice` matches the existing entry, so its 10 goes onto that item's quantity and `add` returns. Only `rice` and `saw` are in the list."
+        concepts: [practice.inventory]
+
+      - type: spot-bug
+        id: spot-shared-loop
+        prompt: "This should add 5 to every quantity. Tap the line with the mistake"
+        code:
+          rust: |
+            struct Item {
+                qty: u32,
+            }
+
+            fn main() {
+                let first = Item { qty: 1 };
+                let mut items = vec![first];
+                for item in &items {
+                    item.qty += 5;
+                }
+                println!("{}", items[0].qty);
+            }
+          verify: compile-fail
+          expectErrors: [E0594]
+        answer: 8
+        explanation: "`&items` gives shared references, which only allow reading, so the compiler rejects line 9 (E0594). Loop over `&mut items` to change each item."
+        concepts: [vec.iter, borrow.mut, err.E0594]
+
+      - type: compiles
+        id: compiles-find-then-add
+        code:
+          rust: |
+            let mut inv = Inventory::new();
+            let saw = String::from("saw");
+            inv.add(Item { name: saw, qty: 2 });
+            let found = inv.find("saw");
+            let rice = String::from("rice");
+            inv.add(Item { name: rice, qty: 5 });
+            println!("{found:?}");
+          verify: compile-fail
+          expectErrors: [E0502]
+          hidden:
+            before: |
+              #[derive(Debug)]
+              struct Item {
+                  name: String,
+                  qty: u32,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+                  fn new() -> Self {
+                      Inventory { items: Vec::new() }
+                  }
+                  fn add(&mut self, item: Item) {
+                      self.items.push(item);
+                  }
+                  fn find(&self, name: &str) -> Option<&Item> {
+                      for item in &self.items {
+                          if item.name == name {
+                              return Some(item);
+                          }
+                      }
+                      None
+                  }
+              }
+        answer: false
+        followUp:
+          prompt: Which error?
+          options:
+            - { id: a, text: "E0502: cannot borrow `inv` as mutable because it is also borrowed as immutable" }
+            - id: b
+              text: "E0499: cannot borrow `inv` as mutable more than once"
+              why: "`find` takes `&self`, a shared borrow. The clash is between that shared borrow and the mutable one for `add`."
+            - id: c
+              text: "E0382: borrow of moved value `inv`"
+              why: "Neither method takes `self` by value, so `inv` is never moved."
+          answer: a
+        explanation: "`found` borrows from `inv` and is used on the last line, so that borrow is still alive when `add` needs `&mut inv`. Printing `found` before the second `add` fixes it."
+        concepts: [borrow.exclusive, err.E0502, vec.borrow]
+
+      - type: decode-error
+        id: decode-restock-shared-self
+        prompt: What's the best fix?
+        code:
+          rust: |
+            struct Shelf {
+                counts: Vec<u32>,
+            }
+
+            impl Shelf {
+                fn restock(&self, n: u32) {
+                    for count in &mut self.counts {
+                        *count += n;
+                    }
+                }
+            }
+
+            fn main() {}
+          verify: compile-fail
+          expectErrors: [E0596]
+        options:
+          - id: a
+            code: "fn restock(&mut self, n: u32) {"
+          - id: b
+            code: "for count in &self.counts {"
+            why: "Then `count` is a shared reference and `*count += n` can't write through it."
+          - id: c
+            code: "fn restock(&self, n: &mut u32) {"
+            why: "That makes `n` changeable, but it's `self.counts` that the loop needs to change."
+        answer: a
+        explanation: "`&mut self.counts` needs write access to `self`, but `&self` only gives read access. A method that changes its struct takes `&mut self`."
+        concepts: [method.self, borrow.mut, err.E0596]
+
+      - type: true-false
+        id: tf-old-changes-vec
+        prompt: "In `add`, `old.qty += item.qty;` changes the item stored inside `self.items`, not a copy of it."
+        answer: true
+        explanation: "`old` is a `&mut Item` pointing into the `Vec`. Writing through it changes the stored item, which is why `find` later sees the new quantity."
+        concepts: [borrow.mut, vec.iter]
+
+  # ---------------------------------------------------------------- step 5
+  - id: report
+    title: Report totals by category
+    goal: |
+      **The owner wants a stock summary: how much of each category is on the shelves.** The `report` method adds up quantities per category with the entry API, then prints the totals.
+
+      A `BTreeMap` keeps its keys sorted, so the report comes out in the same order every run.
+    file:
+      rust: |
+        use std::collections::BTreeMap;
+
+        #[derive(Debug)]
+        enum Category { Tool, Food, Part }
+
+        #[derive(Debug)]
+        struct Item {
+            name: String,
+            qty: u32,
+            category: Category,
+        }
+
+        struct Inventory { items: Vec<Item> }
+
+        impl Inventory {
+            fn new() -> Self {
+                Inventory { items: Vec::new() }
+            }
+
+            fn add(&mut self, item: Item) {
+                for old in &mut self.items {
+                    if old.name == item.name {
+                        old.qty += item.qty;
+                        return;
+                    }
+                }
+                self.items.push(item);
+            }
+
+            fn find(&self, name: &str)
+                -> Option<&Item> {
+                for item in &self.items {
+                    if item.name == name {
+                        return Some(item);
+                    }
+                }
+                None
+            }
+
+            fn report(&self) {
+                let mut sums = BTreeMap::new();
+                for item in &self.items {
+                    let c = &item.category;
+                    let total = sums
+                        .entry(format!("{c:?}"))
+                        .or_insert(0);
+                    *total += item.qty;
+                }
+                for (c, total) in &sums {
+                    println!("{c}: {total}");
+                }
+            }
+        }
+
+        fn main() {
+            let mut inv = Inventory::new();
+            for (name, qty, category) in [
+                ("hammer", 3, Category::Tool),
+                ("rice", 5, Category::Food),
+                ("bolts", 40, Category::Part),
+                ("rice", 10, Category::Food),
+            ] {
+                inv.add(Item {
+                    name: name.to_string(),
+                    qty,
+                    category,
+                });
+            }
+            let n = inv.items.len();
+            println!("{n} items");
+            println!("{:?}", inv.find("rice"));
+            println!("{:?}", inv.find("glue"));
+            inv.report();
+        }
+      verify: run
+      expectStdout: "3 items\nSome(Item { name: \"rice\", qty: 15, category: Food })\nNone\nFood: 15\nPart: 40\nTool: 3\n"
+    exercises:
+      - type: concept
+        id: concept-debug-key
+        title: A key that sorts
+        markdown: |
+          A `BTreeMap` keeps its keys in order, so it needs keys it can compare. `Category` can't be compared yet; that needs extra `derive`s you'll meet later.
+
+          Its Debug name can, though: `format!("{c:?}")` turns `Category::Food` into the `String` `"Food"`, and strings sort alphabetically.
+        code:
+          rust: |
+            #[derive(Debug)]
+            enum Category { Tool, Food }
+
+            let c = Category::Food;
+            let key = format!("{c:?}");
+            println!("{key}");
+          verify: run
+          expectStdout: "Food\n"
+        concepts: [fmt.debug, collections.choose]
+
+      - type: fill-tokens
+        id: fill-report
+        prompt: Fill the blanks to add up the quantities per category
+        code:
+          rust: |
+            fn report(&self) {
+                let mut sums = ___1___::new();
+                for item in &self.items {
+                    let c = &item.category;
+                    let total = sums
+                        .___2___(format!("{c:?}"))
+                        .___3___(0);
+                    *total += item.qty;
+                }
+                for (c, total) in &sums {
+                    println!("{c}: {total}");
+                }
+            }
+          verify: run
+          wrap: none
+          hidden:
+            before: |
+              use std::collections::BTreeMap;
+              #[derive(Debug)]
+              enum Category { Tool, Part }
+              struct Item {
+                  qty: u32,
+                  category: Category,
+              }
+              struct Inventory { items: Vec<Item> }
+              impl Inventory {
+            after: |
+              }
+              fn main() {
+                  let inv = Inventory { items: vec![
+                      Item { qty: 3, category: Category::Tool },
+                      Item { qty: 40, category: Category::Part },
+                      Item { qty: 10, category: Category::Part },
+                  ] };
+                  inv.report();
+              }
+          expectStdout: "Part: 50\nTool: 3\n"
+        blanks:
+          "1": { answer: ["BTreeMap"] }
+          "2": { answer: ["entry"] }
+          "3": { answer: ["or_insert"] }
+        bank: ["BTreeMap", "entry", "or_insert", "HashMap", "get", "insert"]
+        explanation: "`entry(key).or_insert(0)` starts a category at 0 the first time it's seen and returns a `&mut` to its total, which `+=` then increases. The `BTreeMap` prints the categories in sorted order."
+        concepts: [practice.inventory, map.entry]
+
+      - type: predict-output
+        id: predict-sorted-totals
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+            fn main() {
+                let mut sums = BTreeMap::new();
+                for (cat, qty) in [
+                    ("Tool", 3), ("Part", 40),
+                    ("Part", 10),
+                ] {
+                    let total = sums.entry(cat)
+                        .or_insert(0);
+                    *total += qty;
+                }
+                for (cat, total) in &sums {
+                    println!("{cat}: {total}");
+                }
+            }
+          verify: run
+        options:
+          - id: a
+            text: "Part: 50\nTool: 3"
+          - id: b
+            text: "Tool: 3\nPart: 50"
+            why: "A `BTreeMap` doesn't remember the order you inserted keys. It visits them sorted, and `Part` comes before `Tool`."
+          - id: c
+            text: "Tool: 3\nPart: 40\nPart: 10"
+            why: "A map has one entry per key. The second `Part` finds the existing entry and adds to it."
+        answer: a
+        explanation: "`entry` finds `Part` the second time, so its total becomes 50. The loop then visits the keys in sorted order: `Part`, then `Tool`."
+        concepts: [map.entry, map.iter]
+
+      - type: mcq
+        id: mcq-why-btreemap
+        prompt: "Why does `report` use a `BTreeMap` rather than a `HashMap`?"
+        options:
+          - id: a
+            text: "So the categories print in sorted order, the same on every run"
+          - id: b
+            text: "A `HashMap` has no `entry` method"
+            why: "`HashMap` has the same `entry(...).or_insert(...)` API. The difference is the order of its loop."
+          - id: c
+            text: "A `HashMap` can't use `String` keys"
+            why: "`String` keys work in both maps. Word counts in a `HashMap` often use them."
+        answer: a
+        explanation: "Looping over a `HashMap` gives its keys in an unpredictable order that can change between runs. A `BTreeMap` always gives them sorted, so the report is stable."
+        concepts: [collections.choose, map.iter]
+
+      - type: decode-error
+        id: decode-enum-key
+        prompt: What does this error mean?
+        code:
+          rust: |
+            use std::collections::BTreeMap;
+
+            #[derive(Debug)]
+            enum Category { Tool, Food }
+
+            fn main() {
+                let mut sums = BTreeMap::new();
+                sums.insert(Category::Tool, 3);
+                println!("{sums:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0277]
+        options:
+          - id: a
+            text: "A `BTreeMap` sorts its keys, and `Category` can't be compared, so it can't be a key"
+          - id: b
+            text: "`Category` needs `#[derive(Debug)]` to go into a map"
+            why: "`Category` already derives `Debug`. The error asks for `Ord`, which is about ordering."
+          - id: c
+            text: "A `BTreeMap` can't hold numbers as values"
+            why: "Values can be any type. The complaint is about the key type."
+        answer: a
+        explanation: "`Ord` is the ability to put values in order. A `BTreeMap` needs it for its keys, which is why `report` uses the category's name, a `String`, as the key."
+        concepts: [collections.choose, err.E0277]
+
+      - type: parsons
+        id: parsons-count-per-category
+        prompt: Arrange the lines to count how many different items each category has
+        lines:
+          - { id: l1, text: "let mut sums = BTreeMap::new();" }
+          - { id: l2, text: "for item in &items {" }
+          - { id: l3, text: "    let c = &item.category;" }
+          - { id: l4, text: "    let key = format!(\"{c:?}\");" }
+          - { id: l5, text: "    *sums.entry(key).or_insert(0) += 1;" }
+          - { id: l6, text: "}" }
+          - { id: l7, text: "println!(\"{sums:?}\");" }
+        distractors:
+          - { id: d1, text: "    sums.insert(key, 1);" }
+        answer: [l1, l2, l3, l4, l5, l6, l7]
+        verify:
+          harness: |
+            use std::collections::BTreeMap;
+            #[derive(Debug)]
+            enum Category { Tool, Part }
+            struct Item {
+                category: Category,
+            }
+            fn main() {
+                let items = vec![
+                    Item { category: Category::Part },
+                    Item { category: Category::Tool },
+                    Item { category: Category::Part },
+                ];
+            {{solution}}
+            }
+          mode: run
+          expectStdout: "{\"Part\": 2, \"Tool\": 1}\n"
+        explanation: "The map is made before the loop. Inside it, each item's category name becomes a key, and `or_insert(0)` then `+= 1` counts it; `insert(key, 1)` would reset the count to 1 each time."
+        concepts: [practice.inventory, map.entry]
+
+      - type: true-false
+        id: tf-report-borrows
+        prompt: "After `inv.report();`, `main` can still use `inv`."
+        answer: true
+        explanation: "`report` takes `&self`, so it only borrows the inventory while it runs. Ownership stays with `inv` in `main`."
+        concepts: [method.self, borrow.shared]

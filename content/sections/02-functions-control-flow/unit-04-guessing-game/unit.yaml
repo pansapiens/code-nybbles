@@ -1,0 +1,14 @@
+id: functions-control-flow.guessing-game
+title: "Project: Guessing Game"
+description: Build the Rust Book's guessing game step by step, reading input and looping until the guess is right.
+colour: orange
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html
+sources:
+  - name: The Rust Programming Language, ch. 2
+    url: https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html
+    licence: MIT OR Apache-2.0
+    adapted: true
+    changes: rebuilt as guided steps with a fixed secret number; names and messages shortened to fit 40 columns
+path:
+  - build: build-guessing-game

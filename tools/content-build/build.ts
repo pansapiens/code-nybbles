@@ -117,7 +117,7 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
           const changed = Object.entries(fill).filter(([k, t]) => ex.blanks[k]!.answer[0] !== t)
           out.push({
             exercise: ex,
-            case: { id: `${gid}#fill${i}`, source: caseSource(code.rust.replace(BLANK, (_, n: string) => fill[n] ?? ''), code.wrap, code.hidden, 'run'), mode: 'run', edition },
+            case: { id: `${gid}#fill${i}`, source: caseSource(code.rust.replace(BLANK, (_, n: string) => fill[n] ?? ''), code.wrap, code.hidden, 'run'), mode: 'run', edition, stdin: code.stdin },
             apply: () => {},
             probe: (r) =>
               r.outcome.compiled && r.outcome.exitCode === 0 && r.outcome.stdout === code.expectStdout
@@ -272,7 +272,7 @@ function buildLevel(
     const { file } = step
     if (file.verify !== 'run') issues.error(at, 'a step file must be `verify: run` so the end card can show its output')
     const total = file.rust.replace(/\n$/, '').split('\n').length
-    if (total > 40) issues.warn(at, `file has ${total} lines (Builds allow 40)`)
+    if (total > 80) issues.warn(at, `file has ${total} lines (Builds allow 80)`)
     const wide = wideLines(file.rust)
     if (wide) issues.warn(at, `${wide} file line(s) wider than ${MAX_COLS} columns`)
     if (step.exercises.length < 3 || step.exercises.length > 8)

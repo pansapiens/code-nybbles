@@ -269,7 +269,7 @@ steps:
     exercises: [...]     # 3-8 exercises that build this step's change
 ```
 
-It compiles to an ordinary level (`build: true`) with one lesson per step, so the player needs no special case. Each lesson is a generated `concept` card (titled with the step title: the goal, then "Your program so far:" with the previous file, omitted for step 1), the step's exercises, and a generated `concept` card ("Your program now:" with the file, "You type:" with `stdin` if any, "It prints:" with the verified stdout). The file may exceed the 15-line code limit (warning above 40 lines); the 40-column rule applies. Step ids are unique. XP: 15 per step, plus 20 when the last step first completes.
+It compiles to an ordinary level (`build: true`) with one lesson per step, so the player needs no special case. Each lesson is a generated `concept` card (titled with the step title: the goal, then "Your program so far:" with the previous file, omitted for step 1), the step's exercises, and a generated `concept` card ("Your program now:" with the file, "You type:" with `stdin` if any, "It prints:" with the verified stdout). The file may exceed the 15-line code limit (warning above 80 lines: the closing card shows the whole program, which scrolls); the 40-column rule applies. Step ids are unique. XP: 15 per step, plus 20 when the last step first completes.
 
 ---
 

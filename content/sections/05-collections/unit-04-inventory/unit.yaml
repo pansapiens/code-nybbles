@@ -1,0 +1,14 @@
+id: collections.inventory
+title: "Project: Inventory"
+description: Build a small stock tracker from structs, enums, methods, a Vec and a BTreeMap.
+colour: pink
+guidebook: guidebook.md
+bookRef: https://doc.rust-lang.org/book/ch08-00-common-collections.html
+sources:
+  - name: The Rust Programming Language, ch. 5, 6 and 8
+    url: https://doc.rust-lang.org/book/ch08-00-common-collections.html
+    licence: MIT OR Apache-2.0
+    adapted: true
+    changes: an original project using the chapters' ideas
+path:
+  - build: build-inventory

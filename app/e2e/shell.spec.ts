@@ -111,7 +111,7 @@ test.describe('placement test', () => {
     const mcq = (id: string) => ({ type: 'mcq', id, prompt: 'Pick one', options: [{ id: 'a', code: 'right' }, { id: 'b', code: 'wrong' }], answer: 'a' })
     await page.route('**/content/section-*.json', async (route) => {
       const section = await (await route.fetch()).json()
-      const last = section.units.at(-1)
+      const last = section.units.findLast((u: { path: { kind: string }[] }) => u.path.some((p) => p.kind === 'checkpoint'))
       const level = last.levels[last.path.find((p: { kind: string }) => p.kind === 'checkpoint').levelId]
       level.lessons[0].exercises = ['q1', 'q2', 'q3', 'q4'].map(mcq)
       await route.fulfill({ json: section })

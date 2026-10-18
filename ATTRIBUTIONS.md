@@ -13,6 +13,7 @@ draw on these sources, under the licences shown:
 - [The Rust Programming Language, ch. 3.3](https://doc.rust-lang.org/book/ch03-03-how-functions-work.html), MIT OR Apache-2.0. Used in: Functions.
 - [The Rust Programming Language, ch. 3.5](https://doc.rust-lang.org/book/ch03-05-control-flow.html), MIT OR Apache-2.0. Used in: Conditionals.
 - [The Rust Programming Language, ch. 3.5](https://doc.rust-lang.org/book/ch03-05-control-flow.html#repetition-with-loops), MIT OR Apache-2.0. Used in: Loops.
+- [The Rust Programming Language, ch. 2](https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html), MIT OR Apache-2.0, adapted (rebuilt as guided steps with a fixed secret number; names and messages shortened to fit 40 columns). Used in: Project: Guessing Game.
 - [The Rust Programming Language, ch. 4.1](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html), MIT OR Apache-2.0. Used in: Memory Basics.
 - [The Rust Programming Language, ch. 4.1](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#variables-and-data-interacting-with-move), MIT OR Apache-2.0. Used in: Moves, Copies & Clones.
 - [The Rust Programming Language, ch. 4.2](https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html), MIT OR Apache-2.0. Used in: References & Borrowing.
@@ -27,3 +28,4 @@ draw on these sources, under the licences shown:
 - [The Rust Programming Language, ch. 8.1](https://doc.rust-lang.org/book/ch08-01-vectors.html), MIT OR Apache-2.0. Used in: Vectors.
 - [The Rust Programming Language, ch. 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html), MIT OR Apache-2.0. Used in: Strings in Depth.
 - [The Rust Programming Language, ch. 8.3](https://doc.rust-lang.org/book/ch08-03-hash-maps.html), MIT OR Apache-2.0. Used in: HashMap & Friends.
+- [The Rust Programming Language, ch. 5, 6 and 8](https://doc.rust-lang.org/book/ch08-00-common-collections.html), MIT OR Apache-2.0, adapted (an original project using the chapters' ideas). Used in: Project: Inventory.

@@ -1,0 +1,885 @@
+id: functions-control-flow.guessing-game.build-guessing-game
+title: Guessing Game
+icon: star
+concepts: [io.stdin, string.parse-intro, match.ordering, ctrl.loop-input, cargo.dependency-intro]
+reviewConcepts: [var.mut, var.shadowing, types.inference, macro.print-family, fmt.debug, match.intro, ctrl.loop, ctrl.continue, range.basics, err.E0308]
+steps:
+  # ---------------------------------------------------------------- step 1
+  - id: read-guess
+    title: Read a guess
+    goal: |
+      **You're building the guessing game from the Rust Book.** First, the program greets the player, reads one line they type, and prints it back.
+
+      Reading input needs a few new pieces: `String`, `&mut` and `.expect`. Treat them as a recipe for now. Section 3 explains `String` and `&mut`, and Section 6 explains `expect`.
+    file:
+      rust: |
+        use std::io;
+
+        fn main() {
+            println!("Guess the number!");
+            println!("Input your guess.");
+
+            let mut guess = String::new();
+            io::stdin()
+                .read_line(&mut guess)
+                .expect("Failed to read");
+
+            println!("You guessed {guess}");
+        }
+      verify: run
+      stdin: "50\n"
+      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\n\n"
+    exercises:
+      - type: concept
+        id: concept-input-recipe
+        title: The input recipe
+        markdown: |
+          - `use std::io;` lets you write `io::stdin()`, the program's keyboard input.
+          - `String::new()` makes an empty `String`: text that can grow.
+          - `.read_line(&mut guess)` adds the typed line to `guess`. The `&mut` lets it change `guess`.
+          - `.expect("...")` stops the program with that message if reading fails.
+        concepts: [io.stdin]
+
+      - type: predict-output
+        id: predict-newline-kept
+        prompt: You type `Ferris` and press Enter. What does this print?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let mut name = String::new();
+                io::stdin()
+                    .read_line(&mut name)
+                    .expect("Failed to read");
+                println!("[{name}]");
+            }
+          verify: run
+          stdin: "Ferris\n"
+        options:
+          - { id: a, text: "[Ferris\n]" }
+          - { id: b, text: "[Ferris]", why: "`read_line` keeps the Enter key's newline at the end of the text, so `]` lands on the next line." }
+          - { id: c, text: "[]", why: "`read_line` puts the typed line into `name` before the `println!` runs." }
+        answer: a
+        explanation: "`name` holds `\"Ferris\\n\"`: the letters plus the newline from pressing Enter. Printing it inside brackets shows where the newline is."
+        concepts: [io.stdin]
+
+      - type: fill-tokens
+        id: fill-read-guess
+        prompt: "Fill the blanks so the program reads a line into `guess`"
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let ___1___ guess = ___2___::new();
+                io::stdin()
+                    .___3___(&mut guess)
+                    .expect("Failed to read");
+                println!("You guessed {guess}");
+            }
+          verify: run
+          stdin: "7\n"
+          expectStdout: "You guessed 7\n\n"
+        blanks:
+          "1": { answer: ["mut"] }
+          "2": { answer: ["String"] }
+          "3": { answer: ["read_line"] }
+        bank: ["mut", "String", "read_line", "const", "str", "read_text"]
+        explanation: "`let mut guess = String::new();` makes an empty, changeable `String`. `.read_line(&mut guess)` adds the typed line to it."
+        concepts: [io.stdin, var.mut]
+
+      - type: decode-error
+        id: decode-missing-mut
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                println!("You guessed {guess}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "cannot borrow `guess` as mutable"
+        options:
+          - { id: a, code: "let mut guess = String::new();" }
+          - { id: b, code: ".read_line(&guess)", why: "`read_line` has to change `guess`, so it needs `&mut guess`. A plain `&` doesn't allow changes." }
+          - { id: c, code: "let guess = mut String::new();", why: "`mut` belongs on the variable, straight after `let`." }
+        answer: a
+        explanation: "`read_line` changes `guess`, so `guess` must be declared with `mut`, as for any variable you change. The compiler's help line suggests exactly that."
+        concepts: [io.stdin, var.mut]
+
+      - type: parsons
+        id: parsons-read-guess
+        prompt: "Arrange the lines so the program reads a guess and prints it back"
+        lines:
+          - { id: l1, text: "use std::io;" }
+          - { id: l2, text: "fn main() {" }
+          - { id: l3, text: "    let mut guess = String::new();" }
+          - { id: l4, text: "    io::stdin()" }
+          - { id: l5, text: "        .read_line(&mut guess)" }
+          - { id: l6, text: '        .expect("Failed to read");' }
+          - { id: l7, text: '    println!("You guessed {guess}");' }
+          - { id: l8, text: "}" }
+        distractors:
+          - { id: d1, text: "    let guess = String::new();" }
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        alternatives:
+          - [l2, l3, l4, l5, l6, l7, l8, l1]
+        verify:
+          mode: run
+          stdin: "9\n"
+          expectStdout: "You guessed 9\n\n"
+        explanation: "Create the empty `String` first, then read into it, then print it. `guess` needs `mut` because `read_line` changes it."
+        concepts: [io.stdin, var.mut]
+
+      - type: predict-output
+        id: predict-read-twice
+        prompt: You type `red`, press Enter, then type `blue` and press Enter. What does this print?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let mut words = String::new();
+                io::stdin()
+                    .read_line(&mut words)
+                    .expect("Failed to read");
+                io::stdin()
+                    .read_line(&mut words)
+                    .expect("Failed to read");
+                print!("{words}");
+            }
+          verify: run
+          stdin: "red\nblue\n"
+        options:
+          - { id: a, text: "red\nblue" }
+          - { id: b, text: "blue", why: "`read_line` adds to the end of the `String`. It doesn't replace what's already there." }
+          - { id: c, text: "red", why: "The second `read_line` reads the next line you type, `blue`." }
+        answer: a
+        explanation: "Each `read_line` adds one line, newline included, to the end of `words`. So `words` ends up as `\"red\\nblue\\n\"`."
+        concepts: [io.stdin, macro.print-family]
+
+      - type: mcq
+        id: mcq-expect-when
+        prompt: "When does `.expect(\"Failed to read\")` show its message?"
+        options:
+          - { id: a, text: "Only if reading the input fails. The program then stops with that message." }
+          - { id: b, text: "Every time, before the program reads the input", why: "`expect` stays silent when reading works. Its message only appears when something goes wrong." }
+          - { id: c, text: "When you type something that isn't a number", why: "`read_line` accepts any text. Turning text into a number comes in the next step." }
+        answer: a
+        explanation: "`expect` lets the program carry on when reading works, and stops it with your message when reading fails. Section 6 explains how it works."
+        concepts: [io.stdin]
+
+  # ---------------------------------------------------------------- step 2
+  - id: parse-guess
+    title: Turn the text into a number
+    goal: |
+      **`guess` holds text such as `"50\n"`, but the game needs a number.** This step turns the text into a `u32`: `trim` removes the newline, `parse` reads the digits, and `expect` stops the program if they aren't a number. Section 6 explains `parse` and `expect` fully.
+    file:
+      rust: |
+        use std::io;
+
+        fn main() {
+            println!("Guess the number!");
+            println!("Input your guess.");
+
+            let mut guess = String::new();
+            io::stdin()
+                .read_line(&mut guess)
+                .expect("Failed to read");
+
+            let guess: u32 = guess
+                .trim()
+                .parse()
+                .expect("Type a number!");
+
+            println!("You guessed {guess}");
+        }
+      verify: run
+      stdin: "50\n"
+      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\n"
+    exercises:
+      - type: mcq
+        id: mcq-why-trim
+        prompt: "You type `50` and press Enter. Why does the program call `.trim()` before `.parse()`?"
+        options:
+          - { id: a, text: "`guess` holds `\"50\\n\"`, and `parse` fails on the newline" }
+          - { id: b, text: "`trim` turns the text into a number", why: "`parse` does the turning. `trim` only removes spaces and newlines from both ends." }
+          - { id: c, text: "`trim` removes the quote marks around the text", why: "The quotes aren't part of the text. They only mark where it starts and ends in code." }
+        answer: a
+        explanation: "`read_line` keeps the newline from pressing Enter. `\"50\\n\".parse()` fails because `\\n` isn't a digit, so `trim` removes it first."
+        concepts: [string.parse-intro, io.stdin]
+
+      - type: mcq
+        id: mcq-type-abc
+        prompt: You type `abc` and press Enter. What happens?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let guess: u32 = guess
+                    .trim()
+                    .parse()
+                    .expect("Type a number!");
+                println!("You guessed {guess}");
+            }
+          verify: run
+          stdin: "abc\n"
+          expectPanic: "Type a number!"
+        options:
+          - { id: a, text: "The program stops (panics) with the message `Type a number!`" }
+          - { id: b, text: "It prints `You guessed 0`", why: "`parse` doesn't make up a number. It reports that the text isn't one, and `expect` stops the program." }
+          - { id: c, text: "It doesn't compile", why: "The compiler can't know what you'll type. The program compiles, and the problem shows up when it runs." }
+          - { id: d, text: "It asks for another guess", why: "Nothing here repeats. Asking again needs a loop, which comes in step 4." }
+        answer: a
+        explanation: "`abc` isn't a number, so `parse` reports a failure and `expect` stops the program with `Type a number!`. The `println!` never runs."
+        concepts: [string.parse-intro]
+
+      - type: predict-output
+        id: predict-plus-one
+        prompt: You type `41` and press Enter. What does this print?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let guess: u32 = guess
+                    .trim()
+                    .parse()
+                    .expect("Type a number!");
+                println!("{}", guess + 1);
+            }
+          verify: run
+          stdin: "41\n"
+        options:
+          - { id: a, text: "42" }
+          - { id: b, text: "411", why: "After `parse`, `guess` is a `u32`, so `+ 1` does arithmetic. It doesn't stick text together." }
+          - { id: c, text: "41", why: "`guess + 1` is worked out before printing, so the number printed is one more than you typed." }
+        answer: a
+        explanation: "`parse` turns the text `\"41\"` into the number `41`, so `guess + 1` is `42`."
+        concepts: [string.parse-intro]
+
+      - type: decode-error
+        id: decode-annotation
+        prompt: Which change fixes the error?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let guess = guess
+                    .trim()
+                    .parse()
+                    .expect("Type a number!");
+                println!("You guessed {guess}");
+            }
+          verify: compile-fail
+          expectErrorMessage: "type annotations needed"
+        options:
+          - { id: a, code: "let guess: u32 = guess" }
+          - { id: b, code: "let mut guess = guess", why: "`mut` lets a variable change. It doesn't tell `parse` what kind of number to make." }
+          - { id: c, code: "let guess = guess.parse()", why: "Dropping `trim` doesn't help the compiler. It still doesn't know which type to parse into." }
+        answer: a
+        explanation: "`parse` can make many types (`u32`, `i64`, `f64`, ...), so the compiler needs to be told which one. The annotation `: u32` on the variable does that."
+        concepts: [string.parse-intro, types.inference]
+
+      - type: fill-tokens
+        id: fill-parse
+        prompt: "Fill the blanks so the program turns the typed text into a `u32`"
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let guess: ___1___ = guess
+                    .___2___()
+                    .___3___()
+                    .expect("Type a number!");
+                println!("You guessed {guess}");
+            }
+          verify: run
+          stdin: "50\n"
+          expectStdout: "You guessed 50\n"
+        blanks:
+          "1": { answer: ["u32"] }
+          "2": { answer: ["trim"] }
+          "3": { answer: ["parse"] }
+        bank: ["u32", "trim", "parse", "char", "read_line", "text"]
+        explanation: "`trim` removes the newline, `parse` reads the digits, and the `: u32` annotation tells `parse` which type to make."
+        concepts: [string.parse-intro, types.inference]
+
+      - type: true-false
+        id: tf-shadow-guess
+        prompt: "`let guess: u32 = guess.trim()...` creates a new variable named `guess` that hides the text version."
+        answer: true
+        explanation: "This is shadowing, from Unit 1.2. The new `guess` is a `u32`, and it reuses the name so you don't need `guess_text` and `guess_number`."
+        concepts: [var.shadowing, string.parse-intro]
+
+  # ---------------------------------------------------------------- step 3
+  - id: compare
+    title: Compare with the secret
+    goal: |
+      **Now compare the guess with a secret number.** For now the secret is fixed at `42`, so every run is predictable. The last step shows how the real game picks a random one.
+
+      `guess.cmp(&secret)` gives back an `Ordering`, and `match` picks the message. The `&` is part of the recipe (Section 3).
+    file:
+      rust: |
+        use std::cmp::Ordering;
+        use std::io;
+
+        fn main() {
+            println!("Guess the number!");
+            let secret = 42; // fixed for now
+            println!("Input your guess.");
+
+            let mut guess = String::new();
+            io::stdin()
+                .read_line(&mut guess)
+                .expect("Failed to read");
+
+            let guess: u32 = guess
+                .trim()
+                .parse()
+                .expect("Type a number!");
+
+            println!("You guessed {guess}");
+
+            match guess.cmp(&secret) {
+                Ordering::Less => {
+                    println!("Too small!");
+                }
+                Ordering::Greater => {
+                    println!("Too big!");
+                }
+                Ordering::Equal => {
+                    println!("You win!");
+                }
+            }
+        }
+      verify: run
+      stdin: "50\n"
+      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\nToo big!\n"
+    exercises:
+      - type: concept
+        id: concept-ordering
+        title: Three possible answers
+        markdown: |
+          **`a.cmp(&b)` compares `a` with `b`** and gives back an `Ordering`: `Less`, `Greater` or `Equal`.
+
+          In the game, `use std::cmp::Ordering;` lets you write `Ordering::Less` and so on. A `match` with all three arms covers every case, so it needs no `_` arm.
+        code:
+          rust: |
+            let guess = 30;
+            let secret = 42;
+            println!("{:?}", guess.cmp(&secret));
+            println!("{:?}", secret.cmp(&guess));
+            println!("{:?}", guess.cmp(&guess));
+          verify: run
+          expectStdout: "Less\nGreater\nEqual\n"
+        concepts: [match.ordering, fmt.debug]
+
+      - type: predict-output
+        id: predict-too-small
+        code:
+          rust: |
+            use std::cmp::Ordering;
+
+            fn main() {
+                let secret = 42;
+                let guess = 30;
+                let msg = match guess.cmp(&secret) {
+                    Ordering::Less => "Too small!",
+                    Ordering::Greater => "Too big!",
+                    Ordering::Equal => "You win!",
+                };
+                println!("{msg}");
+            }
+          verify: run
+        options:
+          - { id: a, text: "Too small!" }
+          - { id: b, text: "Too big!", why: "`guess.cmp(&secret)` compares `guess` with `secret`. `30` is less than `42`, so it's `Less`." }
+          - { id: c, text: "You win!", why: "`Equal` only matches when both numbers are the same." }
+        answer: a
+        explanation: "`30.cmp(&42)` is `Ordering::Less`, so the first arm gives `\"Too small!\"`."
+        concepts: [match.ordering, match.intro]
+
+      - type: mcq
+        id: mcq-cmp-gives
+        prompt: "What does `guess.cmp(&secret)` give back?"
+        options:
+          - { id: a, text: "An `Ordering`: `Less`, `Greater` or `Equal`" }
+          - { id: b, text: "`true` or `false`", why: "That's what `==` or `<` give. `cmp` has three possible answers, not two." }
+          - { id: c, text: "The larger of the two numbers", why: "`cmp` doesn't pick a number. It reports how `guess` compares with `secret`." }
+        answer: a
+        explanation: "`cmp` reports whether the first value is less than, greater than or equal to the second, as an `Ordering`."
+        concepts: [match.ordering]
+
+      - type: fill-tokens
+        id: fill-cmp
+        prompt: "Fill the blanks so the program prints `Too big!`"
+        code:
+          rust: |
+            use std::cmp::Ordering;
+
+            fn main() {
+                let secret = 42;
+                let guess = 50;
+                let msg = match guess.___1___(&secret) {
+                    Ordering::Less => "Too small!",
+                    Ordering::___2___ => "Too big!",
+                    Ordering::Equal => "You win!",
+                };
+                println!("{msg}");
+            }
+          verify: run
+          expectStdout: "Too big!\n"
+        blanks:
+          "1": { answer: ["cmp"] }
+          "2": { answer: ["Greater"] }
+        bank: ["cmp", "Greater", "compare", "Bigger", "Less", "More"]
+        explanation: "`cmp` compares two values, and `Ordering::Greater` means the first is larger. Each `Ordering` value needs its own arm."
+        concepts: [match.ordering]
+
+      - type: spot-bug
+        id: spot-reversed-cmp
+        prompt: "This program should print `Too big!` because `50` is above the secret, but it prints `Too small!`. Tap the line with the mistake."
+        code:
+          rust: |
+            use std::cmp::Ordering;
+
+            fn main() {
+                let secret = 42;
+                let guess = 50;
+                let msg = match secret.cmp(&guess) {
+                    Ordering::Less => "Too small!",
+                    Ordering::Greater => "Too big!",
+                    Ordering::Equal => "You win!",
+                };
+                println!("{msg}");
+            }
+          verify: run
+          expectStdout: "Too small!\n"
+        answer: 6
+        explanation: "`secret.cmp(&guess)` asks how `secret` compares with `guess`, which is the other way round. The arms expect `guess.cmp(&secret)`."
+        concepts: [match.ordering]
+
+      - type: decode-error
+        id: decode-compare-text
+        prompt: What is the compiler telling you?
+        code:
+          rust: |
+            use std::io;
+
+            fn main() {
+                let secret = 42;
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let result = guess.cmp(&secret);
+                println!("{result:?}");
+            }
+          verify: compile-fail
+          expectErrors: [E0308]
+        options:
+          - { id: a, text: "`guess` is still text, so it can't be compared with a number. Parse it into a `u32` first." }
+          - { id: b, text: "`secret` needs `mut` before it can be compared", why: "Comparing only reads `secret`. The problem is that the two values have different types." }
+          - { id: c, text: "`cmp` can't be used before a `match`", why: "`cmp` can be used anywhere. The error is about a `String` meeting a number." }
+        answer: a
+        explanation: "E0308 says `cmp` expected another `String` but found a number. Rust won't compare text with a number, which is why step 2 parses the guess."
+        concepts: [match.ordering, err.E0308, string.parse-intro]
+
+      - type: true-false
+        id: tf-no-wildcard
+        prompt: "This `match` needs a `_ =>` arm to compile."
+        code:
+          rust: |
+            use std::cmp::Ordering;
+
+            fn main() {
+                let secret = 42;
+                let guess = 7;
+                let msg = match guess.cmp(&secret) {
+                    Ordering::Less => "Too small!",
+                    Ordering::Greater => "Too big!",
+                    Ordering::Equal => "You win!",
+                };
+                println!("{msg}");
+            }
+          verify: run
+          expectStdout: "Too small!\n"
+        answer: false
+        explanation: "An `Ordering` is always `Less`, `Greater` or `Equal`, and all three have arms. With integers you need `_` because there are far too many values to list."
+        concepts: [match.ordering, match.intro]
+
+  # ---------------------------------------------------------------- step 4
+  - id: loop-until-right
+    title: Keep guessing until you win
+    goal: |
+      **One guess isn't much of a game.** This step wraps the guessing in a `loop` that ends with `break` when you win.
+
+      It also stops a typo from crashing the game. `parse` gives back either `Ok` with the number or `Err`, and a `match` skips bad input with `continue`. Section 6 covers `Ok` and `Err` fully.
+    file:
+      rust: |
+        use std::cmp::Ordering;
+        use std::io;
+
+        fn main() {
+            println!("Guess the number!");
+            let secret = 42; // fixed for now
+
+            loop {
+                println!("Input your guess.");
+
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+
+                let guess: u32 =
+                    match guess.trim().parse() {
+                        Ok(num) => num,
+                        Err(_) => continue,
+                    };
+
+                println!("You guessed {guess}");
+
+                match guess.cmp(&secret) {
+                    Ordering::Less => {
+                        println!("Too small!");
+                    }
+                    Ordering::Greater => {
+                        println!("Too big!");
+                    }
+                    Ordering::Equal => {
+                        println!("You win!");
+                        break;
+                    }
+                }
+            }
+        }
+      verify: run
+      stdin: "50\nabc\n25\n42\n"
+      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\nToo big!\nInput your guess.\nInput your guess.\nYou guessed 25\nToo small!\nInput your guess.\nYou guessed 42\nYou win!\n"
+    exercises:
+      - type: concept
+        id: concept-ok-err
+        title: Ok or Err
+        markdown: |
+          **`parse` gives back `Ok` with the number, or `Err` if the text isn't one.** A `match` handles both:
+
+          - `Ok(num) => num` makes the number the value of the `match`.
+          - `Err(_) => continue` skips to the next pass of the loop. The `_` means "whatever the problem was".
+        code:
+          rust: |
+            for text in ["7", "seven", "12"] {
+                let n: u32 = match text.parse() {
+                    Ok(num) => num,
+                    Err(_) => continue,
+                };
+                println!("{n}");
+            }
+          verify: run
+          expectStdout: "7\n12\n"
+        concepts: [ctrl.loop-input, ctrl.continue]
+
+      - type: predict-output
+        id: predict-skip-bad
+        prompt: "You type `3`, then `seven`, then `7`, pressing Enter each time. What does this print?"
+        code:
+          rust: |
+            use std::io;
+            loop {
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let guess: u32 =
+                    match guess.trim().parse() {
+                        Ok(num) => num,
+                        Err(_) => continue,
+                    };
+                println!("Got {guess}");
+                if guess == 7 { break; }
+            }
+          verify: run
+          stdin: "3\nseven\n7\n"
+        options:
+          - { id: a, text: "Got 3\nGot 7" }
+          - { id: b, text: "Got 3", why: "`continue` doesn't end the loop. It goes back to the top and reads the next line, `7`." }
+          - { id: c, text: "Got 3\nGot 0\nGot 7", why: "`Err` doesn't turn into `0`. `continue` skips the `println!` for that pass." }
+          - { id: d, text: "Got 3, then it panics", why: "There's no `expect` on `parse` any more. The `Err` arm handles bad input." }
+        answer: a
+        explanation: "`seven` gives `Err`, so `continue` starts the next pass without printing. `7` is printed and then `break` ends the loop."
+        concepts: [ctrl.loop-input, ctrl.continue]
+
+      - type: fill-tokens
+        id: fill-ok-err
+        prompt: "Fill the blanks so bad input is skipped and the loop keeps reading"
+        code:
+          rust: |
+            use std::io;
+            loop {
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+                let guess: u32 =
+                    match guess.trim().parse() {
+                        ___1___(num) => num,
+                        ___2___(_) => ___3___,
+                    };
+                println!("Got {guess}");
+                if guess == 7 { break; }
+            }
+          verify: run
+          stdin: "5\nabc\n7\n"
+          expectStdout: "Got 5\nGot 7\n"
+        blanks:
+          "1": { answer: ["Ok"] }
+          "2": { answer: ["Err"] }
+          "3": { answer: ["continue"] }
+        bank: ["Ok", "Err", "continue", "break", "Some", "None"]
+        explanation: "`Ok(num)` holds the parsed number. `Err(_)` means the text wasn't a number, and `continue` goes back to the top of the loop to read again."
+        concepts: [ctrl.loop-input]
+
+      - type: parsons
+        id: parsons-parse-match
+        prompt: "Arrange the lines so the game parses the guess, skips bad input and prints the number"
+        lines:
+          - { id: l1, text: "        let guess: u32 =" }
+          - { id: l2, text: "            match guess.trim().parse() {" }
+          - { id: l3, text: "                Ok(num) => num," }
+          - { id: l4, text: "                Err(_) => continue," }
+          - { id: l5, text: "            };" }
+          - { id: l6, text: '        println!("You guessed {guess}");' }
+        distractors:
+          - { id: d1, text: "                Err(_) => break," }
+        answer: [l1, l2, l3, l4, l5, l6]
+        alternatives:
+          - [l1, l2, l4, l3, l5, l6]
+        verify:
+          harness: |
+            use std::io;
+
+            fn main() {
+                loop {
+                    let mut guess = String::new();
+                    io::stdin()
+                        .read_line(&mut guess)
+                        .expect("Failed to read");
+            {{solution}}
+                    if guess == 42 {
+                        break;
+                    }
+                }
+            }
+          mode: run
+          stdin: "50\nabc\n42\n"
+          expectStdout: "You guessed 50\nYou guessed 42\n"
+        explanation: "The `match` gives the number for `Ok`, or skips to the next guess for `Err`. The `;` after `}` ends the `let` statement."
+        concepts: [ctrl.loop-input]
+
+      - type: spot-bug
+        id: spot-err-break
+        prompt: "You type `50`, `abc`, then `42`. The game should skip `abc` and keep asking, but it stops after `50`. Tap the line with the mistake."
+        code:
+          rust: |
+            use std::io;
+            fn main() {
+                loop {
+                    let mut guess = String::new();
+                    io::stdin()
+                        .read_line(&mut guess)
+                        .expect("Failed to read");
+                    let guess: u32 =
+                        match guess.trim().parse() {
+                            Ok(num) => num,
+                            Err(_) => break,
+                        };
+                    println!("You guessed {guess}");
+                }
+            }
+          verify: run
+          stdin: "50\nabc\n42\n"
+          expectStdout: "You guessed 50\n"
+        answer: 11
+        explanation: "`break` ends the whole loop, so the first bad input ends the game. `continue` skips only this pass and asks again."
+        concepts: [ctrl.loop-input, ctrl.loop]
+
+      - type: mcq
+        id: mcq-where-break
+        prompt: "Where does `break` go so the game ends only when you win?"
+        options:
+          - { id: a, text: "In the `Ordering::Equal` arm, after `println!(\"You win!\")`" }
+          - { id: b, text: "In the `Err(_)` arm, instead of `continue`", why: "Then a typo would end the game. Bad input should ask again." }
+          - { id: c, text: "After the `match`, as the last line of the loop", why: "Then the loop would end after any valid guess, right or wrong." }
+        answer: a
+        explanation: "The `Equal` arm only runs for the right guess, so a `break` there ends the loop at the right moment."
+        concepts: [ctrl.loop-input, ctrl.loop]
+
+      - type: true-false
+        id: tf-ok-num
+        prompt: "In `Ok(num) => num`, the name `num` is the number that `parse` read from the text."
+        answer: true
+        explanation: "The pattern `Ok(num)` takes the number out of the `Ok` and names it `num`. The arm then gives `num` as the value of the `match`."
+        concepts: [ctrl.loop-input]
+
+  # ---------------------------------------------------------------- step 5
+  - id: use-rand
+    title: A random secret
+    goal: |
+      **A fixed secret makes a dull game.** The Book picks a random number with `rand`, a **crate**: a package of Rust code that someone published on crates.io. Cargo downloads and builds crates for you.
+
+      This app can't run crates, so your program keeps `42` and shows the `rand` lines as comments.
+    file:
+      rust: |
+        use std::cmp::Ordering;
+        use std::io;
+        // use rand::prelude::*;
+
+        fn main() {
+            println!("Guess the number!");
+            // let secret = rand::rng()
+            //     .random_range(1..=100);
+            let secret = 42;
+
+            loop {
+                println!("Input your guess.");
+
+                let mut guess = String::new();
+                io::stdin()
+                    .read_line(&mut guess)
+                    .expect("Failed to read");
+
+                let guess: u32 =
+                    match guess.trim().parse() {
+                        Ok(num) => num,
+                        Err(_) => continue,
+                    };
+
+                println!("You guessed {guess}");
+
+                match guess.cmp(&secret) {
+                    Ordering::Less => {
+                        println!("Too small!");
+                    }
+                    Ordering::Greater => {
+                        println!("Too big!");
+                    }
+                    Ordering::Equal => {
+                        println!("You win!");
+                        break;
+                    }
+                }
+            }
+        }
+      verify: run
+      stdin: "50\nabc\n25\n42\n"
+      expectStdout: "Guess the number!\nInput your guess.\nYou guessed 50\nToo big!\nInput your guess.\nInput your guess.\nYou guessed 25\nToo small!\nInput your guess.\nYou guessed 42\nYou win!\n"
+    exercises:
+      - type: concept
+        id: concept-add-crate
+        title: Adding a crate
+        markdown: |
+          **List the crate under `[dependencies]` in `Cargo.toml`.** The next `cargo run` downloads and compiles it.
+
+          ```toml
+          [dependencies]
+          rand = "0.10.1"
+          ```
+
+          Then `use rand::prelude::*;` at the top of `main.rs` brings in what `random_range` needs. `rand::rng()` gives a generator seeded by the operating system:
+
+          ```rust
+          let secret = rand::rng()
+              .random_range(1..=100);
+          ```
+        concepts: [cargo.dependency-intro]
+
+      - type: mcq
+        id: mcq-cargo-toml
+        prompt: "What is `Cargo.toml` for?"
+        options:
+          - { id: a, text: "It describes your package and lists the crates it depends on" }
+          - { id: b, text: "It holds your program's Rust code", why: "Your code goes in `src/main.rs`. `Cargo.toml` is settings for Cargo." }
+          - { id: c, text: "It's the compiled program that you run", why: "Cargo puts the compiled program in `target/`. `Cargo.toml` is a text file you edit." }
+        answer: a
+        explanation: "`Cargo.toml` names your package and lists its dependencies. Cargo reads it to know which crates to download and build."
+        concepts: [cargo.dependency-intro]
+
+      - type: fill-tokens
+        id: fill-dependencies
+        prompt: "Fill the blank so Cargo adds the `rand` crate"
+        code:
+          rust: |
+            [___1___]
+            rand = "0.10.1"
+          verify: none
+          verifyReason: "`Cargo.toml` text, not Rust; the verifier has no crates"
+        blanks:
+          "1": { answer: ["dependencies"] }
+        bank: ["dependencies", "package", "crates", "use"]
+        explanation: "Crates your program uses go under `[dependencies]`. `[package]` holds your own package's name and version."
+        concepts: [cargo.dependency-intro]
+
+      - type: mcq
+        id: mcq-range-values
+        prompt: "Which numbers can `random_range(1..=100)` give?"
+        options:
+          - { id: a, text: "Any whole number from 1 to 100, including 100" }
+          - { id: b, text: "1 to 99", why: "That would be `1..100`. The `=` in `..=` includes the end." }
+          - { id: c, text: "0 to 100", why: "The range starts at `1`, so `0` is never picked." }
+        answer: a
+        explanation: "`1..=100` is an inclusive range, as in `for` loops from Unit 2.3: both `1` and `100` are included."
+        concepts: [cargo.dependency-intro, range.basics]
+
+      - type: true-false
+        id: tf-fixed-testing
+        prompt: "With `let secret = 42;`, typing `50`, then `25`, then `42` prints the same output on every run."
+        answer: true
+        explanation: "A fixed secret makes the program predictable, so its output can be checked against known input. With `rand`, the hints would change from run to run."
+        concepts: [cargo.dependency-intro]
+
+      - type: mcq
+        id: mcq-cargo-output
+        prompt: "After adding `rand`, `cargo run` prints `Downloaded rand v0.10.1` and `Compiling rand v0.10.1` before `Guess the number!`. What do these lines mean?"
+        options:
+          - { id: a, text: "Cargo fetched the `rand` crate and compiled it along with your program" }
+          - { id: b, text: "Your program printed them", why: "Your program's first line is `Guess the number!`. The lines before it come from Cargo." }
+          - { id: c, text: "Something went wrong while building", why: "These are progress messages. Problems are marked with `error` or `warning`." }
+        answer: a
+        explanation: "Cargo downloads each new dependency once, compiles it, then compiles and runs your program. The next `cargo run` reuses the compiled crate."
+        concepts: [cargo.dependency-intro]
+
+      - type: match-pairs
+        id: pairs-crate-pieces
+        prompt: Match each piece to where it belongs
+        pairs:
+          - ['rand = "0.10.1"', "Cargo.toml"]
+          - ["use rand::prelude::*;", "top of main.rs"]
+          - ["random_range(1..=100)", "inside main"]
+          - ["the rand crate", "crates.io"]
+        concepts: [cargo.dependency-intro]
