@@ -142,3 +142,24 @@ test('playground runs the default program from the practice hub', async ({ page 
   await page.getByRole('button', { name: 'RUN' }).click()
   await expect(page.getByLabel('Output')).toContainText('Hello, Nybbles!')
 })
+
+test('playground symbol keys type at the cursor, and TEST appears for code with tests', async ({ page }) => {
+  let sent: { tests?: boolean } = {}
+  await page.route('https://play.rust-lang.org/execute', (route) => {
+    sent = route.request().postDataJSON()
+    return route.fulfill({ json: { success: true, stdout: 'test t ... ok\n', stderr: '' } })
+  })
+  await onboard(page)
+  await page.goto('./playground')
+  const editor = page.getByLabel('Rust code')
+  await editor.fill('')
+  await expect(page.getByRole('button', { name: 'TEST' })).toHaveCount(0)
+  const keys = page.getByRole('toolbar', { name: 'Rust symbols' })
+  for (const k of ['#', '[', ']']) await keys.getByRole('button', { name: k, exact: true }).click()
+  await editor.pressSequentially('\nfn t() {}')
+  await expect(editor).toHaveValue('#[]\nfn t() {}')
+  await editor.fill('#[test]\nfn t() {}')
+  await page.getByRole('button', { name: 'TEST' }).click()
+  await expect(page.getByLabel('Output')).toContainText('test t ... ok')
+  expect(sent.tests).toBe(true)
+})

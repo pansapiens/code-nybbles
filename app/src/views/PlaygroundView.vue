@@ -4,15 +4,23 @@
     <label for="editor" class="note">Rust code</label>
     <textarea
       id="editor"
+      ref="editor"
       v-model="code"
       class="editor"
       rows="14"
       spellcheck="false"
       autocapitalize="off"
       autocorrect="off"
-      @keydown.tab.prevent="indent"
+      @keydown.tab.prevent="insert('    ')"
     />
-    <DuoButton block :disabled="!!blocked" @click="runCode">{{ running ? 'Running...' : 'RUN' }}</DuoButton>
+    <!-- mousedown.prevent keeps focus (and the soft keyboard) in the editor. -->
+    <div class="keys" role="toolbar" aria-label="Rust symbols">
+      <button v-for="k in KEYS" :key="k" type="button" class="key" @mousedown.prevent @click="insert(k === 'Tab' ? '    ' : k)">{{ k }}</button>
+    </div>
+    <div class="actions">
+      <DuoButton block :disabled="!!blocked" @click="runCode('run')">{{ running ? 'Running...' : 'RUN' }}</DuoButton>
+      <DuoButton v-if="hasTests" block variant="secondary" :disabled="!!blocked" @click="runCode('test')">TEST</DuoButton>
+    </div>
     <p v-if="blocked" class="note" role="status">{{ blocked }}</p>
     <pre v-if="result" class="output" aria-label="Output" aria-live="polite"><template v-if="result.stdout">{{ result.stdout }}</template><span v-if="result.stderr" class="err">{{ result.stderr }}</span></pre>
     <p class="note">Runs on play.rust-lang.org</p>
@@ -26,8 +34,12 @@ import { retryIn, run, type RunResult } from '@/services/code-runner'
 
 const KEY = 'playground-code'
 const DEFAULT = 'fn main() {\n    println!("Hello, Nybbles!");\n}\n'
+// plans/01 §4.4: the symbols a phone keyboard hides.
+const KEYS = ['Tab', '{', '}', '(', ')', '[', ']', '<', '>', ';', ':', '::', '&', '&mut ', "'", '"', '!', '?', '|', '=>', '->', '.', '_', '#']
 
 const code = ref(localStorage.getItem(KEY) ?? DEFAULT)
+const editor = ref<HTMLTextAreaElement>()
+const hasTests = computed(() => code.value.includes('#[test]'))
 watch(code, (c) => localStorage.setItem(KEY, c))
 
 const running = ref(false)
@@ -45,9 +57,9 @@ const blocked = computed(() => {
 })
 
 let timer: ReturnType<typeof setInterval> | undefined
-async function runCode() {
+async function runCode(mode: 'run' | 'test') {
   running.value = true
-  result.value = await run(code.value, { mode: 'run' })
+  result.value = await run(code.value, { mode })
   running.value = false
   wait.value = retryIn()
   clearInterval(timer)
@@ -59,9 +71,9 @@ onBeforeUnmount(() => {
   removeEventListener('offline', setOnline)
 })
 
-function indent(e: KeyboardEvent) {
-  const t = e.target as HTMLTextAreaElement
-  t.setRangeText('    ', t.selectionStart, t.selectionEnd, 'end')
+function insert(text: string) {
+  const t = editor.value!
+  t.setRangeText(text, t.selectionStart, t.selectionEnd, 'end')
   code.value = t.value
 }
 </script>
@@ -87,6 +99,25 @@ function indent(e: KeyboardEvent) {
   overflow-x: auto;
   background: var(--c-terminal);
   color: var(--c-terminal-text);
+}
+.keys {
+  display: flex;
+  gap: var(--s-1);
+  overflow-x: auto;
+}
+.key {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--c-border);
+  border-radius: var(--radius-card);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: var(--code-size) var(--font-code);
+}
+.actions {
+  display: flex;
+  gap: var(--s-2);
 }
 .err {
   color: var(--c-wrong);
