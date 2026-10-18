@@ -310,7 +310,11 @@ also works. CI doesn't need either.
     launch only (`profile.onboardedAt`; anyone with logged activity counts as onboarded)
   - [ ] (new) No e2e for the jump flow or the onboarding placement offer (placement itself has one)
   - [ ] (new) "Install app" prompt after the first lesson (01 §4.3.1) not done (M5 install prompt timing)
-- [ ] Spike: in-browser compiler (Weblings / Rubrc), record go/no-go (01 §7)
+- [x] Spike: in-browser compiler (Weblings / Rubrc), record go/no-go (01 §7): **not yet**
+  (plans/spikes/in-browser-compiler.md). Rubrc no-go (rustc 1.83, 4+ GB RAM, 15 s compiles). Weblings is the
+  fallback: 44 MB gzip pack, ~0.1-0.4 s compiles on desktop, no COOP/COEP needed, error codes match on all
+  2,487 compile-fail snippets; but ~1 GB RAM, untested on phones, `-O` drops overflow checks, a `u16` gap
+  - [ ] (new) Try https://weblings.forest-anderson.ca on a mid-range Android phone (load + 37-line compile < 3 s?)
 
 ## M5: Polish + launch
 
