@@ -158,6 +158,8 @@ export async function verifyCases(cases: Case[]): Promise<{ results: CaseResult[
   let compiled = 0
   const results: CaseResult[] = new Array(cases.length)
   let next = 0
+  // Identical snippets share a key and so a directory; compiling them at once races the linker.
+  const inflight = new Map<string, Promise<Outcome>>()
   async function worker() {
     while (next < cases.length) {
       const i = next++
@@ -167,8 +169,12 @@ export async function verifyCases(cases: Case[]): Promise<{ results: CaseResult[
       let outcome: Outcome
       if (existsSync(cacheFile)) {
         outcome = JSON.parse(readFileSync(cacheFile, 'utf8')) as Outcome
+      } else if (inflight.has(key)) {
+        outcome = await inflight.get(key)!
       } else {
-        outcome = await compileAndRun(c, join(CASES_DIR, key))
+        const p = compileAndRun(c, join(CASES_DIR, key))
+        inflight.set(key, p)
+        outcome = await p
         if (!outcome.toolFailure) writeFileSync(cacheFile, JSON.stringify(outcome))
         compiled++
       }
