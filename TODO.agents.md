@@ -331,8 +331,8 @@ also works. CI doesn't need either.
     `--c-text-2`; `--c-primary-text`, `--c-streak-text`, `--c-gems-text` for coloured text, with `--icon` keeping
     icons bright (AppIcon)
   - [x] (new) Code size setting applied in rem, so it follows the browser font size
-  - [ ] (new) Decision for the user: white text on the green/red buttons and on the teal, blue, pink and orange
-    banners is below 4.5:1 (2.5-3.6); darkening them to pass changes the look
+  - [x] (new) Decided (user, 2026-10-18): keep the bright button and banner colours, though white text on the
+    green/red buttons and teal, blue, pink and orange banners is below 4.5:1 (2.5-3.6). Not in contrast.spec.ts
   - [ ] (new) Screen reader pass (TalkBack / VoiceOver) through a lesson; not done
 - [ ] Performance on low-end Android
 - [x] Install prompt timing, update prompt, `navigator.storage.persist()`, backup reminders
