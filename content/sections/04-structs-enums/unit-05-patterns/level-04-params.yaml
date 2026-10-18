@@ -72,9 +72,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0061: function takes 1 argument but 2 arguments were supplied" }
-            - { id: b, text: "E0005: refutable pattern in function argument", why: "A tuple pattern can't fail. The problem is the call." }
-            - { id: c, text: "E0308: mismatched types", why: "The compiler reports the wrong number of arguments first." }
+            - { id: a, text: "function takes 1 argument but 2 arguments were supplied" }
+            - { id: b, text: "refutable pattern in function argument", why: "A tuple pattern can't fail. The problem is the call." }
+            - { id: c, text: "mismatched types", why: "The compiler reports the wrong number of arguments first." }
           answer: a
         explanation: "`show` takes one tuple. Call it as `show((1, 2))`, with the tuple's own brackets inside the call's brackets."
         concepts: [pattern.params, fn.params, err.E0061]
@@ -211,9 +211,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0005: refutable pattern in function argument" }
-            - { id: b, text: "E0004: non-exhaustive patterns", why: "E0004 is for `match`. A parameter pattern that can fail is E0005, like a `let`." }
-            - { id: c, text: "E0061: wrong number of arguments", why: "There's one parameter and one argument." }
+            - { id: a, text: "refutable pattern in function argument" }
+            - { id: b, text: "non-exhaustive patterns", why: "That wording is for `match`. A parameter pattern that can fail is a *refutable pattern* error, like a `let`." }
+            - { id: c, text: "wrong number of arguments", why: "There's one parameter and one argument." }
           answer: a
         explanation: "Any caller could pass `None`, and a parameter has no way to handle that. Take `n: Option<i32>` and `match` on it inside."
         concepts: [pattern.params, pattern.refutability, err.E0005]
@@ -286,14 +286,14 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 3
-        explanation: "Each item is a pair `(i32, char)`, but the pattern has three parts, which is E0308. Write `for (count, item) in stock`."
+        explanation: "Each item is a pair `(i32, char)`, but the pattern has three parts, which is a *mismatched types* error. Write `for (count, item) in stock`."
         concepts: [pattern.params, err.E0308]
 
       - type: true-false
         id: tf-any-irrefutable
         prompt: "A function parameter can use any pattern, as long as the pattern can't fail."
         answer: true
-        explanation: "Tuples, structs, arrays, `&` and `_` all work in parameters. Refutable ones like `Some(n)` are E0005."
+        explanation: "Tuples, structs, arrays, `&` and `_` all work in parameters. Refutable ones like `Some(n)` are rejected."
         concepts: [pattern.params, pattern.refutability]
 
       - type: predict-output
@@ -424,9 +424,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `p`" }
-            - { id: b, text: "E0005: refutable pattern in function argument", why: "A struct pattern can't fail." }
-            - { id: c, text: "E0027: pattern does not mention a field", why: "The pattern lists both fields." }
+            - { id: a, text: "borrow of moved value: `p`" }
+            - { id: b, text: "refutable pattern in function argument", why: "A struct pattern can't fail." }
+            - { id: c, text: "pattern does not mention a field", why: "The pattern lists both fields." }
           answer: a
         explanation: "Calling `log(p)` moves the whole `Player` into the function, so `p` can't be used afterwards, even its `Copy` field. Read `p.age` before the call, or make `log` borrow the player instead."
         concepts: [pattern.params, own.move, err.E0382]
@@ -449,7 +449,7 @@ lessons:
           - { id: b, text: "`for` loops can't take tuples apart", why: "`for (x, y) in ...` is fine. This pattern is refutable because of `Some`." }
           - { id: c, text: "The pattern needs a `&`: `&Some((x, y))`", why: "Looping over the array by value gives plain `Option`s, and a `&` wouldn't make the pattern irrefutable anyway." }
         answer: a
-        explanation: "A `for` loop's pattern must match every item. `None` doesn't match `Some((x, y))`, so it's E0005."
+        explanation: "A `for` loop's pattern must match every item. `None` doesn't match `Some((x, y))`, so the compiler rejects it."
         concepts: [pattern.params, pattern.refutability, err.E0005]
 
       - type: fill-tokens
@@ -497,8 +497,8 @@ lessons:
         prompt: "`size` is a `(u32, u32)`. Which signature lets you call `area(&size)` with `w` and `h` as `u32`s?"
         options:
           - { id: a, code: "fn area(&(w, h): &(u32, u32)) -> u32" }
-          - { id: b, code: "fn area(&(w, h): (u32, u32)) -> u32", why: "The pattern has a `&` but the type doesn't, which is E0308." }
-          - { id: c, code: "fn area((w, h): (u32, u32)) -> u32", why: "This takes the tuple itself, so `area(&size)` would be E0308. You'd call `area(size)`." }
+          - { id: b, code: "fn area(&(w, h): (u32, u32)) -> u32", why: "The pattern has a `&` but the type doesn't, which is a *mismatched types* error." }
+          - { id: c, code: "fn area((w, h): (u32, u32)) -> u32", why: "This takes the tuple itself, so `area(&size)` would be a *mismatched types* error. You'd call `area(size)`." }
           - { id: d, code: "fn area(&w, &h: &(u32, u32)) -> u32", why: "That's two parameters, and the first has no type. The tuple pattern needs its own brackets." }
         answer: a
         explanation: "The type `&(u32, u32)` accepts `&size`, and the pattern `&(w, h)` matches it, copying out two `u32`s."

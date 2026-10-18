@@ -81,9 +81,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `entry`" }
-            - { id: b, text: "E0505: cannot move out of `entry` because it is borrowed", why: "Nothing borrows `entry` before the move." }
-            - { id: c, text: "E0308: mismatched types", why: "`other` takes whatever type `entry` has. The problem is the move." }
+            - { id: a, text: "borrow of moved value: `entry`" }
+            - { id: b, text: "cannot move out of `entry` because it is borrowed", why: "Nothing borrows `entry` before the move." }
+            - { id: c, text: "mismatched types", why: "`other` takes whatever type `entry` has. The problem is the move." }
           answer: a
         explanation: "A tuple containing a `String` isn't `Copy`, so `let other = entry;` moves the whole tuple."
         concepts: [own.copy, own.move, err.E0382]
@@ -105,7 +105,7 @@ lessons:
           expectErrors: [E0499]
         options:
           - { id: a, text: "Move `first.push_str(\"a\");` above `let second = &mut text;`" }
-          - { id: b, text: "Change line 4 to `let second = &text;`", why: "A shared borrow would still overlap `first` (E0502), and `push_str` needs `&mut`." }
+          - { id: b, text: "Change line 4 to `let second = &text;`", why: "A shared borrow would still overlap `first`, and `push_str` needs `&mut`." }
           - { id: c, text: "Change line 3 to `let first = &mut text.clone();`", why: "It compiles, but the `a` goes into a copy, so `text` ends up as `b`." }
         answer: a
         explanation: "Once `first` is finished, `second` is the only `&mut` alive. The borrows happen one after the other instead of overlapping."
@@ -184,9 +184,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `line` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0499: cannot borrow `line` as mutable more than once", why: "A slice is a shared borrow. Only `push_str` borrows mutably." }
-            - { id: c, text: "E0382: borrow of moved value", why: "Slicing borrows. Nothing moves." }
+            - { id: a, text: "cannot borrow `line` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "cannot borrow `line` as mutable more than once", why: "A slice is a shared borrow. Only `push_str` borrows mutably." }
+            - { id: c, text: "borrow of moved value", why: "Slicing borrows. Nothing moves." }
           answer: a
         explanation: "`word` is a slice that borrows `line` until line 4. `push_str` could move the text to a new heap location, so Rust doesn't allow it while `word` is alive."
         concepts: [slice.str, err.E0502]
@@ -219,9 +219,9 @@ lessons:
         options:
           - { id: a, text: "`report` can't move on line 4 while the slice `summary` still borrows it" }
           - { id: b, text: "`report` was moved before line 3", why: "Line 4 is the move. Line 3 only borrows." }
-          - { id: c, text: "The slice `0..3` is out of range", why: "`draft` has 5 bytes, so `0..3` is fine. This is a compile-time borrow error, E0505." }
+          - { id: c, text: "The slice `0..3` is out of range", why: "`draft` has 5 bytes, so `0..3` is fine. This is a compile-time borrow error: moving a value while it is borrowed." }
         answer: a
-        explanation: "E0505 means moving a value while it's borrowed. Printing `summary` before the move, or slicing `finished` instead, fixes it."
+        explanation: "The error is moving a value while it's borrowed. Printing `summary` before the move, or slicing `finished` instead, fixes it."
         concepts: [borrow.fixes, slice.str, err.E0505]
 
       - type: compiles

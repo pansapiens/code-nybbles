@@ -54,7 +54,7 @@ lessons:
         markdown: |
           **Adding `;` turns an expression into a statement**, and its value is thrown away.
 
-          That's why a function's tail has no `;`. With one, the body ends in a statement and returns `()` instead, which is error **E0308: mismatched types**.
+          That's why a function's tail has no `;`. With one, the body ends in a statement and returns `()` instead, which is an error: *mismatched types*.
         code:
           rust: |
             fn plus_one(x: i32) -> i32 {
@@ -93,11 +93,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The body produces the wrong type." }
-            - { id: c, text: "E0061: wrong number of arguments", why: "`plus_one(5)` passes one argument for one parameter." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. The body produces the wrong type." }
+            - { id: c, text: "wrong number of arguments", why: "`plus_one(5)` passes one argument for one parameter." }
           answer: a
-        explanation: "The `;` makes the body end in a statement, so it produces `()` while the signature promises `i32`. That mismatch is E0308."
+        explanation: "The `;` makes the body end in a statement, so it produces `()` while the signature promises `i32`. The compiler reports that mismatch as *mismatched types*."
         concepts: [err.E0308, expr.vs-stmt]
 
       - type: predict-output
@@ -127,7 +127,7 @@ lessons:
           - ["let y = 6;", "statement: creates a variable"]
           - ["y + 1", "expression: produces a value"]
           - ["y + 1;", "statement: value thrown away"]
-          - ["E0308", "mismatched types"]
+          - ["5", "expression: a literal is a value"]
         concepts: [expr.vs-stmt, err.E0308]
 
       - type: true-false
@@ -191,7 +191,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 2
-        explanation: "The compiler reports E0308 at the `-> i32` on line 1, but the fix is on line 2: remove the `;` so `n * n` is returned."
+        explanation: "The compiler reports *mismatched types* at the `-> i32` on line 1, but the fix is on line 2: remove the `;` so `n * n` is returned."
         concepts: [err.E0308, expr.vs-stmt]
 
       - type: mcq
@@ -252,7 +252,7 @@ lessons:
           - { id: b, text: "`set_volume` needs a return type", why: "It only prints, so returning `()` is fine." }
           - { id: c, text: "`level` must be declared with `let` first", why: "Parameters are created by the call. The problem is the argument's type." }
         answer: a
-        explanation: "E0308 isn't only about return values. Any time a value's type doesn't match what's expected, including an argument, you get mismatched types."
+        explanation: "*Mismatched types* isn't only about return values. Any time a value's type doesn't match what's expected, including an argument, you get mismatched types."
         concepts: [err.E0308, fn.params]
 
       - type: fill-tokens
@@ -279,7 +279,7 @@ lessons:
 
       - type: true-false
         id: tf-e0308-meaning
-        prompt: "E0308 means a value's type doesn't match the type the code expects there."
+        prompt: "The error \"mismatched types\" means a value's type doesn't match the type the code expects there."
         answer: true
         explanation: "The message shows both sides, for example `expected i32, found ()`. Read it as \"the code needed this, but got that\"."
         concepts: [err.E0308]
@@ -351,9 +351,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0061: wrong number of arguments", why: "`start` takes no arguments and gets none." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "Every name here is defined. The type is the problem." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "wrong number of arguments", why: "`start` takes no arguments and gets none." }
+            - { id: c, text: "cannot find value in this scope", why: "Every name here is defined. The type is the problem." }
           answer: a
         explanation: "The `;` after `(0, 0)` throws the tuple away, so the body produces `()` instead of `(i32, i32)`."
         concepts: [err.E0308, expr.vs-stmt, types.tuple]
@@ -442,7 +442,7 @@ lessons:
           "1": { answer: ["->"] }
           "2": { answer: ["lives - 1"] }
         bank: ["->", "=>", "lives - 1", "lives - 1;", "let lives - 1"]
-        explanation: "The body's only line is the tail, so it has no `;`. With `lives - 1;` the function would return `()` (E0308)."
+        explanation: "The body's only line is the tail, so it has no `;`. With `lives - 1;` the function would return `()` (*mismatched types*)."
         concepts: [expr.vs-stmt, err.E0308]
 
       - type: predict-output
@@ -469,8 +469,8 @@ lessons:
       - type: match-pairs
         id: pairs-error-codes
         pairs:
-          - ["E0308", "mismatched types"]
-          - ["E0061", "wrong number of arguments"]
-          - ["E0425", "name not found in this scope"]
-          - ["E0384", "assigned twice to a non-mut variable"]
+          - ["mismatched types", "a value has a different type from the one expected"]
+          - ["this function takes 2 arguments but 1 argument was supplied", "calling with too few arguments"]
+          - ["cannot find value in this scope", "using a name that isn't visible here"]
+          - ["cannot assign twice to immutable variable", "changing a variable that isn't `mut`"]
         concepts: [err.E0308, compiler.read-error, err.E0384]

@@ -77,7 +77,7 @@ lessons:
         prompt: "`hits` is an `i32`. Which line compiles and gives `0.7` when `hits` is 7?"
         options:
           - { id: a, code: "let ratio = hits as f64 / 10.0;" }
-          - { id: b, code: "let ratio = hits / 10.0;", why: "An integer divided by a float is error E0277." }
+          - { id: b, code: "let ratio = hits / 10.0;", why: "An integer can't be divided by a float." }
           - { id: c, code: "let ratio = (hits / 10) as f64;", why: "This compiles, but `7 / 10` is integer division: 0. Converting 0 gives 0.0." }
           - { id: d, code: "let ratio = f64 hits / 10.0;", why: "The type goes after `as`, following the value." }
         answer: a
@@ -238,9 +238,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0604: only `u8` can be cast as `char`, not `i32`" }
-            - { id: b, text: "E0308: mismatched types", why: "The compiler has a more specific error for this cast." }
-            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
+            - { id: a, text: "only `u8` can be cast as `char`, not `i32`" }
+            - { id: b, text: "mismatched types", why: "The compiler has a more specific error for this cast." }
+            - { id: c, text: "cannot apply unary operator `-`", why: "There's no minus sign here." }
           answer: a
         explanation: "`code` defaults to `i32`, and only a `u8` can be cast to a `char`. Writing `66u8` fixes it."
         concepts: [types.as-cast, types.char, types.inference]
@@ -400,9 +400,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0604: only `u8` can be cast as `char`", why: "There's no cast here at all. That's the problem." }
-            - { id: c, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic or float here." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "only `u8` can be cast as `char`", why: "There's no cast here at all. That's the problem." }
+            - { id: c, text: "cannot add a float to an integer", why: "There's no arithmetic or float here." }
           answer: a
         explanation: "Even though every `u8` fits in a `u32`, Rust won't convert for you. Write `score as u32`."
         concepts: [types.as-cast, types.inference, err.E0308]

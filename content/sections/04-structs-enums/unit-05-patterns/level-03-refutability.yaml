@@ -59,9 +59,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0005: refutable pattern in local binding" }
-            - { id: b, text: "E0004: non-exhaustive patterns", why: "E0004 is for a `match` that misses values. A `let` whose pattern can fail is E0005." }
-            - { id: c, text: "E0308: mismatched types", why: "The types fit: `Some(litres)` is an `Option` pattern." }
+            - { id: a, text: "refutable pattern in local binding" }
+            - { id: b, text: "non-exhaustive patterns", why: "That wording is for a `match` that misses values. A `let` whose pattern can fail is a *refutable pattern* error." }
+            - { id: c, text: "mismatched types", why: "The types fit: `Some(litres)` is an `Option` pattern." }
           answer: a
         explanation: "The compiler checks types, not values. An `Option` could be `None`, and a plain `let` can't handle that."
         concepts: [pattern.refutability, err.E0005]
@@ -149,7 +149,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0005]
         answer: 3
-        explanation: "A `for` loop's pattern must match every item, and `Some(r)` doesn't match `None` (E0005). Loop over `item` and use `if let Some(r) = item` inside."
+        explanation: "A `for` loop's pattern must match every item, and `Some(r)` doesn't match `None`. Loop over `item` and use `if let Some(r) = item` inside."
         concepts: [pattern.refutability, err.E0005]
 
       - type: match-pairs
@@ -440,7 +440,7 @@ lessons:
           expectErrors: [E0005]
         options:
           - { id: a, code: "let Cmd::Move { x, y } = cmd else {\n    return;\n};" }
-          - { id: b, code: "let Cmd::Move { x, y } = cmd else {\n    println!(\"quit\");\n};", why: "The `else` block must leave, for example with `return`. This one carries on, which is E0308." }
+          - { id: b, code: "let Cmd::Move { x, y } = cmd else {\n    println!(\"quit\");\n};", why: "The `else` block must leave, for example with `return`. This one carries on, which is a *mismatched types* error." }
           - { id: c, code: "let Cmd::Move { x, .. } = cmd;", why: "Still refutable: `cmd` could be `Quit`. It also no longer binds `y`." }
         answer: a
         explanation: "`let ... else` accepts a refutable pattern, as long as the `else` block leaves when it fails."
@@ -492,7 +492,7 @@ lessons:
         prompt: "`reading` is an `Option<i32>` inside a function that returns nothing. Which line compiles?"
         options:
           - { id: a, code: "let Some(t) = reading else { return; };" }
-          - { id: b, code: "let Some(t) = reading;", why: "`reading` could be `None`, so this is E0005." }
+          - { id: b, code: "let Some(t) = reading;", why: "`reading` could be `None`, so the compiler rejects it." }
           - { id: c, code: "if Some(t) = reading { }", why: "A pattern after `if` needs `let`: `if let Some(t) = reading`." }
           - { id: d, code: "let Some(t) = reading else { };", why: "The `else` block must leave, for example with `return`." }
         answer: a
@@ -528,12 +528,12 @@ lessons:
 
       - type: match-pairs
         id: pairs-error-codes
-        prompt: Match each error code to its cause
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0005", "a let pattern that can fail"]
-          - ["E0004", "a match that misses values"]
-          - ["E0027", "a struct pattern misses a field"]
-          - ["E0026", "no field with that name"]
-          - ["E0408", "a name missing from one | side"]
+          - ["refutable pattern in local binding", "a let pattern that can fail"]
+          - ["non-exhaustive patterns", "a match that misses values"]
+          - ["pattern does not mention field `y`", "a struct pattern misses a field"]
+          - ["struct does not have a field named `z`", "no field with that name"]
+          - ["variable `n` is not bound in all patterns", "a name missing from one | side"]
         explanation: "These are the pattern errors from this unit and the last."
         concepts: [pattern.refutability, err.E0004]

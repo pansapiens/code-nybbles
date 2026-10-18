@@ -288,7 +288,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0384]
         answer: 4
-        explanation: "`coins` isn't `mut`, so `coins += 1;` is error E0384. Both `println!` lines are fine."
+        explanation: "`coins` isn't `mut`, so `coins += 1;` is an error (*cannot assign twice to immutable variable*). Both `println!` lines are fine."
         concepts: [var.mut, err.E0384]
 
   - id: l3
@@ -362,9 +362,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0425: cannot find value `name` in this scope" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The name inside the braces doesn't exist." }
-            - { id: c, text: "E0308: mismatched types", why: "The problem is the name, not a type." }
+            - { id: a, text: "cannot find value `name` in this scope" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned here. The name inside the braces doesn't exist." }
+            - { id: c, text: "mismatched types", why: "The problem is the name, not a type." }
           answer: a
         explanation: "The name inside the braces must be a variable that exists. Here the variable is `player`."
         concepts: [fmt.inline-args, err.E0425]

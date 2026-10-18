@@ -64,9 +64,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: use of moved value: `c`" }
-            - { id: b, text: "E0063: missing field `text`", why: "`c` is `Quit`, which has no fields. Only `Write` needs `text`." }
-            - { id: c, text: "E0308: mismatched types", why: "`send` takes a `Command`, and `c` is one." }
+            - { id: a, text: "use of moved value: `c`" }
+            - { id: b, text: "missing field `text`", why: "`c` is `Quit`, which has no fields. Only `Write` needs `text`." }
+            - { id: c, text: "mismatched types", why: "`send` takes a `Command`, and `c` is one." }
           answer: a
         explanation: "Passing `c` to `send` moves it. Even `Quit`, which holds no data, moves, because `Command` isn't `Copy`."
         concepts: [enum.data, own.fn-move, err.E0382]
@@ -221,7 +221,7 @@ lessons:
           verify: run
           expectStdout: "None\nSome(5)\n"
         answer: true
-        explanation: "Line 2 gives no type, but line 4 stores `Some(5)` in `best`, so the compiler works out `Option<i32>`. E0282 only happens when nothing tells it."
+        explanation: "Line 2 gives no type, but line 4 stores `Some(5)` in `best`, so the compiler works out `Option<i32>`. The compiler only asks for *type annotations* when nothing tells it."
         concepts: [option.basics]
 
       - type: parsons

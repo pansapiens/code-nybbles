@@ -79,8 +79,8 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0277: the type `str` cannot be indexed by `{integer}`" }
-            - { id: b, text: "E0382: borrow of moved value: `word`", why: "Nothing has moved. The problem is indexing text with a number." }
+            - { id: a, text: "the type `str` cannot be indexed by `{integer}`" }
+            - { id: b, text: "borrow of moved value: `word`", why: "Nothing has moved. The problem is indexing text with a number." }
             - { id: c, text: "None: it compiles because `hello` is all ASCII", why: "Rust checks the type, not the text. No `String` can be indexed with a number, whatever it holds." }
           answer: a
         explanation: "Strings can't be indexed with a single number, even when every character is 1 byte. Use `.chars().nth(0)` for a character."
@@ -283,7 +283,7 @@ lessons:
         prompt: "Which expression gives the first character of `word` as an `Option<char>`?"
         options:
           - { id: a, code: "word.chars().nth(0)" }
-          - { id: b, code: "word[0]", why: "Text can't be indexed with a number (E0277)." }
+          - { id: b, code: "word[0]", why: "Text can't be indexed with a number." }
           - { id: c, code: "word.as_bytes()[0]", why: "This is the first byte, a `u8`. For text that doesn't start with a 1-byte character, it's only part of a character." }
           - { id: d, code: "&word[0..1]", why: "That's a `&str` of the first byte, and it panics if the first character takes more than 1 byte." }
         answer: a
@@ -350,10 +350,10 @@ lessons:
           expectErrors: [E0608]
         options:
           - { id: a, text: "Use `word.chars().nth(2)`, then `.unwrap_or('?')` to get a `char`" }
-          - { id: b, text: "Use `word[2]` instead", why: "Strings can't be indexed with a number either (E0277)." }
+          - { id: b, text: "Use `word[2]` instead", why: "Strings can't be indexed with a number either." }
           - { id: c, text: "Use `word.chars().nth(2)` on its own", why: "That compiles on line 3, but `third` is then an `Option<char>`, and `{third}` can't print an `Option`." }
         answer: a
-        explanation: "`.chars()` can't be indexed with `[2]` (E0608). `nth(2)` gives an `Option<char>`, and `unwrap_or('?')` turns it into a `char`."
+        explanation: "`.chars()` can't be indexed with `[2]`. `nth(2)` gives an `Option<char>`, and `unwrap_or('?')` turns it into a `char`."
         concepts: [string.utf8, option.methods, err.E0608]
 
       - type: mcq
@@ -414,7 +414,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0277]
         answer: 5
-        explanation: "Even with a computed position, text can't be indexed with a number (E0277). Use `.chars()` to work with characters instead."
+        explanation: "Even with a computed position, text can't be indexed with a number. Use `.chars()` to work with characters instead."
         concepts: [string.utf8, err.E0277]
 
       - type: predict-output

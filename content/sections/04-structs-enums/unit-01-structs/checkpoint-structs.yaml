@@ -73,9 +73,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of partially moved value: `a`" }
-            - { id: b, text: "E0277: `Item` doesn't implement `Debug`", why: "`Item` has `#[derive(Debug)]` on line 1." }
-            - { id: c, text: "E0063: missing field `name`", why: "`..a` supplies `name`, so `b` has every field." }
+            - { id: a, text: "borrow of partially moved value: `a`" }
+            - { id: b, text: "`Item` doesn't implement `Debug`", why: "`Item` has `#[derive(Debug)]` on line 1." }
+            - { id: c, text: "missing field `name`", why: "`..a` supplies `name`, so `b` has every field." }
           answer: a
         explanation: "`..a` moved `a.name` into `b`. Printing `a` needs every field, and one of them is gone."
         concepts: [struct.update, struct.ownership, err.E0382]
@@ -105,7 +105,7 @@ lessons:
           - { id: b, text: "Add `..` on its own before the closing `}`", why: "`..` needs another instance to copy from, such as `..other`." }
           - { id: c, text: "Make it `let mut c` and set `c.height = 24;` afterwards", why: "Every field needs a value when the instance is created. You can change it later, but you can't leave it out." }
         answer: a
-        explanation: "E0063 means a field was left out. Every field must be given a value when you create an instance."
+        explanation: "*missing field* means a field was left out. Every field must be given a value when you create an instance."
         concepts: [struct.define, err.E0063]
 
       - type: fill-tokens
@@ -205,9 +205,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: use of moved value: `p`" }
-            - { id: b, text: "E0308: mismatched types", why: "`show` takes a `Point` and gets one both times. The problem is ownership." }
-            - { id: c, text: "E0277: `Point` doesn't implement `Debug`", why: "Only the `i32` fields are printed, with `{}`, so Debug isn't needed." }
+            - { id: a, text: "use of moved value: `p`" }
+            - { id: b, text: "mismatched types", why: "`show` takes a `Point` and gets one both times. The problem is ownership." }
+            - { id: c, text: "`Point` doesn't implement `Debug`", why: "Only the `i32` fields are printed, with `{}`, so Debug isn't needed." }
           answer: a
         explanation: "A struct isn't `Copy` even when its fields are, so the first `show(p)` moves `p`. Taking `p: &Point` would let you call it twice."
         concepts: [struct.ownership, own.copy, err.E0382]
@@ -288,8 +288,8 @@ lessons:
           expectErrors: [E0507]
         options:
           - { id: a, code: "p.name.clone()" }
-          - { id: b, code: "&p.name", why: "That's a `&String`, but the function promises to return a `String` (E0308)." }
-          - { id: c, code: "return p.name;", why: "That's the same move written with `return`. It's still E0507." }
+          - { id: b, code: "&p.name", why: "That's a `&String`, but the function promises to return a `String`." }
+          - { id: c, code: "return p.name;", why: "That's the same move written with `return`. It's still an error: *cannot move out* of a borrowed value." }
         answer: a
         explanation: "`p` only borrows the `Pet`, so the `String` can't be moved out of it. `.clone()` returns a new `String` and leaves `pet` whole."
         concepts: [struct.ownership, own.clone, borrow.shared, err.E0507]
@@ -331,13 +331,13 @@ lessons:
 
       - type: match-pairs
         id: pairs-struct-errors
-        prompt: Match each error code to its cause
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0063", "a field left out when creating an instance"]
-          - ["E0609", "reading a field that doesn't exist"]
-          - ["E0277", "`{:?}` on a struct without the derive"]
-          - ["E0106", "a `&str` field with no lifetime"]
-          - ["E0382", "using a struct after it moved"]
+          - ["missing field `y` in initializer of `Point`", "a field left out when creating an instance"]
+          - ["no field `z` on type `Point`", "reading a field that doesn't exist"]
+          - ["`Point` doesn't implement `Debug`", "`{:?}` on a struct without the derive"]
+          - ["missing lifetime specifier", "a `&str` field with no lifetime"]
+          - ["borrow of moved value: `order`", "using a struct after it moved"]
         concepts: [struct.define, derive.debug, struct.ownership]
 
       - type: compiles
@@ -363,9 +363,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0594: cannot assign to `p.score`, which is behind a `&` reference" }
-            - { id: b, text: "E0382: use of moved value: `p`", why: "`reset` only borrows `p`, so nothing moves." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`p` in `main` is `mut`. The problem is the shared reference inside `reset`." }
+            - { id: a, text: "cannot assign to `p.score`, which is behind a `&` reference" }
+            - { id: b, text: "use of moved value: `p`", why: "`reset` only borrows `p`, so nothing moves." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`p` in `main` is `mut`. The problem is the shared reference inside `reset`." }
           answer: a
         explanation: "A `&Player` only allows reading. To change a field, `reset` needs `p: &mut Player`, called as `reset(&mut p)`."
         concepts: [struct.define, borrow.mut, err.E0594]

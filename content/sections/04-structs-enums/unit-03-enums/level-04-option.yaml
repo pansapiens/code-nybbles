@@ -93,7 +93,7 @@ lessons:
             - { id: b, text: "`None` can't be printed", why: "It can: `{:?}` prints `None`. The compiler needs to know the full type first." }
             - { id: c, text: "Variables can't start out empty", why: "They can, with `None`. It needs a type such as `Option<&str>`." }
           answer: a
-        explanation: "Nothing says what `winner` would hold, so the compiler reports E0282: type annotations needed. Write `let winner: Option<&str> = None;`."
+        explanation: "Nothing says what `winner` would hold, so the compiler says *type annotations needed*. Write `let winner: Option<&str> = None;`."
         concepts: [option.basics, err.E0282]
 
       - type: fill-tokens
@@ -155,7 +155,7 @@ lessons:
         id: concept-not-i32
         title: "`Option<i32>` isn't `i32`"
         markdown: |
-          **An `Option<i32>` might be `None`, so Rust won't let you use it as a number.** Adding an `i32` and an `Option<i32>` is error E0277.
+          **An `Option<i32>` might be `None`, so Rust won't let you use it as a number.** Adding an `i32` and an `Option<i32>` is an error: *cannot add `Option<i32>` to `i32`*.
 
           This is the point of `Option`: you can't forget that a value might be missing.
         code:
@@ -182,9 +182,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0282: type annotations needed", why: "The type is written: `i32`. It doesn't match the value." }
-            - { id: c, text: "E0599: no variant named `Some`", why: "`Some` is always in scope. The problem is the types." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "type annotations needed", why: "The type is written: `i32`. It doesn't match the value." }
+            - { id: c, text: "no variant named `Some`", why: "`Some` is always in scope. The problem is the types." }
           answer: a
         explanation: "`Some(12)` is an `Option<i32>`, not an `i32`. The annotation and the value don't match."
         concepts: [option.type-safety, err.E0308]
@@ -228,7 +228,7 @@ lessons:
             - { id: b, text: "Make `speed` mutable", why: "Printing only reads `speed`. The format is the problem." }
             - { id: c, text: "Change `Some(60)` to `Some(\"60\")`", why: "The type of the data doesn't matter here. `{}` doesn't work for any `Option`." }
           answer: a
-        explanation: "`{}` would have to choose how `None` looks, so `Option` doesn't support it (E0277). `{:?}` prints `Some(60)`."
+        explanation: "`{}` would have to choose how `None` looks, so `Option` doesn't support it. `{:?}` prints `Some(60)`."
         concepts: [option.type-safety, fmt.debug, err.E0277]
 
       - type: concept
@@ -445,7 +445,7 @@ lessons:
             - { id: b, text: "`mut` on `a`", why: "The loop only reads `a`." }
             - { id: c, text: "Nothing is missing. Rust returns `None` automatically.", why: "Rust never fills in `None` for you. The function body ends with the loop, which gives `()`." }
           answer: a
-        explanation: "If the loop finishes, the body's value is `()`, not an `Option<u8>`, so the compiler reports E0308. Add `None` as the last line."
+        explanation: "If the loop finishes, the body's value is `()`, not an `Option<u8>`, so the compiler reports *mismatched types*. Add `None` as the last line."
         concepts: [option.basics, err.E0308]
 
       - type: true-false
@@ -488,7 +488,7 @@ lessons:
             - { id: b, text: "`lives` must be `mut` to add to it", why: "`lives + 1` makes a new value without changing `lives`. The type is the problem." }
             - { id: c, text: "`1` must be written `Some(1)`", why: "`Some(3) + Some(1)` fails too. `+` doesn't work on `Option`s at all." }
           answer: a
-        explanation: "With the `Option` on the left, the compiler reports E0369: cannot add `{integer}` to `Option<u32>`. With it on the right, as in `1 + lives`, it's E0277. Both mean the same thing."
+        explanation: "With the `Option` on the left, the compiler says *cannot add `{integer}` to `Option<u32>`*. With it on the right, as in `1 + lives`, the wording differs but the problem is the same."
         concepts: [option.type-safety, err.E0369]
 
       - type: decode-error
@@ -547,8 +547,8 @@ lessons:
         id: pairs-option-errors
         prompt: Match each line to what the compiler says
         pairs:
-          - ["let x = None;", "E0282: type annotations needed"]
-          - ["let n: i32 = Some(1);", "E0308: mismatched types"]
-          - ["println!(\"{opt}\");", "E0277: doesn't implement `Display`"]
-          - ["let y = 1 + opt;", "E0277: cannot add `Option` to an integer"]
+          - ["let x = None;", "type annotations needed"]
+          - ["let n: i32 = Some(1);", "mismatched types"]
+          - ["println!(\"{opt}\");", "doesn't implement `Display`"]
+          - ["let y = 1 + opt;", "cannot add `Option<i32>` to `{integer}`"]
         concepts: [option.type-safety, option.basics]

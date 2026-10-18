@@ -75,11 +75,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0277: `Point` doesn't implement `Debug`" }
-            - { id: b, text: "E0609: no field `p` on type `Point`", why: "`p` is the variable, not a field. The problem is how it's printed." }
-            - { id: c, text: "E0308: mismatched types", why: "No types are compared here. `{:?}` needs Debug, which `Point` doesn't have." }
+            - { id: a, text: "`Point` doesn't implement `Debug`" }
+            - { id: b, text: "no field `p` on type `Point`", why: "`p` is the variable, not a field. The problem is how it's printed." }
+            - { id: c, text: "mismatched types", why: "No types are compared here. `{:?}` needs Debug, which `Point` doesn't have." }
           answer: a
-        explanation: "A new struct can't be printed until you ask for it. Without `#[derive(Debug)]`, `{:?}` is error E0277."
+        explanation: "A new struct can't be printed until you ask for it. Without `#[derive(Debug)]`, `{:?}` is an error: the compiler says the struct *doesn't implement `Debug`*."
         concepts: [derive.debug, err.E0277]
 
       - type: concept
@@ -275,8 +275,8 @@ lessons:
           expectErrors: [E0277]
         options:
           - { id: a, text: "Add `#[derive(Debug)]` on the line above `struct Order {`" }
-          - { id: b, text: "Change `{o:?}` to `{o}`", why: "`{}` needs Display, which `Order` doesn't have either. It's still E0277." }
-          - { id: c, text: "Add `#[derive(Debug)]` on the line above `fn main() {`", why: "`derive` only works on a struct (or similar type), not a function (E0774)." }
+          - { id: b, text: "Change `{o:?}` to `{o}`", why: "`{}` needs Display, which `Order` doesn't have either. It's still an error: the trait is missing." }
+          - { id: c, text: "Add `#[derive(Debug)]` on the line above `fn main() {`", why: "`derive` only works on a struct (or similar type), not a function." }
         answer: a
         explanation: "The compiler's help suggests the same thing: derive Debug on `Order`, then `{o:?}` works."
         concepts: [derive.debug, err.E0277]
@@ -306,9 +306,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0277: `Engine` doesn't implement `Debug`" }
-            - { id: b, text: "E0277: `Car` doesn't implement `Debug`", why: "`Car` has the derive. The derived code needs to print each field, and `Engine` can't be printed." }
-            - { id: c, text: "E0609: no field `power` on type `Car`", why: "`power` is accessed through `Engine` when it's created, which is fine." }
+            - { id: a, text: "`Engine` doesn't implement `Debug`" }
+            - { id: b, text: "`Car` doesn't implement `Debug`", why: "`Car` has the derive. The derived code needs to print each field, and `Engine` can't be printed." }
+            - { id: c, text: "no field `power` on type `Car`", why: "`power` is accessed through `Engine` when it's created, which is fine." }
           answer: a
         explanation: "Printing a `Car` prints its `engine` field too, so `Engine` also needs `#[derive(Debug)]`."
         concepts: [derive.debug, err.E0277]
@@ -377,7 +377,7 @@ lessons:
           - ["{:#?}", "Debug format, one field per line"]
           - ["#[derive(Debug)]", "lets a struct use `{:?}`"]
           - ["dbg!", "prints file, line and value to stderr"]
-          - ["E0277", "`{:?}` used without the derive"]
+          - ["`Pet` doesn't implement `Debug`", "`{:?}` used without the derive"]
         concepts: [derive.debug, macro.dbg]
 
       - type: predict-output
@@ -480,9 +480,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `name`" }
-            - { id: b, text: "E0277: `String` doesn't implement `Debug`", why: "`String` can be Debug-printed. The problem is ownership." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `name` was moved into `dbg!`." }
+            - { id: a, text: "borrow of moved value: `name`" }
+            - { id: b, text: "`String` doesn't implement `Debug`", why: "`String` can be Debug-printed. The problem is ownership." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. `name` was moved into `dbg!`." }
           answer: a
         explanation: "`dbg!` takes ownership of what you give it, so the `String` moves in. Write `dbg!(&name)` to look without moving."
         concepts: [macro.dbg, own.move, err.E0382]
@@ -545,7 +545,7 @@ lessons:
           - { id: b, text: "`Pet` needs `#[derive(Debug)]`", why: "It already has it. `{}` asks for a different format, Display." }
           - { id: c, text: "`pet` was moved before it was printed", why: "Nothing moved. The error is about how `pet` can be formatted." }
         answer: a
-        explanation: "E0277 says `Pet` doesn't implement `std::fmt::Display`. Debug and Display are separate; the derive only gives Debug."
+        explanation: "The compiler says `Pet` doesn't implement `std::fmt::Display`. Debug and Display are separate; the derive only gives Debug."
         concepts: [derive.debug, err.E0277]
 
       - type: true-false
@@ -590,7 +590,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: false
-        explanation: "`bag` is declared as `Kg` but given an `Lb`. Deriving Debug doesn't make the two types interchangeable (E0308)."
+        explanation: "`bag` is declared as `Kg` but given an `Lb`. Deriving Debug doesn't make the two types interchangeable: the compiler reports *mismatched types*."
         concepts: [struct.tuple, derive.debug, err.E0308]
 
       - type: predict-output

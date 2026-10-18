@@ -57,8 +57,8 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `name`" }
-            - { id: b, text: "E0425: cannot find value `text` in this scope", why: "`main` never uses `text`. It uses `name`, whose value moved into `shout`." }
+            - { id: a, text: "borrow of moved value: `name`" }
+            - { id: b, text: "cannot find value `text` in this scope", why: "`main` never uses `text`. It uses `name`, whose value moved into `shout`." }
             - { id: c, text: "None: `shout` gives the text back when it returns", why: "`shout` returns nothing. It dropped the text when it finished." }
           answer: a
         explanation: "`shout(name)` moved the `String` into `text`, so `name` can't be used on line 8."
@@ -363,7 +363,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 1
-        explanation: "Line 3 returns `text`, but line 1 has no `-> String`, so the compiler reports E0308 on line 3. The fix goes on line 1: `fn tidy(mut text: String) -> String {`."
+        explanation: "Line 3 returns `text`, but line 1 has no `-> String`, so the compiler reports *mismatched types* on line 3. The fix goes on line 1: `fn tidy(mut text: String) -> String {`."
         concepts: [own.fn-return, fn.return, err.E0308]
 
       - type: compiles
@@ -385,9 +385,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: use of moved value: `name`" }
+            - { id: a, text: "use of moved value: `name`" }
             - { id: b, text: "None: each call gets the same `name`", why: "The first call moved the `String` away, so there's nothing left to pass." }
-            - { id: c, text: "E0384: cannot assign twice", why: "Nothing is assigned twice. `name` is moved twice." }
+            - { id: c, text: "cannot assign twice", why: "Nothing is assigned twice. `name` is moved twice." }
           answer: a
         explanation: "A value can only move once. The second `shout(name)` uses a value that already moved."
         concepts: [own.fn-move, err.E0382]
@@ -493,8 +493,8 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `b`" }
-            - { id: b, text: "E0382: borrow of moved value: `kept`", why: "`kept` owns the returned `String` and is valid." }
+            - { id: a, text: "borrow of moved value: `b`" }
+            - { id: b, text: "borrow of moved value: `kept`", why: "`kept` owns the returned `String` and is valid." }
             - { id: c, text: "None: `pick` only returns `x`, so `b` stays in `main`", why: "Both arguments moved in. `y` was dropped at the end of `pick`." }
           answer: a
         explanation: "Both `a` and `b` moved into `pick`. Only `x` came back, as `kept`; `y` was dropped inside `pick`."

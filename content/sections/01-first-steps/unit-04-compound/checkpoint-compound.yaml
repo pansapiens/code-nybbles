@@ -68,7 +68,7 @@ lessons:
         options:
           - { id: a, code: 'println!("{city}: {:?}", range);' }
           - { id: b, code: 'println!("{city:?}: {}", range);', why: "The `:?` is on `city`, but `range` is the tuple that `{}` can't print." }
-          - { id: c, code: 'println!("{city}: {}", range[0]);', why: "Tuples don't use square brackets. That's E0608." }
+          - { id: c, code: 'println!("{city}: {}", range[0]);', why: "Tuples don't use square brackets. That's an error: tuples can't be indexed." }
         answer: a
         explanation: "The tuple needs `{:?}`. `city` is text, which `{}` prints fine."
         concepts: [fmt.debug, compiler.read-error, err.E0277]
@@ -80,7 +80,7 @@ lessons:
           - { id: a, code: "let x = a[std::env::args().count() + 4];" }
           - { id: b, code: "let x = a[3];", why: "The compiler can see that index 3 is out of bounds, so this doesn't compile." }
           - { id: c, code: "let x = a[2];", why: "Index 2 is the last element, so this is fine." }
-          - { id: d, code: "let x = a.3;", why: "Arrays don't use a dot. This is a compile error, E0609." }
+          - { id: d, code: "let x = a.3;", why: "Arrays don't use a dot. This is a compile error: *no field*." }
         answer: a
         explanation: "The compiler can't know what `count()` gives, so the check happens at run time and the program panics."
         concepts: [types.array-bounds, panic.index]

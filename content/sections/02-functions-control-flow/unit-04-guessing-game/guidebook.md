@@ -95,7 +95,7 @@ println!("{msg}"); // Too big!
 
 - `a.cmp(&b)` compares `a` with `b` and gives `Less`, `Greater` or `Equal`.
 - The three arms cover every `Ordering`, so no `_` arm is needed.
-- Comparing a `String` with a number is **E0308**: mismatched types. Parse first.
+- Comparing a `String` with a number is an error: *mismatched types*. Parse first.
 
 ## 4. Loop, and skip bad input
 

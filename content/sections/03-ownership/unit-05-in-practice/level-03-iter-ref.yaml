@@ -63,7 +63,7 @@ lessons:
         markdown: |
           **`for name in names` moves the `String`s out of the array.** Each pass, `name` owns one `String`, which is dropped at the end of that pass.
 
-          The array has moved into the loop, so using `names` afterwards is error **E0382**.
+          The array has moved into the loop, so using `names` afterwards is an error: *borrow of moved value*.
         code:
           rust: |
             let names = [
@@ -106,9 +106,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `cities`" }
-            - { id: b, text: "E0505: cannot move out of `cities` because it is borrowed", why: "Nothing borrows `cities` before the loop. The loop moves it, and line 8 uses it afterwards." }
-            - { id: c, text: "E0499: cannot borrow `cities` as mutable more than once", why: "There are no `&mut` borrows here." }
+            - { id: a, text: "borrow of moved value: `cities`" }
+            - { id: b, text: "cannot move out of `cities` because it is borrowed", why: "Nothing borrows `cities` before the loop. The loop moves it, and line 8 uses it afterwards." }
+            - { id: c, text: "cannot borrow `cities` as mutable more than once", why: "There are no `&mut` borrows here." }
           answer: a
         explanation: "`for city in cities` moves the array into the loop. The compiler's help suggests `for city in &cities`."
         concepts: [own.iter-ref, err.E0382]
@@ -386,7 +386,7 @@ lessons:
           - { id: b, text: "`scores` isn't `mut`", why: "Line 2 says `let mut scores`. The problem is the borrow held by the loop." }
           - { id: c, text: "`s` is a reference, so it can't be added to a number", why: "Adding a `&i32` to an `i32` works. The error is about borrowing `scores`." }
         answer: a
-        explanation: "`for s in &scores` keeps a shared borrow until the loop ends. Changing `scores[0]` needs a mutable borrow, which overlaps it (E0502)."
+        explanation: "`for s in &scores` keeps a shared borrow until the loop ends. Changing `scores[0]` needs a mutable borrow, which overlaps it."
         concepts: [own.iter-ref, err.E0502, borrow.exclusive]
 
   - id: l3
@@ -440,9 +440,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0382: use of moved value", why: "Nothing moves: the loop only borrows." }
-            - { id: c, text: "E0505: cannot move out of `names` because it is borrowed", why: "`last = name` copies a reference. It doesn't try to move the `String`." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "use of moved value", why: "Nothing moves: the loop only borrows." }
+            - { id: c, text: "cannot move out of `names` because it is borrowed", why: "`last = name` copies a reference. It doesn't try to move the `String`." }
           answer: a
         explanation: "`last` is a `String`, but `name` is a `&String`. To keep your own copy, write `last = name.clone();`."
         concepts: [own.iter-ref, err.E0308, own.clone]

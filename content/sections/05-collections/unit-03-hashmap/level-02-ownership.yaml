@@ -52,9 +52,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `city`" }
-            - { id: b, text: "E0502: cannot borrow as immutable", why: "Nothing is borrowed from `visits` here. `city` itself was moved." }
-            - { id: c, text: "E0308: mismatched types", why: "The types are fine. `city` no longer owns its text." }
+            - { id: a, text: "borrow of moved value: `city`" }
+            - { id: b, text: "cannot borrow as immutable", why: "Nothing is borrowed from `visits` here. `city` itself was moved." }
+            - { id: c, text: "mismatched types", why: "The types are fine. `city` no longer owns its text." }
           answer: a
         explanation: "`insert(city, 2)` moves the `String` into `visits`, so `city` can't be printed afterwards."
         concepts: [map.ownership, err.E0382]
@@ -243,7 +243,7 @@ lessons:
             - { id: b, text: "`name` was moved into `scores`", why: "`as_str()` gives a `&str`, so nothing is moved. The map holds a borrow." }
             - { id: c, text: "`scores` can't be used outside the braces", why: "`scores` was created outside the block, so it's still in scope." }
           answer: a
-        explanation: "The map holds a `&str` pointing into `name`, but `name` is dropped at the end of the block. Rust reports E0597: `name` does not live long enough."
+        explanation: "The map holds a `&str` pointing into `name`, but `name` is dropped at the end of the block. Rust reports that `name` does not live long enough."
         concepts: [map.ownership, borrow.shared, err.E0597]
 
       - type: spot-bug
@@ -475,9 +475,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `jobs` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0382: borrow of moved value", why: "`get` lends a reference; it doesn't move the value out." }
-            - { id: c, text: "E0308: mismatched types", why: "The key types match: `&1` is a reference to an integer key." }
+            - { id: a, text: "cannot borrow `jobs` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "borrow of moved value", why: "`get` lends a reference; it doesn't move the value out." }
+            - { id: c, text: "mismatched types", why: "The key types match: `&1` is a reference to an integer key." }
           answer: a
         explanation: "`first` borrows the value inside `jobs`, and it's used after `remove`. Removing would leave `first` pointing at nothing, so Rust refuses."
         concepts: [map.ownership, err.E0502]

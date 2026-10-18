@@ -251,7 +251,7 @@ lessons:
           - { id: b, text: "`print_area` doesn't exist", why: "It exists. The compiler even points to where it's defined." }
           - { id: c, text: "`4` is the wrong type for `width`", why: "`4` is a fine `i32`. The problem is the missing second argument." }
         answer: a
-        explanation: "E0061 means the number of arguments doesn't match the number of parameters. The note shows the definition, so you can see what it expects."
+        explanation: "The error means the number of arguments doesn't match the number of parameters. The note shows the definition, so you can see what it expects."
         concepts: [fn.params, compiler.read-error, err.E0061]
 
       - type: predict-output
@@ -424,9 +424,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0425: cannot find value `name` in this scope" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `greet` can't see `name` at all." }
-            - { id: c, text: "E0061: wrong number of arguments", why: "`greet` takes no parameters and is called with none, so the count matches." }
+            - { id: a, text: "cannot find value `name` in this scope" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. `greet` can't see `name` at all." }
+            - { id: c, text: "wrong number of arguments", why: "`greet` takes no parameters and is called with none, so the count matches." }
           answer: a
         explanation: "A function can't see the variables of the function that calls it. Pass the value in as a parameter: `fn greet(name: &str)` and `greet(name)`."
         concepts: [fn.params, compiler.read-error, err.E0425]
@@ -458,7 +458,7 @@ lessons:
         prompt: "Which call matches `fn move_player(x: i32, y: i32, speed: f64)`?"
         options:
           - { id: a, code: "move_player(1, 2, 0.5);" }
-          - { id: b, code: "move_player(1, 2);", why: "There are three parameters, so the call needs three arguments (E0061)." }
+          - { id: b, code: "move_player(1, 2);", why: "There are three parameters, so the call needs three arguments." }
           - { id: c, code: "move_player(x: 1, y: 2, speed: 0.5);", why: "Rust has no named arguments. You pass values in order." }
           - { id: d, code: "move_player(0.5, 1, 2);", why: "Arguments go in parameter order. `0.5` would land in `x`, which is an `i32`." }
         answer: a

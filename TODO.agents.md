@@ -240,6 +240,9 @@ also works. CI doesn't need either.
   - [ ] (new) A string literal's text lives in the program binary, which diagrams can't show (prose covers it)
   - [x] Code Reads library in the Practice hub (M4)
 - [x] Content QA pass (03 §5 checklist), all of Sections 1-5
+- [x] (new) No rote error codes: 33 code-recall items (code-to-meaning pairs, "E0499 means" true-false, options
+  differing only by code) rewritten to test messages and rules; build check `roteCodes` keeps it that way. Agents
+  also dropped most codes from prose and option prefixes (allowed, but the messages say more)
   - [x] Units 1.3-1.5 and 2.1-2.3 reviewed by two independent agents: 22 fixes (wrong claims, ambiguous
     items, unanswerable tile exercises, a concept used before it is taught)
   - [x] (new) Build: concept cards over 60 words of prose warn; predict-output tiles must be able to spell the answer
@@ -341,8 +344,9 @@ also works. CI doesn't need either.
     card scrolls); the fill-tile probe passes `stdin`
   - [x] (new) Placement: a section's questions come from its last checkpoint, and passing it completes the
     whole section, including a trailing Build (a project unit has no checkpoint)
-  - [ ] (new) A "Run it" button on a Build's closing card (needs the runner; the Playground has no stdin)
-  - [ ] (new) Playground: `test` mode UI, symbol key row (01 §4.4)
+  - [ ] (new) A "Run it" button on a Build's closing card. On hold: play.rust-lang.org has no stdin, so the
+    Guessing Game would loop on EOF, and the closing card already shows the verified run
+  - [x] (new) Playground: symbol key row (keeps editor focus), TEST button shown when the code has `#[test]`
 - [ ] Capacitor Android project, local notifications, haptics (01 §8.2)
 
 ## Mascot (separate design task, 01 §4.6)

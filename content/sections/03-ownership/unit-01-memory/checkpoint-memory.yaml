@@ -43,9 +43,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0599: no method named `push_str` found", why: "`motto` is declared as a `String`, which has `push_str`. The problem is the value on line 2." }
-            - { id: c, text: "E0596: cannot borrow as mutable", why: "`motto` is `mut`, so `push_str` is allowed." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "no method named `push_str` found", why: "`motto` is declared as a `String`, which has `push_str`. The problem is the value on line 2." }
+            - { id: c, text: "cannot borrow as mutable", why: "`motto` is `mut`, so `push_str` is allowed." }
           answer: a
         explanation: "`\"go\"` is a `&str`, but `motto` is declared as a `String`. Write `String::from(\"go\")`."
         concepts: [string.string-vs-literal, err.E0308]

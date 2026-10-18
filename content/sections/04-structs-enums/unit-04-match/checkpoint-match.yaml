@@ -61,9 +61,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0004: non-exhaustive patterns: `None` not covered" }
-            - { id: b, text: "E0004: non-exhaustive patterns: `Some(i32::MIN..=-1_i32)` not covered", why: "`Some(n)` covers every number, negative ones included." }
-            - { id: c, text: "E0308: mismatched types", why: "Both arms give text. The problem is a missing case." }
+            - { id: a, text: "non-exhaustive patterns: `None` not covered" }
+            - { id: b, text: "non-exhaustive patterns: `Some(i32::MIN..=-1_i32)` not covered", why: "`Some(n)` covers every number, negative ones included." }
+            - { id: c, text: "mismatched types", why: "Both arms give text. The problem is a missing case." }
           answer: a
         explanation: "`Some(0)` and `Some(n)` cover every `Some`, but nothing covers `None`. The unused `n` is only a warning."
         concepts: [match.exhaustive, err.E0004, match.bind]
@@ -84,7 +84,7 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, text: "Change line 3 to `if let Some(name) = &pet {`" }
-          - { id: b, text: "Change line 3 to `if let Some(&name) = pet {`", why: "`pet` holds a `String`, not a reference, so `&name` doesn't fit (E0308)." }
+          - { id: b, text: "Change line 3 to `if let Some(&name) = pet {`", why: "`pet` holds a `String`, not a reference, so `&name` doesn't fit." }
           - { id: c, text: "Delete line 6", why: "That compiles, but it drops the output the program is meant to print. Borrowing keeps both." }
         answer: a
         explanation: "`if let Some(name) = pet` moves the `String` into `name`. Matching on `&pet` borrows it, so `pet` is still whole on line 6."
@@ -168,7 +168,7 @@ lessons:
         prompt: "An enum `Tool` has six variants. A function needs special code for `Hammer` only. Which `match` is the better choice?"
         options:
           - { id: a, code: "match tool {\n    Tool::Hammer => bang(),\n    _ => {}\n}" }
-          - { id: b, code: "match tool {\n    Tool::Hammer => bang(),\n}", why: "Five variants have no arm, so this is E0004." }
+          - { id: b, code: "match tool {\n    Tool::Hammer => bang(),\n}", why: "Five variants have no arm, so the `match` isn't exhaustive." }
           - { id: c, code: "match tool {\n    _ => {}\n    Tool::Hammer => bang(),\n}", why: "`_` comes first and catches `Hammer` too, so `bang()` never runs." }
         answer: a
         explanation: "With one interesting case, a `_` arm last is the usual choice. `if let Tool::Hammer = tool` would work too."
@@ -269,11 +269,11 @@ lessons:
         id: pairs-errors
         prompt: Match each error to its cause
         pairs:
-          - ["E0004", "a match misses some values"]
-          - ["E0005", "plain let with a pattern that can fail"]
-          - ["E0027", "braces pattern leaves out a field"]
-          - ["E0023", "tuple pattern has the wrong count"]
-          - ["E0369", "== used on your own enum"]
+          - ["non-exhaustive patterns", "a match misses some values"]
+          - ["refutable pattern in local binding", "plain let with a pattern that can fail"]
+          - ["pattern does not mention field `age`", "braces pattern leaves out a field"]
+          - ["this pattern has 1 field, but the corresponding tuple variant has 3 fields", "tuple pattern has the wrong count"]
+          - ["binary operation `==` cannot be applied to type `Light`", "== used on your own enum"]
         concepts: [err.E0004, match.let-else, match.bind, macro.matches]
 
       - type: predict-output

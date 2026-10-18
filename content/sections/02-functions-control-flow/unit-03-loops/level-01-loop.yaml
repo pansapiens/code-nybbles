@@ -237,9 +237,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
-            - { id: b, text: "E0308: mismatched types", why: "`count` holds whole numbers the whole time." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`count` exists. It can't change because it isn't `mut`." }
+            - { id: a, text: "cannot assign twice to immutable variable" }
+            - { id: b, text: "mismatched types", why: "`count` holds whole numbers the whole time." }
+            - { id: c, text: "cannot find value in this scope", why: "`count` exists. It can't change because it isn't `mut`." }
           answer: a
         explanation: "A counter that changes on each pass must be declared `let mut count`."
         concepts: [ctrl.loop, var.mut, err.E0384]
@@ -284,9 +284,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`n` is `mut`, so `n += 1` is fine." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "Every name here exists." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`n` is `mut`, so `n += 1` is fine." }
+            - { id: c, text: "cannot find value in this scope", why: "Every name here exists." }
           answer: a
         explanation: "Every `break` in a loop must give the same type. One gives text and the other a number."
         concepts: [ctrl.break-value, err.E0308]
@@ -351,7 +351,7 @@ lessons:
           - { id: b, text: "The `if` needs an `else` before it can use `break`", why: "`else` is optional. The problem is that `if` isn't a loop." }
           - { id: c, text: "`break` needs a value, like `break 0;`", why: "A plain `break;` is fine inside a loop. Here there's no loop at all." }
         answer: a
-        explanation: "E0268 means `break` outside of a loop. An `if` runs once, so there's nothing to break out of."
+        explanation: "`break` outside of a loop is an error. An `if` runs once, so there's nothing to break out of."
         concepts: [ctrl.loop, ctrl.if]
 
       - type: fill-tokens
@@ -380,7 +380,7 @@ lessons:
         id: tf-break-type
         prompt: "In one loop, `break 1;` and `break 2;` can both appear."
         answer: true
-        explanation: "Both breaks give an integer, so the loop's type is consistent. Mixing types, like a number and text, is E0308."
+        explanation: "Both breaks give an integer, so the loop's type is consistent. Mixing types, like a number and text, is a *mismatched types* error."
         concepts: [ctrl.break-value]
 
   - id: l3
@@ -489,8 +489,8 @@ lessons:
           expectErrors: [E0308]
         options:
           - { id: a, text: "Change line 6 to `break n;`" }
-          - { id: b, text: "Change line 2 to `let n: u32 = 0;`", why: "Removing `mut` would add an E0384 error and leave this one." }
-          - { id: c, text: "Change line 3 to `let total = loop {`", why: "Then `total` is `()`, and `{}` can't print `()`, so you get E0277 instead." }
+          - { id: b, text: "Change line 2 to `let n: u32 = 0;`", why: "Removing `mut` would add a second error and leave this one." }
+          - { id: c, text: "Change line 3 to `let total = loop {`", why: "Then `total` is `()`, and `{}` can't print `()`, so you get a different error instead." }
         answer: a
         explanation: "A plain `break;` gives `()`, but `total` must be a `u32`. `break n;` gives 15 instead."
         concepts: [ctrl.break-value, err.E0308, types.unit]
@@ -603,5 +603,5 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: false
-        explanation: "With `;` the loop becomes a statement, so the function body gives `()` instead of an `i32`. That's E0308."
+        explanation: "With `;` the loop becomes a statement, so the function body gives `()` instead of an `i32`. That's a *mismatched types* error."
         concepts: [ctrl.break-value, fn.return, err.E0308]

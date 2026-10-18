@@ -83,9 +83,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types, expected integer, found `bool`" }
-            - { id: b, text: "E0609: no field on type", why: "No element is read here. The problem is mixing types." }
-            - { id: c, text: "E0277: cannot be formatted", why: "Nothing is printed. The array itself can't mix types." }
+            - { id: a, text: "mismatched types, expected integer, found `bool`" }
+            - { id: b, text: "no field on type", why: "No element is read here. The problem is mixing types." }
+            - { id: c, text: "cannot be formatted", why: "Nothing is printed. The array itself can't mix types." }
           answer: a
         explanation: "The first element makes it an array of integers, so `true` doesn't fit. A tuple `(1, true)` would work."
         concepts: [types.array, err.E0308]
@@ -144,7 +144,7 @@ lessons:
             - { id: b, text: "The missing element is filled with 0", why: "Rust doesn't fill in missing elements. The length must match exactly." }
             - { id: c, text: "Arrays can't have a type written out", why: "They can: `[i32; 3]`. Here the length doesn't match." }
           answer: a
-        explanation: "The length is part of the type, so `[i32; 3]` needs exactly three values. This is E0308, mismatched types."
+        explanation: "The length is part of the type, so `[i32; 3]` needs exactly three values. This is a *mismatched types* error."
         concepts: [types.array, err.E0308]
 
   - id: l2
@@ -215,7 +215,7 @@ lessons:
             - { id: b, text: "`queue` needs to be `mut`", why: "It already is. `mut` lets you change elements, not add more." }
             - { id: c, text: "`push` only works on arrays of text", why: "No array has `push`, whatever its type." }
           answer: a
-        explanation: "Error E0599 says there's no method `push` for arrays. An array's length is fixed by its type."
+        explanation: "The compiler says there's no method `push` for arrays. An array's length is fixed by its type."
         concepts: [types.array, err.E0599]
 
       - type: predict-output

@@ -96,9 +96,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`initial` is only given one value." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "Nothing is missing. The value has the wrong type." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`initial` is only given one value." }
+            - { id: c, text: "cannot find value in this scope", why: "Nothing is missing. The value has the wrong type." }
           answer: a
         explanation: "`'F'` is a `char`, but the annotation says `&str`. Writing `\"F\"` would fix it."
         concepts: [string.str-literal-intro, types.char, err.E0308]
@@ -203,7 +203,7 @@ lessons:
           - { id: b, text: "`format!` can't be stored in a variable", why: "It can. Its result has a different type from a literal." }
           - { id: c, text: "A number can't be put into text", why: "`format!` turns `score` into text without a problem." }
         answer: a
-        explanation: "E0308 means mismatched types. Writing `let msg: String` or removing the annotation fixes it."
+        explanation: "The error is *mismatched types*. Writing `let msg: String` or removing the annotation fixes it."
         concepts: [string.str-literal-intro, macro.print-family, compiler.read-error, err.E0308]
 
       - type: spot-bug
@@ -355,7 +355,7 @@ lessons:
             - { id: b, text: "`greeting` needs `mut`", why: "It's never changed, so `mut` wouldn't help." }
             - { id: c, text: "`\"hi\"` is too short to be a string", why: "Any length works, even `\"\"`." }
           answer: a
-        explanation: "A literal is a `&str`. The compiler reports a type mismatch (E0308) and suggests borrowing, which means adding `&`."
+        explanation: "A literal is a `&str`. The compiler reports a type mismatch and suggests borrowing, which means adding `&`."
         concepts: [string.str-literal-intro, err.E0308]
 
       - type: decode-error

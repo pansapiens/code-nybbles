@@ -99,11 +99,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0063: missing field `y` in initializer of `Point`" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. A field was left out." }
-            - { id: c, text: "E0308: mismatched types", why: "`5` is a fine `i32`. The problem is the field that has no value." }
+            - { id: a, text: "missing field `y` in initializer of `Point`" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. A field was left out." }
+            - { id: c, text: "mismatched types", why: "`5` is a fine `i32`. The problem is the field that has no value." }
           answer: a
-        explanation: "Every field needs a value when you create an instance. `y` is missing, so this is E0063."
+        explanation: "Every field needs a value when you create an instance. `y` is missing, so the compiler says *missing field*."
         concepts: [struct.define, err.E0063]
 
       - type: true-false
@@ -195,11 +195,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0594: cannot assign to `score.points`, as `score` is not declared as mutable" }
-            - { id: b, text: "E0063: missing field `points`", why: "`points` gets the value `0` when `score` is created." }
-            - { id: c, text: "E0308: mismatched types", why: "`10` is a fine `u32`. The problem is that `score` isn't `mut`." }
+            - { id: a, text: "cannot assign to `score.points`, as `score` is not declared as mutable" }
+            - { id: b, text: "missing field `points`", why: "`points` gets the value `0` when `score` is created." }
+            - { id: c, text: "mismatched types", why: "`10` is a fine `u32`. The problem is that `score` isn't `mut`." }
           answer: a
-        explanation: "`score` isn't `mut`, so none of its fields can change. E0594 is the error for assigning to a field; the fix is `let mut score`."
+        explanation: "`score` isn't `mut`, so none of its fields can change. The compiler says you *cannot assign* to the field; the fix is `let mut score`."
         concepts: [struct.define, var.mut, err.E0594]
 
       - type: fill-tokens
@@ -235,7 +235,7 @@ lessons:
           - ["Point { x: 1 }", "creates an instance"]
           - ["p.x", "reads a field"]
           - ["let mut p = ...", "lets you change fields"]
-          - ["E0063", "a field was left out"]
+          - ["missing field `y` in initializer of `Point`", "a field was left out"]
         concepts: [struct.define]
 
   - id: l2
@@ -381,9 +381,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `rex.name`" }
-            - { id: b, text: "E0063: missing field `name`", why: "`..rex` supplies `name`, so `older` has every field." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The problem is a moved `String`." }
+            - { id: a, text: "borrow of moved value: `rex.name`" }
+            - { id: b, text: "missing field `name`", why: "`..rex` supplies `name`, so `older` has every field." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. The problem is a moved `String`." }
           answer: a
         explanation: "`..rex` moves the `String` in `rex.name` into `older`, the same as `let` would. After that `rex.name` can't be used."
         concepts: [struct.update, own.move, err.E0382]
@@ -433,7 +433,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0560]
         answer: 9
-        explanation: "`Order` has no field called `amount`; it's called `quantity`. The compiler reports E0560 and lists the fields that exist."
+        explanation: "`Order` has no field called `amount`; it's called `quantity`. The compiler says the struct has no such field and lists the fields that exist."
         concepts: [struct.define]
 
       - type: predict-output

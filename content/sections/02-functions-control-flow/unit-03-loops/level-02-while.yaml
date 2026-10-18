@@ -145,9 +145,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`lives` is `mut`, so changing it is fine." }
-            - { id: c, text: "E0268: `break` outside of a loop", why: "There's no `break` here." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`lives` is `mut`, so changing it is fine." }
+            - { id: c, text: "`break` outside of a loop", why: "There's no `break` here." }
           answer: a
         explanation: "A `while` condition must be a `bool`. `lives` is a number, and Rust doesn't treat numbers as true or false."
         concepts: [ctrl.while, err.E0308, types.bool]
@@ -221,7 +221,7 @@ lessons:
           - { id: b, text: "`n` must be `mut` to be used in `break n`", why: "`n` is already `mut`. The problem is the kind of loop." }
           - { id: c, text: "`break` can't be used inside an `if`", why: "`break` inside an `if` is fine. The problem is `break n` in a `while`." }
         answer: a
-        explanation: "E0571 is `break` with a value in a `while` loop. A `while` might end because its condition is false, and then there'd be no value, so Rust only allows `break value` in `loop`."
+        explanation: "Using `break` with a value in a `while` loop is an error. A `while` might end because its condition is false, and then there'd be no value, so Rust only allows `break value` in `loop`."
         concepts: [ctrl.while, ctrl.break-value]
 
       - type: mcq
@@ -229,7 +229,7 @@ lessons:
         prompt: "Which kind of loop can end with `break value`?"
         options:
           - { id: a, text: "`loop` only" }
-          - { id: b, text: "`while` only", why: "A `while` loop gives `()`. `break value` inside one is error E0571." }
+          - { id: b, text: "`while` only", why: "A `while` loop gives `()`. `break value` inside one is an error." }
           - { id: c, text: "Both `loop` and `while`", why: "A `while` can stop because its condition is false, with no value to give, so only `loop` allows it." }
         answer: a
         explanation: "A `loop` can only end at a `break`, so Rust knows every way out has a value."
@@ -314,9 +314,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`n` is `mut`." }
-            - { id: c, text: "E0571: `break` with value from a `while` loop", why: "There's no `break` here." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`n` is `mut`." }
+            - { id: c, text: "`break` with value from a `while` loop", why: "There's no `break` here." }
           answer: a
         explanation: "`n = 0` assigns, and an assignment's value is `()`, not a `bool`. To compare, write `n == 0` (here you'd want `n > 0`)."
         concepts: [ctrl.while, err.E0308]

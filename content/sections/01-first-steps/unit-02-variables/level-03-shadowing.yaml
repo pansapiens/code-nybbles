@@ -86,9 +86,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`spaces` is `mut`, so assigning is allowed. The new value has the wrong type." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`spaces` exists on line 1." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`spaces` is `mut`, so assigning is allowed. The new value has the wrong type." }
+            - { id: c, text: "cannot find value in this scope", why: "`spaces` exists on line 1." }
           answer: a
         explanation: "`mut` lets you change the value but not its type. `spaces` holds text, so it can't be given a number."
         concepts: [var.shadowing, var.mut, err.E0308]
@@ -330,9 +330,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
-            - { id: b, text: "E0308: mismatched types", why: "Every value here is a whole number." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`score` exists, but the newest `score` isn't `mut`." }
+            - { id: a, text: "cannot assign twice to immutable variable" }
+            - { id: b, text: "mismatched types", why: "Every value here is a whole number." }
+            - { id: c, text: "cannot find value in this scope", why: "`score` exists, but the newest `score` isn't `mut`." }
           answer: a
         explanation: "Line 3 creates a new `score` without `mut`. That shadow can't be changed, so line 4 fails."
         concepts: [var.shadowing, err.E0384]
@@ -366,7 +366,7 @@ lessons:
         prompt: Which of these compiles?
         options:
           - { id: a, code: "let lives = \"three\"; let lives = 3;" }
-          - { id: b, code: "let mut lives = \"three\"; lives = 3;", why: "`mut` allows a new value, but not a different type (E0308)." }
+          - { id: b, code: "let mut lives = \"three\"; lives = 3;", why: "`mut` allows a new value, but not a different type (*mismatched types*)." }
           - { id: c, code: "let lives = \"three\"; lives = 3;", why: "`lives` isn't `mut`, and the type is different too." }
         answer: a
         explanation: "Only shadowing can switch a name from text to a number, because it creates a new variable."

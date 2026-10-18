@@ -64,7 +64,7 @@ lessons:
           verify: run
           expectStdout: "hi hi\n"
         answer: true
-        explanation: "`t` borrows `s`, so nothing moves and `s` is still usable. With `let t = s;` this would be E0382."
+        explanation: "`t` borrows `s`, so nothing moves and `s` is still usable. With `let t = s;` this would be an error."
         concepts: [borrow.shared, err.E0382]
 
       - type: concept
@@ -105,7 +105,7 @@ lessons:
         prompt: "`fn shout(s: &String)` takes a reference. Which call keeps `msg` usable afterwards and compiles?"
         options:
           - { id: a, code: "shout(&msg);" }
-          - { id: b, code: "shout(msg);", why: "This passes the `String` itself. The function wants a `&String`, so it's a type error (E0308)." }
+          - { id: b, code: "shout(msg);", why: "This passes the `String` itself. The function wants a `&String`, so it's a type error." }
           - { id: c, code: "&shout(msg);", why: "The `&` has to go on the argument, not on the call. This still passes the `String` itself." }
         answer: a
         explanation: "The parameter type is `&String`, so the argument is `&msg`: a reference to `msg`."
@@ -151,7 +151,7 @@ lessons:
           "1": { answer: ["&String"] }
           "2": { answer: ["&"] }
         bank: ["&String", "String", "&", "*"]
-        explanation: "`count` borrows with `&String`, and the call lends `&city`. With `String` and `city`, the move would make line 8 an E0382."
+        explanation: "`count` borrows with `&String`, and the call lends `&city`. With `String` and `city`, the move would make line 8 a use of a moved value."
         concepts: [borrow.shared]
 
       - type: match-pairs
@@ -170,7 +170,7 @@ lessons:
         id: concept-read-only
         title: Look, don't touch
         markdown: |
-          **A `&` reference is read-only.** You can read through it, but not change the value. Trying is error **E0596**.
+          **A `&` reference is read-only.** You can read through it, but not change the value. Trying is a compile error.
 
           Next level shows how to borrow with permission to change.
         code:
@@ -203,9 +203,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0596: cannot borrow `*r` as mutable, as it is behind a `&` reference" }
-            - { id: b, text: "E0382: borrow of moved value", why: "Nothing moved. `r` only borrows `s`." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "No variable is assigned twice. The problem is changing the text through `r`." }
+            - { id: a, text: "cannot borrow `*r` as mutable, as it is behind a `&` reference" }
+            - { id: b, text: "borrow of moved value", why: "Nothing moved. `r` only borrows `s`." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "No variable is assigned twice. The problem is changing the text through `r`." }
           answer: a
         explanation: "`r` is a `&` reference, so `push_str` can't change the text through it, even though `s` is `mut`."
         concepts: [borrow.shared, err.E0596]
@@ -249,7 +249,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 7
-        explanation: "`print_len` wants a `&String`, but line 7 passes the `String` itself (E0308). Write `print_len(&city)`."
+        explanation: "`print_len` wants a `&String`, but line 7 passes the `String` itself. Write `print_len(&city)`."
         concepts: [borrow.shared, fn.params, err.E0308]
 
       - type: decode-error
@@ -270,10 +270,10 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, text: "Make the parameter `s: &String` and call `count(&name)`" }
-          - { id: b, text: "Change line 7 to `let n = count(&name);` only", why: "`count` still wants a `String`, so passing `&name` is a type error (E0308)." }
+          - { id: b, text: "Change line 7 to `let n = count(&name);` only", why: "`count` still wants a `String`, so passing `&name` is a type error." }
           - { id: c, text: "Change line 8 to `println!(\"{n}\");`", why: "That compiles, but it no longer prints the name." }
         answer: a
-        explanation: "`count(name)` moves `name` into the function, so line 8 can't use it (E0382). Borrowing lets `main` keep it."
+        explanation: "`count(name)` moves `name` into the function, so line 8 can't use it. Borrowing lets `main` keep it."
         concepts: [borrow.shared, own.fn-move, err.E0382]
 
       - type: true-false
@@ -374,7 +374,7 @@ lessons:
           "1": { answer: ["&String"] }
           "2": { answer: ["&first"] }
         bank: ["&String", "String", "&first", "first", "*first"]
-        explanation: "`sum` borrows its first argument, so the call passes `&first`. Passing `first` would move it, and line 9 couldn't print it (E0382)."
+        explanation: "`sum` borrows its first argument, so the call passes `&first`. Passing `first` would move it, and line 9 couldn't print it."
         concepts: [borrow.shared]
 
       - type: predict-output
@@ -436,9 +436,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0382: borrow of moved value", why: "Nothing has moved. `&word` is only a borrow." }
-            - { id: c, text: "E0596: cannot borrow as mutable", why: "Nothing tries to change the text." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "borrow of moved value", why: "Nothing has moved. `&word` is only a borrow." }
+            - { id: c, text: "cannot borrow as mutable", why: "Nothing tries to change the text." }
           answer: a
         explanation: "`shout` wants an owned `String`, but `&word` is a `&String`. The two types don't match."
         concepts: [borrow.shared, fn.params, err.E0308]

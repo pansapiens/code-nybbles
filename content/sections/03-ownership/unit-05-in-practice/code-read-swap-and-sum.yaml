@@ -67,7 +67,7 @@ chunks:
         id: all-mut
         prompt: "`left`, `right` and `total` all need `let mut`, because the program takes `&mut` references to them."
         answer: true
-        explanation: "You can only take `&mut` of a mutable variable. Without `mut`, line 16 or line 19 would fail with E0596."
+        explanation: "You can only take `&mut` of a mutable variable. Without `mut`, line 16 or line 19 would fail to compile."
         concepts: [borrow.mut]
   - lines: 3
     exercises:
@@ -98,9 +98,9 @@ chunks:
         id: swap-same
         prompt: "What happens if line 16 is changed to `swap(&mut left, &mut left);`?"
         options:
-          - { id: a, text: "It doesn't compile: error E0499" }
+          - { id: a, text: "It doesn't compile: two `&mut` borrows of `left` at once" }
           - { id: b, text: "It compiles and `left` stays 3", why: "The borrow checker rejects it before it can run." }
-          - { id: c, text: "It doesn't compile: error E0502", why: "Both borrows are `&mut`, so it's E0499, not the shared-and-mutable error." }
+          - { id: c, text: "It doesn't compile: a `&` and a `&mut` borrow of `left` overlap", why: "Both borrows are `&mut`. There is no shared borrow." }
         answer: a
         explanation: "Both arguments are alive for the whole call, so `left` would have two `&mut` borrows at once."
         concepts: [borrow.exclusive, err.E0499]

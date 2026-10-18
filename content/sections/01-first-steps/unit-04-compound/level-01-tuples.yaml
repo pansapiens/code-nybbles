@@ -102,9 +102,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0609: no field `2` on type `({integer}, {integer})`" }
-            - { id: b, text: "E0425: cannot find value `pair` in this scope", why: "`pair` exists. It's the position `2` that doesn't." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The tuple only has positions 0 and 1." }
+            - { id: a, text: "no field `2` on type `({integer}, {integer})`" }
+            - { id: b, text: "cannot find value `pair` in this scope", why: "`pair` exists. It's the position `2` that doesn't." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is assigned here. The tuple only has positions 0 and 1." }
           answer: a
         explanation: "A tuple with two elements has positions 0 and 1 only. The compiler checks this before the program runs."
         concepts: [types.tuple, compiler.read-error, err.E0609]
@@ -203,9 +203,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0609: no field on type", why: "No field is read with a dot here. The problem is the pattern's size." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The tuple has 3 elements but the pattern has 2." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "no field on type", why: "No field is read with a dot here. The problem is the pattern's size." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. The tuple has 3 elements but the pattern has 2." }
           answer: a
         explanation: "The pattern `(hours, minutes)` has 2 names but `time` has 3 elements, so the types don't match."
         concepts: [types.tuple, err.E0308]
@@ -358,9 +358,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0609: no field `0` on type", why: "The tuple has a position 0. The problem is the order of the values." }
-            - { id: c, text: "E0277: cannot be formatted", why: "Printing an `i32` with `{}` is fine. The values are in the wrong order for the type." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "no field `0` on type", why: "The tuple has a position 0. The problem is the order of the values." }
+            - { id: c, text: "cannot be formatted", why: "Printing an `i32` with `{}` is fine. The values are in the wrong order for the type." }
           answer: a
         explanation: "The type says `i32` first and `bool` second, but the values are the other way round."
         concepts: [types.tuple, err.E0308]

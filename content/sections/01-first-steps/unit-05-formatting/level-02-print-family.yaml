@@ -171,9 +171,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0277: `()` doesn't implement `std::fmt::Display`" }
-            - { id: b, text: "E0425: cannot find value `message` in this scope", why: "`message` exists. The problem is what it holds." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`message` is only assigned once." }
+            - { id: a, text: "`()` doesn't implement `std::fmt::Display`" }
+            - { id: b, text: "cannot find value `message` in this scope", why: "`message` exists. The problem is what it holds." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`message` is only assigned once." }
           answer: a
         explanation: "`println!` prints and gives back `()`, the unit value, which `{}` can't display. To keep the text, use `format!`."
         concepts: [macro.print-family, types.unit, err.E0277]

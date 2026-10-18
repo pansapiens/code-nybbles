@@ -46,11 +46,11 @@ chunks:
         id: add-semicolon
         prompt: "What happens if you write `side * side;` on line 2?"
         options:
-          - { id: a, text: "Error E0308: the body returns `()`, but the signature says `u32`." }
+          - { id: a, text: "Mismatched types: the body returns `()`, but the signature says `u32`." }
           - { id: b, text: "Nothing changes.", why: "The semicolon turns the expression into a statement, so the function no longer returns the product." }
           - { id: c, text: "The function returns 0.", why: "Rust doesn't fill in a default number. It reports a type mismatch instead." }
         answer: a
-        explanation: "With a semicolon the body ends in a statement, whose value is `()`. That doesn't match `-> u32`, so the compiler reports E0308."
+        explanation: "With a semicolon the body ends in a statement, whose value is `()`. That doesn't match `-> u32`, so the compiler reports *mismatched types*."
         concepts: [err.E0308, expr.vs-stmt]
   - lines: 4
     exercises:

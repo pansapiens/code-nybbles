@@ -142,7 +142,7 @@ lessons:
             - { id: b, text: "`s` must be `mut` to slice it", why: "Slicing only reads `s`, so it doesn't need `mut`." }
             - { id: c, text: "Ranges can't be used on text", why: "They can, but only through a reference: `&s[0..2]`." }
           answer: a
-        explanation: "A slice is always used through a reference. Without `&`, Rust would need to store the text itself in `start`, and its size isn't known when compiling (E0277)."
+        explanation: "A slice is always used through a reference. Without `&`, Rust would need to store the text itself in `start`, and its size isn't known when compiling."
         concepts: [slice.str, err.E0277]
 
       - type: fill-tokens
@@ -313,7 +313,7 @@ lessons:
           - { id: b, text: "`..2` is not a valid range", why: "`..2` is fine: it means `0..2`." }
           - { id: c, text: "`s` needs to be `mut`", why: "Slicing only reads `s`. The problem is the type on the left." }
         answer: a
-        explanation: "E0308 means mismatched types: expected `String`, found `&str`. Write `let start: &str` or leave the type out."
+        explanation: "That's a mismatched types error: expected `String`, found `&str`. Write `let start: &str` or leave the type out."
         concepts: [slice.str, err.E0308]
 
       - type: fill-tokens
@@ -442,9 +442,9 @@ lessons:
         options:
           - { id: a, code: "let tea = &t[..3];", why: "Correct: `t` owns the text now, so slice `t`." }
           - { id: b, code: "let tea = s[..3];", why: "`s` has still moved, and a slice needs `&`." }
-          - { id: c, code: "let tea = &mut s[..3];", why: "`s` has still moved (E0382), and it isn't `mut` either (E0596)." }
+          - { id: c, code: "let tea = &mut s[..3];", why: "`s` has still moved, and it isn't `mut` either." }
         answer: a
-        explanation: "After `let t = s;`, `s` is no longer usable (E0382). The text now belongs to `t`, so borrow from `t`."
+        explanation: "After `let t = s;`, `s` is no longer usable. The text now belongs to `t`, so borrow from `t`."
         concepts: [slice.str, err.E0382, own.move]
 
       - type: spot-bug

@@ -240,9 +240,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0061: wrong number of arguments", why: "`lives` takes no arguments and gets none." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`\"three\"` is a text value, not a name to look up." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "wrong number of arguments", why: "`lives` takes no arguments and gets none." }
+            - { id: c, text: "cannot find value in this scope", why: "`\"three\"` is a text value, not a name to look up." }
           answer: a
         explanation: "A `return` value must match the return type, like a tail expression does. `\"three\"` is a `&str`, not an `i32`."
         concepts: [fn.early-return, err.E0308]
@@ -275,7 +275,7 @@ lessons:
         options:
           - { id: a, text: "Write `n * 2` as the tail, and save `return` for leaving early" }
           - { id: b, text: "Always write `return n * 2;`", why: "It works, but Rust code normally uses the tail expression at the end." }
-          - { id: c, text: "Write `n * 2;` with a semicolon", why: "That makes it a statement, so the function returns `()` (E0308)." }
+          - { id: c, text: "Write `n * 2;` with a semicolon", why: "That makes it a statement, so the function returns `()` (*mismatched types*)." }
         answer: a
         explanation: "Both `return n * 2;` and `n * 2` work at the end. The tail is shorter and is what most Rust code does."
         concepts: [fn.early-return, fn.return]
@@ -413,7 +413,7 @@ lessons:
           - { id: b, text: "`return` isn't allowed in a function with `->`", why: "It is, as long as it has a value of the right type: `return 42;`." }
           - { id: c, text: "`score` needs a parameter", why: "The call and definition both have no arguments. The problem is the missing return value." }
         answer: a
-        explanation: "E0069 means a bare `return;` in a function whose return type isn't `()`. The help suggests giving it a value."
+        explanation: "The error means a bare `return;` in a function whose return type isn't `()`. The help suggests giving it a value."
         concepts: [fn.early-return, compiler.read-error]
 
       - type: true-false
@@ -515,9 +515,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0069: `return;` in a function whose return type is not `()`", why: "This `return` has a value. E0069 is for a bare `return;`." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "Every name is defined. The type of the returned value is the problem." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "`return;` in a function whose return type is not `()`", why: "This `return` has a value. The error is about a bare `return;`." }
+            - { id: c, text: "cannot find value in this scope", why: "Every name is defined. The type of the returned value is the problem." }
           answer: a
         explanation: "`return 5;` returns from `main`, not from the block. `main` returns `()`, so returning a number is a type mismatch."
         concepts: [fn.early-return, expr.block, err.E0308]

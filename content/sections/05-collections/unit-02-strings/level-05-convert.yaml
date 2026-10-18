@@ -42,7 +42,7 @@ lessons:
             - { id: b, text: "`let name: String = &\"Ferris\";`", why: "That's a reference to a `&str`, still not an owned `String`." }
             - { id: c, text: "`let mut name: String = \"Ferris\";`", why: "`mut` doesn't change the type. A literal is a `&str`." }
           answer: a
-        explanation: "A literal is a `&str` (E0308). `.to_string()`, `.to_owned()` or `String::from` makes the `String`."
+        explanation: "A literal is a `&str`. `.to_string()`, `.to_owned()` or `String::from` makes the `String`."
         concepts: [string.convert, err.E0308]
 
       - type: predict-output
@@ -202,7 +202,7 @@ lessons:
             - { id: b, text: "Change the parameter to `name: String`", why: "A literal is still a `&str`, not a `String`, so the call fails the same way." }
             - { id: c, text: "Call `greet(&\"Ferris\")`", why: "That's a `&&str`, not a `&String`." }
           answer: a
-        explanation: "A `&String` parameter rejects literals (E0308). `&str` accepts literals and `&String` both."
+        explanation: "A `&String` parameter rejects literals. `&str` accepts literals and `&String` both."
         concepts: [string.convert, slice.str-param, err.E0308]
 
       - type: predict-output
@@ -244,7 +244,7 @@ lessons:
           expectErrors: [E0308]
         options:
           - { id: a, code: "match cmd.as_str() {" }
-          - { id: b, code: "match &cmd {", why: "That's a `&String`, and the patterns are `&str`. It's still E0308." }
+          - { id: b, code: "match &cmd {", why: "That's a `&String`, and the patterns are `&str`. It's still a type mismatch." }
           - { id: c, code: "match cmd.to_string() {", why: "That's another `String`, so the patterns still don't match its type." }
         answer: a
         explanation: "String literal patterns are `&str`, so the value being matched must be a `&str` too. `as_str()` borrows `cmd` as one."
@@ -275,7 +275,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 4
-        explanation: "The vector holds `String`s, and `\"Grace\"` is a `&str` (E0308). Write `\"Grace\".to_string()`."
+        explanation: "The vector holds `String`s, and `\"Grace\"` is a `&str`. Write `\"Grace\".to_string()`."
         concepts: [string.convert, vec.basics, err.E0308]
 
       - type: predict-output
@@ -406,7 +406,7 @@ lessons:
           - { id: b, text: "Structs can't hold text", why: "They can. The field's type is `String`, so it needs an owned `String`." }
           - { id: c, text: "`c` needs `mut` to set its field", why: "Fields are set when the struct is created. No `mut` is needed." }
         answer: a
-        explanation: "Mismatched types (E0308): a literal is a `&str`. `to_string`, `to_owned` or `String::from` turns it into the `String` the field needs."
+        explanation: "Mismatched types: a literal is a `&str`. `to_string`, `to_owned` or `String::from` turns it into the `String` the field needs."
         concepts: [string.convert, struct.ownership, err.E0308]
 
       - type: mcq
@@ -443,7 +443,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 5
-        explanation: "`push_str` needs a `&str`, and `count` is a number (E0308). Write `log.push_str(&count.to_string());`."
+        explanation: "`push_str` needs a `&str`, and `count` is a number. Write `log.push_str(&count.to_string());`."
         concepts: [string.convert, string.build, err.E0308]
 
       - type: fill-tokens
@@ -461,7 +461,7 @@ lessons:
         blanks:
           "1": { answer: ["as_str"] }
         bank: ["as_str", "to_string", "to_owned", "len"]
-        explanation: "`as_str()` gives a `&str`, which can be matched against string literal patterns. `to_string` and `to_owned` give a `String`, which can't (E0308)."
+        explanation: "`as_str()` gives a `&str`, which can be matched against string literal patterns. `to_string` and `to_owned` give a `String`, which can't."
         concepts: [string.convert]
 
       - type: predict-output

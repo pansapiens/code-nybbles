@@ -12,7 +12,7 @@ lessons:
         markdown: |
           **While a reference into a `Vec` is alive, you can't change the `Vec`.** Here `first` borrows an element and is used after the `push`, so the borrows overlap.
 
-          That's the rule from Section 3: many `&` **or** one `&mut`. `push` needs a `&mut`, so this is **E0502**.
+          That's the rule from Section 3: many `&` **or** one `&mut`. `push` needs a `&mut`, so this is an error: *cannot borrow as mutable because it is also borrowed as immutable*.
         code:
           rust: |
             let mut v = vec![1, 2, 3];
@@ -58,9 +58,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `names` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0499: cannot borrow `names` as mutable more than once at a time", why: "`top` is a shared `&` borrow, not a `&mut`. Shared plus mutable is E0502." }
-            - { id: c, text: "E0382: borrow of moved value: `names`", why: "Nothing moves `names`. It's borrowed, and then `push` needs to borrow it mutably." }
+            - { id: a, text: "cannot borrow `names` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "cannot borrow `names` as mutable more than once at a time", why: "`top` is a shared `&` borrow, not a `&mut`. That's a shared-plus-mutable conflict, not two mutable borrows." }
+            - { id: c, text: "borrow of moved value: `names`", why: "Nothing moves `names`. It's borrowed, and then `push` needs to borrow it mutably." }
           answer: a
         explanation: "`top` borrows `names` and is used on line 4, after the `push`. The shared borrow and the `push`'s mutable borrow overlap."
         concepts: [vec.borrow, err.E0502]
@@ -134,7 +134,7 @@ lessons:
           expectErrors: [E0502]
         options:
           - { id: a, code: "let first = v[0];" }
-          - { id: b, code: "let first = &mut v[0];", why: "Still a borrow alive across `push`. Now it's two mutable borrows, E0499." }
+          - { id: b, code: "let first = &mut v[0];", why: "Still a borrow alive across `push`. Now it's two mutable borrows." }
           - { id: c, code: "v.clone().push(4);", why: "Compiles, but it pushes onto a temporary copy that's thrown away. `v` is unchanged." }
         answer: a
         explanation: "`i32` is `Copy`, so `v[0]` copies the number and no borrow remains when `push` runs."
@@ -221,7 +221,7 @@ lessons:
             - { id: b, text: "`get` moves the element out of `v`", why: "`get` lends a reference. It never moves anything out." }
             - { id: c, text: "`first` is an `Option`, which can't be printed", why: "`{:?}` prints an `Option`. The problem is the borrow." }
           answer: a
-        explanation: "The `Some` holds a reference into `v`. While `first` is still used, `v` can't be changed (E0502)."
+        explanation: "The `Some` holds a reference into `v`. While `first` is still used, `v` can't be changed."
         concepts: [vec.borrow, vec.access, err.E0502]
 
       - type: compiles
@@ -238,9 +238,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `nums` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0382: borrow of moved value: `nums`", why: "`for n in &nums` borrows. It doesn't move `nums`." }
-            - { id: c, text: "E0596: cannot borrow `nums` as mutable", why: "`nums` is declared with `let mut`." }
+            - { id: a, text: "cannot borrow `nums` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "borrow of moved value: `nums`", why: "`for n in &nums` borrows. It doesn't move `nums`." }
+            - { id: c, text: "cannot borrow `nums` as mutable", why: "`nums` is declared with `let mut`." }
           answer: a
         explanation: "The loop borrows `nums` for its whole run. Pushing inside it would change the vector being read, and could move its elements."
         concepts: [vec.borrow, vec.iter, err.E0502]
@@ -260,11 +260,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0499: cannot borrow `nums` as mutable more than once at a time" }
-            - { id: b, text: "E0502: cannot borrow `nums` as mutable because it is also borrowed as immutable", why: "This loop borrows with `&mut`, not `&`. Two mutable borrows is E0499." }
-            - { id: c, text: "E0368: binary assignment operation `+=` cannot be applied", why: "Line 3 uses `*n`, which is right." }
+            - { id: a, text: "cannot borrow `nums` as mutable more than once at a time" }
+            - { id: b, text: "cannot borrow `nums` as mutable because it is also borrowed as immutable", why: "This loop borrows with `&mut`, not `&`. The conflict here is two mutable borrows." }
+            - { id: c, text: "binary assignment operation `+=` cannot be applied", why: "Line 3 uses `*n`, which is right." }
           answer: a
-        explanation: "The loop's `&mut nums` is alive for the whole loop, and `push` needs a second `&mut`. Two mutable borrows at once is E0499."
+        explanation: "The loop's `&mut nums` is alive for the whole loop, and `push` needs a second `&mut`. Two mutable borrows at once aren't allowed."
         concepts: [vec.borrow, vec.iter, err.E0499]
 
       - type: true-false
@@ -281,7 +281,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0502]
         answer: false
-        explanation: "`&v[0]` borrows the whole vector as far as the compiler is concerned. Any change to `v` while `r` is alive is E0502."
+        explanation: "`&v[0]` borrows the whole vector as far as the compiler is concerned. Changing `v` while `r` is alive doesn't compile."
         concepts: [vec.borrow, err.E0502]
 
       - type: predict-output
@@ -334,7 +334,7 @@ lessons:
           expectErrors: [E0502]
         options:
           - { id: a, text: "Change line 5 to `let captain = team[0].clone();`" }
-          - { id: b, text: "Change line 5 to `let captain = team[0];`", why: "A `String` isn't `Copy`, so this tries to move it out of the vector (E0507)." }
+          - { id: b, text: "Change line 5 to `let captain = team[0];`", why: "A `String` isn't `Copy`, so this tries to move it out of the vector." }
           - { id: c, text: "Change line 2 to `let team = ...`", why: "Without `mut`, the `push` on line 6 wouldn't be allowed at all." }
         answer: a
         explanation: "`clone()` makes `captain` its own `String`, so it no longer borrows `team` and the `push` is fine."
@@ -389,7 +389,7 @@ lessons:
         verify:
           mode: run
           expectStdout: "[2, 4, 6]\n"
-        explanation: "Reading `nums` while pushing to a different vector is fine. Pushing to `nums` inside its own loop is E0502."
+        explanation: "Reading `nums` while pushing to a different vector is fine. Pushing to `nums` inside its own loop doesn't compile."
         concepts: [vec.borrow, vec.iter]
 
       - type: fill-tokens
@@ -453,7 +453,7 @@ lessons:
           - { id: b, text: "`*x *= 10` isn't allowed inside a loop", why: "Changing elements through `x` is fine. The trouble is the `push` on line 5." }
           - { id: c, text: "`v` needs a type annotation", why: "`vec![1, 2]` tells Rust the type. The error is about borrows." }
         answer: a
-        explanation: "Only one mutable borrow can be alive at a time (E0499). The loop has one for its whole run, and `push` wants a second."
+        explanation: "Only one mutable borrow can be alive at a time. The loop has one for its whole run, and `push` wants a second."
         concepts: [vec.borrow, err.E0499]
 
       - type: compiles
@@ -478,8 +478,8 @@ lessons:
         prompt: "`v` is a `mut` `Vec<i32>`. Which of these compiles?"
         options:
           - { id: a, code: "let n = v.len();\nv.push(n as i32);" }
-          - { id: b, code: "let r = &v[0];\nv.push(1);\nprintln!(\"{r}\");", why: "`r` is still alive when `push` runs: E0502." }
-          - { id: c, code: "for x in &v {\n    v.push(*x);\n}", why: "The loop borrows `v` for its whole run, so `push` inside it is E0502." }
+          - { id: b, code: "let r = &v[0];\nv.push(1);\nprintln!(\"{r}\");", why: "`r` is still alive when `push` runs, so this doesn't compile." }
+          - { id: c, code: "for x in &v {\n    v.push(*x);\n}", why: "The loop borrows `v` for its whole run, so `push` inside it doesn't compile." }
         answer: a
         explanation: "`v.len()` returns a plain `usize`, not a borrow, so nothing is borrowed when `push` runs."
         concepts: [vec.borrow, types.as-cast]

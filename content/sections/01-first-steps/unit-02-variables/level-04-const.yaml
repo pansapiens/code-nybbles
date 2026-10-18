@@ -188,9 +188,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0435: attempt to use a non-constant value in a constant" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The constant uses a variable." }
-            - { id: c, text: "E0308: mismatched types", why: "The problem is where the value comes from, not its type." }
+            - { id: a, text: "attempt to use a non-constant value in a constant" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. The constant uses a variable." }
+            - { id: c, text: "mismatched types", why: "The problem is where the value comes from, not its type." }
           answer: a
         explanation: "`lives` is a variable, so its value isn't fixed at compile time. A constant can only use literals and other constants."
         concepts: [var.const, err.E0435]
@@ -459,10 +459,10 @@ lessons:
 
       - type: match-pairs
         id: pairs-errors
-        prompt: Match each error code to its meaning
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0384", "assigned twice to a non-mut variable"]
-          - ["E0435", "non-constant value in a constant"]
-          - ["E0308", "mismatched types"]
-          - ["E0425", "name not found"]
+          - ["cannot assign twice to immutable variable", "changing a variable that isn't `mut`"]
+          - ["attempt to use a non-constant value in a constant", "setting a `const` from a `let` variable"]
+          - ["mismatched types", "a value has a different type from the one expected"]
+          - ["cannot find value in this scope", "using a name that doesn't exist"]
         concepts: [var.const, err.E0384]

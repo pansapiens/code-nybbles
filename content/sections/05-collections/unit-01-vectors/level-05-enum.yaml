@@ -10,7 +10,7 @@ lessons:
         id: concept-one-type
         title: One type per Vec
         markdown: |
-          **A `Vec` holds one type, so you can't mix numbers and text directly.** The compiler takes the type from the first element and expects the rest to match: **E0308**.
+          **A `Vec` holds one type, so you can't mix numbers and text directly.** The compiler takes the type from the first element and expects the rest to match, so this is a *mismatched types* error.
 
           But a row of a spreadsheet, say, really does mix numbers and text. Coming up: how an enum fixes this.
         code:
@@ -174,9 +174,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0004: non-exhaustive patterns: `&Shape::Dot` not covered" }
-            - { id: b, text: "E0308: mismatched types", why: "All the types fit. The `match` misses a variant." }
-            - { id: c, text: "E0382: borrow of moved value: `shapes`", why: "The loop borrows `shapes` with `&`. Nothing moves." }
+            - { id: a, text: "non-exhaustive patterns: `&Shape::Dot` not covered" }
+            - { id: b, text: "mismatched types", why: "All the types fit. The `match` misses a variant." }
+            - { id: c, text: "borrow of moved value: `shapes`", why: "The loop borrows `shapes` with `&`. Nothing moves." }
           answer: a
         explanation: "A `match` must cover every variant, even ones no element happens to use yet. Add a `Shape::Dot` arm."
         concepts: [vec.enum, match.exhaustive, err.E0004]
@@ -303,9 +303,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `inbox`" }
-            - { id: b, text: "E0004: non-exhaustive patterns", why: "`if let` doesn't need to cover every variant. Only `match` does." }
-            - { id: c, text: "E0308: mismatched types", why: "The types fit. The loop moved `inbox`." }
+            - { id: a, text: "borrow of moved value: `inbox`" }
+            - { id: b, text: "non-exhaustive patterns", why: "`if let` doesn't need to cover every variant. Only `match` does." }
+            - { id: c, text: "mismatched types", why: "The types fit. The loop moved `inbox`." }
           answer: a
         explanation: "`for m in inbox` moves the vector into the loop, so line 13 can't use it. Loop over `&inbox` instead."
         concepts: [vec.enum, vec.iter, err.E0382]
@@ -341,7 +341,7 @@ lessons:
         id: tf-new-variant
         prompt: "If you add a new variant to the enum, every `match` over the elements that doesn't use `_` stops compiling until you handle it."
         answer: true
-        explanation: "Matches must be exhaustive, so the compiler points to every place that needs a new arm (E0004). That's a big help when the list of kinds grows."
+        explanation: "Matches must be exhaustive, so the compiler points to every place that needs a new arm. That's a big help when the list of kinds grows."
         concepts: [vec.enum, match.exhaustive]
 
       - type: fill-tokens
@@ -451,7 +451,7 @@ lessons:
           - { id: b, text: "`Job::Stop` can't be pushed because it holds no data", why: "Variants without data are values like any other. The error is about borrowing." }
           - { id: c, text: "`if let` needs an `else` branch", why: "`else` is optional with `if let`." }
         answer: a
-        explanation: "The vector rules from level 4 still apply with enums. The loop's shared borrow overlaps the `push`'s mutable borrow: E0502."
+        explanation: "The vector rules from level 4 still apply with enums. The loop's shared borrow overlaps the `push`'s mutable borrow, so it doesn't compile."
         concepts: [vec.enum, vec.borrow, err.E0502]
 
       - type: predict-output
@@ -504,7 +504,7 @@ lessons:
         prompt: "A to-do app stores tasks that are either a plain note or a note with a due day. What's a good way to keep them all in one list?"
         options:
           - { id: a, code: "enum Task {\n    Note(String),\n    Due(String, u32),\n}\nlet tasks: Vec<Task> = Vec::new();" }
-          - { id: b, code: "let tasks = vec![String::new(), 3];", why: "A `Vec` can't hold a `String` and an integer side by side. That's E0308." }
+          - { id: b, code: "let tasks = vec![String::new(), 3];", why: "A `Vec` can't hold a `String` and an integer side by side. That's a type mismatch." }
           - { id: c, code: "let notes: Vec<String> = Vec::new();\nlet days: Vec<u32> = Vec::new();", why: "Two separate vectors lose track of which day belongs to which note, and of the order of tasks." }
         answer: a
         explanation: "One enum with a variant per kind of task keeps every task in one `Vec<Task>`, in order, with its own data."
@@ -530,7 +530,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0507]
         answer: 8
-        explanation: "`row[0]` would move the `Cell` out of the vector, which isn't allowed (E0507). Borrow it with `&row[0]` and match on the reference."
+        explanation: "`row[0]` would move the `Cell` out of the vector, which isn't allowed. Borrow it with `&row[0]` and match on the reference."
         concepts: [vec.enum, vec.access, err.E0507]
 
       - type: true-false

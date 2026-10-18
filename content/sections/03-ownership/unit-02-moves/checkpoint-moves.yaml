@@ -158,9 +158,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: use of moved value: `names`" }
+            - { id: a, text: "use of moved value: `names`" }
             - { id: b, text: "None: `names.1` is an integer", why: "The tuple holds a `String`, so the whole tuple moves." }
-            - { id: c, text: "E0384: cannot assign twice", why: "`count` is `mut`, so `count += 1` is fine." }
+            - { id: c, text: "cannot assign twice", why: "`count` is `mut`, so `count += 1` is fine." }
           answer: a
         explanation: "The tuple moves into `taken` on the first pass. On the second pass there's nothing left to move."
         concepts: [own.mixed, own.copy, err.E0382]
@@ -225,7 +225,7 @@ lessons:
           - ["Copy", "duplicated; original still valid"]
           - ["move", "ownership changes hands"]
           - ["clone()", "explicit copy of heap data"]
-          - ["E0382", "a moved value was used"]
+          - ["borrow of moved value", "using a value after it moved"]
           - ["-> String", "gives ownership to the caller"]
         concepts: [own.copy, own.move, own.clone, err.E0382, own.fn-return]
 
@@ -251,7 +251,7 @@ lessons:
 
       - type: mcq
         id: mcq-fix-strategy
-        prompt: "You get E0382 because you print a `String` after moving it. Which fix is usually best to try first?"
+        prompt: "You get a *borrow of moved value* error because you print a `String` after moving it. Which fix is usually best to try first?"
         options:
           - { id: a, text: "Print it before the move, or print the new owner instead" }
           - { id: b, text: "Add `.clone()` everywhere the value is used", why: "Each clone copies the text. Clone only where you really need two `String`s." }

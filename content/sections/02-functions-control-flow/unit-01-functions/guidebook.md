@@ -27,8 +27,8 @@ fn print_size(value: i32, unit: char) {
 
 - Every parameter needs a type: `value: i32`. Leaving it out is a syntax error.
 - Arguments are matched to parameters by position, not by name.
-- The wrong number of arguments is **E0061**.
-- A function can't see the caller's `let` variables (**E0425**). Pass them in as arguments. Top-level `const`s are visible everywhere.
+- The wrong number of arguments is an error.
+- A function can't see the caller's `let` variables (*cannot find value in this scope*). Pass them in as arguments. Top-level `const`s are visible everywhere.
 
 ## Return values
 
@@ -52,7 +52,7 @@ fn add(a: i32, b: i32) -> i32 {
 | Expression + `;` | `x + 1;` | no, the value is thrown away |
 
 - `let a = (let b = 6);` doesn't compile: `let` has no value.
-- A tail with a `;` makes the body produce `()`, which is **E0308: mismatched types**:
+- A tail with a `;` makes the body produce `()`, which is an error, *mismatched types*:
 
 ```rust,compile_fail,E0308
 fn plus_one(x: i32) -> i32 {
@@ -60,7 +60,7 @@ fn plus_one(x: i32) -> i32 {
 }
 ```
 
-- E0308 means "expected one type, found another". It also appears for arguments of the wrong type, such as `7.5` for an `i32`.
+- *Mismatched types* means "expected one type, found another". It also appears for arguments of the wrong type, such as `7.5` for an `i32`.
 
 ## Blocks are expressions
 
@@ -86,7 +86,7 @@ fn get_speed() -> i32 {
 ```
 
 - `return value;` leaves the function at once, from anywhere in the body, even inside a nested block.
-- `return;` with no value works in functions that return `()`. In a function with a return type it's **E0069**.
+- `return;` with no value works in functions that return `()`. In a function with a return type it's an error.
 - At the end of a function, prefer the tail `x` over `return x;`. `return` is for leaving early, which you'll use with `if` in the next unit.
 
 Read more: Book §3.3 · Rust by Example: Functions · Rustlings `02_functions`

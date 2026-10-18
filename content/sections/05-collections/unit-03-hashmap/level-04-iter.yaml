@@ -292,9 +292,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `stock` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0382: borrow of moved value: `stock`", why: "The loop is over `&stock`, which borrows the map instead of moving it." }
-            - { id: c, text: "E0594: cannot assign to `*n`", why: "`n` is only read here. The problem is changing the map while it's being looped over." }
+            - { id: a, text: "cannot borrow `stock` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "borrow of moved value: `stock`", why: "The loop is over `&stock`, which borrows the map instead of moving it." }
+            - { id: c, text: "cannot assign to `*n`", why: "`n` is only read here. The problem is changing the map while it's being looped over." }
           answer: a
         explanation: "The loop borrows `stock` for its whole length, so you can't `insert` into it inside the loop. Collect what to add, then insert after the loop."
         concepts: [map.iter, err.E0502]

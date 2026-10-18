@@ -74,9 +74,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`total` is `mut`, so `+=` is fine." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`total` is in scope on line 6. It's the `;` that causes the problem." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`total` is `mut`, so `+=` is fine." }
+            - { id: c, text: "cannot find value in this scope", why: "`total` is in scope on line 6. It's the `;` that causes the problem." }
           answer: a
         explanation: "`total;` is a statement, so the body ends without a value and gives `()`. Remove the `;` to return `total`."
         concepts: [fn.return, expr.vs-stmt, err.E0308]
@@ -281,9 +281,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0384: cannot assign to immutable argument" }
-            - { id: b, text: "E0308: mismatched types", why: "`n` is a `u32` and `n > 0` is a `bool`, so the types are fine." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`n` is the parameter, so it's in scope inside the function." }
+            - { id: a, text: "cannot assign to immutable argument" }
+            - { id: b, text: "mismatched types", why: "`n` is a `u32` and `n > 0` is a `bool`, so the types are fine." }
+            - { id: c, text: "cannot find value in this scope", why: "`n` is the parameter, so it's in scope inside the function." }
           answer: a
         explanation: "Parameters are immutable, like `let` variables. Copy it first with `let mut left = n;`, or write the parameter as `mut n: u32`."
         concepts: [fn.params, ctrl.while, err.E0384]

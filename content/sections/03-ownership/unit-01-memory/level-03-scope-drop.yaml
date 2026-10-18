@@ -56,11 +56,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0425: cannot find value `word` in this scope" }
-            - { id: b, text: "E0308: mismatched types", why: "`word` is printed both times, and printing a `String` is fine. The second use is outside its scope." }
-            - { id: c, text: "E0596: cannot borrow as mutable", why: "Nothing changes `word` here. The problem is where line 6 is." }
+            - { id: a, text: "cannot find value `word` in this scope" }
+            - { id: b, text: "mismatched types", why: "`word` is printed both times, and printing a `String` is fine. The second use is outside its scope." }
+            - { id: c, text: "cannot borrow as mutable", why: "Nothing changes `word` here. The problem is where line 6 is." }
           answer: a
-        explanation: "`word` only exists inside the inner block. On line 6 there's no `word` in scope, so the compiler reports E0425."
+        explanation: "`word` only exists inside the inner block. On line 6 there's no `word` in scope, so the compiler says *cannot find value `word` in this scope*."
         concepts: [own.scope-drop, err.E0425]
 
       - type: concept
@@ -458,7 +458,7 @@ lessons:
             - { id: b, text: "`msg` might not be set if `score` is small", why: "Even with a large `score`, `msg`'s scope ends at the `}` of the `if`. The name doesn't exist on line 6." }
             - { id: c, text: "A `String` can't be created inside an `if`", why: "It can. It's dropped at the end of the `if` block." }
           answer: a
-        explanation: "An `if` body is a block like any other. `msg` is dropped at its `}`, so line 6 can't find it (E0425)."
+        explanation: "An `if` body is a block like any other. `msg` is dropped at its `}`, so line 6 can't find it."
         concepts: [own.scope-drop, ctrl.if, err.E0425]
 
       - type: true-false
@@ -497,7 +497,7 @@ lessons:
           - { id: b, text: "`points` was dropped, so it now holds 0", why: "A variable that's out of scope doesn't hold anything. The name doesn't exist in `main` at all." }
           - { id: c, text: "`add_points` must be called after line 8", why: "The order of calls doesn't matter. `main` never has a `points` variable." }
         answer: a
-        explanation: "Each function body is its own scope. `points` lives in `add_points`'s frame and is gone when it returns, so `main` gets E0425."
+        explanation: "Each function body is its own scope. `points` lives in `add_points`'s frame and is gone when it returns, so `main` can't find it: *cannot find value `points` in this scope*."
         concepts: [own.scope-drop, fn.define, compiler.read-error, err.E0425]
 
       - type: mcq

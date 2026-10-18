@@ -46,8 +46,8 @@ lessons:
         prompt: "`tag` is a `mut String`. Which line adds a single `#` to its end?"
         options:
           - { id: a, code: "tag.push('#');" }
-          - { id: b, code: "tag.push(\"#\");", why: "`push` takes a `char` in single quotes. `\"#\"` is a `&str`, so this is E0308." }
-          - { id: c, code: "tag.push_str('#');", why: "`push_str` takes a `&str` in double quotes. Passing a `char` is E0308." }
+          - { id: b, code: "tag.push(\"#\");", why: "`push` takes a `char` in single quotes. `\"#\"` is a `&str`, so this is a type mismatch." }
+          - { id: c, code: "tag.push_str('#');", why: "`push_str` takes a `&str` in double quotes. Passing a `char` is a type mismatch." }
           - { id: d, code: "tag.add('#');", why: "There's no `add` method to call like this. Use `push` for a `char`." }
         answer: a
         explanation: "`push` takes one `char`, written in single quotes."
@@ -72,7 +72,7 @@ lessons:
             - { id: b, text: "`reply` needs `mut`", why: "It already has `mut`. The problem is the argument's type." }
             - { id: c, text: "`push` only works on a `Vec`", why: "`String` has its own `push`, which takes a `char`." }
           answer: a
-        explanation: "Mismatched types (E0308): `push` wants a `char` like `'!'`. For a `&str`, use `push_str(\"!\")`."
+        explanation: "Mismatched types: `push` wants a `char` like `'!'`. For a `&str`, use `push_str(\"!\")`."
         concepts: [string.build, err.E0308]
 
       - type: concept
@@ -161,9 +161,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `s1`" }
-            - { id: b, text: "E0382: borrow of moved value: `s2`", why: "`s2` is only borrowed by `&s2`, so it's still valid." }
-            - { id: c, text: "E0308: mismatched types", why: "The types are fine: `String + &String` compiles. The problem is using `s1` afterwards." }
+            - { id: a, text: "borrow of moved value: `s1`" }
+            - { id: b, text: "borrow of moved value: `s2`", why: "`s2` is only borrowed by `&s2`, so it's still valid." }
+            - { id: c, text: "mismatched types", why: "The types are fine: `String + &String` compiles. The problem is using `s1` afterwards." }
           answer: a
         explanation: "`+` takes ownership of `s1`, so `s1` can't be used after line 4. `s3` owns the joined text."
         concepts: [string.build, err.E0382]
@@ -234,7 +234,7 @@ lessons:
           expectErrors: [E0308]
         options:
           - { id: a, code: "let s3 = s1 + &s2;" }
-          - { id: b, code: "let s3 = &s1 + &s2;", why: "The left side must be a `String` that `+` can take. `&String + &String` is E0369." }
+          - { id: b, code: "let s3 = &s1 + &s2;", why: "The left side must be a `String` that `+` can take. `&String + &String` doesn't compile." }
           - { id: c, code: "let s3 = s1 + s2.clone();", why: "A clone is still a `String`, and the right side must be a `&str`. Same error." }
         answer: a
         explanation: "The right side of `+` must be a `&str`. `&s2` borrows `s2`, and Rust turns the `&String` into a `&str` for you."
@@ -385,7 +385,7 @@ lessons:
             - { id: b, text: "`+` can't join text at all", why: "It can, as long as the left side is a `String`." }
             - { id: c, text: "The right side needs `&`: `&\"-tac\"`", why: "A literal is already a `&str`. The left side is the problem." }
           answer: a
-        explanation: "Error E0369: you can't add `&str` to `&str`. Write `String::from(\"tic\") + \"-tac\"`, or use `format!`."
+        explanation: "You can't add `&str` to `&str`. Write `String::from(\"tic\") + \"-tac\"`, or use `format!`."
         concepts: [string.build, string.string-vs-literal, err.E0369]
 
       - type: decode-error
@@ -403,7 +403,7 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, code: 'let s3 = format!("{s1}{s2}");' }
-          - { id: b, code: "let s3 = &s1 + &s2;", why: "`+` needs an owned `String` on the left. `&String + &String` is E0369." }
+          - { id: b, code: "let s3 = &s1 + &s2;", why: "`+` needs an owned `String` on the left. `&String + &String` doesn't compile." }
           - { id: c, code: "let s3 = s2 + &s1;", why: "This compiles, but `s3` becomes `\"pongping\"`, so it prints `ping pongping`." }
         answer: a
         explanation: "`format!` borrows both strings instead of taking `s1`, so `s1` can still be printed. `s1.clone() + &s2` would also work."
@@ -488,7 +488,7 @@ lessons:
         options:
           - { id: a, code: 'let s = format!("{a}-{b}-{c}");' }
           - { id: b, code: 'let s = a + "-" + &b + "-" + &c;', why: "This moves `a` into the first `+`, so `a` can't be used afterwards." }
-          - { id: c, code: 'let s = &a + "-" + &b + "-" + &c;', why: "The left side of `+` must be an owned `String`. This is E0369." }
+          - { id: c, code: 'let s = &a + "-" + &b + "-" + &c;', why: "The left side of `+` must be an owned `String`. This doesn't compile." }
         answer: a
         explanation: "`format!` borrows every value it uses, so `a`, `b` and `c` all stay valid."
         concepts: [string.build]

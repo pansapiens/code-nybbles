@@ -154,7 +154,7 @@ lessons:
             - { id: b, text: "`s` must be a `&str`, not a `String`", why: "The field's type is `String`, so a `String` is right. The brackets are the problem." }
             - { id: c, text: "`Write` must be created with `let mut`", why: "`mut` only matters for changing a variable later." }
           answer: a
-        explanation: "Struct-like variants are created with `{ field: value }`, tuple-like variants with `(value)`. The compiler reports E0533."
+        explanation: "Struct-like variants are created with `{ field: value }`, tuple-like variants with `(value)`. The compiler says the variant is *not a tuple struct or tuple variant*."
         concepts: [enum.data]
 
       - type: mcq
@@ -187,9 +187,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0061: this enum variant takes 2 arguments but 1 argument was supplied" }
-            - { id: b, text: "E0308: mismatched types", why: "`4` is an `i32`, which is the right type. One value is missing." }
-            - { id: c, text: "E0599: no variant named `Move`", why: "`Move` exists. It needs two values." }
+            - { id: a, text: "this enum variant takes 2 arguments but 1 argument was supplied" }
+            - { id: b, text: "mismatched types", why: "`4` is an `i32`, which is the right type. One value is missing." }
+            - { id: c, text: "no variant named `Move`", why: "`Move` exists. It needs two values." }
           answer: a
         explanation: "`Move` holds two `i32`s, so you must give it exactly two. Rust doesn't fill in missing values."
         concepts: [enum.data, err.E0061]
@@ -307,9 +307,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `text`" }
-            - { id: b, text: "E0063: missing field `text`", why: "`{ text }` is the field init shorthand for `{ text: text }`, so the field is there." }
-            - { id: c, text: "E0277: `Command` doesn't implement `Debug`", why: "`Command` derives `Debug`, and line 9 prints `text`, not `c`." }
+            - { id: a, text: "borrow of moved value: `text`" }
+            - { id: b, text: "missing field `text`", why: "`{ text }` is the field init shorthand for `{ text: text }`, so the field is there." }
+            - { id: c, text: "`Command` doesn't implement `Debug`", why: "`Command` derives `Debug`, and line 9 prints `text`, not `c`." }
           answer: a
         explanation: "Putting a `String` into a variant moves it, the same as putting it into a struct. `text` is no longer usable on line 9."
         concepts: [enum.data, own.move, err.E0382]
@@ -359,7 +359,7 @@ lessons:
           - { id: b, text: "`width` must come last", why: "Field order doesn't matter when you name the fields. A field is missing." }
           - { id: c, text: "`Resize` can't have two fields", why: "Struct-like variants can have as many named fields as you need." }
         answer: a
-        explanation: "As with structs, every named field must be given a value. The compiler reports E0063: missing field `height`."
+        explanation: "As with structs, every named field must be given a value. The compiler reports *missing field `height`*."
         concepts: [enum.data, err.E0063]
 
       - type: fill-tokens
@@ -415,7 +415,7 @@ lessons:
         id: tf-variant-alone
         prompt: "`Command::Move` on its own, without `(3, 4)`, is a complete `Command` value."
         answer: false
-        explanation: "A variant that holds data needs its data to make a value. `let c: Command = Command::Move;` is a type mismatch (E0308)."
+        explanation: "A variant that holds data needs its data to make a value. `let c: Command = Command::Move;` is a type mismatch."
         concepts: [enum.data]
 
   - id: l3
@@ -500,7 +500,7 @@ lessons:
           - { id: b, text: "Change line 3 to `Grey(u8, u8, u8),`", why: "That compiles, but then `Grey` and `Rgb` hold the same data and a grey needs only one number." }
           - { id: c, text: "Change line 8 to `Colour::Grey { 90, 160, 220 }`", why: "Curly brackets need field names, and `Grey` still holds only one value." }
         answer: a
-        explanation: "Three colour values match the `Rgb` variant. `Grey` takes one `u8`, so three arguments is E0061."
+        explanation: "Three colour values match the `Rgb` variant. `Grey` takes one `u8`, so three arguments is an error: the function takes 1 argument."
         concepts: [enum.data, err.E0061]
 
       - type: fill-tokens

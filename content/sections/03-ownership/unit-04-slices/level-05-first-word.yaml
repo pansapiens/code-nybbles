@@ -214,7 +214,7 @@ lessons:
             - { id: b, text: "`return i;` can't be used inside a loop", why: "`return` leaves the whole function, even from inside a loop." }
             - { id: c, text: "`s` must be a `&String` for `.as_bytes()`", why: "`.as_bytes()` works on any `&str`." }
           answer: a
-        explanation: "E0308: expected `u8`, found `char`. Bytes and characters are different types."
+        explanation: "Mismatched types: expected `u8`, found `char`. Bytes and characters are different types."
         concepts: [practice.first-word, err.E0308]
 
   - id: l2
@@ -328,9 +328,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `s` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once", why: "There's only one mutable borrow, from `clear`. `word` is a shared borrow." }
-            - { id: c, text: "E0382: borrow of moved value", why: "`first_word(&s)` borrows `s`. Nothing is moved." }
+            - { id: a, text: "cannot borrow `s` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "cannot borrow `s` as mutable more than once", why: "There's only one mutable borrow, from `clear`. `word` is a shared borrow." }
+            - { id: c, text: "borrow of moved value", why: "`first_word(&s)` borrows `s`. Nothing is moved." }
           answer: a
         explanation: "`s.clear()` empties the text, which needs a mutable borrow. `word` is a shared borrow still used on line 12."
         concepts: [practice.first-word, err.E0502]
@@ -566,7 +566,7 @@ lessons:
           - { id: b, text: "`&s[..i]` might cut a character in half", why: "That's a run-time check, and `i` comes from `char_indices`, so it's always a boundary." }
           - { id: c, text: "`return` can't be used inside `if`", why: "`return` works anywhere in a function body." }
         answer: a
-        explanation: "E0308: expected `usize`, found `&str`. Change the return type to `&str` and the last line to `s`."
+        explanation: "Mismatched types: expected `usize`, found `&str`. Change the return type to `&str` and the last line to `s`."
         concepts: [practice.first-word, err.E0308]
 
       - type: spot-bug

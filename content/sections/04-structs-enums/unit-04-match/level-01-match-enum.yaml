@@ -88,7 +88,7 @@ lessons:
         id: concept-exhaustive
         title: Every variant, or no compile
         markdown: |
-          **A `match` must cover every possible value.** For an enum, that means every variant. Leave one out and the compiler stops with error **E0004**, naming the variant you missed.
+          **A `match` must cover every possible value.** For an enum, that means every variant. Leave one out and the compiler stops with a *non-exhaustive patterns* error, naming the variant you missed.
 
           This means a value can never reach a `match` that has no arm for it.
         code:
@@ -126,16 +126,16 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0004: non-exhaustive patterns: `Dir::West` not covered" }
-            - { id: b, text: "E0308: mismatched types", why: "Every arm has the same type, `()`. The problem is the missing variant." }
-            - { id: c, text: "E0425: cannot find value `West`", why: "`Dir::West` exists in the enum. It's the `match` that leaves it out." }
+            - { id: a, text: "non-exhaustive patterns: `Dir::West` not covered" }
+            - { id: b, text: "mismatched types", why: "Every arm has the same type, `()`. The problem is the missing variant." }
+            - { id: c, text: "cannot find value `West`", why: "`Dir::West` exists in the enum. It's the `match` that leaves it out." }
           answer: a
         explanation: "`dir` happens to be `East`, but the compiler checks every possible value. There's no arm for `Dir::West`."
         concepts: [match.exhaustive, err.E0004]
 
       - type: mcq
         id: mcq-which-missing
-        prompt: "The compiler rejects this `match` with E0004. Which pattern does it say is not covered?"
+        prompt: "The compiler rejects this `match` as *non-exhaustive*. Which pattern does it say is not covered?"
         code:
           rust: |
             enum Coin { Five, Ten, Twenty, Fifty }
@@ -156,7 +156,7 @@ lessons:
           - { id: b, code: "Coin::Ten", why: "There's an arm for `Coin::Ten` on line 7." }
           - { id: c, code: "Coin::Fifty", why: "There's an arm for `Coin::Fifty` on line 8." }
         answer: a
-        explanation: "Only `Coin::Twenty` has no arm. E0004 lists exactly the patterns that are missing."
+        explanation: "Only `Coin::Twenty` has no arm. The compiler lists exactly the patterns that are missing."
         concepts: [err.E0004]
 
       - type: concept
@@ -204,7 +204,7 @@ lessons:
         pairs:
           - ["Light::Red =>", "an arm for one variant"]
           - ["_ =>", "an arm for anything left"]
-          - ["E0004", "a value has no arm"]
+          - ["non-exhaustive patterns: `Coin::Twenty` not covered", "a value has no arm"]
           - ["=>", "separates pattern and code"]
         concepts: [match.enum, match.exhaustive, err.E0004]
 
@@ -278,9 +278,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: `match` arms have incompatible types" }
-            - { id: b, text: "E0004: non-exhaustive patterns", why: "All three variants have an arm. The arms disagree about the type." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`action` is assigned once. The problem is inside the `match`." }
+            - { id: a, text: "`match` arms have incompatible types" }
+            - { id: b, text: "non-exhaustive patterns", why: "All three variants have an arm. The arms disagree about the type." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`action` is assigned once. The problem is inside the `match`." }
           answer: a
         explanation: "`action` can only have one type. Two arms give text and one gives a number."
         concepts: [match.enum, err.E0308]
@@ -306,7 +306,7 @@ lessons:
           - { id: b, text: "`East` and `West` are never used, so they must be removed from the enum", why: "Unused variants only cause a warning. The error is about the `match`." }
           - { id: c, text: "A `match` can have at most two arms", why: "There's no limit on arms. The two arms here don't cover every variant." }
         answer: a
-        explanation: "E0004 lists every pattern that isn't covered. Add an arm for each, or a `_` arm."
+        explanation: "The compiler lists every pattern that isn't covered. Add an arm for each, or a `_` arm."
         concepts: [err.E0004]
 
       - type: spot-bug
@@ -335,7 +335,7 @@ lessons:
         id: mcq-new-variant
         prompt: "You add a variant `Flashing` to `Light`. A `match` elsewhere lists `Red`, `Amber` and `Green`, with no `_` arm. What happens?"
         options:
-          - { id: a, text: "The program no longer compiles: E0004 says `Light::Flashing` is not covered" }
+          - { id: a, text: "The program no longer compiles: the compiler says `Light::Flashing` is not covered" }
           - { id: b, text: "It compiles, and `Flashing` runs no arm at all", why: "Rust never lets a value reach a `match` without an arm for it." }
           - { id: c, text: "It compiles, and `Flashing` runs the first arm", why: "Arms only run when their pattern matches. `Light::Red` doesn't match `Flashing`." }
           - { id: d, text: "It compiles, but panics when `Flashing` reaches the `match`", why: "The check happens at compile time, not when the program runs." }
@@ -347,7 +347,7 @@ lessons:
         id: tf-wildcard-hides
         prompt: "With a `_` arm at the end, the compiler can no longer warn you when a new variant is added to the enum."
         answer: true
-        explanation: "`_` covers any variant, including new ones. Listing every variant means a new one gives you E0004 to remind you."
+        explanation: "`_` covers any variant, including new ones. Listing every variant means a new one gives you a compile error to remind you."
         concepts: [match.exhaustive]
 
       - type: fill-tokens
@@ -472,7 +472,7 @@ lessons:
             - { id: b, text: "`_` can't be used with enums", why: "`_` works with any type, including enums." }
             - { id: c, text: "The arms need to list all three variants", why: "`_` covers the rest. The problem is how `Red` is written." }
           answer: a
-        explanation: "A plain name in a pattern creates a variable that matches any value. The compiler spots that it has a variant's name (E0170) and stops."
+        explanation: "A plain name in a pattern creates a variable that matches any value. The compiler spots that it has a variant's name and stops."
         concepts: [match.enum]
 
       - type: decode-error
@@ -624,5 +624,5 @@ lessons:
           - { id: b, text: "Change line 2 to `let door_open = false;`", why: "The compiler checks both values a `bool` can hold, whatever it holds now." }
           - { id: c, text: "Add `;` after the `}` on line 5", why: "A `;` doesn't change which values have arms." }
         answer: a
-        explanation: "E0004 says `false` is not covered. An arm for `false` (or `_`) makes the match exhaustive."
+        explanation: "The compiler says `false` is not covered. An arm for `false` (or `_`) makes the match exhaustive."
         concepts: [err.E0004, match.exhaustive]

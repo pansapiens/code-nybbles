@@ -211,9 +211,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic here." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`letter` is only given one value." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot add a float to an integer", why: "There's no arithmetic here." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`letter` is only given one value." }
           answer: a
         explanation: "`\"b\"` in double quotes is text, not a `char`. Write `'b'` instead."
         concepts: [types.char, err.E0308]

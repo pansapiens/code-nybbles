@@ -280,7 +280,7 @@ lessons:
             - { id: b, text: "Write `Cmd::Move { x, _ }`", why: "In a braces pattern, `_` needs a field name: `y: _`. `..` is the short way." }
             - { id: c, text: "Add a `_ =>` arm at the end", why: "The problem is inside the `Move` pattern, not a missing variant." }
           answer: a
-        explanation: "A braces pattern must mention every field (E0027) unless it ends with `..`."
+        explanation: "A braces pattern must mention every field unless it ends with `..`."
         concepts: [match.bind, err.E0027]
 
       - type: mcq
@@ -288,9 +288,9 @@ lessons:
         prompt: "`Pixel::Rgb` holds three values. Which pattern matches the same values as `Pixel::Rgb(r, ..)`?"
         options:
           - { id: a, code: "Pixel::Rgb(r, _, _)" }
-          - { id: b, code: "Pixel::Rgb(r, _)", why: "A tuple pattern without `..` needs one entry per value. This one has two for three values (E0023)." }
+          - { id: b, code: "Pixel::Rgb(r, _)", why: "A tuple pattern without `..` needs one entry per value. This one has two for three values." }
           - { id: c, code: "Pixel::Rgb(.., r)", why: "This binds `r` to the last value, not the first." }
-          - { id: d, code: "Pixel::Rgb(r)", why: "`r` alone is one entry for three values, which is E0023." }
+          - { id: d, code: "Pixel::Rgb(r)", why: "`r` alone is one entry for three values, which is too few." }
         answer: a
         explanation: "`..` stands for however many values are left, here two, so it's the same as writing `_, _`."
         concepts: [match.bind]
@@ -468,7 +468,7 @@ lessons:
             - { id: b, text: "`name` is dropped at the end of the `match`", why: "`name` lives until the end of `main`. Part of it was moved out." }
             - { id: c, text: "`Option` values can't be printed with `{:?}`", why: "They can, as long as the value inside can." }
           answer: a
-        explanation: "Binding a non-`Copy` value moves it, the same as `let n = ...`. Afterwards `name` is partly moved (E0382)."
+        explanation: "Binding a non-`Copy` value moves it, the same as `let n = ...`. Afterwards `name` is partly moved."
         concepts: [match.bind, own.move, err.E0382]
 
       - type: true-false
@@ -532,7 +532,7 @@ lessons:
           - { id: b, text: "Change line 10 to `Shape::Rect(w, ..) => w * h,`", why: "`..` ignores the second value, so there's no `h` to use." }
           - { id: c, text: "Change line 3 to `Rect(u32),`", why: "That changes what a rectangle is, and line 7 would no longer compile." }
         answer: a
-        explanation: "`Rect` holds two values, so its pattern needs two entries (E0023). Binding both lets the arm multiply them."
+        explanation: "`Rect` holds two values, so its pattern needs two entries. Binding both lets the arm multiply them."
         concepts: [match.bind]
 
       - type: predict-output
@@ -623,8 +623,8 @@ lessons:
         prompt: "`enum Weather { Sunny, Rain(u32) }`. Which set of arms covers every `Weather` value?"
         options:
           - { id: a, code: "Weather::Sunny => 0,\nWeather::Rain(mm) => mm," }
-          - { id: b, code: "Weather::Sunny => 0,\nWeather::Rain(5) => 5,", why: "`Rain(5)` covers only rain of 5 mm. `Rain(6)` would have no arm (E0004)." }
-          - { id: c, code: "Weather::Rain(mm) => mm,", why: "`Sunny` has no arm, so this is E0004." }
+          - { id: b, code: "Weather::Sunny => 0,\nWeather::Rain(5) => 5,", why: "`Rain(5)` covers only rain of 5 mm. `Rain(6)` would have no arm." }
+          - { id: c, code: "Weather::Rain(mm) => mm,", why: "`Sunny` has no arm, so the `match` isn't exhaustive." }
         answer: a
         explanation: "`Rain(mm)` matches rain of any amount, and `Sunny` has its own arm, so every value is covered."
         concepts: [match.bind, match.exhaustive]

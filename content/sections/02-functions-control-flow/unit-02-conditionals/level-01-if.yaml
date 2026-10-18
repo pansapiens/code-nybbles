@@ -121,7 +121,7 @@ lessons:
         id: concept-bool-only
         title: Conditions must be bool
         markdown: |
-          **The condition must be a `bool`.** Some languages treat `0` as false and other numbers as true. Rust doesn't: `if lives {` with a number is error **E0308**, mismatched types.
+          **The condition must be a `bool`.** Some languages treat `0` as false and other numbers as true. Rust doesn't: `if lives {` with a number is an error: *mismatched types*.
 
           Write the comparison you mean instead.
         code:
@@ -150,9 +150,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types (expected `bool`, found integer)" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here. The problem is the type of the condition." }
-            - { id: c, text: "E0425: cannot find value `lives`", why: "`lives` exists. It's a number, and `if` needs a `bool`." }
+            - { id: a, text: "mismatched types (expected `bool`, found integer)" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned here. The problem is the type of the condition." }
+            - { id: c, text: "cannot find value `lives`", why: "`lives` exists. It's a number, and `if` needs a `bool`." }
           answer: a
         explanation: "`if` needs a `bool`, and `lives` is an integer. Rust never treats numbers as true or false, so write `lives > 0` or `lives != 0`."
         concepts: [ctrl.if, err.E0308]
@@ -244,7 +244,7 @@ lessons:
             - { id: b, text: "`score` needs `mut` to be used in an `if`", why: "Reading a variable in a condition doesn't need `mut`. The single `=` is the problem." }
             - { id: c, text: "Numbers can't be compared in an `if`", why: "They can, with `==`, `<`, `>` and the other comparison operators." }
           answer: a
-        explanation: "`score = 100` is an assignment, which isn't a `bool`, so Rust reports E0308. Write `score == 100`."
+        explanation: "`score = 100` is an assignment, which isn't a `bool`, so Rust reports *mismatched types*. Write `score == 100`."
         concepts: [ctrl.if, err.E0308]
 
       - type: predict-output

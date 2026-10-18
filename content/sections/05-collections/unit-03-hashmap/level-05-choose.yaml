@@ -172,7 +172,7 @@ lessons:
             - { id: b, text: "The index should be `ids[1]`", why: "No index works. A set's values aren't stored in positions." }
             - { id: c, text: "`ids` needs `.get(0)` instead", why: "A `HashSet` has no `get(index)` either. You check values with `contains`." }
           answer: a
-        explanation: "A set isn't ordered, so there's no first element to index. The error is E0608: cannot index into a `HashSet`."
+        explanation: "A set isn't ordered, so there's no first element to index. The compiler says: cannot index into a `HashSet`."
         concepts: [collections.choose, err.E0608]
 
   - id: l2

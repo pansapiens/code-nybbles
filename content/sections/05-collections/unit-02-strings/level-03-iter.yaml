@@ -113,7 +113,7 @@ lessons:
             - { id: b, text: "`c` needs a type: `for c: char in word`", why: "Loop variables get their type from what you loop over. The problem is `word` itself." }
             - { id: c, text: "`word` needs `mut`", why: "Reading doesn't need `mut`. Rust needs you to choose characters or bytes." }
           answer: a
-        explanation: "E0277: `String` is not an iterator. Rust makes you pick: `.chars()` for characters or `.bytes()` for bytes."
+        explanation: "`String` is not an iterator. Rust makes you pick: `.chars()` for characters or `.bytes()` for bytes."
         concepts: [string.iter, err.E0277]
 
       - type: predict-output
@@ -242,7 +242,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 5
-        explanation: "`c` is a `char`, but `\"a\"` is a `&str` (E0308). Compare with `'a'` in single quotes."
+        explanation: "`c` is a `char`, but `\"a\"` is a `&str`. Compare with `'a'` in single quotes."
         concepts: [string.iter, types.char, err.E0308]
 
       - type: decode-error
@@ -263,7 +263,7 @@ lessons:
           - { id: b, code: "for word in &text {", why: "A `&String` isn't something to loop over either. You still have to choose words, chars or bytes." }
           - { id: c, code: "for word in text.chars() {", why: "That compiles, but it prints one character per line, not one word." }
         answer: a
-        explanation: "`String` is not an iterator (E0277). `split_whitespace()` says you want the words."
+        explanation: "`String` is not an iterator. `split_whitespace()` says you want the words."
         concepts: [string.iter, err.E0277]
 
       - type: match-pairs
@@ -360,9 +360,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `echo` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0382: borrow of moved value: `echo`", why: "`.chars()` borrows `echo`; it doesn't move it." }
-            - { id: c, text: "E0308: mismatched types", why: "`push` takes a `char`, and `c` is a `char`. The types are fine." }
+            - { id: a, text: "cannot borrow `echo` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "borrow of moved value: `echo`", why: "`.chars()` borrows `echo`; it doesn't move it." }
+            - { id: c, text: "mismatched types", why: "`push` takes a `char`, and `c` is a `char`. The types are fine." }
           answer: a
         explanation: "`.chars()` borrows `echo` for the whole loop, so `push` can't borrow it mutably inside. Build into a second `String` instead."
         concepts: [string.iter, err.E0502]
@@ -456,5 +456,5 @@ lessons:
           - { id: b, text: "`'A'` should be `\"A\"`", why: "That's a `&str`, which can't be compared with a `u8` either." }
           - { id: c, text: "`code` needs to be a `String` to call `.bytes()`", why: "`.bytes()` works on a `&str` too. The problem is comparing a `u8` with a `char`." }
         answer: a
-        explanation: "`.bytes()` gives numbers (`u8`), and Rust won't compare a number with a `char` (E0308). `.chars()` gives `char`s."
+        explanation: "`.bytes()` gives numbers (`u8`), and Rust won't compare a number with a `char`. `.chars()` gives `char`s."
         concepts: [string.iter, err.E0308]

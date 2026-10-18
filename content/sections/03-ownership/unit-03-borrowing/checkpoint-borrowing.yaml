@@ -64,9 +64,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `total` as immutable because it is also borrowed as mutable" }
-            - { id: b, text: "E0499: cannot borrow `total` as mutable more than once at a time", why: "There's only one `&mut` borrow. `println!` reads." }
-            - { id: c, text: "E0596: cannot borrow `total` as mutable", why: "`total` is `mut`, so `&mut total` is fine on its own." }
+            - { id: a, text: "cannot borrow `total` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "cannot borrow `total` as mutable more than once at a time", why: "There's only one `&mut` borrow. `println!` reads." }
+            - { id: c, text: "cannot borrow `total` as mutable", why: "`total` is `mut`, so `&mut total` is fine on its own." }
           answer: a
         explanation: "`r` is used again on the next pass of the loop, so its borrow is alive when `println!` reads `total`."
         concepts: [err.E0502, borrow.nll]
@@ -89,7 +89,7 @@ lessons:
         options:
           - { id: a, text: "Move line 7 up, between lines 3 and 4" }
           - { id: b, text: "Delete line 4", why: "`r` is still used on line 7, so `&mut a` on line 5 clashes with it as well." }
-          - { id: c, text: "Change line 3 to `let r = &mut a;`", why: "Then `r` clashes with `push_str` and `w` as two writers (E0499)." }
+          - { id: c, text: "Change line 3 to `let r = &mut a;`", why: "Then `r` clashes with `push_str` and `w` as two writers." }
         answer: a
         explanation: "Once `r` is printed first, its borrow ends before anything changes `a`."
         concepts: [borrow.nll, err.E0502]
@@ -111,14 +111,14 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 2
-        explanation: "`n` is a reference, so `n = 0` tries to store a number in it (E0308). Write `*n = 0;` to change the value it points at."
+        explanation: "`n` is a reference, so `n = 0` tries to store a number in it. Write `*n = 0;` to change the value it points at."
         concepts: [borrow.mut, err.E0308]
 
       - type: true-false
         id: tf-no-params
         prompt: "`fn latest() -> &String`, with no parameters and no lifetime added, can't compile, because there is nothing for the reference to borrow from."
         answer: true
-        explanation: "That's E0106. Any `String` made inside would be a local, dropped on return. Return `String` instead."
+        explanation: "That's *missing lifetime specifier*. Any `String` made inside would be a local, dropped on return. Return `String` instead."
         concepts: [err.E0106, borrow.dangling]
 
       - type: mcq
@@ -126,8 +126,8 @@ lessons:
         prompt: "After `let w = &mut s;` and before `w`'s last use, which is true?"
         options:
           - { id: a, text: "You can read and change `s` only through `w`" }
-          - { id: b, text: "You can still print `s` directly", why: "`s` has no Read while `w` is in use (E0502)." }
-          - { id: c, text: "You can make a second `&mut s` as long as you only read through it", why: "Two `&mut` in use at once is E0499, whatever you do with them." }
+          - { id: b, text: "You can still print `s` directly", why: "`s` has no Read while `w` is in use." }
+          - { id: c, text: "You can make a second `&mut s` as long as you only read through it", why: "Two `&mut` in use at once is an error, whatever you do with them." }
         answer: a
         explanation: "A `&mut` borrow is exclusive. All access goes through `w` until its last use."
         concepts: [borrow.exclusive, borrow.permissions]
@@ -199,7 +199,7 @@ lessons:
             - { id: b, text: "`r` has no type", why: "The compiler works out that `r` is a `&String` from line 5." }
             - { id: c, text: "`r` must be `mut` to be given a value later", why: "`let r;` can get its value once without `mut`." }
           answer: a
-        explanation: "`r` would dangle on line 7, so Rust rejects it (E0597: `note` does not live long enough)."
+        explanation: "`r` would dangle on line 7, so Rust rejects it (*`note` does not live long enough*)."
         concepts: [borrow.dangling, err.E0597]
 
       - type: parsons
@@ -234,13 +234,13 @@ lessons:
 
       - type: match-pairs
         id: pairs-all-errors
-        prompt: Match each error code to its cause
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0499", "two writers at once"]
-          - ["E0502", "a reader and a writer at once"]
-          - ["E0106", "returned reference with nothing to borrow"]
-          - ["E0596", "changing through `&`"]
-          - ["E0382", "using a moved value"]
+          - ["cannot borrow `s` as mutable more than once at a time", "two writers at once"]
+          - ["cannot borrow `s` as mutable because it is also borrowed as immutable", "a reader and a writer at once"]
+          - ["missing lifetime specifier", "returned reference with nothing to borrow"]
+          - ["cannot borrow `*r` as mutable, as it is behind a `&` reference", "changing through `&`"]
+          - ["borrow of moved value", "using a moved value"]
         concepts: [err.E0499, err.E0502, err.E0106, borrow.shared, own.move]
 
       - type: compiles
@@ -280,5 +280,5 @@ lessons:
           - { id: b, text: "Change line 2 to `&s`", why: "`&s` is a reference, but the function promises a `String`: a type mismatch." }
           - { id: c, text: "Change line 1 to `fn take(mut s: &String) -> String`", why: "`mut s` lets `s` point elsewhere. `*s` still has no Own, so it can't be moved out." }
         answer: a
-        explanation: "Through `&String` you have R but not O, so you can't move the `String` out (E0507). `clone` makes a new one to return."
+        explanation: "Through `&String` you have R but not O, so you can't move the `String` out. `clone` makes a new one to return."
         concepts: [borrow.permissions, own.clone, err.E0507]

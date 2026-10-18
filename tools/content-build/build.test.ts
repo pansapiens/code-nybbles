@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { stringify } from 'yaml'
-import { buildContent, textCodes } from './build.ts'
+import { buildContent, roteCodes } from './build.ts'
 
 /** Write a one-level course to a temp dir; `exercises` replace the default valid one. */
 function fixture(exercises: unknown[]): string {
@@ -204,14 +204,11 @@ test('a build compiles to a level with one lesson per step and generated cards',
   assert.match((await buildContent({ contentDir: root })).issues.errors.map((i) => i.message).join('\n'), /must be `verify: run`/)
 })
 
-test('error codes in learner text are found, except in code and lookup spans', () => {
-  const ex = {
-    type: 'mcq',
-    prompt: 'What does `rustc --explain E0382` show? Compare `error[E0499]`.',
-    options: [{ id: 'a', text: 'E0502: cannot borrow', code: 'x; // E0596' }],
-    explanation: 'Like E0308.\n```text\nE0277\n```',
-    code: { rust: 'let a = 1; // E0384', expectErrors: ['E0384'] },
-    concepts: ['err.E0425'],
-  }
-  assert.deepEqual(textCodes(ex as never), ['E0502', 'E0308'])
+test('questions that hinge on an error code are found; codes shown beside a message are fine', () => {
+  const mcq = (texts: string[]) => ({ type: 'mcq', prompt: 'Which error? E0382 is shown above', options: texts.map((text, i) => ({ id: `${i}`, text })) })
+  assert.deepEqual(roteCodes(mcq(['E0382: borrow of moved value', 'E0499: cannot borrow twice']) as never), [])
+  assert.deepEqual(roteCodes(mcq(["It doesn't compile: E0499", "It doesn't compile: E0502"]) as never), ['options differ only by error code'])
+  assert.deepEqual(roteCodes({ type: 'match-pairs', pairs: [['E0382', 'used after a move']] } as never), ['match-pairs names an error code'])
+  assert.deepEqual(roteCodes({ type: 'true-false', prompt: 'E0499 means two `&mut` at once.' } as never), ['true-false prompt names an error code'])
+  assert.deepEqual(roteCodes({ type: 'true-false', prompt: '`error[E0499]: cannot borrow` means two `&mut` at once.' } as never), [])
 })

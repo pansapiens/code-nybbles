@@ -70,9 +70,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0596: cannot borrow `c` as mutable, as it is not declared as mutable" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned to `c` directly. The method needs a `&mut` borrow of it." }
-            - { id: c, text: "E0382: borrow of moved value", why: "`&mut self` borrows `c`; it doesn't move it." }
+            - { id: a, text: "cannot borrow `c` as mutable, as it is not declared as mutable" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned to `c` directly. The method needs a `&mut` borrow of it." }
+            - { id: c, text: "borrow of moved value", why: "`&mut self` borrows `c`; it doesn't move it." }
           answer: a
         explanation: "A `&mut self` method needs a mutable borrow, which needs `let mut c`."
         concepts: [method.self, err.E0596]
@@ -244,9 +244,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `t`" }
-            - { id: b, text: "E0596: cannot borrow `t` as mutable", why: "Nothing needs a mutable borrow. `self` takes ownership." }
-            - { id: c, text: "E0599: no method named `into_owner`", why: "The method exists. Calling it moves `t`." }
+            - { id: a, text: "borrow of moved value: `t`" }
+            - { id: b, text: "cannot borrow `t` as mutable", why: "Nothing needs a mutable borrow. `self` takes ownership." }
+            - { id: c, text: "no method named `into_owner`", why: "The method exists. Calling it moves `t`." }
           answer: a
         explanation: "`into_owner` takes `self` by value, so the call moves `t` into it. Afterwards even the `Copy` field `t.id` can't be read through `t`."
         concepts: [method.self, own.move, err.E0382]
@@ -331,7 +331,7 @@ lessons:
         id: tf-newtypes
         prompt: "With `struct Celsius(f64);` and `struct Fahrenheit(f64);`, you can't pass a `Celsius` where a `Fahrenheit` is expected."
         answer: true
-        explanation: "Each tuple struct is its own type, even with the same field types inside. Mixing them up is E0308."
+        explanation: "Each tuple struct is its own type, even with the same field types inside. Mixing them up is a *mismatched types* error."
         concepts: [struct.tuple]
 
       - type: predict-output

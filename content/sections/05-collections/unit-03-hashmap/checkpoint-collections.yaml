@@ -66,9 +66,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `line` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0382: borrow of moved value", why: "`&line[0]` borrows the first `String`; it doesn't move it." }
-            - { id: c, text: "E0499: two mutable borrows", why: "`first` is a shared borrow, and `push` needs a mutable one: that's E0502." }
+            - { id: a, text: "cannot borrow `line` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "borrow of moved value", why: "`&line[0]` borrows the first `String`; it doesn't move it." }
+            - { id: c, text: "two mutable borrows", why: "`first` is a shared borrow, and `push` needs a mutable one. That's a shared-plus-mutable conflict, not two mutable borrows." }
           answer: a
         explanation: "`push` may move the `Vec`'s items to a bigger buffer, which would leave `first` dangling. So it can't run while `first` is still in use."
         concepts: [vec.borrow, err.E0502]
@@ -295,13 +295,13 @@ lessons:
 
       - type: match-pairs
         id: pairs-errors
-        prompt: "Match each error to a line that causes it"
+        prompt: "Match each compiler message to a line that causes it"
         pairs:
-          - ["E0382", "using a String after inserting it"]
-          - ["E0502", "v.push(x) while &v[0] is in use"]
-          - ["E0499", "two live entry(..).or_insert(..)"]
-          - ["E0608", "set[0] on a HashSet"]
-          - ["E0368", "count += 1 on a &mut i32"]
+          - ["borrow of moved value", "using a String after inserting it"]
+          - ["cannot borrow as mutable because it is also borrowed as immutable", "v.push(x) while &v[0] is in use"]
+          - ["cannot borrow as mutable more than once at a time", "two live entry(..).or_insert(..)"]
+          - ["cannot index into a value of type `HashSet<i32>`", "set[0] on a HashSet"]
+          - ["binary assignment operation `+=` cannot be applied to type `&mut i32`", "count += 1 on a &mut i32"]
         explanation: "Each of these came up in this section: moves, borrow conflicts, and using references and collections the wrong way."
         concepts: [map.ownership, vec.borrow, map.entry, collections.choose]
 

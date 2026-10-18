@@ -88,7 +88,7 @@ lessons:
         prompt: "While `let w = &mut s;` is still in use, which permissions does `s` have?"
         options:
           - { id: a, text: "None" }
-          - { id: b, text: "R", why: "Reading `s` while `w` could change it is E0502, so `s` loses Read too." }
+          - { id: b, text: "R", why: "Reading `s` while `w` could change it is not allowed, so `s` loses Read too." }
           - { id: c, text: "R W", why: "`w` is the only writer, so `s` can't write either." }
         answer: a
         explanation: "A `&mut` borrow is exclusive: until its last use, `s` can't be read, changed or moved."
@@ -114,7 +114,7 @@ lessons:
             - { id: b, text: "Write: moving changes the text", why: "Moving doesn't change the text. It needs Own." }
             - { id: c, text: "Read: `s` can't be read while borrowed", why: "A `&` borrow leaves `s` with Read." }
           answer: a
-        explanation: "`r` is still used on line 5, so `s` has only R on line 4. Moving needs O (error E0505)."
+        explanation: "`r` is still used on line 5, so `s` has only R on line 4. Moving needs O."
         concepts: [borrow.permissions, own.move, err.E0505]
 
       - type: predict-output
@@ -153,16 +153,16 @@ lessons:
     exercises:
       - type: concept
         id: concept-missing-errors
-        title: Missing permission, error code
+        title: Missing permission, error message
         markdown: |
           Most borrow errors are a missing permission:
 
-          | You try to... | while... | Error |
+          | You try to... | while... | Compiler message |
           |---|---|---|
-          | change `s` | `&s` is in use | E0502 / E0506 |
-          | move `s` | `s` is borrowed | E0505 |
-          | move out of `*r` | always | E0507 |
-          | change through `&` | always | E0596 |
+          | change `s` | `&s` is in use | cannot assign to `s` because it is borrowed |
+          | move `s` | `s` is borrowed | cannot move out of `s` because it is borrowed |
+          | move out of `*r` | always | cannot move out of `*r` which is behind a shared reference |
+          | change through `&` | always | cannot borrow `*r` as mutable, as it is behind a `&` reference |
 
           A reference never has O on the value it points at.
         code:
@@ -196,7 +196,7 @@ lessons:
             - { id: b, text: "`score` isn't `mut`", why: "It is. Normally it has Write, but the borrow takes it away for a while." }
             - { id: c, text: "`r` has no Read permission", why: "`r` can read. The problem is changing `score` under it." }
           answer: a
-        explanation: "`r` is used on line 5, so on line 4 `score` has only R. Assigning needs W (error E0506)."
+        explanation: "`r` is used on line 5, so on line 4 `score` has only R. Assigning needs W."
         concepts: [borrow.permissions, err.E0506]
 
       - type: decode-error
@@ -260,8 +260,8 @@ lessons:
             - { id: h1, value: '"hey"' }
         options:
           - { id: a, code: "w.push_str(\"!\");" }
-          - { id: b, code: "println!(\"{s}\");", why: "`s` has no Read while `w` is in use (E0502)." }
-          - { id: c, code: "let t = s;", why: "`s` has no Own while it's borrowed (E0505)." }
+          - { id: b, code: "println!(\"{s}\");", why: "`s` has no Read while `w` is in use." }
+          - { id: c, code: "let t = s;", why: "`s` has no Own while it's borrowed." }
         answer: a
         explanation: "All the permissions are with `w` for now, and `w` can read and write."
         concepts: [borrow.permissions, borrow.exclusive]
@@ -302,12 +302,12 @@ lessons:
 
       - type: match-pairs
         id: pairs-missing
-        prompt: Match each mistake to its error code
+        prompt: Match each mistake to its compiler message
         pairs:
-          - ["move `s` while `&s` is in use", "E0505"]
-          - ["move out of `*r`", "E0507"]
-          - ["change through `&`", "E0596"]
-          - ["two `&mut s` in use", "E0499"]
+          - ["move `s` while `&s` is in use", "cannot move out of `s` because it is borrowed"]
+          - ["move out of `*r`", "cannot move out of `*r` which is behind a shared reference"]
+          - ["change through `&`", "cannot borrow `*r` as mutable, as it is behind a `&` reference"]
+          - ["two `&mut s` in use", "cannot borrow `s` as mutable more than once at a time"]
         concepts: [borrow.permissions, err.E0499]
 
   - id: l3
@@ -415,7 +415,7 @@ lessons:
             - { id: b, text: "Write", why: "`len` only reads, but even Read is gone while `w` is in use." }
             - { id: c, text: "Own", why: "It has lost Own too, but `len` doesn't need it. The missing one that matters is Read." }
           answer: a
-        explanation: "`w` is used on line 5, so `name` has no permissions on line 4. Reading its length needs R (E0502)."
+        explanation: "`w` is used on line 5, so `name` has no permissions on line 4. Reading its length needs R."
         concepts: [borrow.permissions, err.E0502]
 
       - type: true-false

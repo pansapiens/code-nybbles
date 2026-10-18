@@ -159,7 +159,7 @@ lessons:
           - { id: b, text: "Change line 3 to `println!(\"hit!\");`", why: "`eprintln!` is fine. The error is about changing `lives`." }
           - { id: c, text: "Change line 4 to `mut lives -= 1;`", why: "`mut` goes on the `let` that creates the variable." }
         answer: a
-        explanation: "E0384: `lives` isn't `mut`, so `-=` can't change it."
+        explanation: "`lives` isn't `mut`, so `-=` can't change it. The compiler says *cannot assign twice to immutable variable*."
         concepts: [err.E0384, var.mut, macro.print-family]
 
       - type: predict-output
@@ -219,12 +219,12 @@ lessons:
 
       - type: match-pairs
         id: pairs-errors
-        prompt: Match each error code to its meaning
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0384", "assigned twice to a non-`mut` variable"]
-          - ["E0308", "mismatched types"]
-          - ["E0425", "cannot find a value with that name"]
-          - ["E0277", "this type can't do that, like `{}` on an array"]
+          - ["cannot assign twice to immutable variable", "changing a variable that isn't `mut`"]
+          - ["mismatched types", "a value has a different type from the one expected"]
+          - ["cannot find value in this scope", "using a name that doesn't exist"]
+          - ["doesn't implement `std::fmt::Display`", "printing an array with `{}`"]
         concepts: [compiler.read-error, err.E0384]
 
       - type: parsons

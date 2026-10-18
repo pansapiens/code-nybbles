@@ -305,7 +305,7 @@ lessons:
         id: tf-return-without-arrow
         prompt: "A function can return a number without `->` in its signature, as long as the last line has no semicolon."
         answer: false
-        explanation: "The return type must always be written. Without `->`, the function returns `()`, and a number in the tail position is error E0308."
+        explanation: "The return type must always be written. Without `->`, the function returns `()`, and a number in the tail position is an error (*mismatched types*)."
         concepts: [fn.return]
 
       - type: compiles
@@ -447,7 +447,7 @@ lessons:
           - { id: b, text: "`message` needs to be `mut`", why: "`message` is never changed. The problem is what it holds." }
           - { id: c, text: "A function call can't be stored in a variable", why: "It can, as long as the function returns something useful." }
         answer: a
-        explanation: "`greet` has no `->`, so `message` holds `()`. `{}` can't display `()`, so the compiler reports E0277."
+        explanation: "`greet` has no `->`, so `message` holds `()`. `{}` can't display `()`, so the compiler reports an error."
         concepts: [fn.return, types.unit, err.E0277]
 
       - type: predict-output

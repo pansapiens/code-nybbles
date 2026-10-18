@@ -50,9 +50,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `name`" }
+            - { id: a, text: "borrow of moved value: `name`" }
             - { id: b, text: "None: the tuple holds a copy of `name`", why: "A `String` is never copied implicitly. Putting it in a tuple moves it." }
-            - { id: c, text: "E0308: mismatched types", why: "The types are fine. `name` moved into `pair`." }
+            - { id: c, text: "mismatched types", why: "The types are fine. `name` moved into `pair`." }
           answer: a
         explanation: "Building the tuple moves `name` into `pair.0`, so `name` is invalid on line 3."
         concepts: [own.mixed, err.E0382]
@@ -88,9 +88,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `note`" }
+            - { id: a, text: "borrow of moved value: `note`" }
             - { id: b, text: "None: `send` is false, so the move never happens", why: "The compiler checks every path the program might take, not the values of variables." }
-            - { id: c, text: "E0308: mismatched types", why: "`send` is a `bool`, so the condition is fine." }
+            - { id: c, text: "mismatched types", why: "`send` is a `bool`, so the condition is fine." }
           answer: a
         explanation: "On the path where the `if` body runs, `note` moves. The compiler rejects the program because that path exists."
         concepts: [own.mixed, err.E0382, ctrl.if]
@@ -226,9 +226,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `s1`" }
+            - { id: a, text: "borrow of moved value: `s1`" }
             - { id: b, text: "None: `size` gave the `String` back", why: "It gave it back to `s2`, not `s1`." }
-            - { id: c, text: "E0308: mismatched types", why: "The types line up. `s1` moved into `size`." }
+            - { id: c, text: "mismatched types", why: "The types line up. `s1` moved into `size`." }
           answer: a
         explanation: "The returned `String` belongs to `s2`. `s1` moved into the call and stays invalid."
         concepts: [own.mixed, own.fn-return, err.E0382]
@@ -269,8 +269,8 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0382: use of moved value", why: "Nothing has moved yet. The argument is the wrong type." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "use of moved value", why: "Nothing has moved yet. The argument is the wrong type." }
             - { id: c, text: "None: a literal is turned into a `String` for you", why: "Rust doesn't convert it. Write `String::from(\"hello\")`." }
           answer: a
         explanation: "`\"hello\"` is a string literal, not a `String`. Passing `String::from(\"hello\")` would compile."
@@ -290,9 +290,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `first`" }
+            - { id: a, text: "borrow of moved value: `first`" }
             - { id: b, text: "None: the array copies its items", why: "Only Copy items are copied. `String`s move into the array." }
-            - { id: c, text: "E0382: borrow of moved value: `team`", why: "`team` is the new owner and is valid." }
+            - { id: c, text: "borrow of moved value: `team`", why: "`team` is the new owner and is valid." }
           answer: a
         explanation: "Both `String`s moved into `team`, so `first` can't be printed."
         concepts: [own.mixed, err.E0382]
@@ -458,9 +458,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `saved`" }
+            - { id: a, text: "borrow of moved value: `saved`" }
             - { id: b, text: "None: `fresh` is true, so `saved` doesn't move", why: "The compiler checks both branches. In the `else` branch, `saved` moves." }
-            - { id: c, text: "E0308: `if` and `else` have different types", why: "Both branches give a `String`." }
+            - { id: c, text: "`if` and `else` have different types", why: "Both branches give a `String`." }
           answer: a
         explanation: "`saved` might move in the `else` branch, so the compiler treats it as possibly moved on line 8."
         concepts: [own.mixed, ctrl.if-expr, err.E0382]
@@ -591,9 +591,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: use of moved value: `task`" }
+            - { id: a, text: "use of moved value: `task`" }
             - { id: b, text: "None: `make` can be called again", why: "It could, but the code passes `task` twice instead of calling `make()` again." }
-            - { id: c, text: "E0308: mismatched types", why: "`make` returns a `String` and `run` takes one, so the types match." }
+            - { id: c, text: "mismatched types", why: "`make` returns a `String` and `run` takes one, so the types match." }
           answer: a
         explanation: "`make` hands its `String` to `task`. The first `run(task)` moves it, so the second has nothing to pass."
         concepts: [own.mixed, own.fn-move, own.fn-return, err.E0382]

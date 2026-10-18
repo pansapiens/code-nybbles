@@ -179,9 +179,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0425: cannot find value `price` in this scope" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `price` no longer exists at the `println!`." }
-            - { id: c, text: "E0308: mismatched types", why: "The block's value is an `i32`, and `total` takes it fine." }
+            - { id: a, text: "cannot find value `price` in this scope" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. `price` no longer exists at the `println!`." }
+            - { id: c, text: "mismatched types", why: "The block's value is an `i32`, and `total` takes it fine." }
           answer: a
         explanation: "`price` lives only inside the block. After `}`, only `total` holds the result."
         concepts: [expr.block, compiler.read-error, err.E0425]
@@ -352,9 +352,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0425: cannot find value in this scope", why: "`label` exists. Its value has the wrong type." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`label` is only given a value once." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot find value in this scope", why: "`label` exists. Its value has the wrong type." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`label` is only given a value once." }
           answer: a
         explanation: "The block's value is the text `\"high\"`, a `&str`, but `label` is annotated as `i32`."
         concepts: [expr.block, err.E0308]
@@ -376,7 +376,7 @@ lessons:
         options:
           - { id: a, code: "        n * 2" }
           - { id: b, code: "    println!(\"{doubled:?}\");", why: "That compiles, but prints `()`. The 42 is still thrown away." }
-          - { id: c, code: "    let doubled: i32 = {", why: "The block still produces `()`, so this gives a different error, E0308." }
+          - { id: c, code: "    let doubled: i32 = {", why: "The block still produces `()`, so this gives a different error, *mismatched types*." }
         answer: a
         explanation: "`()` can't be printed with `{}`, which is what the error says. The real problem is the `;` on line 4: without it, the block's value is 42."
         concepts: [expr.block, types.unit, err.E0277]
@@ -409,7 +409,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0425]
         answer: 8
-        explanation: "`price` only exists inside the block, so line 8 can't find it (E0425). `total` on line 7 is fine."
+        explanation: "`price` only exists inside the block, so line 8 can't find it (*cannot find value*). `total` on line 7 is fine."
         concepts: [expr.block, compiler.read-error, err.E0425]
 
       - type: fill-tokens

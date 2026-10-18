@@ -67,7 +67,7 @@ lessons:
             - { id: b, text: "`mut` on the second line: `let mut r`", why: "`r` itself never changes. It's `s` that must be `mut` to be borrowed as `&mut`." }
             - { id: c, text: "Nothing; it's `push_str` that isn't allowed on references", why: "`push_str` works through a `&mut` reference. The problem is that `s` isn't `mut`." }
           answer: a
-        explanation: "`&mut s` needs `s` to be declared `mut`. The compiler says: cannot borrow `s` as mutable, as it is not declared as mutable (E0596)."
+        explanation: "`&mut s` needs `s` to be declared `mut`. The compiler says: cannot borrow `s` as mutable, as it is not declared as mutable."
         concepts: [borrow.mut, var.mut, err.E0596]
 
       - type: concept
@@ -355,7 +355,7 @@ lessons:
           verify: run
           expectStdout: "5\n"
         answer: true
-        explanation: "`*r = 5` replaces the value `r` points at, so `n` is 5. `n` is `mut`, so there's no E0384."
+        explanation: "`*r = 5` replaces the value `r` points at, so `n` is 5. `n` is `mut`, so assigning to it is allowed."
         concepts: [borrow.mut, err.E0384]
 
       - type: fill-tokens

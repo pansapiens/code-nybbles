@@ -219,9 +219,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
-            - { id: b, text: "E0308: mismatched types", why: "Both values are `String`s, so the types match." }
-            - { id: c, text: "E0596: cannot borrow as mutable", why: "That's for calling methods like `push_str` without `mut`. Here it's an assignment with `=`." }
+            - { id: a, text: "cannot assign twice to immutable variable" }
+            - { id: b, text: "mismatched types", why: "Both values are `String`s, so the types match." }
+            - { id: c, text: "cannot borrow as mutable", why: "That's for calling methods like `push_str` without `mut`. Here it's an assignment with `=`." }
           answer: a
         explanation: "Replacing a `String` with `=` needs `mut`, the same as replacing a number."
         concepts: [own.rules, err.E0384]

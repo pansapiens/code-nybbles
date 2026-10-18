@@ -10,9 +10,9 @@ let (item, count, price) = order;    // destructuring
 println!("{item} {count} {price}");
 ```
 
-- Positions start at 0: `.0`, `.1`, `.2`. A position that doesn't exist is a compile error (**E0609**).
-- Tuples use a dot, never square brackets (`t[0]` is **E0608**).
-- The pattern in `let (a, b) = t;` needs one name per element, in order. A wrong count is **E0308**.
+- Positions start at 0: `.0`, `.1`, `.2`. A position that doesn't exist is a compile error (*no field* error).
+- Tuples use a dot, never square brackets (`t[0]` is an error: *cannot index into a value of type*).
+- The pattern in `let (a, b) = t;` needs one name per element, in order. A wrong count is a *mismatched types* error.
 - With `let mut`, you can change an element: `score.0 += 1;`. The types and length stay the same.
 - A one-element tuple needs a comma: `(5,)`. Plain `(5)` is the number 5.
 
@@ -24,7 +24,7 @@ println!("{result:?}");         // ()
 ```
 
 - `()` is the empty tuple. Its type is also written `()`.
-- It means "no useful value". `println!` gives back `()`, so `let n: i32 = println!("5");` is **E0308**.
+- It means "no useful value". `println!` gives back `()`, so `let n: i32 = println!("5");` is a *mismatched types* error.
 - `{}` can't print `()`, but `{:?}` can.
 
 ## Arrays: a fixed number of one type
@@ -39,7 +39,7 @@ println!("{}", primes.len()); // 5
 
 - `[T; N]` is N values of type T. The length is part of the type.
 - `[value; count]` repeats a value.
-- Every element must have the same type: `[1, true]` and `[21.5, 19]` are **E0308**.
+- Every element must have the same type: `[1, true]` and `[21.5, 19]` are *mismatched types* errors.
 - The size never changes. Arrays have no `push`.
 - Indexes start at 0 and have the type `usize`.
 
@@ -76,7 +76,7 @@ println!("{point:#?}");  // pretty: one element per line
 
 | Format | Name | Tuples and arrays? |
 |---|---|---|
-| `{}` | Display, for people | no (**E0277**) |
+| `{}` | Display, for people | no (compile error) |
 | `{:?}` | Debug, one line | yes |
 | `{:#?}` | Debug, pretty | yes |
 

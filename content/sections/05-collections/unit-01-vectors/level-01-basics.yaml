@@ -82,7 +82,7 @@ lessons:
             - { id: b, text: "`vec!` vectors have a fixed length", why: "A `Vec` made with `vec!` can grow like any other. The variable needs `mut`." }
             - { id: c, text: "`push` only works on `Vec::new()` vectors", why: "`push` works on any `Vec`, as long as the variable is `mut`." }
           answer: a
-        explanation: "`push` changes the vector, and variables are immutable by default. The error is E0596: cannot borrow `names` as mutable. Write `let mut names`."
+        explanation: "`push` changes the vector, and variables are immutable by default. The compiler says: cannot borrow `names` as mutable. Write `let mut names`."
         concepts: [vec.basics, var.mut, err.E0596]
 
       - type: fill-tokens
@@ -220,9 +220,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0282: type annotations needed for `Vec<_>`" }
-            - { id: b, text: "E0596: cannot borrow `names` as mutable", why: "Nothing changes `names`, so it doesn't need `mut`." }
-            - { id: c, text: "E0308: mismatched types", why: "There are no two types to mismatch. Rust has no type at all for the elements." }
+            - { id: a, text: "type annotations needed for `Vec<_>`" }
+            - { id: b, text: "cannot borrow `names` as mutable", why: "Nothing changes `names`, so it doesn't need `mut`." }
+            - { id: c, text: "mismatched types", why: "There are no two types to mismatch. Rust has no type at all for the elements." }
           answer: a
         explanation: "Nothing is ever pushed, so Rust can't work out what `names` holds. Write `let names: Vec<String> = Vec::new();` or similar."
         concepts: [vec.basics, types.inference, err.E0282]
@@ -369,9 +369,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `first`" }
-            - { id: b, text: "E0596: cannot borrow `names` as mutable", why: "`names` is declared with `let mut`, so `push` is fine." }
-            - { id: c, text: "E0282: type annotations needed", why: "The `push` tells Rust that `names` is a `Vec<String>`." }
+            - { id: a, text: "borrow of moved value: `first`" }
+            - { id: b, text: "cannot borrow `names` as mutable", why: "`names` is declared with `let mut`, so `push` is fine." }
+            - { id: c, text: "type annotations needed", why: "The `push` tells Rust that `names` is a `Vec<String>`." }
           answer: a
         explanation: "`push` takes ownership of the value. The `String` moves into the vector, so `first` can't be used afterwards."
         concepts: [vec.basics, own.move, err.E0382]

@@ -133,7 +133,7 @@ lessons:
         id: concept-no-mixing
         title: Don't mix integers and floats
         markdown: |
-          **Both sides of an operator must be the same type.** Rust won't add an integer to a float. The compiler reports error **E0277**.
+          **Both sides of an operator must be the same type.** Rust won't add an integer to a float. The compiler reports an error: it can't add an integer to a float.
 
           Write the integer as a float instead: `2.0 + 1.5`.
         code:
@@ -157,9 +157,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0277: cannot multiply `{float}` by `{integer}`" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Each variable gets one value. The problem is the multiplication." }
-            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign in this program." }
+            - { id: a, text: "cannot multiply `{float}` by `{integer}`" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Each variable gets one value. The problem is the multiplication." }
+            - { id: c, text: "cannot apply unary operator `-`", why: "There's no minus sign in this program." }
           answer: a
         explanation: "`price` is a float and `count` is an integer, so `*` can't combine them. Writing `let count = 3.0;` fixes it."
         concepts: [ops.arith, types.float, err.E0277]
@@ -331,9 +331,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0277: cannot add a float to an integer", why: "There's no arithmetic here. The value doesn't match the declared type." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`weight` is only given one value." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot add a float to an integer", why: "There's no arithmetic here. The value doesn't match the declared type." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`weight` is only given one value." }
           answer: a
         explanation: "`5` is an integer literal, and Rust won't use it as an `f32`. Write `5.0` instead."
         concepts: [types.float, err.E0308]

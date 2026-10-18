@@ -55,9 +55,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0384: cannot assign twice to immutable variable" }
-            - { id: b, text: "E0435: attempt to use a non-constant value in a constant", why: "`LIMIT` is only read here, and reading a constant into a variable is fine." }
-            - { id: c, text: "E0308: mismatched types", why: "`tries` holds whole numbers throughout." }
+            - { id: a, text: "cannot assign twice to immutable variable" }
+            - { id: b, text: "attempt to use a non-constant value in a constant", why: "`LIMIT` is only read here, and reading a constant into a variable is fine." }
+            - { id: c, text: "mismatched types", why: "`tries` holds whole numbers throughout." }
           answer: a
         explanation: "`let tries = tries;` creates a new, non-`mut` `tries`. Line 7 then tries to change it."
         concepts: [var.shadowing, err.E0384]
@@ -142,7 +142,7 @@ lessons:
         id: tf-type-change
         prompt: "Both shadowing and `mut` let you change the type of value stored under a name."
         answer: false
-        explanation: "Only shadowing can, because it creates a new variable. A `mut` variable keeps its type (assigning another type is E0308)."
+        explanation: "Only shadowing can, because it creates a new variable. A `mut` variable keeps its type (assigning another type is a *mismatched types* error)."
         concepts: [var.shadowing, var.mut]
 
       - type: mcq
@@ -195,7 +195,7 @@ lessons:
           - { id: b, text: "`level` needs to be `mut`", why: "It already is. `mut` allows a new value of the same type only." }
           - { id: c, text: "Text can't be printed with `{level}`", why: "It can. The error is on line 3, the assignment." }
         answer: a
-        explanation: "E0308 means mismatched types. To switch to text, shadow with `let level = \"two\";` instead."
+        explanation: "The error is *mismatched types*. To switch to text, shadow with `let level = \"two\";` instead."
         concepts: [var.mut, var.shadowing, err.E0308]
 
       - type: predict-output

@@ -105,7 +105,7 @@ lessons:
             - { id: b, text: "`n` needs to be declared `let mut n`", why: "`n` itself doesn't change; the value it points to does. That takes `*`." }
             - { id: c, text: "`+=` doesn't work on numbers stored in a map", why: "It does, once you dereference: `*n += 1`." }
           answer: a
-        explanation: "You can't add 1 to a reference. `*n` reaches the `i32` it points to. The error is E0368: `+=` cannot be applied to `&mut {integer}`."
+        explanation: "You can't add 1 to a reference. `*n` reaches the `i32` it points to. The compiler says `+=` cannot be applied to `&mut {integer}`."
         concepts: [map.entry, borrow.mut, err.E0368]
 
       - type: predict-output
@@ -371,9 +371,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0499: cannot borrow `pts` as mutable more than once at a time" }
-            - { id: b, text: "E0368: `+=` cannot be applied to `&mut {integer}`", why: "The `*` is there, so `+=` is fine." }
-            - { id: c, text: "E0382: use of moved value", why: "Nothing is moved. Both `a` and `b` are `&mut` borrows of `pts`." }
+            - { id: a, text: "cannot borrow `pts` as mutable more than once at a time" }
+            - { id: b, text: "`+=` cannot be applied to `&mut {integer}`", why: "The `*` is there, so `+=` is fine." }
+            - { id: c, text: "use of moved value", why: "Nothing is moved. Both `a` and `b` are `&mut` borrows of `pts`." }
           answer: a
         explanation: "`a` and `b` are both `&mut` borrows of `pts`, and `a` is still used after `b` is made. Finish with one before taking the next."
         concepts: [map.entry, err.E0499]

@@ -215,7 +215,7 @@ lessons:
             - { id: b, text: "Index 0 might be out of range", why: "Range is checked when the program runs, not by the compiler. The problem is ownership." }
             - { id: c, text: "`names` needs `mut`", why: "Reading doesn't need `mut`. The problem is taking ownership of an element." }
           answer: a
-        explanation: "A `String` isn't `Copy`, so `let first = names[0];` would move it and leave a hole in the vector. The error is E0507: cannot move out of index. Borrow it with `&names[0]`."
+        explanation: "A `String` isn't `Copy`, so `let first = names[0];` would move it and leave a hole in the vector. The compiler says: cannot move out of index. Borrow it with `&names[0]`."
         concepts: [vec.access, own.move, err.E0507]
 
       - type: decode-error

@@ -337,19 +337,22 @@ function checkOptions(where: string, options: Option[], answer: string, issues: 
 }
 
 /**
- * Error codes named in learner-facing text. Codes are lookup keys for `rustc --explain`, not facts to memorise, so
- * text names the problem or quotes the message. Code, fenced blocks and `error[...]` / `--explain` spans don't count.
+ * Questions that hinge on knowing what an error code means. Codes may be shown (they're lookup keys for
+ * `rustc --explain`), and "E0382: borrow of moved value" can be read, but a bare code can only be recalled: no bare
+ * codes in pairs, tiles or true-false prompts, and no options that differ only by their code.
  */
-export function textCodes(ex: Exercise): string[] {
-  const out = new Set<string>()
-  const walk = (v: unknown, key: string): void => {
-    if (key === 'code' || key === 'concepts') return
-    if (typeof v === 'string')
-      for (const m of v.replace(/```[\s\S]*?```|`[^`]*(error\[|--explain)[^`]*`/g, '').match(/\bE\d{4}\b/g) ?? []) out.add(m)
-    else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, Array.isArray(v) ? key : k)
+export function roteCodes(ex: Exercise): string[] {
+  const has = (s: string) => /\bE\d{4}\b(?!\]?: \S)/.test(s)
+  const out: string[] = []
+  if (ex.type === 'match-pairs' && ex.pairs.flat().some(has)) out.push('match-pairs names an error code')
+  if (('bank' in ex && ex.bank?.some(has)) || ('tiles' in ex && ex.tiles?.some(has))) out.push('a tile is an error code')
+  if (ex.type === 'true-false' && has(ex.prompt)) out.push('true-false prompt names an error code')
+  for (const opts of ['options' in ex ? ex.options : undefined, ex.type === 'compiles' ? ex.followUp?.options : undefined]) {
+    const texts = (opts ?? []).flatMap((o) => (o.text ? [o.text] : []))
+    if (texts.some(has) && new Set(texts.map((t) => t.replace(/\bE\d{4}\b/g, '').trim())).size < texts.length)
+      out.push('options differ only by error code')
   }
-  walk(ex, '')
-  return [...out]
+  return out
 }
 
 const words = (s: string) => s.trim().split(/\s+/).join(' ')
@@ -377,13 +380,12 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
     if (words > 60) issues.warn(where, `concept card has ${words} words (aim for at most 60)`)
   }
 
-  const named = textCodes(ex)
-  if (named.length) issues.warn(where, `text names ${named.join(', ')}; describe the problem or quote the message (codes are for \`rustc --explain\`)`)
+  for (const r of roteCodes(ex)) issues.warn(where, `${r}; test the message or the problem, not the code`)
 
   const code = 'code' in ex ? ex.code : undefined
   // Registered error codes are concepts, so review can track them.
   for (const e of code?.expectErrors ?? [])
-    if (concepts.has(`err.${e}`) && !('concepts' in ex && ex.concepts.includes(`err.${e}`)))
+    if (concepts.has(`err.${e}`) && !('concepts' in ex && ex.concepts?.includes(`err.${e}`)))
       issues.warn(where, `expects ${e}; add err.${e} to concepts`)
   if (code) {
     // Fill-tokens lines are measured with the answers in place of the `___N___` markers.

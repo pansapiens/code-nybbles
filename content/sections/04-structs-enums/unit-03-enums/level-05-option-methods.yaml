@@ -306,9 +306,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0599: no method named `map`", why: "`Option` has a `map` method. The problem is the type of its result." }
-            - { id: c, text: "E0282: type annotations needed", why: "The annotation is there, `u32`. It doesn't match the `Option<u32>` that `map` returns." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "no method named `map`", why: "`Option` has a `map` method. The problem is the type of its result." }
+            - { id: c, text: "type annotations needed", why: "The annotation is there, `u32`. It doesn't match the `Option<u32>` that `map` returns." }
           answer: a
         explanation: "`map` returns an `Option<u32>`, but `n` is declared as `u32`. Add `.unwrap_or(0)` to get a plain number."
         concepts: [option.methods, option.type-safety, err.E0308]
@@ -352,7 +352,7 @@ lessons:
           - { id: b, text: "Change line 3 to `let extra = bonus.map(|b| b * 2).unwrap();`", why: "That compiles, but `bonus` is `None`, so it panics when it runs." }
           - { id: c, text: "Change line 3 to `let extra = bonus.is_some();`", why: "`is_some()` is a `bool`, and you can't add a `bool` to a number." }
         answer: a
-        explanation: "`map` still returns an `Option`, which can't be added to a number (E0277). `unwrap_or(0)` turns `None` into 0, so `total` is 100."
+        explanation: "`map` still returns an `Option`, which can't be added to a number. `unwrap_or(0)` turns `None` into 0, so `total` is 100."
         concepts: [option.methods, option.type-safety, err.E0277]
 
       - type: mcq
@@ -410,9 +410,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `name`" }
-            - { id: b, text: "E0308: mismatched types", why: "`len` is an `Option<usize>`, which `{:?}` prints fine. `name` is the problem." }
-            - { id: c, text: "E0599: no method named `len`", why: "`s` is a `String`, which has a `len` method." }
+            - { id: a, text: "borrow of moved value: `name`" }
+            - { id: b, text: "mismatched types", why: "`len` is an `Option<usize>`, which `{:?}` prints fine. `name` is the problem." }
+            - { id: c, text: "no method named `len`", why: "`s` is a `String`, which has a `len` method." }
           answer: a
         explanation: "`map` takes the `Option` by value, so the `String` inside moves into the closure. `name` can't be printed afterwards."
         concepts: [option.methods, own.move, err.E0382]

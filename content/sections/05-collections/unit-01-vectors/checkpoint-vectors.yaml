@@ -55,9 +55,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `scores`" }
-            - { id: b, text: "E0308: mismatched types", why: "`scores` holds `usize` values here, inferred from the division by `scores.len()`, so the types fit. The problem is the loop." }
-            - { id: c, text: "E0502: cannot borrow `scores` as mutable", why: "Nothing borrows `scores` mutably. The loop moves it." }
+            - { id: a, text: "borrow of moved value: `scores`" }
+            - { id: b, text: "mismatched types", why: "`scores` holds `usize` values here, inferred from the division by `scores.len()`, so the types fit. The problem is the loop." }
+            - { id: c, text: "cannot borrow `scores` as mutable", why: "Nothing borrows `scores` mutably. The loop moves it." }
           answer: a
         explanation: "`for s in scores` moves the vector, even though its elements are numbers. Loop over `&scores` to keep it."
         concepts: [vec.iter, err.E0382]
@@ -116,7 +116,7 @@ lessons:
           "1": { answer: ["&mut"] }
           "2": { answer: ["*p"] }
         bank: ["&mut", "&", "*p", "p", "prices"]
-        explanation: "`&mut prices` lends each element mutably, and `*p` is the number behind the reference. Without `*`, `-=` is applied to the reference itself (E0368)."
+        explanation: "`&mut prices` lends each element mutably, and `*p` is the number behind the reference. Without `*`, `-=` is applied to the reference itself."
         concepts: [vec.iter]
 
       - type: predict-output
@@ -152,8 +152,8 @@ lessons:
         prompt: "`v` is a `mut` `Vec<String>`. Which of these compiles?"
         options:
           - { id: a, code: "let first = v[0].clone();\nv.push(String::new());\nprintln!(\"{first}\");" }
-          - { id: b, code: "let first = &v[0];\nv.push(String::new());\nprintln!(\"{first}\");", why: "`first` borrows `v` and is used after the `push`: E0502." }
-          - { id: c, code: "let first = v[0];\nv.push(String::new());\nprintln!(\"{first}\");", why: "A `String` can't be moved out of a vector by indexing: E0507." }
+          - { id: b, code: "let first = &v[0];\nv.push(String::new());\nprintln!(\"{first}\");", why: "`first` borrows `v` and is used after the `push`, so this doesn't compile." }
+          - { id: c, code: "let first = v[0];\nv.push(String::new());\nprintln!(\"{first}\");", why: "A `String` can't be moved out of a vector by indexing, so this doesn't compile." }
         answer: a
         explanation: "`clone()` gives `first` its own `String`, so nothing borrows `v` when `push` runs."
         concepts: [vec.borrow, vec.access, own.clone]
@@ -203,13 +203,13 @@ lessons:
 
       - type: match-pairs
         id: pairs-errors
-        prompt: Match each mistake to its error code
+        prompt: Match each mistake to the compiler's message
         pairs:
-          - ["push while &v[0] is in use", "E0502"]
-          - ["push inside for x in &mut v", "E0499"]
-          - ["use v after for x in v", "E0382"]
-          - ["let s = v[0]; on a Vec<String>", "E0507"]
-          - ["push to a Vec without mut", "E0596"]
+          - ["push while &v[0] is in use", "cannot borrow `v` as mutable because it is also borrowed as immutable"]
+          - ["push inside for x in &mut v", "cannot borrow `v` as mutable more than once at a time"]
+          - ["use v after for x in v", "borrow of moved value: `v`"]
+          - ["let s = v[0]; on a Vec<String>", "cannot move out of index of `Vec<String>`"]
+          - ["push to a Vec without mut", "cannot borrow `v` as mutable, as it is not declared as mutable"]
         concepts: [vec.borrow, vec.iter, vec.access, vec.basics]
 
       - type: decode-error
@@ -232,7 +232,7 @@ lessons:
           - { id: b, text: "`*q == 2` compares a reference with a number", why: "`*q` is the number, so the comparison is fine." }
           - { id: c, text: "`queue` was moved into the loop", why: "`&mut queue` borrows. A move would be `for q in queue`." }
         answer: a
-        explanation: "Two mutable borrows of `queue` would be alive at once (E0499). Collect the new values in a second vector and add them after the loop."
+        explanation: "Two mutable borrows of `queue` would be alive at once. Collect the new values in a second vector and add them after the loop."
         concepts: [vec.borrow, err.E0499]
 
       - type: predict-output

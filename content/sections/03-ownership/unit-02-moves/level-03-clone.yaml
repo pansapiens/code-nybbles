@@ -117,9 +117,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `note`" }
+            - { id: a, text: "borrow of moved value: `note`" }
             - { id: b, text: "None: `.clone()` brings the text back", why: "`.clone()` needs the original. After the move, `note` has nothing to clone." }
-            - { id: c, text: "E0384: cannot assign twice", why: "Nothing is reassigned. `note` is used after it moved." }
+            - { id: c, text: "cannot assign twice", why: "Nothing is reassigned. `note` is used after it moved." }
           answer: a
         explanation: "The clone has to happen before the move. Line 3 tries to clone `note` after it moved to `a`."
         concepts: [own.clone, err.E0382]
@@ -130,7 +130,7 @@ lessons:
           - ["let b = a; (String)", "moves: a is invalid"]
           - ["let b = a.clone();", "new heap text: both valid"]
           - ["let b = a; (i32)", "copies: both valid"]
-          - ["E0382", "a moved value was used"]
+          - ["borrow of moved value", "using a value after it moved"]
         concepts: [own.clone, own.move, own.copy]
 
       - type: spot-bug
@@ -217,7 +217,7 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, code: "let reply = greeting.clone();" }
-          - { id: b, code: "let reply = greeting.copy();", why: "`String` has no `copy()` method. That's E0599." }
+          - { id: b, code: "let reply = greeting.copy();", why: "`String` has no `copy()` method. The compiler says *no method named `copy` found for struct `String` in the current scope*." }
           - { id: c, code: "let mut reply = greeting;", why: "`mut` doesn't stop the move. `greeting` would still be invalid." }
         answer: a
         explanation: "The compiler's help suggests this clone too. It gives `reply` its own text, so `greeting` stays valid."
@@ -260,7 +260,7 @@ lessons:
         prompt: "When is `.clone()` the right choice?"
         options:
           - { id: a, text: "When you need two separate `String`s that can each change or be kept" }
-          - { id: b, text: "Every time the compiler reports E0382", why: "Often the better fix is to use the new owner, or reorder the lines. Clone only when you need two." }
+          - { id: b, text: "Every time you get a *borrow of moved value* error", why: "Often the better fix is to use the new owner, or reorder the lines. Clone only when you need two." }
           - { id: c, text: "For integers, so they don't move", why: "Integers are Copy and never move." }
         answer: a
         explanation: "Clone when the program needs two independent values. Otherwise a move, or a reorder, avoids the extra work."

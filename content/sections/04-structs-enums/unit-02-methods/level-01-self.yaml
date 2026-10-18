@@ -163,9 +163,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0596: cannot borrow `laps` as mutable, as it is not declared as mutable" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing assigns to `laps` directly. The problem is the mutable borrow that `add` needs." }
-            - { id: c, text: "E0382: borrow of moved value", why: "`&mut self` borrows `laps`; nothing is moved." }
+            - { id: a, text: "cannot borrow `laps` as mutable, as it is not declared as mutable" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing assigns to `laps` directly. The problem is the mutable borrow that `add` needs." }
+            - { id: c, text: "borrow of moved value", why: "`&mut self` borrows `laps`; nothing is moved." }
           answer: a
         explanation: "`add` takes `&mut self`, so calling it borrows `laps` mutably. That needs `let mut laps`."
         concepts: [method.self, borrow.mut, err.E0596]
@@ -282,9 +282,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `pass`" }
-            - { id: b, text: "E0596: cannot borrow `pass` as mutable", why: "No method here needs a mutable borrow." }
-            - { id: c, text: "E0599: no method named `into_owner` found", why: "The method exists. The problem is using `pass` after it moved." }
+            - { id: a, text: "borrow of moved value: `pass`" }
+            - { id: b, text: "cannot borrow `pass` as mutable", why: "No method here needs a mutable borrow." }
+            - { id: c, text: "no method named `into_owner` found", why: "The method exists. The problem is using `pass` after it moved." }
           answer: a
         explanation: "`into_owner` takes `self`, so `pass` moves into it. Reading `pass.owner` afterwards uses a moved value."
         concepts: [method.self, err.E0382]
@@ -294,7 +294,7 @@ lessons:
         prompt: "`fn rename(___, new_name: String)` replaces `self.name`. The caller keeps using the value afterwards. What goes in the blank?"
         options:
           - { id: a, code: "&mut self" }
-          - { id: b, code: "&self", why: "`&self` is read-only, so assigning to `self.name` is an error (E0594)." }
+          - { id: b, code: "&self", why: "`&self` is read-only, so assigning to `self.name` is an error." }
           - { id: c, code: "self", why: "That would move the value into `rename`, and the caller couldn't use it afterwards." }
         answer: a
         explanation: "The method changes a field and the caller keeps the value, so it borrows mutably with `&mut self`."
@@ -442,7 +442,7 @@ lessons:
           - { id: b, text: "`tick` should take `self` instead of `&mut self`", why: "Then `tick` would use up the timer. The real fix is `let mut timer`." }
           - { id: c, text: "Methods can't change fields", why: "They can, with `&mut self`. The variable needs `mut` too." }
         answer: a
-        explanation: "Calling a `&mut self` method borrows the value mutably, and only a `mut` variable can be borrowed that way (E0596)."
+        explanation: "Calling a `&mut self` method borrows the value mutably, and only a `mut` variable can be borrowed that way."
         concepts: [method.self, borrow.mut, err.E0596]
 
       - type: true-false
@@ -569,7 +569,7 @@ lessons:
         options:
           - { id: a, code: "self.label.clone()" }
           - { id: b, code: "return self.label;", why: "`return` doesn't change anything: it still tries to move the `String` out of a borrow." }
-          - { id: c, code: "&self.label", why: "That's a `&String`, but the signature promises an owned `String` (E0308)." }
+          - { id: c, code: "&self.label", why: "That's a `&String`, but the signature promises an owned `String`." }
         answer: a
         explanation: "`&self` only borrows the badge, so the method can't move `label` out of it. Cloning returns a new `String` and leaves the field in place."
         concepts: [method.self, own.clone, err.E0507]
@@ -624,9 +624,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `taps` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0596: cannot borrow `taps` as mutable, as it is not declared as mutable", why: "`taps` is declared `let mut`, so a mutable borrow is allowed in general." }
-            - { id: c, text: "E0382: borrow of moved value: `taps`", why: "`add` takes `&mut self`, which borrows `taps`; nothing moves." }
+            - { id: a, text: "cannot borrow `taps` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "cannot borrow `taps` as mutable, as it is not declared as mutable", why: "`taps` is declared `let mut`, so a mutable borrow is allowed in general." }
+            - { id: c, text: "borrow of moved value: `taps`", why: "`add` takes `&mut self`, which borrows `taps`; nothing moves." }
           answer: a
         explanation: "`taps.add()` borrows `taps` mutably while `first` still holds a shared borrow that's used on the next line. One writer or many readers."
         concepts: [method.self, borrow.exclusive, err.E0502]

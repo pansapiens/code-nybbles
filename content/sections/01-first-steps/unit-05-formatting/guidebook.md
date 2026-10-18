@@ -76,7 +76,7 @@ println!("{}", name.len());    // 6
 println!("{}", "café".len());  // 5
 ```
 
-- Double quotes make a `&str`; single quotes make a `char`. Mixing them up is E0308.
+- Double quotes make a `&str`; single quotes make a `char`. Mixing them up is a *mismatched types* error.
 - `format!` returns a `String`, a different type from `&str`. Both print the same way. Section 3 covers the difference.
 - `.len()` counts bytes, not characters. Plain English letters are 1 byte each; `é` is 2.
 - An escape is one character: `"\n".len()` is 1, but `r"\n".len()` is 2.

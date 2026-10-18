@@ -71,7 +71,7 @@ lessons:
         prompt: "Which `match` does the same as `if let Some(n) = slot { println!(\"{n}\"); }`?"
         options:
           - { id: a, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n    _ => (),\n}" }
-          - { id: b, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n}", why: "A `match` must be exhaustive. Without a `None` or `_` arm this is E0004." }
+          - { id: b, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n}", why: "A `match` must be exhaustive. Without a `None` or `_` arm the `match` isn't exhaustive." }
           - { id: c, code: "match slot {\n    Some(n) => println!(\"{n}\"),\n    None => println!(\"none\"),\n}", why: "This prints `none` for `None`, but the `if let` prints nothing." }
         answer: a
         explanation: "`if let` is a `match` with one arm you care about and a `_` arm that does nothing, written `()`."
@@ -134,7 +134,7 @@ lessons:
             - { id: b, text: "`mm` was moved by the first `println!`", why: "`u32` is `Copy`, and printing only borrows anyway. The problem is where `mm` exists." }
             - { id: c, text: "`rain` is used twice", why: "`rain` is only used once, on line 3." }
           answer: a
-        explanation: "Variables from an `if let` pattern live until the end of its block. Line 6 is outside it, so `mm` can't be found (E0425)."
+        explanation: "Variables from an `if let` pattern live until the end of its block. Line 6 is outside it, so `mm` can't be found."
         concepts: [match.if-let, err.E0425]
 
       - type: predict-output
@@ -288,7 +288,7 @@ lessons:
             - { id: b, text: "`let` can't have an `else`", why: "`let ... else` is valid Rust. Its `else` block has to leave, though." }
             - { id: c, text: "`n` is used before it has a value", why: "`n` has a value whenever line 6 is reached, as long as the `else` leaves." }
           answer: a
-        explanation: "If the `else` block finished normally, line 6 would run without an `n`. The compiler reports that the `else` clause does not diverge (E0308)."
+        explanation: "If the `else` block finished normally, line 6 would run without an `n`. The compiler reports that the `else` clause does not diverge."
         concepts: [match.let-else, err.E0308]
 
       - type: true-false
@@ -363,10 +363,10 @@ lessons:
           expectErrors: [E0005]
         options:
           - { id: a, text: "Change line 3 to `let Some(n) = slot else { return; };`" }
-          - { id: b, text: "Change line 2 to `let slot: u32 = Some(3);`", why: "`Some(3)` is an `Option<u32>`, not a `u32`, so that's E0308." }
+          - { id: b, text: "Change line 2 to `let slot: u32 = Some(3);`", why: "`Some(3)` is an `Option<u32>`, not a `u32`, so the types don't match." }
           - { id: c, text: "Change line 3 to `let n = Some(slot);`", why: "That wraps `slot` in another `Some`. `n` would be `Some(Some(3))`." }
         answer: a
-        explanation: "A plain `let` must match every possible value, and `slot` could be `None` (E0005). `let ... else` says what to do in that case."
+        explanation: "A plain `let` must match every possible value, and `slot` could be `None`. `let ... else` says what to do in that case."
         concepts: [match.let-else, err.E0005]
 
   - id: l3
@@ -546,7 +546,7 @@ lessons:
         options:
           - { id: a, text: "Add `continue;` after line 6" }
           - { id: b, text: "Add `0` after line 6", why: "The `else` block can't give a value. It must leave." }
-          - { id: c, text: "Replace lines 5 to 7 with `let Some(n) = slot;`", why: "A plain `let` can't handle the `None` case, which is E0005." }
+          - { id: c, text: "Replace lines 5 to 7 with `let Some(n) = slot;`", why: "A plain `let` can't handle the `None` case, which the compiler rejects." }
         answer: a
         explanation: "The `else` block must leave. Inside a loop, `continue` skips to the next slot, and the program prints `empty slot` then `8`."
         concepts: [match.let-else, err.E0308]

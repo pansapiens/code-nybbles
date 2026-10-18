@@ -186,9 +186,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: `match` arms have incompatible types" }
-            - { id: b, text: "E0599: no variant named `Green`", why: "`Green` is declared on line 1. The problem is what its arm returns." }
-            - { id: c, text: "E0424: expected value, found module `self`", why: "`wait` takes `&self`, so `self` is available." }
+            - { id: a, text: "`match` arms have incompatible types" }
+            - { id: b, text: "no variant named `Green`", why: "`Green` is declared on line 1. The problem is what its arm returns." }
+            - { id: c, text: "expected value, found module `self`", why: "`wait` takes `&self`, so `self` is available." }
           answer: a
         explanation: "Every arm must give a value of the same type, here `u32` from the signature. `\"go\"` is a `&str`."
         concepts: [enum.impl, err.E0308]
@@ -513,7 +513,7 @@ lessons:
             - { id: b, text: "Enums can't be changed after they're created", why: "A `mut` enum variable can be given a different variant, as `*self = ...` does." }
             - { id: c, text: "`*self` can't be assigned a variant", why: "Through `&mut self` you can replace the whole value. The variable `light` is the problem." }
           answer: a
-        explanation: "Calling a `&mut self` method borrows `light` mutably, which needs `let mut light`. The compiler reports E0596."
+        explanation: "Calling a `&mut self` method borrows `light` mutably, which needs `let mut light`. The compiler says it *cannot borrow `light` as mutable*."
         concepts: [enum.impl, method.self, borrow.mut, err.E0596]
 
       - type: predict-output
@@ -695,9 +695,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0599: no variant named `Small` found for `Coin`", why: "The arm names `Size::Small`, which exists. It's the wrong type for `self`." }
-            - { id: c, text: "E0424: expected value, found module `self`", why: "`value` takes `&self`, so `self` is available." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "no variant named `Small` found for `Coin`", why: "The arm names `Size::Small`, which exists. It's the wrong type for `self`." }
+            - { id: c, text: "expected value, found module `self`", why: "`value` takes `&self`, so `self` is available." }
           answer: a
         explanation: "`self` is a `Coin`, so every arm must be a `Coin` variant. `Size::Small` has a different type."
         concepts: [enum.impl, err.E0308]

@@ -107,9 +107,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0382: use of moved value", why: "Nothing is used after the call. The call itself has the wrong type." }
-            - { id: c, text: "E0502: cannot borrow as mutable because it is also borrowed as immutable", why: "There's no `&mut` here." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "use of moved value", why: "Nothing is used after the call. The call itself has the wrong type." }
+            - { id: c, text: "cannot borrow as mutable because it is also borrowed as immutable", why: "There's no `&mut` here." }
           answer: a
         explanation: "`greet` wants a `&str` and gets a `String`. Rust converts `&String`, but not a `String` itself: you need the `&`."
         concepts: [slice.str-param, err.E0308]
@@ -132,7 +132,7 @@ lessons:
           expectErrors: [E0308]
         options:
           - { id: a, code: "greet(&name);", why: "Correct: `greet` borrows `name`, which is still usable on the next line." }
-          - { id: b, code: "fn greet(name: String) {", why: "That makes `greet` take ownership, so line 8 would then use a moved value (E0382)." }
+          - { id: b, code: "fn greet(name: String) {", why: "That makes `greet` take ownership, so line 8 would then use a moved value." }
           - { id: c, code: "greet(*name);", why: "`*name` isn't a reference. Passing a reference needs `&`." }
         answer: a
         explanation: "The compiler's help says it: consider borrowing here. `&name` is a `&String`, which deref coercion turns into a `&str`."
@@ -145,7 +145,7 @@ lessons:
           - { id: a, code: "text: &str" }
           - { id: b, code: "text: &String", why: "A literal like `\"hi\"` is a `&str`, not a reference to a `String`." }
           - { id: c, code: "text: String", why: "None of the three is a `String`. They're all references." }
-          - { id: d, code: "text: str", why: "`str` without `&` has no size known at compile time, so it can't be a parameter (E0277)." }
+          - { id: d, code: "text: str", why: "`str` without `&` has no size known at compile time, so it can't be a parameter." }
         answer: a
         explanation: "`&str` takes literals and slices directly, and `&String` through deref coercion."
         concepts: [slice.str-param]
@@ -444,10 +444,10 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, text: "Line 1: `name: &str`, and line 7: `greet(&name);`" }
-          - { id: b, text: "Only line 7: `greet(&name);`", why: "`greet` still asks for a `String`, so passing `&name` is a type mismatch (E0308)." }
+          - { id: b, text: "Only line 7: `greet(&name);`", why: "`greet` still asks for a `String`, so passing `&name` is a type mismatch." }
           - { id: c, text: "Only line 1: `name: &str`", why: "Line 7 would still pass the `String` itself, which isn't a `&str`." }
         answer: a
-        explanation: "`greet` took ownership, so `name` moved and line 8 fails (E0382). Borrowing needs both a `&str` parameter and a `&` at the call."
+        explanation: "`greet` took ownership, so `name` moved and line 8 fails. Borrowing needs both a `&str` parameter and a `&` at the call."
         concepts: [slice.str-param, own.fn-move, err.E0382]
 
       - type: mcq

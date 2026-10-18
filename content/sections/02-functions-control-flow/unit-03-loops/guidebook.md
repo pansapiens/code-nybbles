@@ -14,7 +14,7 @@ loop {
 
 - `loop` never stops on its own. `break` ends it, and the program carries on after the closing `}`.
 - Code after `break` in the same block never runs.
-- `break` outside a loop is error **E0268**.
+- `break` outside a loop is an error.
 
 ## `break` with a value
 
@@ -29,8 +29,8 @@ let first = loop {
 ```
 
 - The value after `break` becomes the value of the whole `loop`. Don't forget the `;` that ends the `let`.
-- Every `break` in one loop must give the same type (**E0308** otherwise). A plain `break;` gives `()`.
-- Only `loop` can `break` with a value. In `while` or `for` it's error **E0571**.
+- Every `break` in one loop must give the same type (*mismatched types* otherwise). A plain `break;` gives `()`.
+- Only `loop` can `break` with a value. In `while` or `for` it's an error.
 
 ## `while` checks before each pass
 
@@ -42,7 +42,7 @@ while fuel > 0 {
 }
 ```
 
-- The condition must be a `bool`: `while lives` with a number is **E0308**. Write `while lives > 0`.
+- The condition must be a `bool`: `while lives` with a number is an error. Write `while lives > 0`.
 - If the condition is false the first time, the body never runs.
 - Make sure the body moves towards the end, or the loop never finishes.
 
@@ -60,7 +60,7 @@ for _ in 0..5 { }          // repeat 5 times
 - `.rev()` needs brackets: `(1..4).rev()`.
 - The loop variable is new each pass, immutable, and gone after the loop.
 - `for i in 0..arr.len()` gives every index. Indexes are `usize`.
-- A plain number isn't something you can loop over (**E0277**); use a range.
+- A plain number isn't something you can loop over (an error); use a range.
 
 ## `continue` and labels
 
@@ -80,7 +80,7 @@ for _ in 0..5 { }          // repeat 5 times
 
 - `continue` skips the rest of this pass. In a `while`, change the counter before any `continue`, or the loop gets stuck.
 - `break` and `continue` act on the innermost loop. A label (`'name:` before any loop) lets you pick an outer one.
-- A label without its `'` is a syntax error. Using a label that doesn't exist is **E0426**.
+- A label without its `'` is a syntax error. Using a label that doesn't exist is an error: *use of undeclared label*.
 
 ## Classic patterns
 

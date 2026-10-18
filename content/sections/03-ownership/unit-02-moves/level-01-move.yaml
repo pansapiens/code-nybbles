@@ -67,7 +67,7 @@ lessons:
         id: concept-e0382
         title: Using a moved value
         markdown: |
-          **Using `s1` after the move is error E0382**, "borrow of moved value". The compiler checks this before the program runs, so it can never read text it no longer owns.
+          **Using `s1` after the move is an error**: the compiler says "borrow of moved value". The compiler checks this before the program runs, so it can never read text it no longer owns.
         code:
           rust: |
             let s1 = String::from("hello");
@@ -90,9 +90,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `player_name` is read after its value moved away." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`player_name` still exists as a name, but its value moved to `winner`." }
+            - { id: a, text: "borrow of moved value" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. `player_name` is read after its value moved away." }
+            - { id: c, text: "cannot find value in this scope", why: "`player_name` still exists as a name, but its value moved to `winner`." }
           answer: a
         explanation: "The `String` moved to `winner` on line 2, so `player_name` can't be used on line 3."
         concepts: [own.move, err.E0382]
@@ -155,16 +155,16 @@ lessons:
           - ["let s2 = s1;", "moves the String to s2"]
           - ["s2", "the new owner"]
           - ["s1", "no longer valid"]
-          - ["E0382", "use of a moved value"]
+          - ["borrow of moved value", "use of a moved value"]
         concepts: [own.move, err.E0382]
 
   - id: l2
     exercises:
       - type: concept
         id: concept-labels
-        title: Reading E0382
+        title: Reading a moved-value error
         markdown: |
-          **E0382 points at three places:**
+          **The error points at three places:**
           - `move occurs because ...` on the `let` that created the `String`
           - `value moved here` where it moved
           - `value borrowed here after move` where you used it too late
@@ -214,7 +214,7 @@ lessons:
         options:
           - { id: a, text: "Change line 4 to `println!(\"{paint} {paint}\");`" }
           - { id: b, text: "Change line 3 to `let mut paint = colour;`", why: "`mut` doesn't stop the move. `colour` is still invalid on line 4." }
-          - { id: c, text: "Swap lines 2 and 3", why: "Then line 2 uses `colour` before it exists, which is error E0425." }
+          - { id: c, text: "Swap lines 2 and 3", why: "Then line 2 uses `colour` before it exists, which is an error because the name doesn't exist yet." }
         answer: a
         explanation: "After the move, `paint` owns the text, so print it through `paint`. You'll see other fixes later in this unit."
         concepts: [err.E0382, own.move]
@@ -271,11 +271,11 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `second`" }
-            - { id: b, text: "E0382: borrow of moved value: `first`", why: "`first` is never used after it moves, so it causes no error." }
-            - { id: c, text: "E0308: mismatched types", why: "Every variable here is a `String`. The problem is ownership." }
+            - { id: a, text: "borrow of moved value: `second`" }
+            - { id: b, text: "borrow of moved value: `first`", why: "`first` is never used after it moves, so it causes no error." }
+            - { id: c, text: "mismatched types", why: "Every variable here is a `String`. The problem is ownership." }
           answer: a
-        explanation: "`second` gave its `String` to `third` on line 3, so printing `second` on line 4 is E0382."
+        explanation: "`second` gave its `String` to `third` on line 3, so printing `second` on line 4 uses a moved value."
         concepts: [own.move, err.E0382]
 
       - type: true-false
@@ -299,7 +299,7 @@ lessons:
         blanks:
           "1": { answer: ["message"] }
         bank: ["message", "greeting", "Good", "morning"]
-        explanation: "The `String` moved to `message`, so `message` is the only name you can print it with. `greeting` would be E0382."
+        explanation: "The `String` moved to `message`, so `message` is the only name you can print it with. `greeting` would be a use after the move."
         concepts: [own.move, string.string-vs-literal]
 
       - type: spot-bug
@@ -355,8 +355,8 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `tune`" }
-            - { id: b, text: "E0425: cannot find value `playing` in this scope", why: "Line 6 uses `tune`, which is still in scope. Its value has moved, though." }
+            - { id: a, text: "borrow of moved value: `tune`" }
+            - { id: b, text: "cannot find value `playing` in this scope", why: "Line 6 uses `tune`, which is still in scope. Its value has moved, though." }
             - { id: c, text: "None: `tune` gets its value back at the `}`", why: "A move doesn't undo itself. `playing` dropped the text at the `}`." }
           answer: a
         explanation: "The `String` moved into `playing`, which dropped it at the end of the block. `tune` never gets it back."
@@ -402,7 +402,7 @@ lessons:
           - { id: b, text: "`list` needs `mut` to call `push_str`", why: "It already has `mut`. The problem is that `list` no longer owns anything." }
           - { id: c, text: "`shopping` needs `mut`", why: "`shopping` is never changed. Line 4 changes `list`." }
         answer: a
-        explanation: "Changing a value counts as using it. After the move, `list` is invalid, so `push_str` on it is E0382."
+        explanation: "Changing a value counts as using it. After the move, `list` is invalid, so `push_str` on it is an error."
         concepts: [err.E0382, own.move]
 
       - type: compiles
@@ -466,7 +466,7 @@ lessons:
           "1": { answer: ["colours"] }
           "2": { answer: ["palette"] }
         bank: ["colours", "palette", "\"red\"", "green"]
-        explanation: "`let palette = colours;` moves the `String`, so it must be printed through `palette`. Printing `colours` there would be E0382."
+        explanation: "`let palette = colours;` moves the `String`, so it must be printed through `palette`. Printing `colours` there would use a moved value."
         concepts: [own.move]
 
       - type: spot-bug
@@ -491,8 +491,8 @@ lessons:
         prompt: "Which program compiles?"
         options:
           - { id: a, code: "let a = String::from(\"x\");\nprintln!(\"{a}\");\nlet b = a;" }
-          - { id: b, code: "let a = String::from(\"x\");\nlet b = a;\nprintln!(\"{a}\");", why: "`a` is printed after it moved to `b`: E0382." }
-          - { id: c, code: "let a = String::from(\"x\");\nlet b = a;\nlet c = a;", why: "`a` can only move once. The second move uses a moved value: E0382." }
+          - { id: b, code: "let a = String::from(\"x\");\nlet b = a;\nprintln!(\"{a}\");", why: "`a` is printed after it moved to `b`." }
+          - { id: c, code: "let a = String::from(\"x\");\nlet b = a;\nlet c = a;", why: "`a` can only move once. The second move uses a moved value." }
         answer: a
         explanation: "What matters is the order: you can use a variable up to the line it moves on, but not after."
         concepts: [own.move, err.E0382]

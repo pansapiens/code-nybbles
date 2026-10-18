@@ -261,9 +261,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0499: cannot borrow as mutable more than once", why: "There's only one borrow here, and it's a shared one." }
-            - { id: c, text: "E0382: borrow of moved value", why: "`&name` borrows. Nothing is moved." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot borrow as mutable more than once", why: "There's only one borrow here, and it's a shared one." }
+            - { id: c, text: "borrow of moved value", why: "`&name` borrows. Nothing is moved." }
           answer: a
         explanation: "`shout` expects `&mut String` but gets `&String`. The two reference types differ, so the call must say `&mut name`."
         concepts: [own.param-choice, borrow.mut, err.E0308]
@@ -337,7 +337,7 @@ lessons:
         id: tf-mut-needs-let-mut
         prompt: "To pass `&mut total` to a function, the caller's `total` must be declared with `let mut`."
         answer: true
-        explanation: "A mutable reference allows changes, and Rust only allows changes to a `mut` variable. Without `let mut`, `&mut total` is error E0596."
+        explanation: "A mutable reference allows changes, and Rust only allows changes to a `mut` variable. Without `let mut`, `&mut total` is an error: *cannot borrow `total` as mutable, as it is not declared as mutable*."
         concepts: [own.param-choice, borrow.mut]
 
       - type: predict-output
@@ -469,7 +469,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 8
-        explanation: "The first call moves `message` into `log`, so the second call uses a moved value (E0382). The compiler points at line 8."
+        explanation: "The first call moves `message` into `log`, so the second call uses a moved value. The compiler points at line 8."
         concepts: [own.param-choice, err.E0382, own.fn-move]
 
       - type: mcq
@@ -542,9 +542,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `word` as immutable because it is also borrowed as mutable" }
-            - { id: b, text: "E0499: cannot borrow `word` as mutable more than once", why: "Only one of the two borrows is `&mut`. The other is shared." }
-            - { id: c, text: "E0382: borrow of moved value", why: "Both arguments are borrows, so nothing moves." }
+            - { id: a, text: "cannot borrow `word` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "cannot borrow `word` as mutable more than once", why: "Only one of the two borrows is `&mut`. The other is shared." }
+            - { id: c, text: "borrow of moved value", why: "Both arguments are borrows, so nothing moves." }
           answer: a
         explanation: "Both arguments are alive for the whole call, so `word` would be borrowed as `&mut` and `&` at once. To append a copy of itself, clone first: `let copy = word.clone();`."
         concepts: [own.param-choice, err.E0502, borrow.exclusive]

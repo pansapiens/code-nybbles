@@ -58,9 +58,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: `if` and `else` have incompatible types" }
-            - { id: b, text: "E0317: `if` may be missing an `else` clause", why: "There is an `else`. Its type is the problem." }
-            - { id: c, text: "E0004: non-exhaustive patterns", why: "That error is for `match`, and there's no `match` here." }
+            - { id: a, text: "`if` and `else` have incompatible types" }
+            - { id: b, text: "`if` may be missing an `else` clause", why: "There is an `else`. Its type is the problem." }
+            - { id: c, text: "non-exhaustive patterns", why: "That error is for `match`, and there's no `match` here." }
           answer: a
         explanation: "`'P'` is a `char` and `\"F\"` is a `&str`. Both blocks must give the same type, so use double quotes for both."
         concepts: [ctrl.if-expr, err.E0308]
@@ -193,11 +193,11 @@ lessons:
 
       - type: match-pairs
         id: pairs-errors
-        prompt: Match each error to its cause
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0308", "blocks or arms give different types"]
-          - ["E0317", "an `if` without `else` is used as a value"]
-          - ["E0004", "a `match` doesn't cover every value"]
+          - ["mismatched types", "blocks or arms give different types"]
+          - ["`if` may be missing an `else` clause", "an `if` without `else` is used as a value"]
+          - ["non-exhaustive patterns", "a `match` doesn't cover every value"]
           - ["chained comparison", "writing `0 < x < 10`"]
         concepts: [ctrl.if-expr, match.intro, err.E0308]
 
@@ -217,9 +217,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0004: non-exhaustive patterns (`false` not covered)" }
-            - { id: b, text: "E0308: mismatched types", why: "`true` is a `bool`, the same type as `is_open`." }
-            - { id: c, text: "E0317: `if` may be missing an `else` clause", why: "That error is for `if`. `match` reports missing values as E0004." }
+            - { id: a, text: "non-exhaustive patterns (`false` not covered)" }
+            - { id: b, text: "mismatched types", why: "`true` is a `bool`, the same type as `is_open`." }
+            - { id: c, text: "`if` may be missing an `else` clause", why: "That error is for `if`. `match` reports missing values as *non-exhaustive patterns*." }
           answer: a
         explanation: "A `bool` has two values and only `true` has an arm. Add `false => ...` or `_ => ...`."
         concepts: [match.intro, err.E0004]
@@ -229,8 +229,8 @@ lessons:
         prompt: "Which `if` gives the same value as `match n { 0 => \"none\", _ => \"some\" }`?"
         options:
           - { id: a, code: "if n == 0 { \"none\" } else { \"some\" }" }
-          - { id: b, code: "if n { \"some\" } else { \"none\" }", why: "`n` is an integer, and an `if` condition must be a `bool` (E0308)." }
-          - { id: c, code: "if n == 0 { \"none\" }", why: "Without `else` there's no value for other numbers, which is E0317." }
+          - { id: b, code: "if n { \"some\" } else { \"none\" }", why: "`n` is an integer, and an `if` condition must be a `bool` (*mismatched types*)." }
+          - { id: c, code: "if n == 0 { \"none\" }", why: "Without `else` there's no value for other numbers, which is an error." }
           - { id: d, code: "if n != 0 { \"none\" } else { \"some\" }", why: "That swaps the two results." }
         answer: a
         explanation: "The `0` arm becomes the `n == 0` test and `_` becomes `else`."

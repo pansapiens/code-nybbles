@@ -77,7 +77,7 @@ error: expected `;`, found `println`
 - The first line says **what** is wrong; `-->` says **where** (file, line, column).
 - `help:` lines often suggest a fix.
 - The error can point **after** the real mistake. A missing `;` or closing `"` is often on the line above.
-- Codes like `E0765` can be looked up with `rustc --explain E0765`.
+- The code in `error[E0765]` can be looked up with `rustc --explain E0765`.
 - Fix the first error, then compile again; later errors are often caused by it.
 
 Read more: Book §1.1-1.3 and §3.4 · Rust by Example "Hello World" · Rustlings `00_intro`

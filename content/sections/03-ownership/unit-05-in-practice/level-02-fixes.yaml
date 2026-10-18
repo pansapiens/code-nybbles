@@ -43,7 +43,7 @@ lessons:
           - { id: b, text: "The text was freed on line 3", why: "Nothing is freed. The text is still alive, owned by `home` now." }
           - { id: c, text: "`home` needs `mut`", why: "Nothing changes `home`. The problem is that `city` no longer owns anything." }
         answer: a
-        explanation: "`let home = city;` moves the `String`, because `String` isn't `Copy`. Using `city` afterwards is E0382: borrow of moved value."
+        explanation: "`let home = city;` moves the `String`, because `String` isn't `Copy`. Using `city` afterwards is an error: *borrow of moved value*."
         concepts: [borrow.fixes, err.E0382, own.move]
 
       - type: mcq
@@ -70,7 +70,7 @@ lessons:
         id: concept-e0505
         title: No moving while borrowed
         markdown: |
-          **You can't move a value while a reference to it is still in use.** That's error **E0505**. If `name` moved, `view` would point at a variable that no longer owns anything.
+          **You can't move a value while a reference to it is still in use.** The compiler says *cannot move out of `name` because it is borrowed*. If `name` moved, `view` would point at a variable that no longer owns anything.
 
           Fix it by finishing with `view` before the move.
         code:
@@ -109,7 +109,7 @@ lessons:
 
       - type: true-false
         id: tf-clone-always
-        prompt: "`.clone()` is always the best fix for E0382."
+        prompt: "`.clone()` is always the best fix for a use-after-move error."
         answer: false
         explanation: "A clone makes a second, separate copy of the data. If you only need to read the value, borrowing avoids the copy."
         concepts: [borrow.fixes, own.clone]
@@ -149,17 +149,18 @@ lessons:
           - { id: b, text: "`score` isn't `mut`", why: "Line 2 says `let mut score`. The problem is the borrow." }
           - { id: c, text: "`best` should be a `&mut` reference", why: "A mutable borrow would conflict with the assignment too." }
         answer: a
-        explanation: "E0506 means assigning to a value that's borrowed. `best` is used on line 5, so its borrow covers line 4. To keep the old number, copy it: `let best = score;`."
+        explanation: "The error is assigning to a value that's borrowed. `best` is used on line 5, so its borrow covers line 4. To keep the old number, copy it: `let best = score;`."
         concepts: [borrow.fixes, err.E0506]
 
       - type: match-pairs
-        id: pairs-error-codes
+        id: pairs-error-messages
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0382", "used after a move"]
-          - ["E0499", "two &mut at once"]
-          - ["E0502", "& and &mut overlap"]
-          - ["E0505", "moved while borrowed"]
-          - ["E0506", "assigned while borrowed"]
+          - ["borrow of moved value", "used after a move"]
+          - ["cannot borrow `s` as mutable more than once at a time", "two &mut at once"]
+          - ["cannot borrow `s` as mutable because it is also borrowed as immutable", "& and &mut overlap"]
+          - ["cannot move out of `s` because it is borrowed", "moved while borrowed"]
+          - ["cannot assign to `s` because it is borrowed", "assigned while borrowed"]
         concepts: [borrow.fixes, err.E0382, err.E0499, err.E0502]
 
   - id: l2
@@ -207,7 +208,7 @@ lessons:
           expectErrors: [E0499]
         options:
           - { id: a, text: "Swap lines 4 and 5, so `a` is finished before `b` starts" }
-          - { id: b, text: "Make `b` a shared borrow: `let b = &name;`", why: "That's still a borrow overlapping `a` (E0502), and you can't `push_str` through a `&`." }
+          - { id: b, text: "Make `b` a shared borrow: `let b = &name;`", why: "That's still a borrow overlapping `a`, and you can't `push_str` through a `&`." }
           - { id: c, text: "Write `let b = &mut name.clone();`", why: "It compiles, but `b` changes a copy. The `!` never reaches `name`." }
         answer: a
         explanation: "After the swap, `a`'s last use comes before `b` is created, so only one `&mut` is alive at a time. The program prints `Annie!`."
@@ -227,9 +228,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `word` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0499: cannot borrow `word` as mutable more than once", why: "`r` is a shared borrow, so there's only one mutable borrow, from `push_str`." }
-            - { id: c, text: "E0506: cannot assign to `word` because it is borrowed", why: "There's no `=` here. `push_str` borrows `word` mutably, which is E0502." }
+            - { id: a, text: "cannot borrow `word` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "cannot borrow `word` as mutable more than once", why: "`r` is a shared borrow, so there's only one mutable borrow, from `push_str`." }
+            - { id: c, text: "cannot assign to `word` because it is borrowed", why: "There's no `=` here. `push_str` borrows `word` mutably while `r` is still in use." }
           answer: a
         explanation: "`push_str` needs `&mut word` while `r` is still in use on line 4. Printing `r` before the `push_str` fixes it."
         concepts: [borrow.fixes, err.E0502]
@@ -252,7 +253,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0505]
         answer: 8
-        explanation: "Line 8 moves `note` while `preview` still borrows it, because `preview` is used on line 9. That's E0505."
+        explanation: "Line 8 moves `note` while `preview` still borrows it, because `preview` is used on line 9. Moving a borrowed value isn't allowed."
         concepts: [borrow.fixes, own.fn-move, err.E0505]
 
       - type: decode-error
@@ -274,8 +275,8 @@ lessons:
           expectErrors: [E0505]
         options:
           - { id: a, text: "Move `println!(\"{label}\");` above `submit(ticket);`" }
-          - { id: b, text: "Write `let label = ticket;`", why: "Then `ticket` moves into `label`, and `submit(ticket)` is E0382." }
-          - { id: c, text: "Call `submit(&ticket)`", why: "`submit` takes a `String`, so passing `&String` is a type mismatch (E0308)." }
+          - { id: b, text: "Write `let label = ticket;`", why: "Then `ticket` moves into `label`, and `submit(ticket)` uses a moved value." }
+          - { id: c, text: "Call `submit(&ticket)`", why: "`submit` takes a `String`, so passing `&String` is a type mismatch." }
         answer: a
         explanation: "Once `label` is finished, nothing borrows `ticket`, so moving it into `submit` is allowed."
         concepts: [borrow.fixes, borrow.nll, err.E0505]
@@ -315,12 +316,12 @@ lessons:
           - { id: b, code: 'println!("{b}");', why: "`b` owns the text now, so it can be printed." }
           - { id: c, code: "let c = &b;", why: "Borrowing the current owner is fine." }
         answer: a
-        explanation: "`a` is greyed out because its `String` moved to `b`. Using `a` again is E0382."
+        explanation: "`a` is greyed out because its `String` moved to `b`. Using `a` again is an error: *borrow of moved value*."
         concepts: [borrow.fixes, err.E0382]
 
       - type: true-false
         id: tf-reorder-fixes-e0502
-        prompt: "Moving a reference's last use earlier can fix E0502 without any `.clone()`."
+        prompt: "Moving a reference's last use earlier can fix a `&` and `&mut` overlap without any `.clone()`."
         answer: true
         explanation: "A borrow ends at its last use. If the shared borrow is finished before the mutable one starts, they no longer overlap."
         concepts: [borrow.fixes, borrow.nll]
@@ -403,9 +404,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0499: cannot borrow `x` as mutable more than once at a time" }
-            - { id: b, text: "E0502: cannot borrow `x` as immutable because it is also borrowed as mutable", why: "Both borrows on line 9 are `&mut`." }
-            - { id: c, text: "E0382: use of moved value", why: "`x` is an `i32`, and the call only borrows it." }
+            - { id: a, text: "cannot borrow `x` as mutable more than once at a time" }
+            - { id: b, text: "cannot borrow `x` as immutable because it is also borrowed as mutable", why: "Both borrows on line 9 are `&mut`." }
+            - { id: c, text: "use of moved value", why: "`x` is an `i32`, and the call only borrows it." }
           answer: a
         explanation: "Both arguments are alive for the whole call, so `x` would have two `&mut` borrows at once."
         concepts: [borrow.fixes, err.E0499]
@@ -446,7 +447,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0506]
         answer: 4
-        explanation: "`+=` assigns to `level` while `shown` still borrows it (E0506). Printing `shown` before line 4, or writing `let shown = level;`, fixes it."
+        explanation: "`+=` assigns to `level` while `shown` still borrows it. Printing `shown` before line 4, or writing `let shown = level;`, fixes it."
         concepts: [borrow.fixes, err.E0506]
 
       - type: mcq
@@ -480,7 +481,7 @@ lessons:
           expectErrors: [E0382]
         options:
           - { id: a, code: "let text = add_dot(text);" }
-          - { id: b, code: "add_dot(&text);", why: "`add_dot` takes a `String`, so `&text` is a type mismatch (E0308)." }
+          - { id: b, code: "add_dot(&text);", why: "`add_dot` takes a `String`, so `&text` is a type mismatch." }
           - { id: c, code: "let mut text = String::from(\"Done\");", why: "`mut` doesn't stop the move into `add_dot`, and the returned `String` is still thrown away." }
         answer: a
         explanation: "`add_dot` takes ownership and hands back the new `String`. Storing the result in a new `text` gives `main` an owner again."
@@ -526,7 +527,7 @@ lessons:
           heap:
             - { id: h1, value: '"Ann"' }
         answer: true
-        explanation: "A borrow ends at its last use. If `view` isn't used after the move, nothing is borrowing `name`, so there's no E0505."
+        explanation: "A borrow ends at its last use. If `view` isn't used after the move, nothing is borrowing `name`, so the move is allowed."
         concepts: [borrow.fixes, borrow.nll]
 
       - type: predict-output

@@ -91,7 +91,7 @@ chunks:
         prompt: "`square` has no `self` parameter. How is it called?"
         options:
           - { id: a, code: "Rect::square(2)" }
-          - { id: b, code: "r.square(2)", why: "Without `self` it's an associated function, not a method, so a dot call is E0599." }
+          - { id: b, code: "r.square(2)", why: "Without `self` it's an associated function, not a method, so a dot call fails: *no method named `square` found*." }
           - { id: c, code: "square(2)", why: "`square` belongs to `Rect`, so it needs the type name in front." }
         answer: a
         explanation: "Associated functions are called on the type with `::`."

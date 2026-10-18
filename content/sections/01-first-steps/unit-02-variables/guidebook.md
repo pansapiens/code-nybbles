@@ -21,9 +21,9 @@ lives -= 1;   // same as lives = lives - 1
 lives += 5;   // same as lives = lives + 5
 ```
 
-- Without `mut`, assigning again is error **E0384**: cannot assign twice to immutable variable.
+- Without `mut`, assigning again is an error: *cannot assign twice to immutable variable*.
 - `mut` goes on the `let`, once. Later changes don't repeat it.
-- `mut` lets the value change, not its type. Assigning a different type is **E0308**: mismatched types.
+- `mut` lets the value change, not its type. Assigning a different type is an error: *mismatched types*.
 
 ## Shadowing: a new variable with the same name
 
@@ -50,7 +50,7 @@ const SECONDS_PER_HOUR: u32 = 60 * 60;
 ```
 
 - Names use `SCREAMING_SNAKE_CASE`. The type is required.
-- Never `mut`, and the value must be known at compile time: numbers and other constants, not `let` variables (**E0435**).
+- Never `mut`, and the value must be known at compile time: numbers and other constants, not `let` variables (*attempt to use a non-constant value in a constant*).
 - `static` looks similar but has one fixed place in memory. Use `const` unless you need that.
 
 ## Printing values

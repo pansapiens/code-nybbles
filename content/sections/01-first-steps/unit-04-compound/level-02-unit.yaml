@@ -81,9 +81,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types, expected `i32`, found `()`" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`count` is only assigned once. The problem is the type of the value." }
-            - { id: c, text: "E0425: cannot find value", why: "Nothing is missing. `println!` gives back `()`, which isn't an `i32`." }
+            - { id: a, text: "mismatched types, expected `i32`, found `()`" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`count` is only assigned once. The problem is the type of the value." }
+            - { id: c, text: "cannot find value", why: "Nothing is missing. `println!` gives back `()`, which isn't an `i32`." }
           answer: a
         explanation: "Printing `3` doesn't make `println!` return 3. It returns `()`, which can't go in an `i32`."
         concepts: [types.unit, err.E0308]

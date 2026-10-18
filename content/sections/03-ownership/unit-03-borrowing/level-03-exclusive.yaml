@@ -53,9 +53,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0499: cannot borrow `s` as mutable more than once at a time" }
-            - { id: b, text: "E0596: cannot borrow `s` as mutable", why: "`s` is `mut`, so one `&mut` borrow is fine. The problem is the second one." }
-            - { id: c, text: "E0382: borrow of moved value", why: "Nothing moved. Both lines borrow `s`." }
+            - { id: a, text: "cannot borrow `s` as mutable more than once at a time" }
+            - { id: b, text: "cannot borrow `s` as mutable", why: "`s` is `mut`, so one `&mut` borrow is fine. The problem is the second one." }
+            - { id: c, text: "borrow of moved value", why: "Nothing moved. Both lines borrow `s`." }
           answer: a
         explanation: "`r1` and `r2` are both `&mut s`, and both are used afterwards, so two writers exist at once."
         concepts: [borrow.exclusive, err.E0499]
@@ -71,7 +71,7 @@ lessons:
         id: concept-no-read-while-write
         title: No reading during a change
         markdown: |
-          **A `&` and a `&mut` can't overlap either.** If `r` is still going to read `s`, nothing may change `s` in the meantime. Breaking this rule is error **E0502**.
+          **A `&` and a `&mut` can't overlap either.** If `r` is still going to read `s`, nothing may change `s` in the meantime. Breaking this rule is a compile error.
 
           Calling `s.push_str` borrows `s` as `&mut` for the call.
         code:
@@ -110,9 +110,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `s` as immutable because it is also borrowed as mutable" }
-            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "There's only one `&mut` here. The clash is between `w` and the `&` reference `r`." }
-            - { id: c, text: "E0596: cannot borrow `*r` as mutable", why: "Nothing changes the text through `r`. It only reads." }
+            - { id: a, text: "cannot borrow `s` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "cannot borrow `s` as mutable more than once at a time", why: "There's only one `&mut` here. The clash is between `w` and the `&` reference `r`." }
+            - { id: c, text: "cannot borrow `*r` as mutable", why: "Nothing changes the text through `r`. It only reads." }
           answer: a
         explanation: "`w` writes on line 5 and `r` reads on line 6, so a writer and a reader are in use at the same time."
         concepts: [borrow.exclusive, err.E0502]
@@ -122,8 +122,8 @@ lessons:
         prompt: Which pair of references to the same `String` can be in use at the same time?
         options:
           - { id: a, text: "Two `&` references" }
-          - { id: b, text: "A `&` and a `&mut`", why: "The reader could see the text change under it. That's E0502." }
-          - { id: c, text: "Two `&mut` references", why: "Two writers at once is E0499." }
+          - { id: b, text: "A `&` and a `&mut`", why: "The reader could see the text change under it." }
+          - { id: c, text: "Two `&mut` references", why: "Two writers at once is not allowed." }
         answer: a
         explanation: "Readers can share. A writer must be the only reference in use."
         concepts: [borrow.exclusive]
@@ -158,17 +158,17 @@ lessons:
           heap:
             - { id: h1, value: '"tea"' }
         answer: false
-        explanation: "While a `&mut` borrow is in use it must be the only reference. A reader next to it is E0502."
+        explanation: "While a `&mut` borrow is in use it must be the only reference. A reader next to it breaks that rule."
         concepts: [borrow.exclusive, err.E0502]
 
       - type: match-pairs
         id: pairs-error-codes
-        prompt: Match each error code to its cause
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0499", "two `&mut` in use at once"]
-          - ["E0502", "`&` and `&mut` in use at once"]
-          - ["E0596", "changing through `&`"]
-          - ["E0382", "using a moved value"]
+          - ["cannot borrow `s` as mutable more than once at a time", "two `&mut` in use at once"]
+          - ["cannot borrow `s` as mutable because it is also borrowed as immutable", "`&` and `&mut` in use at once"]
+          - ["cannot borrow `*r` as mutable, as it is behind a `&` reference", "changing through `&`"]
+          - ["borrow of moved value", "using a moved value"]
         concepts: [err.E0499, err.E0502, err.E0382]
 
   - id: l2
@@ -190,10 +190,10 @@ lessons:
           expectErrors: [E0499]
         options:
           - { id: a, text: "Delete line 4 and change line 6 to `*a += 1;`" }
-          - { id: b, text: "Change line 4 to `let b = &total;`", why: "`b` can't write through a `&` reference, and a reader next to `a` is E0502." }
+          - { id: b, text: "Change line 4 to `let b = &total;`", why: "`b` can't write through a `&` reference, and a reader next to `a` still overlaps it." }
           - { id: c, text: "Change line 3 to `let a = &total;`", why: "Then line 5 can't write through `a`, and `b` still overlaps with it." }
         answer: a
-        explanation: "One `&mut` reference can make both changes. Two writers in use at once is E0499."
+        explanation: "One `&mut` reference can make both changes. Two writers in use at once is not allowed."
         concepts: [err.E0499, borrow.exclusive]
 
       - type: spot-bug
@@ -211,7 +211,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0502]
         answer: 4
-        explanation: "`push_str` needs a `&mut` borrow of `list`, but `first` still reads `list` on line 5 (E0502)."
+        explanation: "`push_str` needs a `&mut` borrow of `list`, but `first` still reads `list` on line 5."
         concepts: [err.E0502, borrow.exclusive]
 
       - type: predict-output
@@ -254,9 +254,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `s` as immutable because it is also borrowed as mutable" }
-            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "Only one argument is `&mut`. The other is a `&` reader." }
-            - { id: c, text: "E0308: mismatched types", why: "Each argument has the type its parameter asks for." }
+            - { id: a, text: "cannot borrow `s` as immutable because it is also borrowed as mutable" }
+            - { id: b, text: "cannot borrow `s` as mutable more than once at a time", why: "Only one argument is `&mut`. The other is a `&` reader." }
+            - { id: c, text: "mismatched types", why: "Each argument has the type its parameter asks for." }
           answer: a
         explanation: "Both borrows of `s` are alive for the whole call: a writer and a reader at once."
         concepts: [err.E0502, borrow.exclusive]
@@ -273,8 +273,8 @@ lessons:
         concepts: [borrow.exclusive]
 
       - type: true-false
-        id: tf-e0499-meaning
-        prompt: "E0499 means two `&mut` borrows of the same value are in use at the same time."
+        id: tf-two-mut-rule
+        prompt: "Two `&mut` borrows of the same value can't be in use at the same time."
         answer: true
         explanation: "The message is: cannot borrow as mutable more than once at a time."
         concepts: [err.E0499]
@@ -328,7 +328,7 @@ lessons:
           - { id: b, text: "`name` isn't declared `mut`", why: "It is, on line 2. The problem is the read on line 4." }
           - { id: c, text: "`println!` can't print a `String`", why: "It can. It can't read `name` while `r` might still change it." }
         answer: a
-        explanation: "`r` is used again on line 5, so its `&mut` borrow is alive on line 4, and reading `name` there is E0502."
+        explanation: "`r` is used again on line 5, so its `&mut` borrow is alive on line 4, and reading `name` there overlaps it."
         concepts: [err.E0502, borrow.exclusive]
 
   - id: l3
@@ -350,7 +350,7 @@ lessons:
         blanks:
           "1": { answer: ["b"] }
         bank: ["a", "b", "r1", "&a"]
-        explanation: "The rule is about one value. Two `&mut` references to two different variables are fine; `&mut a` twice is E0499."
+        explanation: "The rule is about one value. Two `&mut` references to two different variables are fine; `&mut a` twice is an error."
         concepts: [borrow.exclusive, err.E0499]
 
       - type: parsons
@@ -400,7 +400,7 @@ lessons:
           - { id: b, text: "`a` isn't declared `mut`", why: "It is, on line 7. The problem is borrowing it mutably twice." }
           - { id: c, text: "A function can't have two `&mut` parameters", why: "It can, as long as they point at different values." }
         answer: a
-        explanation: "Both `&mut a` borrows last for the whole call, so there are two writers at once (E0499)."
+        explanation: "Both `&mut a` borrows last for the whole call, so there are two writers at once."
         concepts: [err.E0499, borrow.exclusive]
 
       - type: predict-output
@@ -444,9 +444,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `a`" }
-            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "There's only one `&mut` borrow of `s`. It was moved from `a` into `b`." }
-            - { id: c, text: "E0502: cannot borrow `s` as immutable", why: "Nothing borrows `s` with `&` here." }
+            - { id: a, text: "borrow of moved value: `a`" }
+            - { id: b, text: "cannot borrow `s` as mutable more than once at a time", why: "There's only one `&mut` borrow of `s`. It was moved from `a` into `b`." }
+            - { id: c, text: "cannot borrow `s` as immutable", why: "Nothing borrows `s` with `&` here." }
           answer: a
         explanation: "A `&` reference is copied on assignment, but a `&mut` reference is moved, so there's still only one writer. `a` can't be used after the move."
         concepts: [borrow.exclusive, err.E0382]
@@ -473,8 +473,8 @@ lessons:
             - { id: h1, value: '"hi"' }
         options:
           - { id: a, code: "let r3 = &s;" }
-          - { id: b, code: "let w = &mut s;", why: "A writer can't join readers that are still in use (E0502)." }
-          - { id: c, code: "s.push_str(\"!\");", why: "`push_str` borrows `s` as `&mut`, which clashes with the readers (E0502)." }
+          - { id: b, code: "let w = &mut s;", why: "A writer can't join readers that are still in use." }
+          - { id: c, code: "s.push_str(\"!\");", why: "`push_str` borrows `s` as `&mut`, which clashes with the readers." }
         answer: a
         explanation: "A third reader is fine. Anything that changes `s` has to wait until `r1` and `r2` are finished."
         concepts: [borrow.exclusive, err.E0502]
@@ -497,7 +497,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0502]
         answer: 8
-        explanation: "Line 8 lends `&mut word` while `r` still reads `word` on line 9 (E0502)."
+        explanation: "Line 8 lends `&mut word` while `r` still reads `word` on line 9."
         concepts: [err.E0502, borrow.exclusive]
 
       - type: match-pairs
@@ -506,6 +506,6 @@ lessons:
         pairs:
           - ["many `&s` in use", "fine: many readers"]
           - ["one `&mut s` in use", "fine: one writer"]
-          - ["two `&mut s` in use", "E0499"]
-          - ["`&s` and `&mut s` in use", "E0502"]
+          - ["two `&mut s` in use", "error: two writers at once"]
+          - ["`&s` and `&mut s` in use", "error: a reader and a writer at once"]
         concepts: [borrow.exclusive, err.E0499, err.E0502]

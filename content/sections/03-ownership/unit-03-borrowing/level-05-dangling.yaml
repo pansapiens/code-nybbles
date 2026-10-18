@@ -12,7 +12,7 @@ lessons:
         markdown: |
           **A dangling reference points at a value that has been freed.** Rust never allows one.
 
-          Here `let r;` creates `r` and gives it a value later. At the inner `}`, `s` is dropped and its text freed, but `r` is used after that. The compiler rejects it: `s` does not live long enough (E0597).
+          Here `let r;` creates `r` and gives it a value later. At the inner `}`, `s` is dropped and its text freed, but `r` is used after that. The compiler rejects it: `s` does not live long enough.
         code:
           rust: |
             let r;
@@ -65,7 +65,7 @@ lessons:
         markdown: |
           **A function can't return a reference to its own local variable.** The local is dropped when the function returns, so the reference would dangle.
 
-          The compiler reports **E0106**, missing lifetime specifier: there's no value for the reference to be borrowed from. Lifetimes come in Section 9. The usual fix is to return the `String` itself.
+          The compiler reports **missing lifetime specifier**: there's no value for the reference to be borrowed from. Lifetimes come in Section 9. The usual fix is to return the `String` itself.
         code:
           rust: |
             fn dangle() -> &String {
@@ -110,7 +110,7 @@ lessons:
         options:
           - { id: a, text: "Return `String` on line 1 and `s` on line 3, so ownership moves to the caller" }
           - { id: b, text: "Return `&mut String` on line 1 and `&mut s` on line 3", why: "That's still a reference to `s`, which is dropped when the function returns." }
-          - { id: c, text: "Add `'static` as the compiler suggests: `&'static String`", why: "Then the compiler says you can't return a reference to the local `s` (E0515). `s` is still dropped." }
+          - { id: c, text: "Add `'static` as the compiler suggests: `&'static String`", why: "Then the compiler says you can't return a reference to the local `s`. `s` is still dropped." }
         answer: a
         explanation: "Returning the `String` moves ownership out of the function, so nothing is freed and nothing dangles."
         concepts: [err.E0106, borrow.dangling, own.fn-return]
@@ -173,12 +173,12 @@ lessons:
 
       - type: match-pairs
         id: pairs-errors
-        prompt: Match each error code to its message
+        prompt: Match each compiler message to its cause
         pairs:
-          - ["E0106", "missing lifetime specifier"]
-          - ["E0597", "does not live long enough"]
-          - ["E0382", "borrow of moved value"]
-          - ["E0499", "borrow as mutable more than once"]
+          - ["missing lifetime specifier", "a returned reference with nothing to borrow from"]
+          - ["`s` does not live long enough", "a reference used after its value is dropped"]
+          - ["borrow of moved value", "a value used after it moved"]
+          - ["cannot borrow `s` as mutable more than once at a time", "two writers at once"]
         concepts: [err.E0106, borrow.dangling, err.E0499]
 
   - id: l2
@@ -220,9 +220,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0106: missing lifetime specifier" }
-            - { id: b, text: "E0382: borrow of moved value", why: "Nothing is used after a move. The problem is the return type." }
-            - { id: c, text: "E0502: cannot borrow as mutable because it is also borrowed as immutable", why: "There's only one borrow here." }
+            - { id: a, text: "missing lifetime specifier" }
+            - { id: b, text: "borrow of moved value", why: "Nothing is used after a move. The problem is the return type." }
+            - { id: c, text: "cannot borrow as mutable because it is also borrowed as immutable", why: "There's only one borrow here." }
           answer: a
         explanation: "`label` has no parameters, so its returned `&String` could only point at a local, which is dropped on return."
         concepts: [err.E0106]
@@ -243,7 +243,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0597]
         answer: 6
-        explanation: "`city` lives until the `}` on line 6. Line 7 uses `r` after that, so the compiler reports E0597."
+        explanation: "`city` lives until the `}` on line 6. Line 7 uses `r` after that, so the compiler says *`city` does not live long enough*."
         concepts: [borrow.dangling, own.scope-drop, err.E0597]
 
       - type: predict-output
@@ -438,9 +438,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0106: missing lifetime specifier" }
-            - { id: b, text: "E0382: borrow of moved value", why: "An `i32` is copied, never moved, and nothing is used after a move here." }
-            - { id: c, text: "E0499: cannot borrow as mutable more than once", why: "There are no `&mut` borrows here." }
+            - { id: a, text: "missing lifetime specifier" }
+            - { id: b, text: "borrow of moved value", why: "An `i32` is copied, never moved, and nothing is used after a move here." }
+            - { id: c, text: "cannot borrow as mutable more than once", why: "There are no `&mut` borrows here." }
           answer: a
         explanation: "The same rule applies to numbers: `n` is a local, so `&n` can't be returned. Return `i32` instead."
         concepts: [err.E0106, borrow.dangling]
@@ -450,7 +450,7 @@ lessons:
         prompt: Which function can create a new `String` and hand it to the caller?
         options:
           - { id: a, code: "fn make() -> String" }
-          - { id: b, code: "fn make() -> &String", why: "The new `String` would be a local, dropped on return. This is E0106." }
+          - { id: b, code: "fn make() -> &String", why: "The new `String` would be a local, dropped on return. The compiler says *missing lifetime specifier*." }
           - { id: c, code: "fn make() -> &mut String", why: "Still a reference to a local that's dropped on return." }
         answer: a
         explanation: "Returning by value moves ownership to the caller, so the `String` lives on."
@@ -502,7 +502,7 @@ lessons:
         prompt: Match each signature to what the compiler thinks
         pairs:
           - ["fn f() -> String", "fine: gives away a new String"]
-          - ["fn f() -> &String", "E0106: nothing to borrow from"]
+          - ["fn f() -> &String", "error: missing lifetime specifier"]
           - ["fn f(s: &String) -> &String", "fine: returns the borrow it got"]
           - ["fn f(s: String) -> String", "fine: takes and gives back"]
         concepts: [err.E0106, borrow.dangling]

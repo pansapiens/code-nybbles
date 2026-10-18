@@ -87,7 +87,7 @@ lessons:
           - { id: b, code: "fn greet(name: &str, 3) {", why: "A parameter needs a name and a type, like `times: i32`. `3` is a value, not a parameter." }
           - { id: c, code: "fn greet(name) {", why: "That removes the type and still has one parameter, so it's two problems." }
         answer: a
-        explanation: "`greet` has one parameter but the call passes two arguments (E0061). The compiler's help suggests removing the extra one."
+        explanation: "`greet` has one parameter but the call passes two arguments. The compiler's help suggests removing the extra one."
         difficulty: 2
         concepts: [fn.params, compiler.read-error, err.E0061]
 
@@ -170,7 +170,7 @@ lessons:
           - { id: c, code: "{ return 4; }", why: "This compiles: `return` hands back 4." }
           - { id: d, code: "{ let n = 4; n }", why: "This compiles: the statement runs, then the tail `n` is returned." }
         answer: a
-        explanation: "`4;` is a statement, so the body produces `()` instead of an `i32` (E0308)."
+        explanation: "`4;` is a statement, so the body produces `()` instead of an `i32` (*mismatched types*)."
         difficulty: 2
         concepts: [expr.vs-stmt, err.E0308, fn.early-return]
 
@@ -277,7 +277,7 @@ lessons:
           - { id: b, text: "Make it `let mut name`", why: "`mut` controls changing a value. It doesn't let other functions see it." }
           - { id: c, text: "Move `greet` above `main`", why: "Function order doesn't matter, and `greet` still can't see `main`'s variables." }
         answer: a
-        explanation: "E0425 means `name` isn't in scope inside `greet`. Passing it as an argument gives `greet` its own `name`."
+        explanation: "*cannot find value `name` in this scope* means `name` isn't in scope inside `greet`. Passing it as an argument gives `greet` its own `name`."
         difficulty: 3
         concepts: [fn.params, compiler.read-error, err.E0425]
 

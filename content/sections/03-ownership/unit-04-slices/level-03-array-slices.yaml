@@ -144,7 +144,7 @@ lessons:
             - { id: b, text: "`count` can only take arrays of length 3", why: "A `&[i32]` can be any length. That's why it's useful." }
             - { id: c, text: "`.len()` only works on text", why: "Arrays and slices have `.len()` too." }
           answer: a
-        explanation: "E0308: expected `&[i32]`, found an array. `&goals` borrows the array, and Rust turns that into a slice."
+        explanation: "Mismatched types: expected `&[i32]`, found an array. `&goals` borrows the array, and Rust turns that into a slice."
         concepts: [slice.array, err.E0308]
 
       - type: fill-tokens
@@ -271,7 +271,7 @@ lessons:
             - { id: b, text: "Use `{*small}`", why: "Inline arguments only take a name. And `{}` still can't print a list of numbers." }
             - { id: c, text: "Slices can't be printed", why: "They can, with the Debug format." }
           answer: a
-        explanation: "`{}` doesn't know how to show a list of numbers (E0277). The Debug format `{:?}` prints `[5, 10]`."
+        explanation: "`{}` doesn't know how to show a list of numbers. The Debug format `{:?}` prints `[5, 10]`."
         concepts: [slice.array, fmt.debug, err.E0277]
 
       - type: decode-error
@@ -295,7 +295,7 @@ lessons:
           expectErrors: [E0308]
         options:
           - { id: a, code: "println!(\"{}\", sum(&points));", why: "Correct: borrow the array, and Rust treats it as a slice." }
-          - { id: b, code: "fn sum(xs: [i32]) -> i32 {", why: "`[i32]` without `&` has no size known at compile time (E0277)." }
+          - { id: b, code: "fn sum(xs: [i32]) -> i32 {", why: "`[i32]` without `&` has no size known at compile time." }
           - { id: c, code: "println!(\"{}\", sum(points[..]));", why: "`points[..]` without `&` isn't a borrow, so it's still the wrong type." }
         answer: a
         explanation: "`sum` asks for a `&[i32]` and got an array. Passing `&points` borrows it."

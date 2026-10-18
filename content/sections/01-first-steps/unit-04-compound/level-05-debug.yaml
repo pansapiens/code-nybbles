@@ -50,9 +50,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0277: `({integer}, {integer})` doesn't implement `std::fmt::Display`" }
-            - { id: b, text: "E0308: mismatched types", why: "No types are mismatched. The problem is that `{}` can't format a tuple." }
-            - { id: c, text: "E0609: no field on type", why: "No field is read here. The whole tuple is passed to `{}`." }
+            - { id: a, text: "`({integer}, {integer})` doesn't implement `std::fmt::Display`" }
+            - { id: b, text: "mismatched types", why: "No types are mismatched. The problem is that `{}` can't format a tuple." }
+            - { id: c, text: "no field on type", why: "No field is read here. The whole tuple is passed to `{}`." }
           answer: a
         explanation: "`{}` needs the type to support *Display*, and tuples don't. The compiler suggests `{:?}` instead."
         concepts: [fmt.debug, err.E0277]

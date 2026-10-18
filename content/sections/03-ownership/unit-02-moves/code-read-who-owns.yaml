@@ -57,7 +57,7 @@ chunks:
         id: add-milk-semicolon
         prompt: "If line 7 were `cup;`, `add_milk` would drop the text instead of returning it, and the program would not compile."
         answer: true
-        explanation: "With `;` the body returns `()`, which doesn't match `-> String` (E0308). The `String` would be dropped inside `add_milk`."
+        explanation: "With `;` the body returns `()`, which doesn't match `-> String`. The `String` would be dropped inside `add_milk`."
         concepts: [own.fn-return, err.E0308]
   - lines: 4
     exercises:
@@ -135,7 +135,7 @@ chunks:
         id: swap-lines
         prompt: "What if lines 17 and 18 were swapped?"
         options:
-          - { id: a, text: "Error E0382: `order` would be cloned after it moved into `finish`" }
+          - { id: a, text: "Error: `order` would be cloned after it moved into `finish`" }
           - { id: b, text: "It would work the same", why: "After `finish(order)`, `order` is invalid, so `order.clone()` can't run." }
           - { id: c, text: "`spare` would print an empty string", why: "Rust doesn't leave moved variables empty. It refuses to compile." }
         answer: a

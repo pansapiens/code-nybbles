@@ -127,9 +127,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0600: cannot apply unary operator `-` to type `u8`" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "`change` is only given a value once." }
-            - { id: c, text: "E0425: cannot find value in this scope", why: "`change` is created on line 1, so it can be found." }
+            - { id: a, text: "cannot apply unary operator `-` to type `u8`" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "`change` is only given a value once." }
+            - { id: c, text: "cannot find value in this scope", why: "`change` is created on line 1, so it can be found." }
           answer: a
         explanation: "A `u8` can't be negative, so Rust refuses to put a minus sign in front of a `u8` value. Use a signed type such as `i8` instead."
         concepts: [types.int]

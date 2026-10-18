@@ -73,7 +73,7 @@ lessons:
             - { id: b, code: "fn show(&mut self) {", why: "That would also need `let mut t`, and `show` doesn't change anything. `&self` is enough." }
             - { id: c, code: "for _ in 0..1 {", why: "That avoids the error by running once, but changes what the program does." }
           answer: a
-        explanation: "`show` takes `self`, so the first pass of the loop moves `t` and the second can't use it (E0382). `show` only reads, so `&self` fits."
+        explanation: "`show` takes `self`, so the first pass of the loop moves `t` and the second can't use it: *borrow of moved value*. `show` only reads, so `&self` fits."
         concepts: [method.self, own.move, err.E0382]
 
       - type: fill-tokens
@@ -130,10 +130,10 @@ lessons:
           expectErrors: [E0502]
         options:
           - { id: a, text: "Move `println!(\"{old}\");` above line 13" }
-          - { id: b, text: "Change line 4 to `fn rename(&self, name: &str) {`", why: "Then `rename` can't assign to `self.tag` (E0594)." }
+          - { id: b, text: "Change line 4 to `fn rename(&self, name: &str) {`", why: "Then `rename` can't assign to `self.tag`." }
           - { id: c, text: "Change line 11 to `let p = Player { tag };`", why: "`rename` needs a mutable borrow, so `p` must stay `mut`." }
         answer: a
-        explanation: "`old` borrows from `p` through `tag()`. Using it after `rename` keeps that borrow alive across a mutable one (E0502). Print it first."
+        explanation: "`old` borrows from `p` through `tag()`. Using it after `rename` keeps that borrow alive across a mutable one. Print it first."
         concepts: [method.auto-ref, borrow.exclusive, err.E0502]
 
       - type: predict-output
@@ -202,11 +202,11 @@ lessons:
         id: pairs-errors
         prompt: Match each error to its usual cause
         pairs:
-          - ["E0596", "`&mut self` method on a non-`mut` variable"]
-          - ["E0599", "associated function called with `.`"]
-          - ["E0382", "value used after a `self` method moved it"]
-          - ["E0594", "assigning to a field in a `&self` method"]
-          - ["E0424", "`self` used in a function without `self`"]
+          - ["cannot borrow `c` as mutable, as it is not declared as mutable", "`&mut self` method on a non-`mut` variable"]
+          - ["no method named `square` found", "associated function called with `.`"]
+          - ["borrow of moved value: `t`", "value used after a `self` method moved it"]
+          - ["cannot assign to `self.n`, which is behind a `&` reference", "assigning to a field in a `&self` method"]
+          - ["expected value, found module `self`", "`self` used in a function without `self`"]
         explanation: "These are the errors you'll meet most often while writing methods."
         concepts: [method.self, method.associated]
 

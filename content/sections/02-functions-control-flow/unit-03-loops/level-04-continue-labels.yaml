@@ -244,9 +244,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0426: use of undeclared label `'outer`" }
-            - { id: b, text: "E0268: `break` outside of a loop", why: "The `break` is inside two loops. The problem is the label name." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned here." }
+            - { id: a, text: "use of undeclared label `'outer`" }
+            - { id: b, text: "`break` outside of a loop", why: "The `break` is inside two loops. The problem is the label name." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is assigned here." }
           answer: a
         explanation: "No loop is labelled `'outer`. Writing `'outer: for a in 1..=3 {` on line 1 fixes it."
         concepts: [ctrl.labels]
@@ -503,7 +503,7 @@ lessons:
           - { id: b, text: "The label `'outer` is in the wrong place", why: "`'outer:` before `for` is the right place. The problem is `break` with a value." }
           - { id: c, text: "`n` must be `mut`", why: "Nothing changes `n`. The `for` loop sets it." }
         answer: a
-        explanation: "E0571 is `break` with a value in a `for` or `while` loop. Those loops can end without a `break`, so they always give `()`."
+        explanation: "Using `break` with a value in a `for` or `while` loop is an error. Those loops can end without a `break`, so they always give `()`."
         concepts: [ctrl.labels, ctrl.break-value]
 
       - type: predict-output

@@ -45,8 +45,8 @@ lessons:
         prompt: "`add` takes `&mut self`. Which call is the same as `taps.add()`?"
         options:
           - { id: a, code: "(&mut taps).add();" }
-          - { id: b, code: "(&taps).add();", why: "That's a shared borrow, and `add` needs `&mut self`. It fails with E0596." }
-          - { id: c, code: "Counter::add(taps);", why: "Written this way, nothing is borrowed for you. `add` expects `&mut Counter`, so this is E0308." }
+          - { id: b, code: "(&taps).add();", why: "That's a shared borrow, and `add` needs `&mut self`. It fails: the value can't be borrowed as mutable through a shared reference." }
+          - { id: c, code: "Counter::add(taps);", why: "Written this way, nothing is borrowed for you. `add` expects `&mut Counter`, so this is a *mismatched types* error." }
         answer: a
         explanation: "Rust matches the method's `self` parameter, so for `&mut self` it borrows `taps` mutably."
         concepts: [method.auto-ref]
@@ -304,9 +304,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0596: cannot borrow `*r` as mutable, as it is behind a `&` reference" }
-            - { id: b, text: "E0599: no method named `add` found for reference `&Counter`", why: "Rust finds `add` through the reference. The problem is the kind of borrow." }
-            - { id: c, text: "E0502: cannot borrow `c` as mutable because it is also borrowed as immutable", why: "The method is called on `r`, not `c`, so the error is about `r`." }
+            - { id: a, text: "cannot borrow `*r` as mutable, as it is behind a `&` reference" }
+            - { id: b, text: "no method named `add` found for reference `&Counter`", why: "Rust finds `add` through the reference. The problem is the kind of borrow." }
+            - { id: c, text: "cannot borrow `c` as mutable because it is also borrowed as immutable", why: "The method is called on `r`, not `c`, so the error is about `r`." }
           answer: a
         explanation: "Rust can borrow for you, but it can't turn a shared `&` reference into `&mut`. `r` would need to be `&mut c`."
         concepts: [method.auto-ref, borrow.mut, err.E0596]
@@ -335,7 +335,7 @@ lessons:
         options:
           - { id: a, text: "Make `bump` take `c: &mut Counter` and call `bump(&mut taps)`" }
           - { id: b, text: "Change line 8 to `(&mut c).add();`", why: "`c` is a shared reference, so you can't get a `&mut` from it (and `c` isn't `mut` either)." }
-          - { id: c, text: "Change line 4 to `fn add(&self) { self.n += 1; }`", why: "Then `add` can't change `self.n`, so it fails with E0594." }
+          - { id: c, text: "Change line 4 to `fn add(&self) { self.n += 1; }`", why: "Then `add` can't change `self.n`, so it fails." }
         answer: a
         explanation: "`add` needs a mutable borrow, and a `&Counter` can't give one. The parameter and the call both need `&mut`."
         concepts: [method.auto-ref, own.param-choice, err.E0596]
@@ -344,7 +344,7 @@ lessons:
         id: tf-no-mut-needed
         prompt: "Because Rust borrows for you, you don't need `let mut` to call a `&mut self` method."
         answer: false
-        explanation: "Rust adds the `&mut`, but a mutable borrow still needs a `mut` variable. Without it you get E0596."
+        explanation: "Rust adds the `&mut`, but a mutable borrow still needs a `mut` variable. Without it the compiler says *cannot borrow as mutable*."
         concepts: [method.auto-ref, method.self]
 
       - type: spot-bug
@@ -519,9 +519,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0499: cannot borrow `s` as mutable more than once at a time" }
-            - { id: b, text: "E0596: cannot borrow `s` as mutable", why: "`s` is declared `let mut`, so one mutable borrow is fine." }
-            - { id: c, text: "E0382: use of moved value: `s`", why: "`add` takes `&mut self`, so `s` is borrowed, not moved." }
+            - { id: a, text: "cannot borrow `s` as mutable more than once at a time" }
+            - { id: b, text: "cannot borrow `s` as mutable", why: "`s` is declared `let mut`, so one mutable borrow is fine." }
+            - { id: c, text: "use of moved value: `s`", why: "`add` takes `&mut self`, so `s` is borrowed, not moved." }
           answer: a
         explanation: "`first` keeps a mutable borrow of `s` alive until the `println!`, so the second `s.add()` can't borrow it again."
         concepts: [method.auto-ref, err.E0499]
@@ -579,7 +579,7 @@ lessons:
           - { id: b, text: "Rust should have borrowed `t` for each call", why: "Rust only borrows for you when the method takes `&self` or `&mut self`. This one takes `self`." }
           - { id: c, text: "`t` needs to be `let mut`", why: "`mut` lets a value change, but it can't bring back a value that has moved." }
         answer: a
-        explanation: "`into_owner` takes `self`, so the call moves `t` (E0382 on the second call). Rust adds `&` only when the method asks for a borrow."
+        explanation: "`into_owner` takes `self`, so the call moves `t` (the second call fails with *use of moved value*). Rust adds `&` only when the method asks for a borrow."
         concepts: [method.auto-ref, method.self, err.E0382]
 
       - type: true-false
@@ -623,7 +623,7 @@ lessons:
           - { id: c, code: "(&rect).area()", why: "You wrote the borrow yourself, which is what `&self` needs." }
           - { id: d, code: "Rect::area(&rect)", why: "This passes `&rect` for `&self`, which matches." }
         answer: a
-        explanation: "Rust only borrows automatically with the `.` method form. `Rect::area` expects a `&Rect`, so passing `rect` itself is E0308."
+        explanation: "Rust only borrows automatically with the `.` method form. `Rect::area` expects a `&Rect`, so passing `rect` itself is a *mismatched types* error."
         concepts: [method.auto-ref]
 
       - type: spot-bug
@@ -676,5 +676,5 @@ lessons:
             - { id: b, text: "It should be `(&mut fan).new()`", why: "The kind of borrow doesn't matter: `new` isn't a method at all." }
             - { id: c, text: "`fan` must be `let mut`", why: "Nothing changes `fan`. `new` must be called as `Fan::new()`." }
           answer: a
-        explanation: "Automatic referencing only applies to methods. An associated function is always called on the type: `Fan::new()` (E0599 otherwise)."
+        explanation: "Automatic referencing only applies to methods. An associated function is always called on the type: `Fan::new()`; with a dot the compiler says *no method named `new` found*."
         concepts: [method.auto-ref, method.associated, err.E0599]

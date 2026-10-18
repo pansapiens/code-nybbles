@@ -182,15 +182,15 @@ steps:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0063: missing field `qty`" }
+            - { id: a, text: "missing field `qty`" }
             - id: b
-              text: "E0277: `Item` doesn't implement `Debug`"
+              text: "`Item` doesn't implement `Debug`"
               why: "`Item` has `#[derive(Debug)]`, so it can be printed."
             - id: c
-              text: "E0308: mismatched types"
+              text: "mismatched types"
               why: "`name` gets a `String`, which is the right type. The problem is the field that's missing."
           answer: a
-        explanation: "Creating a struct needs a value for every field. `qty` has no value and Rust doesn't fill in a default, so this is E0063."
+        explanation: "Creating a struct needs a value for every field. `qty` has no value and Rust doesn't fill in a default, so the compiler reports a missing field."
         concepts: [struct.define, err.E0063]
 
   # ---------------------------------------------------------------- step 2
@@ -909,7 +909,7 @@ steps:
           verify: compile-fail
           expectErrors: [E0594]
         answer: 8
-        explanation: "`&items` gives shared references, which only allow reading, so the compiler rejects line 9 (E0594). Loop over `&mut items` to change each item."
+        explanation: "`&items` gives shared references, which only allow reading, so the compiler rejects line 9. Loop over `&mut items` to change each item."
         concepts: [vec.iter, borrow.mut, err.E0594]
 
       - type: compiles
@@ -953,12 +953,12 @@ steps:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `inv` as mutable because it is also borrowed as immutable" }
+            - { id: a, text: "cannot borrow `inv` as mutable because it is also borrowed as immutable" }
             - id: b
-              text: "E0499: cannot borrow `inv` as mutable more than once"
+              text: "cannot borrow `inv` as mutable more than once"
               why: "`find` takes `&self`, a shared borrow. The clash is between that shared borrow and the mutable one for `add`."
             - id: c
-              text: "E0382: borrow of moved value `inv`"
+              text: "borrow of moved value `inv`"
               why: "Neither method takes `self` by value, so `inv` is never moved."
           answer: a
         explanation: "`found` borrows from `inv` and is used on the last line, so that borrow is still alive when `add` needs `&mut inv`. Printing `found` before the second `add` fixes it."

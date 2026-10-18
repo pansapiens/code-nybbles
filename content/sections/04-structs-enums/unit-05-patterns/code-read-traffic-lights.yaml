@@ -70,7 +70,7 @@ chunks:
         id: delete-arm
         prompt: "If you deleted line 8, the program would still compile."
         answer: false
-        explanation: "The `match` would no longer cover `Light::Amber`, which is error E0004: non-exhaustive patterns."
+        explanation: "The `match` would no longer cover `Light::Amber`, which is an error: *non-exhaustive patterns*."
         concepts: [match.exhaustive, err.E0004]
   - lines: 7
     exercises:

@@ -71,9 +71,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value" }
-            - { id: b, text: "E0308: mismatched types", why: "Both variables are `String`s. The problem is that `lives` moved." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is reassigned. `lives` is read after its value moved." }
+            - { id: a, text: "borrow of moved value" }
+            - { id: b, text: "mismatched types", why: "Both variables are `String`s. The problem is that `lives` moved." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is reassigned. `lives` is read after its value moved." }
           answer: a
         explanation: "A `String` owns heap data, so it moves instead of copying. `lives` is invalid after line 2."
         concepts: [own.copy, own.move, err.E0382]
@@ -179,9 +179,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `entry`" }
+            - { id: a, text: "borrow of moved value: `entry`" }
             - { id: b, text: "None: `entry.1` is an `i32`, which is Copy", why: "The whole tuple moved on line 2, so none of `entry` can be used." }
-            - { id: c, text: "E0308: mismatched types", why: "`entry.1` is an integer and `{}` can print it. The problem is the move." }
+            - { id: c, text: "mismatched types", why: "`entry.1` is an integer and `{}` can print it. The problem is the move." }
           answer: a
         explanation: "`(String, i32)` isn't Copy, so line 2 moves the whole tuple to `winner`. Reading `entry.1` uses the moved value."
         concepts: [own.copy, err.E0382]
@@ -413,9 +413,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `names`" }
+            - { id: a, text: "borrow of moved value: `names`" }
             - { id: b, text: "None: arrays are always copied", why: "Only arrays of Copy types are copied. These items are `String`s." }
-            - { id: c, text: "E0382: borrow of moved value: `team`", why: "`team` is the new owner and is never used after a move." }
+            - { id: c, text: "borrow of moved value: `team`", why: "`team` is the new owner and is never used after a move." }
           answer: a
         explanation: "`[String; 2]` isn't Copy, so line 5 moves the array to `team`, and `names.len()` uses a moved value."
         concepts: [own.copy, err.E0382]

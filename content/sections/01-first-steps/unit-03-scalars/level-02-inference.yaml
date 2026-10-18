@@ -116,11 +116,11 @@ lessons:
           expectErrors: [E0308]
         answer: false
         followUp:
-          prompt: Which error code appears first?
+          prompt: Which error appears first?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. The problem is adding two different types." }
-            - { id: c, text: "E0600: cannot apply unary operator `-`", why: "There's no minus sign here." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. The problem is adding two different types." }
+            - { id: c, text: "cannot apply unary operator `-`", why: "There's no minus sign here." }
           answer: a
         explanation: "`u8` and `i32` are different types, and Rust won't add them together. Both values need the same integer type."
         concepts: [types.inference, types.int, err.E0308]

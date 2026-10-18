@@ -69,9 +69,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `s` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0499: cannot borrow `s` as mutable more than once at a time", why: "`r` is a `&` reference, so only one `&mut` borrow is involved." }
-            - { id: c, text: "E0596: cannot borrow `s` as mutable", why: "`s` is `mut`, so `push_str` would be fine on its own." }
+            - { id: a, text: "cannot borrow `s` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "cannot borrow `s` as mutable more than once at a time", why: "`r` is a `&` reference, so only one `&mut` borrow is involved." }
+            - { id: c, text: "cannot borrow `s` as mutable", why: "`s` is `mut`, so `push_str` would be fine on its own." }
           answer: a
         explanation: "`r` is used on line 4, after `push_str`, so its borrow is still alive when `s` changes."
         concepts: [borrow.nll, err.E0502]
@@ -80,7 +80,7 @@ lessons:
         id: concept-reorder
         title: Fix it by reordering
         markdown: |
-          **Many E0502 and E0499 errors go away if you finish with one reference before you start the next.** Move the last use of the old reference above the conflicting line.
+          **Many borrow errors go away if you finish with one reference before you start the next.** Move the last use of the old reference above the conflicting line.
         code:
           rust: |
             let mut s = String::from("hi");
@@ -99,10 +99,10 @@ lessons:
             code: "let r = &s;\nprintln!(\"{r}\");\ns.push_str(\"!\");"
           - id: b
             code: "let r = &s;\ns.push_str(\"!\");\nprintln!(\"{r}\");"
-            why: "`r` is still used after `push_str`, so a reader and a writer overlap (E0502)."
+            why: "`r` is still used after `push_str`, so a reader and a writer overlap."
           - id: c
             code: "let r = &s;\ns.push_str(\"!\");\nprintln!(\"{r}{s}\");"
-            why: "`r` is still used on the last line, after `push_str` (E0502)."
+            why: "`r` is still used on the last line, after `push_str`."
         answer: a
         explanation: "In the first order, `r`'s borrow is over before `push_str` borrows `s` as `&mut`."
         concepts: [borrow.nll]
@@ -161,8 +161,8 @@ lessons:
           expectErrors: [E0502]
         options:
           - { id: a, text: "Move line 5 above line 4" }
-          - { id: b, text: "Change line 3 to `let view = &mut tally;`", why: "Then `view` and `push_str` are two writers at once (E0499)." }
-          - { id: c, text: "Remove `mut` from line 2", why: "Then `push_str` can't change `tally` at all (E0596)." }
+          - { id: b, text: "Change line 3 to `let view = &mut tally;`", why: "Then `view` and `push_str` are two writers at once." }
+          - { id: c, text: "Remove `mut` from line 2", why: "Then `push_str` can't change `tally` at all." }
         answer: a
         explanation: "Printing `view` first ends its borrow, so `push_str` can borrow `tally` afterwards."
         concepts: [borrow.nll, err.E0502]
@@ -330,7 +330,7 @@ lessons:
           "1": { answer: ["r"] }
           "2": { answer: ["s"] }
         bank: ["r", "s", "&s", "*r"]
-        explanation: "`r` can only be used before `push_str`. After the change, print `s` itself; using `r` there would be E0502."
+        explanation: "`r` can only be used before `push_str`. After the change, print `s` itself; using `r` there would still be an error."
         concepts: [borrow.nll]
 
       - type: decode-error
@@ -350,7 +350,7 @@ lessons:
           expectErrors: [E0499]
         options:
           - { id: a, text: "Move line 5 up, between lines 3 and 4" }
-          - { id: b, text: "Change line 4 to `let b = &log;`", why: "`b` can't write through a `&` reference, and it would still overlap with `a` (E0502)." }
+          - { id: b, text: "Change line 4 to `let b = &log;`", why: "`b` can't write through a `&` reference, and it would still overlap with `a`." }
           - { id: c, text: "Move line 7 up, between lines 2 and 3", why: "That doesn't change the overlap between `a` and `b`." }
         answer: a
         explanation: "With `a.push_str` before `let b`, `a` is finished when `b` starts. The two writers take turns."
@@ -404,7 +404,7 @@ lessons:
           verify: compile
         options:
           - { id: a, text: "`r1` is last used before `r2` is created" }
-          - { id: b, text: "Two `&mut` references are fine inside one block", why: "Two writers in use at once is still E0499. Here they don't overlap." }
+          - { id: b, text: "Two `&mut` references are fine inside one block", why: "Two writers in use at once is still an error. Here they don't overlap." }
           - { id: c, text: "`r2` copies the `String`, so it doesn't borrow `s`", why: "`&mut s` borrows; nothing is copied." }
         answer: a
         explanation: "The borrows take turns: `r1` ends on line 3, and `r2` starts on line 4."
@@ -424,7 +424,7 @@ lessons:
           heap:
             - { id: h1, value: '"ab"' }
         answer: false
-        explanation: "Because `r1` is used again, its borrow is still alive when `r2` is created: two writers at once (E0499)."
+        explanation: "Because `r1` is used again, its borrow is still alive when `r2` is created: two writers at once."
         concepts: [borrow.nll, err.E0499]
 
       - type: spot-bug
@@ -447,7 +447,7 @@ lessons:
 
       - type: true-false
         id: tf-move-print-up
-        prompt: "Moving the last use of a reference to an earlier line can fix an E0502."
+        prompt: "Moving the last use of a reference to an earlier line can fix a `&` and `&mut` overlap error."
         answer: true
         explanation: "If the old reference's last use comes before the conflicting borrow, the two no longer overlap."
         concepts: [borrow.nll, err.E0502]

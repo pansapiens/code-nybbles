@@ -112,7 +112,7 @@ lessons:
             - { id: b, text: "A type annotation like `HashMap<&str, i32>`", why: "Rust works out the types from the `insert` call. It can't find the name `HashMap` at all." }
             - { id: c, text: "`vec!` around the values", why: "`vec!` makes a `Vec`. The problem is that `HashMap` isn't in scope." }
           answer: a
-        explanation: "Unlike `Vec` and `String`, `HashMap` isn't in scope by default. Without the `use` line, the compiler reports E0433: it can't find `HashMap`."
+        explanation: "Unlike `Vec` and `String`, `HashMap` isn't in scope by default. Without the `use` line, the compiler can't find `HashMap`."
         concepts: [map.basics]
 
       - type: concept
@@ -237,7 +237,7 @@ lessons:
         prompt: "`fees` is a `HashMap<&str, i32>`. Which line gives `fee` the fee for `\"gym\"`, or 0 if it's missing?"
         options:
           - { id: a, code: "let fee = fees.get(\"gym\").unwrap_or(&0);" }
-          - { id: b, code: "let fee = fees.get(\"gym\").unwrap_or(0);", why: "`get` returns `Option<&i32>`, so the fallback must be a `&i32` too. `0` is a plain `i32`, which is E0308." }
+          - { id: b, code: "let fee = fees.get(\"gym\").unwrap_or(0);", why: "`get` returns `Option<&i32>`, so the fallback must be a `&i32` too. `0` is a plain `i32`, which is a type mismatch." }
           - { id: c, code: "let fee = fees.get(\"gym\", 0);", why: "`get` takes only the key. The fallback comes from an `Option` method." }
         answer: a
         explanation: "`get` gives `Option<&i32>`, so `unwrap_or` needs a `&i32` fallback: `&0`."
@@ -284,9 +284,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: mismatched types" }
-            - { id: b, text: "E0382: borrow of moved value", why: "Nothing is moved here. `get` returns an `Option<&i32>`, and the annotation says `i32`." }
-            - { id: c, text: "E0433: cannot find type `HashMap`", why: "The `use` line is there, so `HashMap` is in scope." }
+            - { id: a, text: "mismatched types" }
+            - { id: b, text: "borrow of moved value", why: "Nothing is moved here. `get` returns an `Option<&i32>`, and the annotation says `i32`." }
+            - { id: c, text: "cannot find type `HashMap`", why: "The `use` line is there, so `HashMap` is in scope." }
           answer: a
         explanation: "`get` returns `Option<&i32>`, not `i32`. You have to handle the `None` case, for example with `if let` or `unwrap_or`."
         concepts: [map.basics, option.type-safety, err.E0308]
@@ -402,7 +402,7 @@ lessons:
             - { id: b, text: "`HashMap::new()` needs the key and value types", why: "Rust works out the types from the `insert` call." }
             - { id: c, text: "`len` doesn't work on maps", why: "`len` counts a map's entries. The problem is the missing `mut`." }
           answer: a
-        explanation: "`insert` borrows the map mutably, which needs `let mut scores`. The error is E0596: cannot borrow as mutable."
+        explanation: "`insert` borrows the map mutably, which needs `let mut scores`. The compiler says: cannot borrow as mutable."
         concepts: [map.basics, var.mut, err.E0596]
 
       - type: fill-tokens
@@ -475,9 +475,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `ages` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0382: borrow of moved value", why: "`get` doesn't move anything out of the map. It lends a reference." }
-            - { id: c, text: "E0596: cannot borrow as mutable", why: "`ages` is declared `mut`, so `insert` is allowed on its own." }
+            - { id: a, text: "cannot borrow `ages` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "borrow of moved value", why: "`get` doesn't move anything out of the map. It lends a reference." }
+            - { id: c, text: "cannot borrow as mutable", why: "`ages` is declared `mut`, so `insert` is allowed on its own." }
           answer: a
         explanation: "`mia` is a reference into `ages`, and it's still used on line 8. While that borrow is alive, `insert` can't change the map, the same rule as with a `Vec`."
         concepts: [map.basics, err.E0502, vec.borrow]

@@ -508,7 +508,7 @@ steps:
           - { id: b, text: "`secret` needs `mut` before it can be compared", why: "Comparing only reads `secret`. The problem is that the two values have different types." }
           - { id: c, text: "`cmp` can't be used before a `match`", why: "`cmp` can be used anywhere. The error is about a `String` meeting a number." }
         answer: a
-        explanation: "E0308 says `cmp` expected another `String` but found a number. Rust won't compare text with a number, which is why step 2 parses the guess."
+        explanation: "The error is *mismatched types*: `cmp` expected another `String` but found a number. Rust won't compare text with a number, which is why step 2 parses the guess."
         concepts: [match.ordering, err.E0308, string.parse-intro]
 
       - type: true-false

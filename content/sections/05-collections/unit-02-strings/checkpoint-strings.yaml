@@ -54,9 +54,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0502: cannot borrow `text` as mutable because it is also borrowed as immutable" }
-            - { id: b, text: "E0308: mismatched types", why: "The types are fine: `clean` is a `&str` and `push_str` gets a `&str`." }
-            - { id: c, text: "E0382: borrow of moved value: `text`", why: "`trim` borrows `text`; it doesn't move it." }
+            - { id: a, text: "cannot borrow `text` as mutable because it is also borrowed as immutable" }
+            - { id: b, text: "mismatched types", why: "The types are fine: `clean` is a `&str` and `push_str` gets a `&str`." }
+            - { id: c, text: "borrow of moved value: `text`", why: "`trim` borrows `text`; it doesn't move it." }
           answer: a
         explanation: "`clean` is a slice of `text` and is used on line 5, so `text` can't be changed on line 4. Moving the `println!` above the `push_str` fixes it."
         concepts: [string.methods, err.E0502]
@@ -78,7 +78,7 @@ lessons:
           - { id: b, text: "Use `&word[1..2]`", why: "`é` takes bytes 0 and 1, so byte 1 is in the middle of it. This compiles but panics." }
           - { id: c, text: "Use `word.as_bytes()[1]`", why: "That's byte 1, which is the second half of `é`, not the character `c`." }
         answer: a
-        explanation: "Text can't be indexed with a number (E0277). `.chars().nth(1)` counts whole characters, so it finds `c` even though `é` is 2 bytes."
+        explanation: "Text can't be indexed with a number. `.chars().nth(1)` counts whole characters, so it finds `c` even though `é` is 2 bytes."
         concepts: [string.utf8, option.methods, err.E0277]
 
       - type: predict-output
@@ -203,7 +203,7 @@ lessons:
           - { id: b, code: "a + &b", why: "The left side is still a `&str`. `+` needs an owned `String` on the left." }
           - { id: c, code: "&a + b", why: "That's a `&&str` on the left, which `+` can't use either." }
         answer: a
-        explanation: "`+` needs an owned `String` on its left (E0369 for `&str + &str`). `a.to_string()` makes one; `format!(\"{a}{b}\")` also works."
+        explanation: "`+` needs an owned `String` on its left. `a.to_string()` makes one; `format!(\"{a}{b}\")` also works."
         concepts: [string.build, string.convert, err.E0369]
 
       - type: predict-output

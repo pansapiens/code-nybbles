@@ -25,7 +25,7 @@ let coins = 3u8;      // suffix, also 3_u8
 ```
 
 - Rust also infers from later use: `let n = 5; let small: u8 = n;` makes `n` a `u8`.
-- Rust never converts between number types by itself. A `u8` can't go where an `i32` is needed: error **E0308** (mismatched types).
+- Rust never converts between number types by itself. A `u8` can't go where an `i32` is needed: the compiler says *mismatched types*.
 
 ## Floats and arithmetic
 
@@ -38,7 +38,7 @@ println!("{}", -7 / 2);     // -3  towards zero
 
 - `f64` is the default float, `f32` is smaller and less precise. Float literals need a decimal point: `5.0`.
 - `*` and `/` happen before `+` and `-`; operators of the same level run left to right.
-- Both sides of an operator must be the same type. `2 + 1.5` is error **E0277**.
+- Both sides of an operator must be the same type. `2 + 1.5` is an error: the compiler can't add an integer to a float.
 - `{}` prints a whole float without `.0` (`5`); `{:?}` shows it (`5.0`).
 - Floats are approximations: `0.1 + 0.2` prints `0.30000000000000004`.
 
@@ -89,6 +89,6 @@ println!("{}", 66u8 as char);       // B
 - `as` never panics, so it can quietly change a value. Check that it fits first.
 - Cast before you divide: `(7 / 2) as f64` is already `3.0`.
 - `as` binds tighter than `+`: `max as u16 + 1` converts first, then adds.
-- Only `u8` can be cast to `char` (error **E0604** otherwise). `true as i32` is 1.
+- Only `u8` can be cast to `char` (anything else is a compile error). `true as i32` is 1.
 
 Read more: Book §3.2 · Rust by Example (Primitives, Casting) · Rustlings `04_primitive_types`

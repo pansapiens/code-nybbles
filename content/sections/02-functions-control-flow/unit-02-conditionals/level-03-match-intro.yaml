@@ -165,7 +165,7 @@ lessons:
         id: concept-exhaustive
         title: Every value must be covered
         markdown: |
-          **A `match` must be exhaustive.** The compiler checks that every possible value has an arm. If any are missing, you get error **E0004**: non-exhaustive patterns.
+          **A `match` must be exhaustive.** The compiler checks that every possible value has an arm. If any are missing, you get an error: *non-exhaustive patterns*.
 
           For integers, which have billions of possible values, that usually means ending with `_`.
         code:
@@ -198,9 +198,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0004: non-exhaustive patterns" }
-            - { id: b, text: "E0308: mismatched types", why: "All the patterns are integers, the same type as `dice`." }
-            - { id: c, text: "E0317: `if` may be missing an `else` clause", why: "That's for `if`. A `match` that misses values gives its own error." }
+            - { id: a, text: "non-exhaustive patterns" }
+            - { id: b, text: "mismatched types", why: "All the patterns are integers, the same type as `dice`." }
+            - { id: c, text: "`if` may be missing an `else` clause", why: "That's for `if`. A `match` that misses values gives its own error." }
           answer: a
         explanation: "`dice` is an `i32`, which could be any value from about -2 billion to 2 billion. The compiler checks the type, not the value 3, so it wants an arm for the rest."
         concepts: [match.intro, err.E0004]
@@ -231,7 +231,7 @@ lessons:
         id: concept-match-value
         title: match gives a value
         markdown: |
-          **Like `if`, `match` is an expression.** Each arm's code is a value, and the whole `match` takes the value of the arm that runs. All arms must have the same type, or it's error **E0308**.
+          **Like `if`, `match` is an expression.** Each arm's code is a value, and the whole `match` takes the value of the arm that runs. All arms must have the same type, or it's a *mismatched types* error.
         code:
           rust: |
             let dice = 5;
@@ -284,9 +284,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0308: `match` arms have incompatible types" }
-            - { id: b, text: "E0004: non-exhaustive patterns", why: "The `_` arm covers every remaining value." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "`label` gets one value. The arms give different types." }
+            - { id: a, text: "`match` arms have incompatible types" }
+            - { id: b, text: "non-exhaustive patterns", why: "The `_` arm covers every remaining value." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "`label` gets one value. The arms give different types." }
           answer: a
         explanation: "Two arms give text and one gives an integer. Like the blocks of an `if`, every arm must have the same type."
         concepts: [match.intro, err.E0308]
@@ -473,10 +473,10 @@ lessons:
         prompt: "What does the compiler check for a `match` that it doesn't check for an `if` / `else if` chain without a final `else`?"
         options:
           - { id: a, text: "That every possible value is handled" }
-          - { id: b, text: "That the conditions are `bool`", why: "That's checked for `if` too: a condition that isn't a `bool` is E0308." }
+          - { id: b, text: "That the conditions are `bool`", why: "That's checked for `if` too: a condition that isn't a `bool` is a *mismatched types* error." }
           - { id: c, text: "That the arms run in order", why: "Both run their branches top to bottom. Order isn't the difference." }
         answer: a
-        explanation: "An `if` without `else` can skip all its blocks. A `match` must have an arm for every value, or it's E0004."
+        explanation: "An `if` without `else` can skip all its blocks. A `match` must have an arm for every value, or it's an error."
         concepts: [match.intro, ctrl.if]
 
       - type: spot-bug

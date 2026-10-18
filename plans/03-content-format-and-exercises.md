@@ -15,7 +15,7 @@ All types work offline and are graded on the client. Every type has a tap-only i
 | 3 | `predict-output` | What does this print? | Code card, then choose an option, **or** assemble the output from tiles | Option ID / normalised string | MVP |
 | 4 | `fill-tokens` | Fill the blanks | Code with 1–4 blanks; tap tiles from a token bank into the blanks (Duolingo word bank) | Per-blank match; each blank allows alternatives | MVP |
 | 5 | `parsons` | Arrange the code | Drag (or tap in order) shuffled lines into the correct order; optional indentation step; optional distractor lines | Ordered line IDs; supports multiple valid orders | MVP |
-| 6 | `compiles` | Does it compile? | Code card → YES / NO; if NO, a follow-up "Which error?" (error code options) | Boolean (+ error code) | MVP |
+| 6 | `compiles` | Does it compile? | Code card → YES / NO; if NO, a follow-up "Which error?" (compiler message options) | Boolean (+ which message) | MVP |
 | 7 | `spot-bug` | Tap the bug | Tap the line (or token) that causes the error/bug | Line/token ID | MVP |
 | 8 | `match-pairs` | Match pairs | Two columns of 4–5 tiles; tap left then right (Duolingo match) | All pairs matched; mismatch = mistake (heart) | MVP |
 | 9 | `decode-error` | Decode the error | A real compiler error shown in terminal style + code → choose what it means **or** pick the fix (diff options) | Option ID | MVP |
@@ -134,9 +134,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0499: cannot borrow `s` as mutable more than once" }
-            - { id: b, text: "E0382: borrow of moved value" }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable" }
+            - { id: a, text: "cannot borrow `s` as mutable more than once" }
+            - { id: b, text: "borrow of moved value: `s`" }
+            - { id: c, text: "cannot assign twice to immutable variable `s`" }
           answer: a
         explanation: Two `&mut` borrows of `s` are alive at the same time (both are used in `println!`).
         concepts: [borrow.exclusive, err.E0499]
@@ -357,6 +357,7 @@ flowchart LR
 - Always name the rule, then show it: "**One writer or many readers.** Here's why…"
 - Prefer realistic names (`score`, `user_name`, `inventory`) over `foo`/`bar`
 - Show compiler errors as a learning moment ("The compiler is helping here…")
+- Error codes (E0382) are lookup keys for `rustc --explain`, not facts to memorise. Showing them is fine, and so is asking what "E0382: borrow of moved value" means, since the message is being read; asking what a bare code means is not. The build warns on bare codes in match-pairs, tiles and true-false prompts, and on options that differ only by their code
 - Every unit ends its guidebook with "Read more: Book §x.y · Rust by Example · Rustlings `NN_topic`"
 
 ### 5.2 Production estimate

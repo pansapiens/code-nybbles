@@ -47,7 +47,7 @@ lessons:
         markdown: |
           **For now, give text fields the type `String`, not `&str`.** A `&str` field would borrow text owned by something else.
 
-          Rust then needs to know how long that borrow lasts, which uses *lifetimes*, a later topic. Without one you get E0106, the error you saw for dangling references.
+          Rust then needs to know how long that borrow lasts, which uses *lifetimes*, a later topic. Without one the compiler says *missing lifetime specifier*.
         code:
           rust: |
             struct User {
@@ -80,9 +80,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0106: missing lifetime specifier" }
-            - { id: b, text: "E0308: mismatched types", why: "`\"Emma\"` is a `&str`, which matches the field. The problem is the field's type itself." }
-            - { id: c, text: "E0382: use of moved value", why: "Nothing is moved. The error is in the struct definition, on line 2." }
+            - { id: a, text: "missing lifetime specifier" }
+            - { id: b, text: "mismatched types", why: "`\"Emma\"` is a `&str`, which matches the field. The problem is the field's type itself." }
+            - { id: c, text: "use of moved value", why: "Nothing is moved. The error is in the struct definition, on line 2." }
           answer: a
         explanation: "A reference field needs a lifetime, which you'll meet later. Using `title: String` avoids the problem."
         concepts: [struct.ownership, err.E0106]
@@ -115,9 +115,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `draft`" }
-            - { id: b, text: "E0609: no field `text` on type `Note`", why: "`Note` does have a `text` field. The problem is that `draft` moved." }
-            - { id: c, text: "E0106: missing lifetime specifier", why: "The field is a `String`, so no lifetime is needed." }
+            - { id: a, text: "borrow of moved value: `draft`" }
+            - { id: b, text: "no field `text` on type `Note`", why: "`Note` does have a `text` field. The problem is that `draft` moved." }
+            - { id: c, text: "missing lifetime specifier", why: "The field is a `String`, so no lifetime is needed." }
           answer: a
         explanation: "`let saved = draft;` moves the whole `Note`, `String` and all, into `saved`. `draft` can't be used after that."
         concepts: [struct.ownership, own.move, err.E0382]
@@ -258,9 +258,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: use of partially moved value: `user`" }
-            - { id: b, text: "E0609: no field `name` on type `User`", why: "`User` has a `name` field. The problem is that it was moved out." }
-            - { id: c, text: "E0384: cannot assign twice to immutable variable", why: "Nothing is assigned twice. `user` is used after part of it moved." }
+            - { id: a, text: "use of partially moved value: `user`" }
+            - { id: b, text: "no field `name` on type `User`", why: "`User` has a `name` field. The problem is that it was moved out." }
+            - { id: c, text: "cannot assign twice to immutable variable", why: "Nothing is assigned twice. `user` is used after part of it moved." }
           answer: a
         explanation: "`user.name` moved into `name`, so `user` is missing a field and can't be moved as a whole."
         concepts: [struct.ownership, err.E0382]
@@ -339,9 +339,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `a`" }
-            - { id: b, text: "E0609: no field `x` on type `Point`", why: "`Point` has an `x` field. The problem is that `a` has moved." }
-            - { id: c, text: "E0308: mismatched types", why: "The types match. `let b = a;` moved `a`." }
+            - { id: a, text: "borrow of moved value: `a`" }
+            - { id: b, text: "no field `x` on type `Point`", why: "`Point` has an `x` field. The problem is that `a` has moved." }
+            - { id: c, text: "mismatched types", why: "The types match. `let b = a;` moved `a`." }
           answer: a
         explanation: "A struct you define isn't `Copy`, even when all its fields are. So `let b = a;` moves `a`, and `a.x` can't be read afterwards."
         concepts: [struct.ownership, own.copy, err.E0382]
@@ -368,7 +368,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 12
-        explanation: "Line 11 moves `order.item` out, and line 12 then tries to use it (E0382). Borrowing with `&order.item` on line 11 would fix it."
+        explanation: "Line 11 moves `order.item` out, and line 12 then tries to use it: *borrow of moved value*. Borrowing with `&order.item` on line 11 would fix it."
         concepts: [struct.ownership, err.E0382]
 
       - type: true-false
@@ -606,7 +606,7 @@ lessons:
           expectErrors: [E0106]
         options:
           - { id: a, text: "Line 2: `name: String,` and line 6: `name: String::from(\"Kim\")`" }
-          - { id: b, text: "Line 2: `name: &mut str,`", why: "That's still a reference, so it still needs a lifetime (E0106)." }
+          - { id: b, text: "Line 2: `name: &mut str,`", why: "That's still a reference, so it still needs a lifetime." }
           - { id: c, text: "Line 6: `name: &\"Kim\"`", why: "The error is in the struct definition on line 2, not in the value." }
         answer: a
         explanation: "With a `String` field, `Profile` owns its text and needs no lifetime. The value then has to be a `String` too."
@@ -689,9 +689,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0507: cannot move out of `p.name` which is behind a shared reference" }
-            - { id: b, text: "E0382: use of moved value: `rex`", why: "`rex` is only borrowed. The problem is inside `take_name`." }
-            - { id: c, text: "E0106: missing lifetime specifier", why: "The function returns an owned `String`, so no lifetime is needed." }
+            - { id: a, text: "cannot move out of `p.name` which is behind a shared reference" }
+            - { id: b, text: "use of moved value: `rex`", why: "`rex` is only borrowed. The problem is inside `take_name`." }
+            - { id: c, text: "missing lifetime specifier", why: "The function returns an owned `String`, so no lifetime is needed." }
           answer: a
         explanation: "`p` only borrows the `Pet`, so `take_name` can't move the `String` out of it. Returning `p.name.clone()` would work."
         concepts: [struct.ownership, borrow.shared, err.E0507]

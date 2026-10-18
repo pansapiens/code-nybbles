@@ -119,7 +119,7 @@ lessons:
 
       - type: mcq
         id: mcq-error-code
-        prompt: "Some errors have a code, like `error[E0765]`. What is `E0765`?"
+        prompt: "Some errors have a code in brackets, like `error[E0765]`. What is that code?"
         options:
           - { id: a, text: "An error code you can look up with `rustc --explain E0765`" }
           - { id: b, text: "The number of errors in your file", why: "The code names the kind of error. The count comes at the end: `aborting due to 1 previous error`." }
@@ -339,7 +339,7 @@ lessons:
             - { id: b, text: "A `;` is missing", why: "Every statement has its `;`. The problem is the function's name." }
             - { id: c, text: "`println!` is missing its `!`", why: "`println!` is written correctly here." }
           answer: a
-        explanation: "Names in Rust are case-sensitive, so `Main` is not `main`. The compiler reports E0601: `main` function not found."
+        explanation: "Names in Rust are case-sensitive, so `Main` is not `main`. The compiler reports *`main` function not found*."
         concepts: [compiler.read-error, intro.main]
 
       - type: parsons
@@ -364,8 +364,8 @@ lessons:
         id: mcq-explain
         prompt: "What does `rustc --explain E0758` do?"
         options:
-          - { id: a, text: Shows a longer explanation of error E0758 with examples }
-          - { id: b, text: Fixes error E0758 in your code, why: "It only explains the error. You make the fix yourself." }
+          - { id: a, text: "Shows a longer explanation of that error, with examples" }
+          - { id: b, text: Fixes that error in your code, why: "It only explains the error. You make the fix yourself." }
           - { id: c, text: Compiles your program again, why: "It doesn't compile anything; it prints documentation about one error code." }
         answer: a
         explanation: "`rustc --explain` prints the documentation for an error code, usually with a broken example and a fixed one."

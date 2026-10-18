@@ -233,7 +233,7 @@ lessons:
             - { id: b, text: "Indexes start at 1 for text", why: "Byte positions start at 0. Single-number indexing isn't allowed at all." }
             - { id: c, text: "`s` must be `mut` to read from it", why: "Reading never needs `mut`." }
           answer: a
-        explanation: "E0277: `str` cannot be indexed by an integer. Text can only be indexed with ranges, like `&s[0..1]`."
+        explanation: "The type `str` cannot be indexed by an integer. Text can only be indexed with ranges, like `&s[0..1]`."
         concepts: [slice.utf8, err.E0277]
 
       - type: true-false

@@ -115,14 +115,14 @@ lessons:
             - { id: b, text: "`ages` needs to be declared `mut`", why: "It already is. The problem is inside the loop." }
             - { id: c, text: "You can't change elements inside a loop", why: "You can, with `&mut`. You need `*` to reach the number." }
           answer: a
-        explanation: "`+=` works on the `i32`, not on the reference to it. The error is E0368: binary assignment operation `+=` cannot be applied to type `&mut {integer}`."
+        explanation: "`+=` works on the `i32`, not on the reference to it. The compiler says: binary assignment operation `+=` cannot be applied to type `&mut {integer}`."
         concepts: [vec.iter, borrow.mut, err.E0368]
 
       - type: concept
         id: concept-for-move
         title: Loop over the Vec itself
         markdown: |
-          **`for x in v` moves the vector into the loop.** Each `x` is an owned element, and the vector is gone afterwards: using `v` again is **E0382**.
+          **`for x in v` moves the vector into the loop.** Each `x` is an owned element, and the vector is gone afterwards: using `v` again is an error: *borrow of moved value*.
 
           This happens even for a `Vec<i32>`. An array of `i32` is `Copy`, but a `Vec` never is.
         code:
@@ -151,9 +151,9 @@ lessons:
         followUp:
           prompt: Which error?
           options:
-            - { id: a, text: "E0382: borrow of moved value: `marks`" }
-            - { id: b, text: "E0596: cannot borrow `marks` as mutable", why: "Nothing changes `marks`. The loop takes it." }
-            - { id: c, text: "E0308: mismatched types", why: "All the types fit. The problem is ownership." }
+            - { id: a, text: "borrow of moved value: `marks`" }
+            - { id: b, text: "cannot borrow `marks` as mutable", why: "Nothing changes `marks`. The loop takes it." }
+            - { id: c, text: "mismatched types", why: "All the types fit. The problem is ownership." }
           answer: a
         explanation: "`for m in marks` moves the `Vec` into the loop. A `Vec<i32>` isn't `Copy`, even though its elements are. Loop over `&marks` instead."
         concepts: [vec.iter, err.E0382, own.copy]
@@ -276,7 +276,7 @@ lessons:
             - { id: b, text: "`*s += 1` should be `s += 1`", why: "`*` is needed to reach the number behind the `&mut`. That part is right." }
             - { id: c, text: "You can't use `&mut` in a `for` loop", why: "You can. That's how you change every element." }
           answer: a
-        explanation: "You can only borrow a variable mutably if it's declared `mut`. The error is E0596."
+        explanation: "You can only borrow a variable mutably if it's declared `mut`. The compiler says it cannot borrow as mutable."
         concepts: [vec.iter, var.mut, err.E0596]
 
       - type: match-pairs
@@ -313,7 +313,7 @@ lessons:
         prompt: "You want to print every name in `guests` and then call `guests.len()`. Which loop header fits best?"
         options:
           - { id: a, code: "for g in &guests {" }
-          - { id: b, code: "for g in guests {", why: "That moves `guests` into the loop, so `guests.len()` afterwards is E0382." }
+          - { id: b, code: "for g in guests {", why: "That moves `guests` into the loop, so using `guests.len()` afterwards is a use of a moved value." }
           - { id: c, code: "for g in &mut guests {", why: "It works if `guests` is `mut`, but you only read the names, so a shared borrow is enough." }
         answer: a
         explanation: "Reading only needs `&`. The vector is still usable after the loop."

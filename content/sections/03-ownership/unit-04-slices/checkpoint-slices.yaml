@@ -136,18 +136,18 @@ lessons:
           heap:
             - { id: h1, value: '"hello"' }
         answer: false
-        explanation: "`r` borrows the text. Clearing `s` while `r` is still used would leave `r` pointing at removed text, so it's error E0502."
+        explanation: "`r` borrows the text. Clearing `s` while `r` is still used would leave `r` pointing at removed text, so it's an error."
         concepts: [slice.str, err.E0502]
 
       - type: match-pairs
         id: pairs-problems
         prompt: Match each problem to its cause
         pairs:
-          - ["E0502", "changing a `String` while a slice of it is in use"]
-          - ["E0277: size of `str` not known", "slicing without `&`"]
+          - ["cannot borrow `s` as mutable because it is also borrowed as immutable", "changing a `String` while a slice of it is in use"]
+          - ["the size for values of type `str` cannot be known at compilation time", "slicing without `&`"]
           - ["not a char boundary", "a range inside a multi-byte character"]
           - ["out of bounds", "a range past the end"]
-          - ["E0308: expected `&str`, found `String`", "passing a `String` without `&`"]
+          - ["expected `&str`, found `String`", "passing a `String` without `&`"]
         concepts: [slice.str, slice.utf8, slice.str-param]
 
       - type: compiles
@@ -234,7 +234,7 @@ lessons:
           - { id: b, text: "`nums` must be `mut` to be borrowed", why: "Shared borrows never need `mut`." }
           - { id: c, text: "Index 0 is out of bounds", why: "`nums` has 3 elements, so index 0 is fine. The type is the problem." }
         answer: a
-        explanation: "E0308: expected `&[i32]`, found `&{integer}`. Indexing with one number gives one element, and only a range gives a slice."
+        explanation: "Mismatched types: expected `&[i32]`, found `&{integer}`. Indexing with one number gives one element, and only a range gives a slice."
         concepts: [slice.array, err.E0308]
 
       - type: predict-output

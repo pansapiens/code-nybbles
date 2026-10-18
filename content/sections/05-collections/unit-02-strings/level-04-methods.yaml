@@ -137,7 +137,7 @@ lessons:
             - { id: b, text: "`trim` can't be called on a `String`", why: "It can. It's the type annotation that doesn't match." }
             - { id: c, text: "`raw` needs `mut` to be trimmed", why: "`trim` doesn't change `raw`, so no `mut` is needed." }
           answer: a
-        explanation: "E0308, mismatched types: `trim` returns a `&str` slice of `raw`. Drop the `: String`, or make a `String` with `String::from(raw.trim())`."
+        explanation: "Mismatched types: `trim` returns a `&str` slice of `raw`. Drop the `: String`, or make a `String` with `String::from(raw.trim())`."
         concepts: [string.methods, err.E0308]
 
   - id: l2
@@ -221,7 +221,7 @@ lessons:
           - { id: b, code: "name = name.trim().len();", why: "That's a number, not a `String`, so the types still don't match." }
           - { id: c, code: "name.trim();", why: "This compiles, but throws the result away. `name` keeps its spaces." }
         answer: a
-        explanation: "`name` is a `String`, but `trim` returns a `&str` (E0308). `String::from` makes a new `String` from the trimmed text."
+        explanation: "`name` is a `String`, but `trim` returns a `&str`. `String::from` makes a new `String` from the trimmed text."
         concepts: [string.methods, err.E0308]
 
       - type: match-pairs
@@ -332,7 +332,7 @@ lessons:
             - { id: b, text: "`trim` can't be called inside a block", why: "It can. The problem is using the result after `raw` is gone." }
             - { id: c, text: "`clean` must be given a value on the line where it's declared", why: "Declaring first and assigning later is fine. The borrow is the problem." }
           answer: a
-        explanation: "`trim` returns a slice of `raw`. `raw` is dropped at the end of the block, so `clean` would point at freed memory (E0597: does not live long enough)."
+        explanation: "`trim` returns a slice of `raw`. `raw` is dropped at the end of the block, so `clean` would point at freed memory (the compiler says `clean` does not live long enough)."
         concepts: [string.methods, borrow.dangling, err.E0597]
 
       - type: predict-output
@@ -419,7 +419,7 @@ lessons:
           - { id: b, code: "let up: &str = title.trim();", why: "This compiles, but `trim` doesn't change the case, so it prints `rust book`." }
           - { id: c, code: "let up: &str = title;", why: "This compiles, but `up` is the original lowercase text." }
         answer: a
-        explanation: "`to_uppercase` returns a new `String`, not a `&str` (E0308). Without the annotation, `up` is a `String` holding `RUST BOOK`."
+        explanation: "`to_uppercase` returns a new `String`, not a `&str`. Without the annotation, `up` is a `String` holding `RUST BOOK`."
         concepts: [string.methods, err.E0308]
 
       - type: mcq
