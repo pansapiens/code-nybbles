@@ -20,7 +20,7 @@ defineProps<{ exercise: Ex<'concept'>; checked: boolean }>()
 <style scoped>
 .eyebrow {
   margin: 0;
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;

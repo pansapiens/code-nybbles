@@ -334,7 +334,10 @@ also works. CI doesn't need either.
   - [x] (new) Buttons pass AA (user, 2026-10-18): `--c-correct-button` / `--c-wrong-button` faces under white
     text; secondary and ghost buttons use `--c-primary-text`. Banners keep their bright colours (white text on teal,
     blue, pink and orange is 2.5-3.5:1), by the user's choice
-  - [ ] (new) Screen reader pass (TalkBack / VoiceOver) through a lesson; not done
+  - [x] (new) Automated audit `e2e/a11y.spec.ts` (axe-core, WCAG 2.1 A/AA, light and dark): every main screen and 12
+    lesson steps with feedback. Fixed: missing h1 (Learn, Streak), Start bubble name and contrast, streak calendar
+    ARIA (now a list), concept eyebrow contrast. Page titles name the screen; each new question takes focus
+  - [ ] (new) Manual TalkBack / VoiceOver run on a phone (needs a person; the automated audit can't judge reading order or verbosity)
 - [ ] Performance on low-end Android
 - [x] Install prompt timing, update prompt, `navigator.storage.persist()`, backup reminders
   - (new) Install toast after the first XP, "Not now" is permanent (Settings has no install button yet);

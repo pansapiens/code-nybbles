@@ -4,7 +4,7 @@
       class="node"
       :class="[state, kind, { open }]"
       :style="{ '--fill': `${fill * 360}deg`, '--unit-colour': colour, '--offset': offset }"
-      :aria-label="`${title}, ${stateLabel}`"
+      :aria-label="`${current ? 'Start: ' : ''}${title}, ${stateLabel}`"
     >
       <span class="face">
         <AppIcon :name="icon" :size="current ? 40 : 34" />
@@ -146,10 +146,10 @@ const action = computed(() => {
   position: absolute;
   top: -34px;
   padding: var(--s-1) var(--s-3);
-  border: 2px solid var(--c-border);
+  border: 2px solid var(--unit-colour);
   border-radius: var(--radius-tile);
   background: var(--c-canvas);
-  color: var(--unit-colour);
+  color: var(--c-text); /* unit colours are too light for text (plans/01 §4.5) */
   font-weight: 900;
   text-transform: uppercase;
   animation: bob 1.6s ease-in-out infinite;

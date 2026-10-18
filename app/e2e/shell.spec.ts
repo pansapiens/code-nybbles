@@ -41,7 +41,7 @@ test('lesson player: answer, feedback, quit', async ({ page }) => {
   await onboard(page)
   await page.goto('./')
   await page.getByRole('button', { name: /, up next$/ }).click()
-  await page.getByRole('button', { name: /^Start/ }).click()
+  await page.getByRole('button', { name: /^Start \+/ }).click()
   const gotIt = page.getByRole('button', { name: 'Got it' })
   const radio = page.getByRole('radio').first()
   await expect(gotIt.or(radio).first()).toBeVisible()
@@ -65,7 +65,7 @@ test('a wrong answer lands in Mistakes review', async ({ page }) => {
   await onboard(page)
   await page.goto('./')
   await page.getByRole('button', { name: /, up next$/ }).click()
-  await page.getByRole('button', { name: /^Start/ }).click()
+  await page.getByRole('button', { name: /^Start \+/ }).click()
   const answer = async (ex: { type: string; answer: unknown; options?: { id: string }[] }, wrong = false) => {
     const count = ex.type === 'true-false' ? 2 : ex.options!.length
     const right = ex.type === 'true-false' ? (ex.answer ? 0 : 1) : ex.options!.findIndex((o) => o.id === ex.answer)

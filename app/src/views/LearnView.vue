@@ -1,5 +1,6 @@
 <template>
   <section class="view path">
+    <h1 class="visually-hidden">Learn</h1>
     <p v-if="error" role="alert">Couldn't load the course: {{ error }}</p>
     <template v-for="u in units" :key="u.id">
       <header class="unit-banner" :style="{ background: u.colour }">

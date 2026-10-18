@@ -18,7 +18,7 @@
       <CelebrationScreen :key="screenIndex" :screen="screens[screenIndex]!" />
     </main>
 
-    <main v-else-if="exercise" class="prompt">
+    <main v-else-if="exercise" ref="promptEl" class="prompt" tabindex="-1">
       <CodeCard v-if="program" class="program" :code="visibleProgram" line-numbers caption="Program" />
       <component
         :is="rendererFor(exercise)"
@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import type { CompiledExercise, CompiledLevel } from '@code-nybbles/content-build/schema'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -182,6 +182,12 @@ onMounted(async () => {
 })
 
 const exercise = computed(() => (run.value ? exercises.get(currentRef(run.value) ?? '') : undefined))
+// Each new exercise takes focus, so a screen reader reads the question and Tab reaches its answers first.
+const promptEl = ref<HTMLElement>()
+watch(
+  () => run.value?.index,
+  () => nextTick(() => promptEl.value?.focus({ preventScroll: true })),
+)
 watch(run, (r) => (revealed.value = Math.max(revealed.value, reveals.get((r && currentRef(r)) ?? '') ?? 0)))
 const visibleProgram = computed(() => program.value?.rust.split('\n').slice(0, revealed.value).join('\n') ?? '')
 const explanation = computed(() => (exercise.value && 'explanation' in exercise.value ? exercise.value.explanation : undefined))
@@ -343,6 +349,9 @@ watch(response, (r) => {
 .prompt {
   flex: 1;
   padding: var(--s-4);
+}
+.prompt:focus {
+  outline: none; /* focused by script for screen readers, not a control */
 }
 .lesson-foot {
   position: sticky;

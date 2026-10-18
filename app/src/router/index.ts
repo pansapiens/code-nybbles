@@ -26,7 +26,7 @@ const router = createRouter({
     { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/streak', name: 'streak', component: () => import('@/views/StreakView.vue') },
-    { path: '/guidebook/:unitId', component: () => import('@/views/GuidebookView.vue'), props: true },
+    { path: '/guidebook/:unitId', name: 'guidebook', component: () => import('@/views/GuidebookView.vue'), props: true },
     {
       path: '/lesson/:levelId/:lessonId',
       name: 'lesson',
@@ -56,6 +56,28 @@ const router = createRouter({
       : []),
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
+})
+
+// The page title names the screen, so screen readers announce where a navigation landed.
+const TITLES: Record<string, string> = {
+  learn: 'Learn',
+  practice: 'Practice',
+  'practice-session': 'Practice',
+  playground: 'Playground',
+  shop: 'Shop',
+  profile: 'Profile',
+  settings: 'Settings',
+  streak: 'Streak',
+  guidebook: 'Guidebook',
+  lesson: 'Lesson',
+  onboarding: 'Welcome',
+  placement: 'Placement test',
+  jump: 'Jump ahead',
+  'not-found': 'Page not found',
+}
+router.afterEach((to) => {
+  const title = TITLES[String(to.name)]
+  document.title = title ? `${title} · Code Nybbles` : 'Code Nybbles'
 })
 
 // First launch only. Anyone who already has activity (e.g. from before onboarding existed, or an imported backup) is skipped.

@@ -1,5 +1,6 @@
 <template>
   <section class="view stack">
+    <h1 class="visually-hidden">Streak</h1>
     <div class="hero" :class="{ off: !v.extendedToday }">
       <AppIcon name="flame" :size="88" />
       <div>
@@ -28,7 +29,7 @@
       </div>
       <div class="card">
         <span class="label">Freezes</span>
-        <span class="freezes" :aria-label="`${v.streak.freezesEquipped} of ${MAX_FREEZES} freezes equipped`">
+        <span class="freezes" role="img" :aria-label="`${v.streak.freezesEquipped} of ${MAX_FREEZES} freezes equipped`">
           <AppIcon v-for="i in MAX_FREEZES" :key="i" name="star" :class="{ on: i <= v.streak.freezesEquipped }" />
         </span>
         <RouterLink to="/shop" class="small">Get more</RouterLink>
@@ -46,20 +47,14 @@
         <strong>{{ monthLabel }}</strong>
         <button type="button" class="nav" aria-label="Next month" @click="month = addMonths(month, 1)">&rsaquo;</button>
       </div>
-      <div class="grid" role="grid" :aria-label="monthLabel">
-        <span v-for="d in WEEKDAYS" :key="d" class="dow" aria-hidden="true">{{ d }}</span>
-        <span v-for="n in leadingBlanks" :key="`b${n}`" aria-hidden="true" />
-        <span
-          v-for="d in days"
-          :key="d.date"
-          role="gridcell"
-          class="day"
-          :class="[d.status, { today: d.date === v.today }]"
-          :aria-label="`${d.date}: ${d.status ?? (d.date === v.today ? 'today' : 'no lesson')}`"
-        >
-          {{ d.n }}
-        </span>
-      </div>
+      <ol class="grid" :aria-label="monthLabel">
+        <li v-for="d in WEEKDAYS" :key="d" class="dow" aria-hidden="true">{{ d }}</li>
+        <li v-for="n in leadingBlanks" :key="`b${n}`" aria-hidden="true" />
+        <li v-for="d in days" :key="d.date" class="day" :class="[d.status, { today: d.date === v.today }]">
+          <span aria-hidden="true">{{ d.n }}</span>
+          <span class="visually-hidden">{{ d.date }}: {{ d.status ?? (d.date === v.today ? 'today' : 'no lesson') }}</span>
+        </li>
+      </ol>
       <p class="legend">
         <span class="key active" /> Active <span class="key frozen" /> Frozen <span class="key repaired" /> Repaired
       </p>
@@ -199,6 +194,9 @@ const monthLabel = computed(() =>
   cursor: pointer;
 }
 .grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: var(--s-1);
