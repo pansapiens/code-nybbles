@@ -46,7 +46,7 @@ lessons:
         id: tf-names-match-fields
         prompt: "In `let Point { x, y } = p;`, the variables must be called `x` and `y`, the same as the fields."
         answer: true
-        explanation: "`Point { x, y }` is shorthand for `Point { x: x, y: y }`, so each variable is named after its field. The next card shows how to pick other names."
+        explanation: "`Point { x, y }` is shorthand for `Point { x: x, y: y }`, so each variable is named after its field. To pick other names, write `field: name`."
         concepts: [pattern.destructure]
 
       - type: concept
@@ -299,19 +299,19 @@ lessons:
             struct Day { temp: i32, wind: u32 }
 
             fn main() {
-                let today = Day {
+                let day = Day {
                     temp: 18,
                     wind: 25,
                 };
-                let Day { temperature, .. } = today;
+                let Day { temperature, .. } = day;
                 println!("{temperature}");
             }
           verify: compile-fail
           expectErrors: [E0026]
         options:
-          - { id: a, code: "let Day { temp: temperature, .. } = today;" }
-          - { id: b, code: "let Day { temperature: temp, .. } = today;", why: "It's `field: variable`, so this still looks for a field called `temperature`." }
-          - { id: c, code: "let Day { temperature } = today;", why: "There's still no `temperature` field, and without `..` the `wind` field is missing too." }
+          - { id: a, code: "let Day { temp: temperature, .. } = day;" }
+          - { id: b, code: "let Day { temperature: temp, .. } = day;", why: "It's `field: variable`, so this still looks for a field called `temperature`." }
+          - { id: c, code: "let Day { temperature } = day;", why: "There's still no `temperature` field, and without `..` the `wind` field is missing too." }
         answer: a
         explanation: "`Day` has no field called `temperature`. `temp: temperature` reads the `temp` field into a variable named `temperature`."
         concepts: [pattern.destructure]

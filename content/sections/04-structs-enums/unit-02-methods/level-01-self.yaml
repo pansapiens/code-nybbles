@@ -514,7 +514,7 @@ lessons:
 
       - type: true-false
         id: tf-field-and-method
-        prompt: "A struct can have a field and a method with the same name, like `balance` above."
+        prompt: "A struct can have a field `balance` and a method `fn balance(&self) -> u32` with the same name."
         answer: true
         explanation: "`acc.balance` reads the field and `acc.balance()` calls the method. The brackets tell Rust which you mean."
         concepts: [method.self]

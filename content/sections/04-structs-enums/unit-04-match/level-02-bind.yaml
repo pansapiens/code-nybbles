@@ -95,15 +95,15 @@ lessons:
           rust: |
             let reading: Option<u32> = Some(7);
             let doubled = match reading {
-                ___1___(n) => n * 2,
-                ___2___ => 0,
+                ___1___ => 0,
+                ___2___(n) => n * 2,
             };
             println!("{doubled}");
           verify: run
           expectStdout: "14\n"
         blanks:
-          "1": { answer: ["Some"] }
-          "2": { answer: ["None"] }
+          "1": { answer: ["None"] }
+          "2": { answer: ["Some"] }
         bank: ["Some", "None", "Null", "nil", "Option"]
         explanation: "`Option` has two variants, `Some` and `None`. Rust has no `null`; `None` is the \"no value\" case."
         concepts: [match.bind]

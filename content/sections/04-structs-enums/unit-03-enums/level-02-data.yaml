@@ -471,7 +471,7 @@ lessons:
         id: mcq-valid-definition
         prompt: Which enum definition compiles?
         options:
-          - { id: a, code: "enum Shape { Circle(f64), Rect { w: f64, h: f64 } }" }
+          - { id: a, code: "enum Shape {\n    Circle(f64),\n    Rect { w: f64, h: f64 },\n}" }
           - { id: b, code: "enum Shape { Circle(r: f64) }", why: "Tuple-like variants list only types. To name the field, use `Circle { r: f64 }`." }
           - { id: c, code: "enum Shape { Circle { f64 } }", why: "Curly brackets need field names: `Circle { r: f64 }`." }
         answer: a

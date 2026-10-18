@@ -317,8 +317,8 @@ lessons:
           verify: run
         options:
           - { id: a, text: "Some(3)\nNone" }
-          - { id: b, text: "3\n0", why: "`divide` returns an `Option`, and `{:?}` shows the `Some` and `None`." }
-          - { id: c, text: "Some(3)", why: "Dividing by 0 doesn't stop the program here. `divide` checks first and returns `None`." }
+          - { id: b, text: "3\n0", why: "`div` returns an `Option`, and `{:?}` shows the `Some` and `None`." }
+          - { id: c, text: "Some(3)", why: "Dividing by 0 doesn't stop the program here. `div` checks first and returns `None`." }
         answer: a
         explanation: "With `b` as 0 the function returns `None` instead of dividing, so nothing panics."
         concepts: [option.basics, option.type-safety]
@@ -365,10 +365,10 @@ lessons:
 
       - type: parsons
         id: parsons-first-negative
-        prompt: Arrange the lines so `first_negative` returns the first number below zero, if there is one
+        prompt: Arrange the lines so `find_neg` returns the first number below zero, if there is one
         lines:
-          - { id: l1, text: "fn first_negative(nums: [i32; 4]) -> Option<i32> {" }
-          - { id: l2, text: "    for n in nums {" }
+          - { id: l1, text: "fn find_neg(a: [i32; 4]) -> Option<i32> {" }
+          - { id: l2, text: "    for n in a {" }
           - { id: l3, text: "        if n < 0 {" }
           - { id: l4, text: "            return Some(n);" }
           - { id: l5, text: "        }" }
@@ -383,8 +383,8 @@ lessons:
           harness: |
             {{solution}}
             fn main() {
-                println!("{:?}", first_negative([3, -2, 5, -7]));
-                println!("{:?}", first_negative([1, 2, 3, 4]));
+                println!("{:?}", find_neg([3, -2, 5, -7]));
+                println!("{:?}", find_neg([1, 2, 3, 4]));
             }
           mode: run
           expectStdout: "Some(-2)\nNone\n"

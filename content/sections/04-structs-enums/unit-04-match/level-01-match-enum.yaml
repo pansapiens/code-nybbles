@@ -373,7 +373,7 @@ lessons:
         blanks:
           "1": { answer: ["match"] }
           "2": { answer: ["Coin::Twenty", "_"] }
-        bank: ["match", "if", "switch", "Coin::Twenty", "Twenty", "else"]
+        bank: ["match", "if", "Coin::Twenty", "Twenty", "else"]
         explanation: "`match coin` starts the match. The last arm can name `Coin::Twenty` or use `_`; both cover the remaining variant."
         concepts: [match.enum, match.exhaustive]
 
@@ -517,7 +517,7 @@ lessons:
           "1": { answer: ["match"] }
           "2": { answer: ["::"] }
           "3": { answer: ["_"] }
-        bank: ["match", "if", "::", ".", "_", "else", "default"]
+        bank: ["match", "if", "::", ".", "_", "else"]
         explanation: "`match dir` starts the match, variants are named with `::`, and `_` catches `South` and `West`."
         concepts: [match.enum, match.exhaustive]
 

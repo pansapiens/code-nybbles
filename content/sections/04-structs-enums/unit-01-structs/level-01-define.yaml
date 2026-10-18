@@ -478,19 +478,20 @@ lessons:
           - { id: l6, text: "    User { name, age: 21 }" }
           - { id: l7, text: "}" }
           - { id: l8, text: "fn main() {" }
-          - { id: l9, text: '    let user = make_user(String::from("Mia"));' }
-          - { id: l10, text: '    println!("{} {}", user.name, user.age);' }
-          - { id: l11, text: "}" }
+          - { id: l9, text: '    let name = String::from("Mia");' }
+          - { id: l10, text: "    let u = make_user(name);" }
+          - { id: l11, text: '    println!("{} {}", u.name, u.age);' }
+          - { id: l12, text: "}" }
         distractors:
           - { id: d1, text: "    User { name: String, age: 21 }" }
           - { id: d2, text: "    name = String," }
-        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11]
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12]
         alternatives:
-          - [l1, l2, l3, l4, l8, l9, l10, l11, l5, l6, l7]
-          - [l5, l6, l7, l1, l2, l3, l4, l8, l9, l10, l11]
-          - [l8, l9, l10, l11, l1, l2, l3, l4, l5, l6, l7]
-          - [l8, l9, l10, l11, l5, l6, l7, l1, l2, l3, l4]
-          - [l5, l6, l7, l8, l9, l10, l11, l1, l2, l3, l4]
+          - [l1, l2, l3, l4, l8, l9, l10, l11, l12, l5, l6, l7]
+          - [l5, l6, l7, l1, l2, l3, l4, l8, l9, l10, l11, l12]
+          - [l8, l9, l10, l11, l12, l1, l2, l3, l4, l5, l6, l7]
+          - [l8, l9, l10, l11, l12, l5, l6, l7, l1, l2, l3, l4]
+          - [l5, l6, l7, l8, l9, l10, l11, l12, l1, l2, l3, l4]
         verify:
           mode: run
           expectStdout: "Mia 21\n"
@@ -610,10 +611,10 @@ lessons:
         id: mcq-definition-syntax
         prompt: Which is a valid struct definition?
         options:
-          - { id: a, code: "struct Song { title: String, length: u32 }" }
-          - { id: b, code: "struct Song { title: String; length: u32 }", why: "Fields are separated by commas, not semicolons." }
-          - { id: c, code: "struct Song { let title: String, let length: u32 }", why: "Fields don't use `let`. You write `name: Type`." }
-          - { id: d, code: "struct Song { title = String, length = u32 }", why: "A field's type follows a `:`, as with a variable's type." }
+          - { id: a, code: "struct Point { x: i32, y: i32 }" }
+          - { id: b, code: "struct Point { x: i32; y: i32 }", why: "Fields are separated by commas, not semicolons." }
+          - { id: c, code: "struct Point { let x: i32, let y: i32 }", why: "Fields don't use `let`. You write `name: Type`." }
+          - { id: d, code: "struct Point { x = i32, y = i32 }", why: "A field's type follows a `:`, as with a variable's type." }
         answer: a
         explanation: "A definition lists `name: Type` pairs separated by commas. A trailing comma after the last field is allowed too."
         concepts: [struct.define]

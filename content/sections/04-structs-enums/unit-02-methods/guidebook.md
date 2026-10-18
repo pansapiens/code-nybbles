@@ -25,7 +25,7 @@ fn main() {
 
 - A method's first parameter is `self`, the value it was called on. Fields are reached with `self.count`.
 - Call a method with a dot: `taps.add(2)`. Extra arguments go in the brackets.
-- A struct can have a field and a method with the same name: `taps.count` vs `taps.count()`.
+- A struct can have a field and a method with the same name. With a method `fn count(&self)`, `taps.count` reads the field and `taps.count()` calls the method.
 
 ## Choosing `&self`, `&mut self` or `self`
 

@@ -56,10 +56,10 @@ lessons:
           verify: run
         options:
           - { id: a, text: "30" }
-          - { id: b, text: "35", why: "Only one arm runs: the one for the variant `light` holds." }
+          - { id: b, text: "35", why: "Only one arm runs: the one for `Red`, the value the method was called on." }
           - { id: c, text: "Red", why: "`wait` returns the number from the matching arm, not the variant's name." }
         answer: a
-        explanation: "`light` is `Red`, so `match self` takes the `Light::Red` arm and returns `30`."
+        explanation: "The method is called on `Light::Red`, so `match self` takes the `Light::Red` arm and returns `30`."
         concepts: [enum.impl]
 
       - type: true-false

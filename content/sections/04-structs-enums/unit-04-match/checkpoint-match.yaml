@@ -216,12 +216,12 @@ lessons:
           - { id: l2, text: "    match v {" }
           - { id: l3, text: "        Vehicle::Bike => 2," }
           - { id: l4, text: "        Vehicle::Car => 4," }
-          - { id: l5, text: "        Vehicle::Truck(axles) => axles * 2," }
+          - { id: l5, text: "        Vehicle::Truck(n) => n * 2," }
           - { id: l6, text: "    }" }
           - { id: l7, text: "}" }
         distractors:
-          - { id: d1, text: "        Vehicle::Truck => axles * 2," }
-          - { id: d2, text: "        Vehicle::Truck(axles) => axles * 2;" }
+          - { id: d1, text: "        Vehicle::Truck => n * 2," }
+          - { id: d2, text: "        Vehicle::Truck(n) => n * 2;" }
         answer: [l1, l2, l3, l4, l5, l6, l7]
         alternatives:
           - [l1, l2, l3, l5, l4, l6, l7]
@@ -239,7 +239,7 @@ lessons:
             }
           mode: run
           expectStdout: "6 6\n"
-        explanation: "Each variant gets an arm, and `Truck(axles)` binds the number of axles so the arm can use it. The arms can go in any order."
+        explanation: "Each variant gets an arm, and `Truck(n)` binds the number of axles so the arm can use it. The arms can go in any order."
         concepts: [match.enum, match.bind]
 
       - type: decode-error

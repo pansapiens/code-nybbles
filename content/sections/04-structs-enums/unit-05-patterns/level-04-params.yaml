@@ -359,7 +359,8 @@ lessons:
           - { id: l1, text: "fn main() {" }
           - { id: l2, text: "    let laps = [62, 58, 60];" }
           - { id: l3, text: "    let mut best = (0, laps[0]);" }
-          - { id: l4, text: "    for (i, &t) in laps.iter().enumerate() {" }
+          - { id: l12, text: "    let each = laps.iter().enumerate();" }
+          - { id: l4, text: "    for (i, &t) in each {" }
           - { id: l5, text: "        if t < best.1 {" }
           - { id: l6, text: "            best = (i, t);" }
           - { id: l7, text: "        }" }
@@ -368,8 +369,10 @@ lessons:
           - { id: l10, text: '    println!("lap {lap}: {time}s");' }
           - { id: l11, text: "}" }
         distractors:
-          - { id: d1, text: "    for (i, t) in laps.iter() {" }
-        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11]
+          - { id: d1, text: "    for (i, t) in each {" }
+        answer: [l1, l2, l3, l12, l4, l5, l6, l7, l8, l9, l10, l11]
+        alternatives:
+          - [l1, l2, l12, l3, l4, l5, l6, l7, l8, l9, l10, l11]
         verify:
           mode: run
           expectStdout: "lap 1: 58s\n"

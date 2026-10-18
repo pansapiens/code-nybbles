@@ -385,12 +385,12 @@ lessons:
         id: parsons-is-vertical
         prompt: "Arrange the lines into a function that says whether a direction is north or south"
         lines:
-          - { id: l1, text: "fn is_vertical(dir: Dir) -> bool {" }
-          - { id: l2, text: "    matches!(dir, Dir::North | Dir::South)" }
+          - { id: l1, text: "fn is_vertical(d: Dir) -> bool {" }
+          - { id: l2, text: "    matches!(d, Dir::North | Dir::South)" }
           - { id: l3, text: "}" }
         distractors:
-          - { id: d1, text: "    matches!(dir, Dir::North || Dir::South)" }
-          - { id: d2, text: "    matches!(dir, Dir::North | Dir::South);" }
+          - { id: d1, text: "    matches!(d, Dir::North || Dir::South)" }
+          - { id: d2, text: "    matches!(d, Dir::North | Dir::South);" }
         answer: [l1, l2, l3]
         verify:
           harness: |

@@ -430,15 +430,16 @@ lessons:
           - { id: l3, text: "    title: String," }
           - { id: l4, text: "}" }
           - { id: l5, text: "fn main() {" }
-          - { id: l6, text: '    let b = Book { title: String::from("Emma") };' }
-          - { id: l7, text: '    println!("{b:?}");' }
-          - { id: l8, text: "}" }
+          - { id: l6, text: '    let title = String::from("Emma");' }
+          - { id: l7, text: "    let b = Book { title };" }
+          - { id: l8, text: '    println!("{b:?}");' }
+          - { id: l9, text: "}" }
         distractors:
           - { id: d1, text: "#[derive(debug)]" }
           - { id: d2, text: '    println!("{b}");' }
-        answer: [l1, l2, l3, l4, l5, l6, l7, l8]
+        answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
         alternatives:
-          - [l5, l6, l7, l8, l1, l2, l3, l4]
+          - [l5, l6, l7, l8, l9, l1, l2, l3, l4]
         verify:
           mode: run
           expectStdout: "Book { title: \"Emma\" }\n"

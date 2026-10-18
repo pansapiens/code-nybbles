@@ -212,7 +212,7 @@ also works. CI doesn't need either.
   - [ ] Unit 2.4 Guessing Game is a Build project; needs Build nodes (M6) - skipped for now
   - [x] Section 3 complete: Units 3.1-3.5 (3.5 ends with the Section 3 checkpoint), diagrams on every level
   - [x] Section 4 written: Units 4.1-4.5 (4.5 ends with the Section 4 checkpoint); not yet QA-reviewed
-  - [ ] Section 5 (briefs ready in /tmp/cn-brief/unit-5.*.md; 5.3 ends with `collections.hashmap.checkpoint`)
+  - [~] Section 5 being written (briefs /tmp/cn-brief/unit-5.*.md; 5.3 ends with `collections.hashmap.checkpoint`); `section.yaml` and course entry added
   - Authored by parallel subagents, one per unit; the parent pre-registers concept ids and section unit lists
     so agents only touch their own unit directory (briefs in the session log of 2026-10-17)
 - [x] Guidebooks per unit; checkpoints
@@ -237,7 +237,11 @@ also works. CI doesn't need either.
     tile items with significant spacing were converted to options mode
   - [ ] (new) Clippy-clean check for snippets (03 §5) not automated
   - [ ] Units 1.1-1.2 haven't had an independent review
-  - [ ] (new) Section 4 QA pass (qa brief in /tmp/cn-brief/qa.md)
+  - [x] (new) Section 4 QA pass (19 fixes: catch-all fill tiles, 40-column lines, items leaning on the previous one)
+    - [ ] (new) Judgement calls: a few lines at 41-51 columns (Rectangle Code Read is at the 25-line limit;
+      Traffic lights line 14 holds the `|` the questions ask about); `spot-missing-self` answer is line 4 but
+      rustc points at line 5; `let ... else` wording omits `panic!`; Section 4 checkpoint uses US coins;
+      `pairs-option-errors` has two "E0277" tiles; a redundant parsons alternative in `checkpoint-methods`
   - [x] Section 3 reviewed by two agents: 25 fixes (moved-value claims, drop timing, E0106 vs E0515,
     E0502 vs E0506, parsons distractors that formed valid programs, follow-ups made self-contained)
   - [ ] Judgement calls (Section 3): spot-bug items that expect the root-cause line, not the line rustc reports

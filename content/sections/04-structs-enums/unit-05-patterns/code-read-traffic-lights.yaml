@@ -21,11 +21,11 @@ program:
             }
         }
     }
-
     fn main() {
         let mut light = Light::Red;
         for _ in 0..4 {
-            println!("{light:?} for {}s", light.seconds());
+            let s = light.seconds();
+            println!("{light:?} for {s}s");
             light = light.next();
         }
     }
@@ -94,7 +94,7 @@ chunks:
         answer: a
         explanation: "The first arm matches `Light::Amber`, so `seconds` returns 5."
         concepts: [match.enum]
-  - lines: 4
+  - lines: 3
     exercises:
       - type: mcq
         id: loop-count
@@ -106,11 +106,11 @@ chunks:
         answer: a
         explanation: "The range `0..4` has four values. `_` ignores the number, since only the count matters."
         concepts: [ctrl.for]
-  - lines: 4
+  - lines: 5
     exercises:
       - type: mcq
         id: why-mut
-        prompt: "Why is `light` declared with `mut` on line 20?"
+        prompt: "Why is `light` declared with `mut` on line 19?"
         options:
           - { id: a, text: "The loop assigns it a new `Light` each time round" }
           - { id: b, text: "Calling a method needs `mut`", why: "`seconds` and `next` take `&self`, which only needs to read `light`." }

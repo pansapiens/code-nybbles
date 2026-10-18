@@ -481,18 +481,18 @@ lessons:
         id: parsons-birthday
         prompt: "`struct User { name: String, age: u32 }` is already defined. Arrange the lines so the program prints `Kim 31`."
         lines:
-          - { id: l1, text: "fn birthday(u: &mut User) {" }
-          - { id: l2, text: "    u.age += 1;" }
+          - { id: l1, text: "fn birthday(p: &mut User) {" }
+          - { id: l2, text: "    p.age += 1;" }
           - { id: l3, text: "}" }
           - { id: l4, text: "fn main() {" }
           - { id: l5, text: '    let name = String::from("Kim");' }
-          - { id: l6, text: "    let mut user = User { name, age: 30 };" }
-          - { id: l7, text: "    birthday(&mut user);" }
-          - { id: l8, text: '    println!("{} {}", user.name, user.age);' }
+          - { id: l6, text: "    let mut u = User { name, age: 30 };" }
+          - { id: l7, text: "    birthday(&mut u);" }
+          - { id: l8, text: '    println!("{} {}", u.name, u.age);' }
           - { id: l9, text: "}" }
         distractors:
-          - { id: d1, text: "    birthday(user);" }
-          - { id: d2, text: "    let user = User { name, age: 30 };" }
+          - { id: d1, text: "    birthday(u);" }
+          - { id: d2, text: "    let u = User { name, age: 30 };" }
         answer: [l1, l2, l3, l4, l5, l6, l7, l8, l9]
         alternatives:
           - [l4, l5, l6, l7, l8, l9, l1, l2, l3]
@@ -505,7 +505,7 @@ lessons:
             {{solution}}
           mode: run
           expectStdout: "Kim 31\n"
-        explanation: "`birthday` borrows `user` mutably, so `main` keeps ownership and can print it afterwards. Passing `user` itself would move it."
+        explanation: "`birthday` borrows `u` mutably, so `main` keeps ownership and can print it afterwards. Passing `u` itself would move it."
         concepts: [struct.ownership, borrow.mut]
 
       - type: fill-tokens

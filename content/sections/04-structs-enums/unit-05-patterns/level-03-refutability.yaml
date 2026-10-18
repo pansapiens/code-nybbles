@@ -439,8 +439,8 @@ lessons:
           verify: compile-fail
           expectErrors: [E0005]
         options:
-          - { id: a, code: "let Cmd::Move { x, y } = cmd else { return; };" }
-          - { id: b, code: "let Cmd::Move { x, y } = cmd else { println!(\"quit\"); };", why: "The `else` block must leave, for example with `return`. This one carries on, which is E0308." }
+          - { id: a, code: "let Cmd::Move { x, y } = cmd else {\n    return;\n};" }
+          - { id: b, code: "let Cmd::Move { x, y } = cmd else {\n    println!(\"quit\");\n};", why: "The `else` block must leave, for example with `return`. This one carries on, which is E0308." }
           - { id: c, code: "let Cmd::Move { x, .. } = cmd;", why: "Still refutable: `cmd` could be `Quit`. It also no longer binds `y`." }
         answer: a
         explanation: "`let ... else` accepts a refutable pattern, as long as the `else` block leaves when it fails."
