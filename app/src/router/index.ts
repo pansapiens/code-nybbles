@@ -13,6 +13,13 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'learn', component: LearnView },
     { path: '/practice', name: 'practice', component: () => import('@/views/PracticeView.vue') },
+    {
+      path: '/practice/:kind(smart|mistakes|unit)/:unitId?',
+      name: 'practice-session',
+      component: () => import('@/views/LessonView.vue'),
+      props: true,
+      meta: { fullscreen: true },
+    },
     { path: '/shop', name: 'shop', component: () => import('@/views/ShopView.vue') },
     { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },

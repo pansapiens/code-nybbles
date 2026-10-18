@@ -17,4 +17,5 @@ path:
   - level: level-04-functions
   - level: level-05-marathon
   - code-read: code-read-who-owns
+  - practice
   - checkpoint: checkpoint-moves

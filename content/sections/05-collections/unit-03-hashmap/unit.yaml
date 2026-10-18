@@ -17,4 +17,5 @@ path:
   - level: level-04-iter
   - level: level-05-choose
   - code-read: code-read-word-frequency
+  - practice
   - checkpoint: checkpoint-collections

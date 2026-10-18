@@ -15,4 +15,5 @@ path:
   - chest
   - level: level-03-scope-drop
   - level: level-04-rules
+  - practice
   - checkpoint: checkpoint-memory

@@ -39,7 +39,7 @@ import AppIcon from './AppIcon.vue'
 import DuoButton from './DuoButton.vue'
 
 const props = defineProps<{
-  kind: 'level' | 'checkpoint' | 'code-read' | 'chest'
+  kind: 'level' | 'checkpoint' | 'code-read' | 'chest' | 'practice'
   state: NodeState
   title: string
   /** Lessons done / total, for the ring. */
@@ -57,11 +57,12 @@ const open = ref(false)
 const current = computed(() => props.state === 'current')
 const fill = computed(() => (props.kind === 'level' && props.total ? Math.min(1, props.done / props.total) : 0))
 const icon = computed(() =>
-  props.state === 'locked' ? 'lock' : props.kind === 'chest' ? 'chest' : props.kind === 'checkpoint' ? 'trophy' : props.kind === 'code-read' ? 'book' : props.state === 'done' ? 'check' : 'star',
+  props.state === 'locked' ? 'lock' : props.kind === 'chest' ? 'chest' : props.kind === 'practice' ? 'dumbbell' : props.kind === 'checkpoint' ? 'trophy' : props.kind === 'code-read' ? 'book' : props.state === 'done' ? 'check' : 'star',
 )
 const stateLabel = computed(() => ({ done: 'complete', current: 'up next', locked: 'locked' })[props.state])
 const subtitle = computed(() => {
   if (props.state === 'locked') return 'Finish everything above to unlock this.'
+  if (props.kind === 'practice') return 'Review what you have learned so far.'
   if (props.kind === 'chest') return props.state === 'done' ? 'Opened.' : 'A free reward for getting this far.'
   if (props.kind === 'checkpoint') return props.state === 'done' ? 'Passed. Replay it any time.' : 'Test yourself on the whole unit.'
   if (props.kind === 'code-read') return props.state === 'done' ? 'Read. Replay it any time.' : 'Read a whole program and answer questions about it.'
@@ -70,6 +71,7 @@ const subtitle = computed(() => {
 })
 const action = computed(() => {
   if (props.kind === 'chest') return 'Open'
+  if (props.kind === 'practice') return `Practise +${props.xp} XP`
   if (props.state === 'done') return 'Review'
   return `Start +${props.xp} XP`
 })

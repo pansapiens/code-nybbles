@@ -4,8 +4,10 @@ import { commit, getProfile, loadProgress, updateProfile } from '@/db/repo'
 import type { Profile } from '@/db/schema'
 import { deviceTimezone } from '@/domain/dates'
 import {
+  type AnswerResult,
   buy,
   completeLesson,
+  completePractice,
   type Ctx,
   type DailyGoal,
   type DomainEvent,
@@ -56,6 +58,11 @@ export const useProgressStore = defineStore('progress', () => {
     await save(out.events)
     return out
   }
+  async function finishPractice(kind: Parameters<typeof completePractice>[1], results: AnswerResult[]) {
+    const out = completePractice(state.value, kind, results, ctx())
+    await save(out.events)
+    return out
+  }
   async function purchase(item: ShopItem) {
     const out = buy(state.value, item, ctx())
     if ('error' in out) return out.error
@@ -73,5 +80,5 @@ export const useProgressStore = defineStore('progress', () => {
     profile.value = await getProfile()
   }
 
-  return { state, profile, ready, view, dailyGoal, load, reload, finishLesson, purchase, claimChest, loseHeart, setDailyGoal }
+  return { state, profile, ready, view, dailyGoal, load, reload, finishLesson, finishPractice, purchase, claimChest, loseHeart, setDailyGoal }
 })

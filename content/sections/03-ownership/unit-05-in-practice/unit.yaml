@@ -15,4 +15,5 @@ path:
   - chest
   - level: level-03-iter-ref
   - code-read: code-read-swap-and-sum
+  - practice
   - checkpoint: checkpoint-ownership

@@ -16,4 +16,5 @@ path:
   - level: level-03-refutability
   - level: level-04-params
   - code-read: code-read-traffic-lights
+  - practice
   - checkpoint: checkpoint-structs-enums

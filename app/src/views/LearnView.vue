@@ -25,7 +25,7 @@
             :title="n.title"
             :done="Math.min(game.state.levels[n.id]?.lessons ?? 0, n.lessons ?? 0)"
             :total="n.lessons ?? 0"
-            :xp="n.kind === 'checkpoint' ? XP.checkpoint : n.kind === 'code-read' ? XP.codeRead : XP.lesson"
+            :xp="n.kind === 'checkpoint' ? XP.checkpoint : n.kind === 'code-read' ? XP.codeRead : n.kind === 'practice' ? XP.practice : XP.lesson"
             :colour="u.colour"
             :offset="n.offset"
             @start="start(n)"
@@ -48,7 +48,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import PathNode from '@/components/PathNode.vue'
 import { loadCourse } from '@/content/loader'
-import { nextLesson, nodeStates, type PathNode as Node } from '@/domain/path'
+import { nextLesson, nodeStates, type PathNode as Node, unitNodes } from '@/domain/path'
 import { XP } from '@/domain/progress'
 import { useProgressStore } from '@/stores/progress'
 
@@ -58,35 +58,19 @@ const sections = shallowRef<CompiledSection[]>([])
 const error = ref<string>()
 const toast = ref<string>()
 
-type ViewNode = Node & { index: number; title: string; offset: string; lessonIds: string[] }
+type ViewNode = Node & { unitId: string; index: number; title: string; offset: string; lessonIds: string[] }
 
 const units = computed(() => {
   let index = 0
   return sections.value.flatMap((s, si) =>
     s.units.map((u, ui) => {
-      const nodes: ViewNode[] = []
-      for (const p of u.path) {
-        // Practice and Build nodes aren't playable yet (M4+), so they're left off the path.
-        if (p.kind !== 'chest' && !('levelId' in p)) continue
-        const i = nodes.length
+      const nodes: ViewNode[] = unitNodes(u).map((n, i) => {
         // Winding path: +-1 x --wave (plans/01 §4.3.2).
         const offset = `calc(var(--wave) * ${Math.sin((i * Math.PI) / 4).toFixed(3)})`
-        if (p.kind === 'chest' && 'id' in p) {
-          nodes.push({ id: p.id, kind: 'chest', index: index++, title: 'Treasure chest', offset, lessonIds: [] })
-          continue
-        }
-        if (!('levelId' in p)) continue
-        const level = u.levels[p.levelId]!
-        nodes.push({
-          id: level.id,
-          kind: p.kind,
-          lessons: level.lessons.length,
-          index: index++,
-          title: level.title,
-          offset,
-          lessonIds: level.lessons.map((l) => l.id),
-        })
-      }
+        const level = u.levels[n.id]
+        const title = level?.title ?? (n.kind === 'chest' ? 'Treasure chest' : 'Practice')
+        return { ...n, unitId: u.id, index: index++, title, offset, lessonIds: level?.lessons.map((l) => l.id) ?? [] }
+      })
       return {
         id: u.id,
         title: u.title,
@@ -108,6 +92,7 @@ async function start(n: ViewNode) {
     if (gems) showToast(`+${gems} gems`)
     return
   }
+  if (n.kind === 'practice') return void router.push({ name: 'practice-session', params: { kind: 'unit', unitId: n.unitId } })
   void router.push({ name: 'lesson', params: { levelId: n.id, lessonId: n.lessonIds[nextLesson(n, game.state)] } })
 }
 

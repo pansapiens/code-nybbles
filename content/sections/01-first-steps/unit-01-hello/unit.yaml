@@ -17,4 +17,5 @@ path:
   - level: level-04-comments
   - level: level-05-first-errors
   - code-read: code-read-ferris-says-hello
+  - practice
   - checkpoint: checkpoint-hello

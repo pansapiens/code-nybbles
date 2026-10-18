@@ -9,7 +9,7 @@
     </header>
 
     <main v-if="error" class="prompt stack">
-      <h1>Couldn't open this lesson</h1>
+      <h1>Couldn't open this session</h1>
       <p>{{ error }}</p>
       <DuoButton @click="router.push('/')">Back to the path</DuoButton>
     </main>
@@ -88,9 +88,10 @@ import BottomSheet from '@/components/BottomSheet.vue'
 import DuoButton from '@/components/DuoButton.vue'
 import HudChip from '@/components/HudChip.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
-import { loadLevel } from '@/content/loader'
+import { loadCourse, loadLevel } from '@/content/loader'
 import {
   answerCurrent,
+  answerResults,
   currentRef,
   isFinished,
   type LessonRun,
@@ -100,6 +101,7 @@ import {
   startRun,
   summarise,
 } from '@/domain/lesson-planner'
+import { type PracticeKind, exercisePool, planPractice } from '@/domain/practice'
 import { type Grade, grade, solution } from '@/exercises/grade'
 import { checksItself, isGraded, rendererFor } from '@/exercises/registry'
 import CelebrationScreen, { type Screen } from '@/components/CelebrationScreen.vue'
@@ -110,7 +112,8 @@ import { type Cue, feedback } from '@/services/feedback'
 import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore } from '@/stores/settings'
 
-const props = defineProps<{ levelId: string; lessonId: string }>()
+// Lesson route: levelId and lessonId. Practice route: kind (and unitId for unit practice).
+const props = defineProps<{ levelId?: string; lessonId?: string; kind?: PracticeKind; unitId?: string }>()
 const router = useRouter()
 const game = useProgressStore()
 const settings = useSettingsStore()
@@ -136,7 +139,16 @@ const confirmExit = ref(false)
 
 onMounted(async () => {
   try {
-    const [found] = await Promise.all([loadLevel(props.levelId), game.load()])
+    if (props.kind) {
+      const [{ sections }] = await Promise.all([loadCourse(), game.load()])
+      const pool = exercisePool(sections)
+      const items = planPractice(props.kind, game.state, pool, game.view.today, props.unitId)
+      if (!items.length) throw new Error("There's nothing to practise yet. Finish a lesson first.")
+      for (const i of pool) exercises.set(i.ref, i.ex)
+      run.value = startRun({ levelId: 'practice', lessonId: props.kind, items }, Date.now())
+      return
+    }
+    const [found] = await Promise.all([loadLevel(props.levelId!), game.load()])
     const level = found?.level
     const lesson = level?.lessons.find((l) => l.id === props.lessonId)
     if (!level || !lesson) throw new Error(`There's no lesson ${props.levelId}/${props.lessonId}.`)
@@ -194,13 +206,20 @@ function next(correct: boolean, mistakes: number) {
 async function finish(r: LessonRun) {
   saving.value = true
   const sum = summarise(r, (ref) => isGraded(exercises.get(ref)!), Date.now())
-  const out = await game.finishLesson({
-    levelId: props.levelId,
-    lessonId: props.lessonId,
-    checkpoint: checkpoint.value,
-    codeRead: !!program.value,
-    ...sum,
+  const results = answerResults(r, (ref) => {
+    const ex = exercises.get(ref)!
+    return isGraded(ex) ? (ex.concepts ?? []) : undefined
   })
+  const out = props.kind
+    ? await game.finishPractice(props.kind, results)
+    : await game.finishLesson({
+        levelId: props.levelId!,
+        lessonId: props.lessonId!,
+        checkpoint: checkpoint.value,
+        codeRead: !!program.value,
+        results,
+        ...sum,
+      })
   saving.value = false
   screens.value = celebrations(out, sum)
   cue('complete')
@@ -237,7 +256,7 @@ function celebrations(out: Finished, sum: LessonSummary): Screen[] {
 function press() {
   if (screens.value) {
     if (screenIndex.value < screens.value.length - 1) screenIndex.value++
-    else void router.push('/')
+    else void router.push(props.kind ? '/practice' : '/')
     return
   }
   const ex = exercise.value!

@@ -19,3 +19,15 @@ it('opens nodes in order and cycles replays', () => {
   p.openedChests.push('u.chest-2')
   expect(nodeStates(nodes, p)).toEqual(['done', 'done', 'current'])
 })
+
+it('treats a practice node as open once reached, without gating what follows', () => {
+  const nodes: PathNode[] = [
+    { id: 'a', kind: 'level', lessons: 1 },
+    { id: 'u.practice-2', kind: 'practice' },
+    { id: 'b', kind: 'level', lessons: 1 },
+  ]
+  const p = initialProgress()
+  expect(nodeStates(nodes, p)).toEqual(['current', 'locked', 'locked'])
+  p.levels.a = { lessons: 1, bestAccuracy: 1, firstCompletedAt: 0 }
+  expect(nodeStates(nodes, p)).toEqual(['done', 'done', 'current'])
+})

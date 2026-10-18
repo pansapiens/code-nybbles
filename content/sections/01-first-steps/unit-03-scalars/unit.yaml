@@ -18,4 +18,5 @@ path:
   - level: level-05-bool-char
   - level: level-06-casting
   - code-read: code-read-temperature
+  - practice
   - checkpoint: checkpoint-scalars

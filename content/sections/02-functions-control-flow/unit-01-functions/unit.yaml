@@ -17,4 +17,5 @@ path:
   - level: level-04-blocks
   - level: level-05-early-return
   - code-read: code-read-area-calculator
+  - practice
   - checkpoint: checkpoint-functions

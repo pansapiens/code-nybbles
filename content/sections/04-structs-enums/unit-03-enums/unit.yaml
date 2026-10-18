@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-option
   - level: level-05-option-methods
+  - practice
   - checkpoint: checkpoint-enums

@@ -17,4 +17,5 @@ path:
   - level: level-04-continue-labels
   - level: level-05-classics
   - code-read: code-read-collatz
+  - practice
   - checkpoint: checkpoint-functions-control-flow

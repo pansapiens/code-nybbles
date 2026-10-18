@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-const
   - level: level-05-formatting
+  - practice
   - checkpoint: checkpoint-variables

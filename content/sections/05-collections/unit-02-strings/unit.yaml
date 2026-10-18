@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-methods
   - level: level-05-convert
+  - practice
   - checkpoint: checkpoint-strings

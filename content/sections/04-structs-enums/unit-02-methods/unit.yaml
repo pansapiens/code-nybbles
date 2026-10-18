@@ -15,4 +15,5 @@ path:
   - chest
   - level: level-03-auto-ref
   - code-read: code-read-rectangle
+  - practice
   - checkpoint: checkpoint-methods

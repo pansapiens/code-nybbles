@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-bounds
   - level: level-05-debug
+  - practice
   - checkpoint: checkpoint-compound

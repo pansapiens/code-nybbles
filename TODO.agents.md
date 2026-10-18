@@ -233,7 +233,7 @@ also works. CI doesn't need either.
   arrows, moved and freed states; schema-validated targets; SVG renderer (`MemoryDiagram.vue`) with a text description
   - [ ] (new) Per-variable label (e.g. R/W/O permissions in 3.3 level 6 are in the caption for now)
   - [ ] (new) A string literal's text lives in the program binary, which diagrams can't show (prose covers it)
-  - [ ] Code Reads library in the Practice hub (M4)
+  - [x] Code Reads library in the Practice hub (M4)
 - [x] Content QA pass (03 §5 checklist), all of Sections 1-5
   - [x] Units 1.3-1.5 and 2.1-2.3 reviewed by two independent agents: 22 fixes (wrong claims, ambiguous
     items, unanswerable tile exercises, a concept used before it is taught)
@@ -289,7 +289,17 @@ also works. CI doesn't need either.
 
 ## M4: Practice + review
 
-- [ ] Leitner SRS `domain/srs.ts` (01 §3.11); practice node; mistakes review; practice hub UI
+- [x] Leitner SRS (01 §3.11); practice node; mistakes review; practice hub UI
+  - (new) Event-sourced: `lesson_completed` carries per-exercise `results` (first-attempt ok + concepts), new
+    `practice_completed`; concept boxes and mistakes are folded into `Progress`, so backups keep them. The
+    unused Dexie `concepts`/`mistakes` tables can be dropped in a later schema version
+  - (new) A concept moves up a box only when reviewed on or after its due date (several lessons in one day
+    don't push it to box 6); a miss resets it to box 0, due the same day
+  - (new) `domain/practice.ts`: smart (overdue, then weakest; 2 per concept, 10 per session), mistakes (newest
+    10 that still exist in the content), unit (smart within one unit). Concept cards and Code Read items excluded
+  - [x] (new) A `practice` node before every checkpoint (21 units); optional, never gates the path
+  - [ ] (new) Code Read mistakes are recorded but can't be reviewed (they need their program)
+  - [ ] (new) Pool sampling of extra exercises inside normal lessons (plans/03 §1.1) still not done
 - [ ] Placement test (02 §6); onboarding flow (01 §4.3.1)
 - [ ] Spike: in-browser compiler (Weblings / Rubrc), record go/no-go (01 §7)
 

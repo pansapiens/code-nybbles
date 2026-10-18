@@ -15,4 +15,5 @@ path:
   - chest
   - level: level-03-if-let
   - level: level-04-matches
+  - practice
   - checkpoint: checkpoint-match

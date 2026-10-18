@@ -15,4 +15,5 @@ path:
   - chest
   - level: level-03-debug
   - level: level-04-ownership
+  - practice
   - checkpoint: checkpoint-structs

@@ -22,4 +22,5 @@ path:
   - level: level-04-nll
   - level: level-05-dangling
   - level: level-06-permissions
+  - practice
   - checkpoint: checkpoint-borrowing

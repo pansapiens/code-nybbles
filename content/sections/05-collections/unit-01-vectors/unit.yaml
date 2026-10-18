@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-borrow
   - level: level-05-enum
+  - practice
   - checkpoint: checkpoint-vectors

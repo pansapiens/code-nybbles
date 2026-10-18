@@ -16,4 +16,5 @@ path:
   - chest
   - level: level-04-utf8
   - level: level-05-first-word
+  - practice
   - checkpoint: checkpoint-slices

@@ -3,6 +3,7 @@ import {
   BEGINNER_FINAL,
   buy,
   completeLesson,
+  completePractice,
   type Ctx,
   type DomainEvent,
   fold,
@@ -139,5 +140,56 @@ describe('progress', () => {
     expect(s.state.streak.days['2026-10-06']).toBe('repaired')
     expect(s.state.streak.freezesEquipped).toBe(2) // no freeze spent on the skipped date
     expect(fold(s.log)).toEqual(s.state)
+  })
+
+  describe('concept strength and mistakes', () => {
+    const r = (ref: string, concepts: string[], ok: boolean) => ({ ref, concepts, ok })
+
+    it('moves concepts up a Leitner box on all-correct and resets on a miss', () => {
+      const s = session()
+      s.run(completeLesson(s.state, lesson({ results: [r('a', ['c.x'], true), r('b', ['c.x', 'c.y'], true), r('c', ['c.y'], false)] }), ctx(T0)))
+      expect(s.state.concepts['c.x']).toEqual({ box: 1, due: '2026-10-02', correct: 2, incorrect: 0 })
+      expect(s.state.concepts['c.y']).toEqual({ box: 0, due: '2026-10-01', correct: 1, incorrect: 1 })
+      s.run(completePractice(s.state, 'smart', [r('a', ['c.x'], true)], ctx(T0 + DAY)))
+      expect(s.state.concepts['c.x']).toMatchObject({ box: 2, due: '2026-10-04' })
+      expect(s.state.concepts['c.y']).toMatchObject({ box: 0 }) // untouched: not in the results
+      // Right again before it's due: no promotion, due date kept.
+      s.run(completePractice(s.state, 'smart', [r('a', ['c.x'], true)], ctx(T0 + 2 * DAY)))
+      expect(s.state.concepts['c.x']).toMatchObject({ box: 2, due: '2026-10-04', correct: 4 })
+      // Reviewed on each due date, it climbs to box 6 and stays there.
+      const dayOf = (date: string) => (Date.parse(date) - Date.parse('2026-10-01')) / DAY
+      for (let i = 0; i < 5; i++) s.run(completePractice(s.state, 'smart', [r('a', ['c.x'], true)], ctx(T0 + dayOf(s.state.concepts['c.x']!.due) * DAY)))
+      expect(s.state.concepts['c.x']?.box).toBe(6)
+      const late = dayOf(s.state.concepts['c.x']!.due)
+      s.run(completePractice(s.state, 'smart', [r('a', ['c.x'], false)], ctx(T0 + (late - 3) * DAY)))
+      expect(s.state.concepts['c.x']).toMatchObject({ box: 0 }) // a miss resets even before it's due
+      expect(fold(s.log)).toEqual(s.state)
+    })
+
+    it('tracks unresolved mistakes, capped at the latest 50, and folds old events without results', () => {
+      const s = session()
+      s.run(completeLesson(s.state, lesson({ results: [r('a', ['c.x'], false), r('b', ['c.x'], false)] }), ctx(T0)))
+      expect(Object.keys(s.state.mistakes)).toEqual(['a', 'b'])
+      s.run(completePractice(s.state, 'mistakes', [r('a', ['c.x'], true)], ctx(T0 + 1000)))
+      expect(Object.keys(s.state.mistakes)).toEqual(['b'])
+      const many = Array.from({ length: 60 }, (_, i) => r(`m${i}`, ['c.x'], false))
+      s.run(completePractice(s.state, 'smart', many, ctx(T0 + 2000)))
+      expect(Object.keys(s.state.mistakes)).toHaveLength(50)
+      expect(s.state.mistakes.m59).toBeDefined()
+      expect(s.state.mistakes.m9).toBeUndefined()
+
+      const old = completeLesson(initialProgress(), lesson(), ctx(T0)).events
+      delete (old[0] as { payload: { results?: unknown } }).payload.results
+      expect(fold(old).concepts).toEqual({})
+    })
+
+    it('practice earns 10 XP, counts for the streak, never costs hearts and refills one', () => {
+      const s = session()
+      for (let i = 0; i < 2; i++) s.run(wrongAnswer(s.state, ctx(T0)))
+      s.run(completePractice(s.state, 'smart', [r('a', ['c.x'], false)], ctx(T0)))
+      expect(s.state.xp).toBe(10)
+      expect(s.state.streak.currentStreak).toBe(1)
+      expect(heartsAt(s.state.hearts, T0)).toBe(4)
+    })
   })
 })

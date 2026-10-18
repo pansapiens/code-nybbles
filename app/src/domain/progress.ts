@@ -22,7 +22,7 @@ import {
 
 // ---- Rules (plans/01 §3.2, §3.8, §3.9) ----
 
-export const XP = { lesson: 10, perfectBonus: 5, checkpoint: 30, codeRead: 15 }
+export const XP = { lesson: 10, perfectBonus: 5, checkpoint: 30, codeRead: 15, practice: 10 }
 export const GEMS = { perfectLesson: 5, checkpoint: 50, dailyChest: [10, 30], pathChest: [20, 50] } as const
 export const PRICES = { freeze: 200, hearts: 350 } as const
 export const MAX_HEARTS = 5
@@ -36,6 +36,13 @@ export function milestoneGems(streak: number): number {
 
 // ---- Events ----
 
+/** One graded exercise in a session: `ok` = right on the first attempt. Concept cards aren't graded, so aren't listed. */
+export interface AnswerResult {
+  ref: string
+  concepts: string[]
+  ok: boolean
+}
+
 export type EventBody =
   | {
       type: 'lesson_completed'
@@ -48,8 +55,11 @@ export type EventBody =
         accuracy: number
         mistakes: number
         durationMs: number
+        /** Absent on events written before M4. */
+        results?: AnswerResult[]
       }
     }
+  | { type: 'practice_completed'; payload: { kind: 'smart' | 'mistakes' | 'unit'; xp: number; results: AnswerResult[] } }
   | {
       type: 'gems_awarded'
       payload: {
@@ -82,6 +92,19 @@ export interface LevelStats {
   firstCompletedAt: number
 }
 
+/** Leitner box 0-6; `due` is the first local date the concept should be practised again. */
+export interface ConceptStrength {
+  box: number
+  due: LocalDate
+  correct: number
+  incorrect: number
+}
+
+/** Days until a concept is due again, indexed by the box it just moved into, minus one. */
+const BOX_DAYS = [1, 2, 4, 8, 16, 32]
+/** ponytail: the log keeps every mistake but the derived state only the latest 50; a longer queue needs paging in the UI. */
+const MAX_MISTAKES = 50
+
 export interface Progress {
   streak: StreakState
   xp: number
@@ -93,6 +116,9 @@ export interface Progress {
   achievements: Record<string, number>
   perfectLessons: number
   checkpointsPassed: number
+  concepts: Record<string, ConceptStrength>
+  /** Exercise refs last answered wrongly and not yet answered right, oldest first. */
+  mistakes: Record<string, { at: number }>
   /** The last event folded in; used for timezone-travel forgiveness. */
   last?: { ts: number; tz: string; localDate: LocalDate }
 }
@@ -109,6 +135,8 @@ export function initialProgress(): Progress {
     achievements: {},
     perfectLessons: 0,
     checkpointsPassed: 0,
+    concepts: {},
+    mistakes: {},
   }
 }
 
@@ -124,6 +152,33 @@ function loseHeart(h: Progress['hearts'], now: number): Progress['hearts'] {
   if (current >= MAX_HEARTS) return { count: MAX_HEARTS - 1, updatedAt: now } // regen timer starts now
   const regenerated = current - h.count
   return { count: Math.max(0, current - 1), updatedAt: h.updatedAt + regenerated * HEART_REGEN_MS }
+}
+
+// ---- Concept strength and mistakes (plans/01 §3.11) ----
+
+function applyResults(s: Progress, results: AnswerResult[], ev: DomainEvent) {
+  const byConcept = new Map<string, boolean[]>()
+  const mistakes = { ...s.mistakes }
+  for (const r of results) {
+    for (const c of r.concepts) byConcept.set(c, [...(byConcept.get(c) ?? []), r.ok])
+    delete mistakes[r.ref] // re-added last so insertion order is recency
+    if (!r.ok) mistakes[r.ref] = { at: ev.ts }
+  }
+  s.mistakes = Object.fromEntries(Object.entries(mistakes).slice(-MAX_MISTAKES))
+  s.concepts = { ...s.concepts }
+  for (const [c, oks] of byConcept) {
+    const prev = s.concepts[c]
+    const right = oks.filter(Boolean).length
+    // Leitner: only a review on or after the due date moves a concept up; earlier successes leave it where it is.
+    const early = !!prev && prev.due > ev.localDate
+    const box = oks.length !== right ? 0 : early ? prev.box : Math.min(6, (prev?.box ?? 0) + 1)
+    s.concepts[c] = {
+      box,
+      due: early && box ? prev.due : addDays(ev.localDate, box ? BOX_DAYS[box - 1]! : 0),
+      correct: (prev?.correct ?? 0) + right,
+      incorrect: (prev?.incorrect ?? 0) + oks.length - right,
+    }
+  }
 }
 
 // ---- Streak settling ----
@@ -179,6 +234,20 @@ export function apply(p: Progress, ev: DomainEvent): { state: Progress; notices:
       const st = onSessionCompleted(s.streak, ev.localDate)
       s.streak = st.state
       notices.push(...st.events)
+      applyResults(s, ev.payload.results ?? [], ev)
+      break
+    }
+    case 'practice_completed': {
+      s.xp += ev.payload.xp
+      day.xp += ev.payload.xp
+      day.sessions += 1
+      // Practice never costs hearts and always gives one back (plans/01 §3.8); regen progress is kept.
+      const current = heartsAt(s.hearts, ev.ts)
+      s.hearts = { count: Math.min(MAX_HEARTS, current + 1), updatedAt: s.hearts.updatedAt + (current - s.hearts.count) * HEART_REGEN_MS }
+      const st = onSessionCompleted(s.streak, ev.localDate)
+      s.streak = st.state
+      notices.push(...st.events)
+      applyResults(s, ev.payload.results, ev)
       break
     }
     case 'gems_awarded':
@@ -304,6 +373,19 @@ function unlockAchievements(b: ReturnType<typeof batch>, trigger: DomainEvent) {
   }
 }
 
+/** Milestone, daily-goal chest: what any XP-earning session can trigger. */
+function sessionRewards(b: ReturnType<typeof batch>, notices: Notice[], goalBefore: boolean, ctx: Ctx, random: () => number) {
+  for (const n of notices)
+    if (n.type === 'streak_milestone')
+      b.push({ type: 'gems_awarded', payload: { gems: milestoneGems(n.length), reason: 'milestone', ref: String(n.length) } })
+  const day = b.state.daily[b.localDate]
+  if (!goalBefore && (day?.xp ?? 0) >= ctx.dailyGoalXp && !day?.chest) {
+    const gems = between(GEMS.dailyChest, random)
+    b.push({ type: 'gems_awarded', payload: { gems, reason: 'daily-goal', ref: b.localDate } })
+    b.notices.push({ type: 'daily_goal_reached', gems })
+  }
+}
+
 export interface LessonResult {
   levelId: string
   lessonId: string
@@ -312,6 +394,7 @@ export interface LessonResult {
   accuracy: number
   mistakes: number
   durationMs: number
+  results?: AnswerResult[]
 }
 
 export function completeLesson(p: Progress, r: LessonResult, ctx: Ctx) {
@@ -325,15 +408,17 @@ export function completeLesson(p: Progress, r: LessonResult, ctx: Ctx) {
   if (!r.mistakes) b.push({ type: 'gems_awarded', payload: { gems: GEMS.perfectLesson, reason: 'perfect-lesson' } })
   if (r.checkpoint && firstPass)
     b.push({ type: 'gems_awarded', payload: { gems: GEMS.checkpoint, reason: 'checkpoint', ref: r.levelId } })
-  for (const n of notices)
-    if (n.type === 'streak_milestone')
-      b.push({ type: 'gems_awarded', payload: { gems: milestoneGems(n.length), reason: 'milestone', ref: String(n.length) } })
-  const day = b.state.daily[b.localDate]
-  if (!goalBefore && (day?.xp ?? 0) >= ctx.dailyGoalXp && !day?.chest) {
-    const gems = between(GEMS.dailyChest, random)
-    b.push({ type: 'gems_awarded', payload: { gems, reason: 'daily-goal', ref: b.localDate } })
-    b.notices.push({ type: 'daily_goal_reached', gems })
-  }
+  sessionRewards(b, notices, goalBefore, ctx, random)
+  unlockAchievements(b, ev)
+  return { events: b.events, notices: b.notices, state: b.state, xp }
+}
+
+export function completePractice(p: Progress, kind: 'smart' | 'mistakes' | 'unit', results: AnswerResult[], ctx: Ctx) {
+  const b = batch(p, ctx)
+  const goalBefore = (p.daily[b.localDate]?.xp ?? 0) >= ctx.dailyGoalXp
+  const xp = XP.practice
+  const { ev, notices } = b.push({ type: 'practice_completed', payload: { kind, xp, results } })
+  sessionRewards(b, notices, goalBefore, ctx, ctx.random ?? Math.random)
   unlockAchievements(b, ev)
   return { events: b.events, notices: b.notices, state: b.state, xp }
 }

@@ -2,6 +2,8 @@
  * Lesson planning and the in-lesson queue (plans/03 §6, plans/01 §4.3.4). Pure: no Vue, no Dexie.
  * An exercise ref is the global ID `levelId/lessonId/exerciseId` (plans/03 §2.3).
  */
+import type { AnswerResult } from './progress'
+
 export type ExerciseRef = string
 
 export interface LessonPlan {
@@ -25,8 +27,8 @@ export interface LessonRun {
   startedAt: number
 }
 
-// ponytail: authored order only. Pool sampling, SRS review items and Legendary subsets
-// come with M4 (plans/03 §1.1); they plug in here without touching the player.
+// ponytail: authored order only. Pool sampling and Legendary subsets (plans/03 §1.1) plug in here;
+// practice sessions build their plan in practice.ts and reuse the same run.
 export function planLesson(levelId: string, lesson: { id: string; exercises: { id: string }[] }): LessonPlan {
   return {
     levelId,
@@ -52,6 +54,17 @@ export function answerCurrent(run: LessonRun, correct: boolean, mistakes = corre
     index: run.index + 1,
     attempts: [...run.attempts, { ref, correct, mistakes }],
   }
+}
+
+/** One result per graded exercise (`concepts(ref)` is undefined for ungraded ones); ok = right first time. */
+export function answerResults(run: LessonRun, concepts: (ref: ExerciseRef) => string[] | undefined): AnswerResult[] {
+  const seen = new Set<ExerciseRef>()
+  return run.attempts.flatMap((a) => {
+    const cs = concepts(a.ref)
+    if (!cs || seen.has(a.ref)) return []
+    seen.add(a.ref)
+    return [{ ref: a.ref, concepts: cs, ok: a.correct && !a.mistakes }]
+  })
 }
 
 /** Fraction of planned items answered correctly (re-queues don't move the bar backwards). */

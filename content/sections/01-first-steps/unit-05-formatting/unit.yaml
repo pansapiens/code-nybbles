@@ -15,4 +15,5 @@ path:
   - level: level-03-escapes
   - chest
   - level: level-04-str
+  - practice
   - checkpoint: checkpoint-first-steps

@@ -1,15 +1,24 @@
 /** Learning path locking (plans/01 §4.3.2): everything before the first unfinished node is open. */
+import type { CompiledUnit } from '@code-nybbles/content-build/schema'
 import type { Progress } from './progress'
 
 export interface PathNode {
   id: string
-  kind: 'level' | 'checkpoint' | 'code-read' | 'chest'
+  kind: 'level' | 'checkpoint' | 'code-read' | 'chest' | 'practice'
   /** Lessons in the level (level, checkpoint and code-read nodes). */
   lessons?: number
 }
 export type NodeState = 'done' | 'current' | 'locked'
 
+/** A unit's playable nodes. Build nodes aren't playable yet (M5), so they're left off. */
+export function unitNodes(u: CompiledUnit): PathNode[] {
+  return u.path.flatMap((p): PathNode[] =>
+    p.kind === 'build' ? [] : 'levelId' in p ? [{ id: p.levelId, kind: p.kind, lessons: u.levels[p.levelId]!.lessons.length }] : [{ id: p.id, kind: p.kind }],
+  )
+}
+
 export function isDone(n: PathNode, p: Progress): boolean {
+  if (n.kind === 'practice') return true // never gates the path: open once reached, like a chest that can be reopened
   if (n.kind === 'chest') return p.openedChests.includes(n.id)
   return (p.levels[n.id]?.lessons ?? 0) >= (n.lessons ?? 1)
 }
