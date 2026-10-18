@@ -65,7 +65,8 @@ const ITEMS: { to: string; label: string; icon: IconName }[] = [
 .nav-item.router-link-exact-active {
   border-color: var(--c-selected-border);
   background: var(--c-selected-tint);
-  color: var(--c-primary);
+  --icon: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 /* Desktop: labelled left sidebar. */

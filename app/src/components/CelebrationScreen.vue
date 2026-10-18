@@ -133,7 +133,8 @@ function formatDuration(ms: number) {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  color: var(--c-gems);
+  --icon: var(--c-gems);
+  color: var(--c-gems-text);
   font-weight: 800;
 }
 .week {
@@ -150,7 +151,8 @@ function formatDuration(ms: number) {
   color: var(--c-streak-off);
 }
 .week li.active {
-  color: var(--c-streak);
+  --icon: var(--c-streak);
+  color: var(--c-streak-text);
 }
 .week li.frozen {
   color: var(--c-frozen);

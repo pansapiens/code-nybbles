@@ -75,7 +75,8 @@ async function buy(item: ShopItem) {
   align-items: center;
   gap: var(--s-2);
   margin: 0;
-  color: var(--c-gems);
+  --icon: var(--c-gems);
+  color: var(--c-gems-text);
   font-size: 1.2rem;
   font-weight: 900;
 }

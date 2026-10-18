@@ -46,15 +46,19 @@ const ariaLabel = computed(() => {
   background: var(--c-surface);
 }
 .k-streak {
-  color: var(--c-streak);
+  --icon: var(--c-streak);
+  color: var(--c-streak-text);
 }
 .k-gems {
-  color: var(--c-gems);
+  --icon: var(--c-gems);
+  color: var(--c-gems-text);
 }
 .k-hearts {
-  color: var(--c-wrong);
+  --icon: var(--c-wrong);
+  color: var(--c-wrong-text);
 }
 .dim {
-  color: var(--c-streak-off);
+  --icon: var(--c-streak-off);
+  color: var(--c-text-2);
 }
 </style>

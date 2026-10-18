@@ -45,7 +45,8 @@ export const useSettingsStore = defineStore('settings', () => {
     else localStorage.setItem(THEME_KEY, t)
     applyTheme(t)
   })
-  watch(codeSize, (px) => document.documentElement.style.setProperty('--code-size', `${px}px`), {
+  // In rem, so code also follows the browser's font size (16px = 1rem by default).
+  watch(codeSize, (px) => document.documentElement.style.setProperty('--code-size', `${px / 16}rem`), {
     immediate: true,
   })
 

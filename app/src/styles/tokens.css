@@ -12,7 +12,7 @@
   --c-tile: light-dark(#e7e3f0, #342c47);
   --c-tile-ledge: light-dark(#cfc8de, #251f35);
   --c-text: light-dark(#3f3a4d, #ffffff);
-  --c-text-2: light-dark(#8f89a0, #a9a3b8);
+  --c-text-2: light-dark(#756e88, #a9a3b8);
   --c-border: light-dark(#e7e3f0, #342c47);
   --c-scrim: rgb(0 0 0 / 0.4);
   --c-shade: #000; /* mixed into colours for ledges: color-mix(in oklab, X, var(--c-shade) 25%) */
@@ -31,6 +31,7 @@
   --c-primary-ledge: #5b32d6;
   --c-primary-hi: #a585ff;
   --c-on-primary: #ffffff;
+  --c-primary-text: light-dark(#6a3df0, #a585ff); /* the primary as text: >= 4.5:1 */
 
   /* Selected tile/option */
   --c-selected-tint: light-dark(#efe9ff, #2d2350);
@@ -56,6 +57,9 @@
   --c-info: #3d8bfd;
   --c-rust: #ce422b;
   --c-frozen: #3d8bfd;
+  /* Game colours as text (>= 4.5:1); the bright values above are for icons. Pair with --icon (AppIcon). */
+  --c-streak-text: light-dark(#ab6400, #ff9600);
+  --c-gems-text: light-dark(#118098, #22c3e6);
 
   /* Section banner rotation (no green: green means "correct") */
   --c-section-purple: #7c4dff;
@@ -68,7 +72,7 @@
   /* Type */
   --font-ui: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
   --font-code: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
-  --code-size: 15px;
+  --code-size: 0.9375rem; /* 15px at the default font size; the setting is in px of that */
 
   /* Shape */
   --radius-tile: 12px;

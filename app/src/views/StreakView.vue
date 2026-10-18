@@ -173,7 +173,7 @@ const monthLabel = computed(() =>
   text-transform: uppercase;
 }
 .small {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-size: 0.85rem;
   font-weight: 800;
 }

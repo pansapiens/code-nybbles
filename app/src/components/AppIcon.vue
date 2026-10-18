@@ -48,6 +48,8 @@ withDefaults(defineProps<{ name: IconName; size?: number; label?: string }>(), {
 
 <style scoped>
 .app-icon {
+  /* A container can colour its text for contrast and keep its icon bright: `color: X-text; --icon: X`. */
+  color: var(--icon, currentcolor);
   flex-shrink: 0;
   display: inline-block;
   vertical-align: middle;

@@ -116,7 +116,7 @@ also works. CI doesn't need either.
   - [x] Syntax highlighting: deviation, a tiny per-line regex lexer at runtime (`components/highlight.ts`,
     `HighlightedLine.vue`) rather than build-time Shiki/Lezer, because fill-tokens and spot-bug split the code
     themselves. Used by CodeCard, spot-bug, fill-tokens. Colour tokens `--c-syn-*` in tokens.css
-    - [ ] (new) Check `--c-syn-*` contrast with a tool in the M5 accessibility audit
+    - [x] (new) Check `--c-syn-*` contrast with a tool in the M5 accessibility audit (contrast.spec.ts)
   - [x] Markdown -> HTML at build time (markdown-it, `html: false`): prompts, explanations, hints, `why`,
     concept cards, option text (not predict-output's, which is literal output), guidebooks
   - [x] (new) Id nesting check: unit ids start with the section id, level ids with the unit id (the app
@@ -326,7 +326,14 @@ also works. CI doesn't need either.
 
 ## M5: Polish + launch
 
-- [ ] Accessibility audit, WCAG AA contrast check of tokens, reduced motion, font scaling (01 §4.5)
+- [~] Accessibility audit, WCAG AA contrast check of tokens, reduced motion, font scaling (01 §4.5)
+  - [x] (new) Text pairs pass AA in both themes, checked by `styles/__tests__/contrast.spec.ts`: darker light-mode
+    `--c-text-2`; `--c-primary-text`, `--c-streak-text`, `--c-gems-text` for coloured text, with `--icon` keeping
+    icons bright (AppIcon)
+  - [x] (new) Code size setting applied in rem, so it follows the browser font size
+  - [ ] (new) Decision for the user: white text on the green/red buttons and on the teal, blue, pink and orange
+    banners is below 4.5:1 (2.5-3.6); darkening them to pass changes the look
+  - [ ] (new) Screen reader pass (TalkBack / VoiceOver) through a lesson; not done
 - [ ] Performance on low-end Android
 - [x] Install prompt timing, update prompt, `navigator.storage.persist()`, backup reminders
   - (new) Install toast after the first XP, "Not now" is permanent (Settings has no install button yet);
