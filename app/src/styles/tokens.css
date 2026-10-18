@@ -47,6 +47,11 @@
   --c-wrong-ledge: #c42f40;
   --c-wrong-tint: light-dark(#ffe3e6, #3d1a22);
   --c-wrong-text: light-dark(#c42f40, #ff8a96);
+  /* Button faces under white text: darker than the feedback colours for >= 4.5:1 */
+  --c-correct-button: #218738;
+  --c-correct-button-ledge: #17602a;
+  --c-wrong-button: #d92d3f;
+  --c-wrong-button-ledge: #a61f2e;
 
   /* Game colours */
   --c-streak: #ff9600;

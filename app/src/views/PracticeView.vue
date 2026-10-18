@@ -118,7 +118,7 @@ h2 {
   min-width: 1.5em;
   padding: 0 var(--s-2);
   border-radius: var(--radius-pill);
-  background: var(--c-wrong);
+  background: var(--c-wrong-button);
   color: var(--c-on-primary);
   font-size: 0.85rem;
   text-align: center;

@@ -22,7 +22,7 @@ const TEXT_PAIRS = [
   ['c-text', 'c-canvas'], ['c-text', 'c-surface'], ['c-text', 'c-tile'], ['c-text', 'c-selected-tint'],
   ['c-text-2', 'c-canvas'], ['c-text-2', 'c-surface'],
   ['c-primary-text', 'c-canvas'], ['c-primary-text', 'c-surface'], ['c-primary-text', 'c-selected-tint'],
-  ['c-on-primary', 'c-primary'],
+  ['c-on-primary', 'c-primary'], ['c-on-primary', 'c-correct-button'], ['c-on-primary', 'c-wrong-button'],
   ['c-correct-text', 'c-correct-tint'], ['c-wrong-text', 'c-wrong-tint'], ['c-wrong-text', 'c-canvas'],
   ['c-streak-text', 'c-canvas'], ['c-gems-text', 'c-canvas'],
   ['c-terminal-text', 'c-terminal'], ['c-wrong', 'c-terminal'],

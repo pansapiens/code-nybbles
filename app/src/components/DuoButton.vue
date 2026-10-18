@@ -66,20 +66,20 @@ withDefaults(
 .v-secondary {
   --face: var(--c-canvas);
   --ledge-c: var(--c-border);
-  --fg: var(--c-primary);
+  --fg: var(--c-primary-text);
   --border: var(--c-border);
 }
 .v-danger {
-  --face: var(--c-wrong);
-  --ledge-c: var(--c-wrong-ledge);
+  --face: var(--c-wrong-button);
+  --ledge-c: var(--c-wrong-button-ledge);
 }
 .v-correct {
-  --face: var(--c-correct);
-  --ledge-c: var(--c-correct-ledge);
+  --face: var(--c-correct-button);
+  --ledge-c: var(--c-correct-button-ledge);
 }
 .v-ghost {
   --face: transparent;
   --ledge-c: transparent;
-  --fg: var(--c-primary);
+  --fg: var(--c-primary-text);
 }
 </style>
