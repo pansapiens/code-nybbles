@@ -6,7 +6,7 @@
       <header class="unit-banner" :style="{ background: u.colour }">
         <div>
           <div class="eyebrow">Section {{ u.sectionNo }}, Unit {{ u.unitNo }}</div>
-          <h2>{{ u.title }}</h2>
+          <h2 :title="u.title">{{ u.title }}</h2>
         </div>
         <RouterLink v-if="u.hasGuidebook" class="guidebook" :to="`/guidebook/${u.id}`" aria-label="Guidebook">
           <AppIcon name="notebook" :size="28" />
@@ -147,10 +147,15 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: var(--s-3);
+  height: 72px;
   margin: var(--s-3) 0;
   padding: var(--s-3) var(--s-4);
+  overflow: hidden;
   border-radius: var(--radius-banner);
   color: var(--c-on-primary);
+}
+.unit-banner > div {
+  min-width: 0;
 }
 @media (width >= 1024px) {
   .unit-banner {
@@ -159,14 +164,20 @@ onMounted(async () => {
 }
 .unit-banner h2 {
   margin: 0;
+  overflow: hidden;
   font-size: 1.2rem;
   font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .eyebrow {
+  overflow: hidden;
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
   opacity: 0.85;
 }
 .guidebook {
