@@ -7,7 +7,7 @@
       :aria-label="`${current ? 'Start: ' : ''}${title}, ${stateLabel}`"
     >
       <span class="face">
-        <AppIcon :name="icon" :size="current ? 40 : 34" />
+        <AppIcon :name="icon" :size="current ? 32 : 26" />
       </span>
       <span v-if="current" class="start-bubble" aria-hidden="true">Start</span>
     </PopoverTrigger>
@@ -85,15 +85,15 @@ const action = computed(() => {
 
 <style scoped>
 .node {
-  --size: 72px;
+  --size: 60px;
   --face: var(--unit-colour);
   --ledge-c: color-mix(in oklab, var(--unit-colour), var(--c-shade) 25%);
 
   position: relative;
   display: grid;
   place-items: center;
-  width: calc(var(--size) + 16px);
-  height: calc(var(--size) + 16px);
+  width: calc(var(--size) + 12px);
+  height: calc(var(--size) + 12px);
   border: 0;
   border-radius: 50%;
   /* progress ring (plans/01 §3.1: "progress ring fills") */
@@ -102,7 +102,7 @@ const action = computed(() => {
   transform: translateX(var(--offset, 0));
 }
 .node.current {
-  --size: 84px;
+  --size: 70px;
 }
 .node.done.level,
 .node.done.build {
@@ -121,11 +121,11 @@ const action = computed(() => {
   display: grid;
   place-items: center;
   width: var(--size);
-  height: calc(var(--size) - 8px);
+  height: calc(var(--size) - 6px);
   border-radius: 50%;
   background: var(--face);
   color: var(--c-on-primary);
-  box-shadow: 0 8px 0 var(--ledge-c);
+  box-shadow: 0 6px 0 var(--ledge-c);
   transition: transform var(--t-fast);
 }
 .node.locked .face {
@@ -136,7 +136,7 @@ const action = computed(() => {
   --ledge-c: var(--c-gold-ledge);
 }
 .node:active .face {
-  transform: translateY(6px);
+  transform: translateY(4px);
   box-shadow: 0 2px 0 var(--ledge-c);
 }
 .node.current .face {
@@ -144,7 +144,7 @@ const action = computed(() => {
 }
 .start-bubble {
   position: absolute;
-  top: -34px;
+  top: -30px;
   padding: var(--s-1) var(--s-3);
   border: 2px solid var(--unit-colour);
   border-radius: var(--radius-tile);

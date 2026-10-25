@@ -9,7 +9,7 @@
     :role="label ? 'img' : undefined"
     fill="currentColor"
   >
-    <path :d="PATHS[name]" />
+    <path :d="PATHS[name]" :fill-rule="name === 'notebook' ? 'evenodd' : undefined" />
   </svg>
 </template>
 
@@ -38,6 +38,8 @@ const PATHS = {
   chest: 'M4 4h16a2 2 0 0 1 2 2v4H2V6a2 2 0 0 1 2-2Zm-2 8h8v2h4v-2h8v8H2v-8Z',
   lock: 'M7 10V7a5 5 0 0 1 10 0v3h2v12H5V10h2Zm2 0h6V7a3 3 0 0 0-6 0v3Z',
   book: 'M4 3h7a3 3 0 0 1 1 .2A3 3 0 0 1 13 3h7v16h-7a2 2 0 0 0-1 .3 2 2 0 0 0-1-.3H4V3Zm2 2v12h5l.9.2V6a1 1 0 0 0-1-1H6Zm12 0h-4.9a1 1 0 0 0-1 1v11.2l.9-.2h5V5Z',
+  notebook:
+    'M6.2 3h13a1.5 1.5 0 0 1 1.5 1.5v15a1.5 1.5 0 0 1-1.5 1.5H6.2a1.5 1.5 0 0 1-1.5-1.5v-15A1.5 1.5 0 0 1 6.2 3zM7.8 4.7h9.8v14.6H7.8V4.7zM8.6 7.4h8.2v1.2H8.6V7.4zM8.6 10.6h8.2v1.2H8.6v-1.2zM8.6 13.8h8.2v1.2H8.6v-1.2zM3.5 6.3a1.25 1.25 0 1 0 2.5 0 1.25 1.25 0 1 0-2.5 0M3.5 11.3a1.25 1.25 0 1 0 2.5 0 1.25 1.25 0 1 0-2.5 0M3.5 16.3a1.25 1.25 0 1 0 2.5 0 1.25 1.25 0 1 0-2.5 0',
   build: 'M3 13h8v8H3v-8Zm10 0h8v8h-8v-8ZM8 3h8v8H8V3Z',
   'arrow-down': 'M11 4h2v12l5-5 1.4 1.4L12 19.8l-7.4-7.4L6 11l5 5V4Z',
 } as const

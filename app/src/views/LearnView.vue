@@ -7,11 +7,9 @@
         <div>
           <div class="eyebrow">Section {{ u.sectionNo }}, Unit {{ u.unitNo }}</div>
           <h2>{{ u.title }}</h2>
-          <p>{{ u.description }}</p>
         </div>
-        <RouterLink v-if="u.hasGuidebook" class="guidebook" :to="`/guidebook/${u.id}`">
-          <AppIcon name="book" />
-          <span>Guidebook</span>
+        <RouterLink v-if="u.hasGuidebook" class="guidebook" :to="`/guidebook/${u.id}`" aria-label="Guidebook">
+          <AppIcon name="notebook" :size="28" />
         </RouterLink>
       </header>
       <ol class="nodes" :aria-label="`${u.title} path`">
@@ -67,8 +65,8 @@ const units = computed(() => {
   return sections.value.flatMap((s, si) =>
     s.units.map((u, ui) => {
       const nodes: ViewNode[] = unitNodes(u).map((n, i) => {
-        // Winding path: +-1 x --wave (plans/01 §4.3.2).
-        const offset = `calc(var(--wave) * ${Math.sin((i * Math.PI) / 4).toFixed(3)})`
+        // One swing every 6 nodes, a little wider than the original every-8 layout.
+        const offset = `calc(var(--wave) * ${Math.sin((i * Math.PI) / 3).toFixed(3)})`
         const level = u.levels[n.id]
         const title = level?.title ?? (n.kind === 'chest' ? 'Treasure chest' : 'Practice')
         return { ...n, unitId: u.id, index: index++, title, offset, lessonIds: level?.lessons.map((l) => l.id) ?? [] }
@@ -76,7 +74,6 @@ const units = computed(() => {
       return {
         id: u.id,
         title: u.title,
-        description: u.description,
         hasGuidebook: !!u.guidebook,
         colour: `var(--c-section-${u.colour ?? s.colour})`,
         sectionNo: si + 1,
@@ -134,12 +131,12 @@ onMounted(async () => {
 
 <style scoped>
 .path {
-  --wave: 60px;
+  --wave: 76px;
   padding-bottom: 120px;
 }
 @media (width <= 375px) {
   .path {
-    --wave: 40px;
+    --wave: 56px;
   }
 }
 .unit-banner {
@@ -150,8 +147,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: var(--s-3);
-  margin: var(--s-4) 0;
-  padding: var(--s-4);
+  margin: var(--s-3) 0;
+  padding: var(--s-3) var(--s-4);
   border-radius: var(--radius-banner);
   color: var(--c-on-primary);
 }
@@ -162,36 +159,32 @@ onMounted(async () => {
 }
 .unit-banner h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 900;
 }
-.unit-banner p {
-  margin: var(--s-1) 0 0;
-  opacity: 0.9;
-}
 .eyebrow {
+  font-size: 0.75rem;
   font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   opacity: 0.85;
 }
 .guidebook {
   display: grid;
-  justify-items: center;
+  place-items: center;
   flex-shrink: 0;
-  min-width: var(--touch-min);
-  padding: var(--s-2);
+  width: 48px;
+  height: 48px;
   border: 2px solid currentcolor;
   border-radius: var(--radius-tile);
   color: inherit;
-  font-size: 0.75rem;
-  font-weight: 800;
   text-decoration: none;
-  text-transform: uppercase;
 }
 .nodes {
   display: grid;
   justify-items: center;
-  gap: var(--s-5);
-  margin: calc(var(--s-6) + 32px) 0 var(--s-6); /* room for the START bubble */
+  gap: var(--s-3);
+  margin: calc(var(--s-5) + 28px) 0 var(--s-4); /* room for the START bubble */
   padding: 0;
   list-style: none;
 }

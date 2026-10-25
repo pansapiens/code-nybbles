@@ -421,6 +421,7 @@ also works. CI doesn't need either.
   (identical snippets compiled at once in one directory), fixed by sharing one compile per key. M6 Android:
   Capacitor project, reminders, native haptics; debug APK builds, not yet run on a device. Next: device test
   of the APK, manual screen-reader pass, playtest.
+- 2026-10-25: Path header shows the section and unit title only, with a notebook icon for the guidebook. Nodes are a little smaller and closer, on a slightly wider and faster sine, so more fit on screen.
 - 2026-10-25: Reset progress lists sections and units. Choosing one marks that unit and everything after it not done, and keeps XP, gems and the streak. Reset everything is still there.
 - 2026-10-25: Lesson player: Hint button, combo toasts with +2 XP at every 10, Enter to check or continue.
   Settings shows the full MIT and Apache-2.0 texts, including the Rust Project notice. Snowflake icon for
