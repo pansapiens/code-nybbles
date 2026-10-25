@@ -306,8 +306,10 @@ also works. CI doesn't need either.
   `spot-off-by-one`, checkpoint `spot-last-panic`); the build will flag them if that changes
 - [ ] (new) Level `icon:` is in the schema but unused by the app
 - [ ] (new) Linked follow-up questions: authors repeat code because a re-queued item can't rely on the one before it
-- [ ] (new) Build bundles are only written when the whole course has 0 errors, so authors can't preview
+- [x] (new) Build bundles are only written when the whole course has 0 errors, so authors can't preview
   diagrams while other units are mid-edit (a `--partial` flag that skips failing units would help)
+  `pnpm content:build -- --partial` writes the passing units and still exits 1. A unit with any error is left out;
+  an error in `section.yaml` is not blamed on a unit
 
 ## M4: Practice + review
 
@@ -452,3 +454,5 @@ also works. CI doesn't need either.
   revealed. Smart and unit practice still leave Code Reads out. e2e misses one question in Ferris says hello and
   meets it again under Mistakes, with `fn main` on screen.
 - 2026-10-25: The backup reminder was already shipping (a toast 30 days after first launch or the last export). Ticked.
+- 2026-10-25: `content:build --partial` writes bundles for units with no errors and leaves the failing units out, so a
+  diagram can be previewed while another unit is mid-edit. The command still exits 1.

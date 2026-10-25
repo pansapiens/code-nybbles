@@ -602,6 +602,8 @@ export interface BuildOptions {
   outDir?: string
   verify?: boolean
   strict?: boolean
+  /** Write bundles even when there are errors, leaving out units that have any. */
+  partial?: boolean
 }
 
 export interface BuildResult {
@@ -609,6 +611,8 @@ export interface BuildResult {
   manifest?: ContentManifest
   sections: CompiledSection[]
   stats: { exercises: number; snippets: number; compiled: number }
+  /** Unit ids left out of the written bundles (`partial`). */
+  skippedUnits?: string[]
 }
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 12)
@@ -624,6 +628,8 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
   if (!course) return { issues, sections: [], stats }
 
   const sections: CompiledSection[] = []
+  /** Unit id to its directory, so a later error can be traced back to the unit. */
+  const unitDirs = new Map<string, string>()
   const levelIds = new Set<string>()
   /** Concepts introduced by a level's `concepts:` so far, in course order (taught-before-tested). */
   const taught = new Set<string>()
@@ -639,6 +645,7 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
       const unit = load(Unit, join(udir, 'unit.yaml'), issues, root)
       if (!unit) continue
       const uwhere = relative(root, join(udir, 'unit.yaml'))
+      unitDirs.set(unit.id, relative(root, udir))
       if (!unit.id.startsWith(`${section.id}.`)) issues.error(uwhere, `unit id must start with "${section.id}."`)
       const levels: Record<string, CompiledLevel> = {}
       const path: CompiledPathNode[] = []
@@ -735,17 +742,24 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
   }
 
   if (opts.strict) for (const i of issues.list) i.level = 'error'
-  if (issues.errors.length) return { issues, sections, stats }
+  const skippedUnits = unitsWithErrors(issues.errors, unitDirs)
+  if (issues.errors.length && !opts.partial) return { issues, sections, stats }
 
-  for (const s of sections)
+  const written =
+    opts.partial && skippedUnits.length
+      ? sections
+          .map((s) => ({ ...s, units: s.units.filter((u) => !skippedUnits.includes(u.id)) }))
+          .filter((s) => s.units.length)
+      : sections
+  for (const s of written)
     for (const u of s.units)
       for (const l of Object.values(u.levels)) for (const lesson of l.lessons) lesson.exercises.forEach(renderMarkdown)
-  const bundles = sections.map((s) => ({ s, json: JSON.stringify(s) }))
+  const bundles = written.map((s) => ({ s, json: JSON.stringify(s) }))
   const manifest: ContentManifest = {
     contentVersion: hash(bundles.map((b) => b.json).join('') + JSON.stringify(conceptList)),
     course,
     concepts: conceptList,
-    attributions: attributionsOf(sections),
+    attributions: attributionsOf(written),
     sections: bundles.map(({ s, json }) => ({ id: s.id, title: s.title, hash: hash(json), url: `section-${s.id}.json` })),
   }
   if (opts.outDir) {
@@ -753,7 +767,14 @@ export async function buildContent(opts: BuildOptions): Promise<BuildResult> {
     for (const { s, json } of bundles) writeFileSync(join(opts.outDir, `section-${s.id}.json`), json)
     writeFileSync(join(opts.outDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
   }
-  return { issues, manifest, sections, stats }
+  return { issues, manifest, sections, stats, skippedUnits: skippedUnits.length ? skippedUnits : undefined }
+}
+
+/** Units whose directory owns at least one error. An error on `unit.yaml` counts; one on `section.yaml` does not. */
+function unitsWithErrors(errors: { where: string }[], unitDirs: Map<string, string>): string[] {
+  return [...unitDirs]
+    .filter(([, dir]) => errors.some((i) => i.where === dir || i.where.startsWith(`${dir}/`)))
+    .map(([id]) => id)
 }
 
 // ---- CLI ----
@@ -766,6 +787,7 @@ if (import.meta.main) {
       out: { type: 'string', default: join(repo, 'app/public/content') },
       'no-verify': { type: 'boolean', default: false },
       strict: { type: 'boolean', default: false },
+      partial: { type: 'boolean', default: false },
     },
   })
   const t0 = performance.now()
@@ -775,6 +797,7 @@ if (import.meta.main) {
     outDir: values['no-verify'] ? undefined : values.out,
     verify: !values['no-verify'],
     strict: values.strict,
+    partial: values.partial,
   })
   for (const i of r.issues.list) console.log(`${i.level === 'error' ? 'ERROR' : 'warn '} ${i.where}: ${i.message}`)
   const { exercises, snippets, compiled } = r.stats
@@ -783,6 +806,7 @@ if (import.meta.main) {
       `in ${((performance.now() - t0) / 1000).toFixed(1)}s; ` +
       `${r.issues.errors.length} errors, ${r.issues.list.length - r.issues.errors.length} warnings`,
   )
+  if (r.skippedUnits?.length) console.log(`partial: wrote bundles without ${r.skippedUnits.join(', ')}`)
   if (r.issues.errors.length) process.exit(1)
   if (values['no-verify']) process.exit(0)
   // Only the real course owns the repo's ATTRIBUTIONS.md; test builds of other dirs must not overwrite it.

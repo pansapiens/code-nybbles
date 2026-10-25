@@ -1,6 +1,6 @@
 // Run: node --test (set RUST_VERIFY_LINKER if the PATH `cc` can't link Rust, see ../rust-verify/README.md)
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -255,6 +255,41 @@ test('primary error line is the first span, shifted back out of a generated main
   assert.equal(primaryErrorLine('error[E0423]: x\n --> main.rs:3:5\n  |\n'), 3)
   assert.equal(shownErrorLine(2, 'println("hi");\n', 'auto', undefined, 'compile-fail'), 1)
   assert.equal(shownErrorLine(3, 'fn main() {\n    println("hi");\n}\n', 'none'), 3)
+})
+
+test('--partial writes units with no errors and skips the rest', async () => {
+  const root = fixture([predict('b')])
+  const w = (p: string, v: unknown) => writeFileSync(join(root, p), stringify(v))
+  mkdirSync(join(root, 'sections', 's1', 'u2'), { recursive: true })
+  w('sections/s1/section.yaml', { id: 's1', title: 'S1', description: 'd', colour: 'purple', units: ['u1', 'u2'] })
+  w('sections/s1/u2/unit.yaml', { id: 's1.u2', title: 'U2', description: 'd', path: [{ level: 'level' }] })
+  w('sections/s1/u2/level.yaml', {
+    id: 's1.u2.level',
+    title: 'L',
+    lessons: [{ id: 'l1', exercises: [{ ...predict('a'), id: 'ok' }] }],
+  })
+  const out = join(root, 'out')
+  const r = await buildContent({ contentDir: root, outDir: out, partial: true })
+  assert.ok(r.issues.errors.length)
+  assert.deepEqual(r.skippedUnits, ['s1.u1'])
+  assert.equal(r.sections.flatMap((s) => s.units).length, 2)
+  const written = JSON.parse(readFileSync(join(out, 'section-s1.json'), 'utf8')) as {
+    units: { id: string; levels: Record<string, { lessons: { exercises: { explanation: string }[] }[] }> }[]
+  }
+  assert.deepEqual(
+    written.units.map((u) => u.id),
+    ['s1.u2'],
+  )
+  assert.match(written.units[0]!.levels['s1.u2.level']!.lessons[0]!.exercises[0]!.explanation, /^<p>e<\/p>/)
+  const manifest = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf8')) as { sections: { id: string }[] }
+  assert.deepEqual(
+    manifest.sections.map((s) => s.id),
+    ['s1'],
+  )
+  const blocked = join(root, 'blocked')
+  const full = await buildContent({ contentDir: root, outDir: blocked })
+  assert.equal(full.skippedUnits, undefined)
+  assert.equal(existsSync(join(blocked, 'manifest.json')), false)
 })
 
 test('questions that hinge on an error code are found; codes shown beside a message are fine', () => {
