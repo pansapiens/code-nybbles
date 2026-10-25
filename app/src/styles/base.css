@@ -19,6 +19,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+body {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
 button {
   font: inherit;
   color: inherit;

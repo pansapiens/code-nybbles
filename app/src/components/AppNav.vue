@@ -30,8 +30,8 @@ const ITEMS: { to: string; label: string; icon: IconName }[] = [
   z-index: 10;
   display: flex;
   justify-content: space-around;
-  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
   border-top: 2px solid var(--c-border);
   background: var(--c-canvas);
 }
@@ -78,7 +78,7 @@ const ITEMS: { to: string; label: string; icon: IconName }[] = [
     justify-content: flex-start;
     gap: var(--s-1);
     height: 100dvh;
-    padding: var(--s-5) var(--s-3);
+    padding: calc(var(--s-5) + var(--safe-top)) var(--s-3) var(--s-5);
     border-top: 0;
     border-right: 2px solid var(--c-border);
   }

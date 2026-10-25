@@ -94,6 +94,7 @@ async function finish(to?: string) {
   margin: 0 auto;
   justify-content: center;
   min-height: 100dvh;
+  padding-top: calc(var(--s-4) + var(--safe-top));
 }
 .time {
   min-height: var(--touch-min);

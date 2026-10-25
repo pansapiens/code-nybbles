@@ -92,7 +92,7 @@ function snoozeBackup() {
 <style scoped>
 .shell {
   min-height: 100dvh;
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom));
 }
 .rail {
   display: none;
@@ -125,6 +125,9 @@ function snoozeBackup() {
   .hud-mobile {
     display: none;
   }
+  .main {
+    padding-top: var(--safe-top);
+  }
   .rail {
     display: flex;
     position: sticky;
@@ -137,7 +140,7 @@ function snoozeBackup() {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabbar-h) + var(--s-3) + env(safe-area-inset-bottom));
+  bottom: calc(var(--tabbar-h) + var(--s-3) + var(--safe-bottom));
   z-index: 20;
   transform: translateX(-50%);
   padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);

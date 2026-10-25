@@ -33,8 +33,8 @@ const settings = useSettingsStore()
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: var(--hud-h);
-  padding: 0 var(--s-3);
+  height: calc(var(--hud-h) + var(--safe-top));
+  padding: var(--safe-top) var(--s-3) 0;
   border-bottom: 2px solid var(--c-border);
   background: var(--c-canvas);
 }

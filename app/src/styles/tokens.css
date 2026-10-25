@@ -100,6 +100,11 @@
   --hud-h: 56px;
   --tabbar-h: 64px;
   --path-max: 600px;
+  /* System bars and cutouts. Capacitor writes --safe-area-inset-* from WindowInsets; env() covers iOS and the browser. */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 
   /* Motion */
   --t-fast: 120ms;

@@ -141,7 +141,7 @@ onMounted(async () => {
 }
 .unit-banner {
   position: sticky;
-  top: calc(var(--hud-h) + var(--s-2));
+  top: calc(var(--hud-h) + var(--safe-top) + var(--s-2));
   z-index: 3;
   display: flex;
   align-items: center;
@@ -159,7 +159,7 @@ onMounted(async () => {
 }
 @media (width >= 1024px) {
   .unit-banner {
-    top: var(--s-2);
+    top: calc(var(--safe-top) + var(--s-2));
   }
 }
 .unit-banner h2 {
@@ -202,7 +202,7 @@ onMounted(async () => {
 .jump {
   position: fixed;
   right: var(--s-4);
-  bottom: calc(var(--tabbar-h) + var(--s-4) + env(safe-area-inset-bottom));
+  bottom: calc(var(--tabbar-h) + var(--s-4) + var(--safe-bottom));
   z-index: 6;
   display: grid;
   place-items: center;
@@ -227,7 +227,7 @@ onMounted(async () => {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabbar-h) + var(--s-5));
+  bottom: calc(var(--tabbar-h) + var(--s-5) + var(--safe-bottom));
   z-index: 10;
   padding: var(--s-3) var(--s-5);
   border-radius: var(--radius-pill);

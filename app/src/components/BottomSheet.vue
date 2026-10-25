@@ -33,7 +33,7 @@ const open = defineModel<boolean>('open', { default: false })
   margin: 0 auto;
   max-height: 85dvh;
   overflow-y: auto;
-  padding: var(--s-5) var(--s-4) calc(var(--s-5) + env(safe-area-inset-bottom));
+  padding: var(--s-5) var(--s-4) calc(var(--s-5) + var(--safe-bottom));
   border-radius: var(--radius-banner) var(--radius-banner) 0 0;
   background: var(--c-canvas);
   animation: sheet-up var(--t-med) ease-out;
