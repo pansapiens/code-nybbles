@@ -94,9 +94,18 @@ test('a perfect first lesson awards XP, extends the streak and shows a combo', a
   await expect(page.getByRole('heading', { name: '1 day streak!' })).toBeVisible()
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page.getByRole('heading', { name: 'Hello, World!' })).toBeVisible()
+  // Early Crab (before 7am) and Night Owl (after 10pm) can follow Hello, World! and each add 25 gems.
+  let gems = 30
+  const streak = page.getByRole('button', { name: '1 day streak' })
+  const timeOfDay = page.getByRole('heading', { name: /Early Crab|Night Owl/ })
   await page.getByRole('button', { name: 'Continue' }).click()
-  await expect(page.getByRole('button', { name: '1 day streak' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '30 gems' })).toBeVisible()
+  await expect(streak.or(timeOfDay)).toBeVisible()
+  if (await timeOfDay.isVisible()) {
+    gems += 25
+    await page.getByRole('button', { name: 'Continue' }).click()
+  }
+  await expect(streak).toBeVisible()
+  await expect(page.getByRole('button', { name: `${gems} gems` })).toBeVisible()
 
   const level = unit.levels[unit.path[0].level ?? unit.path[0].levelId]
   const here = page.getByRole('button', { name: `Start: ${level.title}, up next` })
@@ -111,7 +120,7 @@ test('a perfect first lesson awards XP, extends the streak and shows a combo', a
   await here.click()
   await expect(page.getByText(`Lesson 1 of ${level.lessons.length}`)).toBeVisible()
   await expect(page.getByRole('button', { name: '1 day streak' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '30 gems' })).toBeVisible()
+  await expect(page.getByRole('button', { name: `${gems} gems` })).toBeVisible()
 })
 
 test('a hint is offered and keeps the answer from being perfect', async ({ page }) => {
