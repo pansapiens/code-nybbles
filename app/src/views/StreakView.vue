@@ -30,7 +30,7 @@
       <div class="card">
         <span class="label">Freezes</span>
         <span class="freezes" role="img" :aria-label="`${v.streak.freezesEquipped} of ${MAX_FREEZES} freezes equipped`">
-          <AppIcon v-for="i in MAX_FREEZES" :key="i" name="star" :class="{ on: i <= v.streak.freezesEquipped }" />
+          <AppIcon v-for="i in MAX_FREEZES" :key="i" name="freeze" :class="{ on: i <= v.streak.freezesEquipped }" />
         </span>
         <RouterLink to="/shop" class="small">Get more</RouterLink>
       </div>

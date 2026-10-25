@@ -68,6 +68,12 @@ describe('progress', () => {
     // Build steps are 15 XP, plus 20 when the last one completes the Build.
     expect(completeLesson(s.state, lesson({ build: 'step' }), ctx(T0)).xp).toBe(15)
     expect(completeLesson(s.state, lesson({ build: 'final' }), ctx(T0)).xp).toBe(35)
+    // A hint drops the perfect bonus and the perfect gems. Combo XP is added on top.
+    const hinted = completeLesson(initialProgress(), lesson({ hinted: true, comboXp: 2 }), ctx(T0))
+    expect(hinted.xp).toBe(12)
+    expect(hinted.state.perfectLessons).toBe(0)
+    expect(hinted.events.some((e) => e.type === 'gems_awarded' && e.payload.reason === 'perfect-lesson')).toBe(false)
+    expect(completePractice(initialProgress(), 'smart', [], ctx(T0), 2).xp).toBe(12)
     // Passing the last beginner checkpoint unlocks Rustacean Initiate.
     const final = completeLesson(s.state, lesson({ levelId: BEGINNER_FINAL, checkpoint: true }), ctx(T0))
     expect(final.state.achievements['rustacean-initiate']).toBeDefined()

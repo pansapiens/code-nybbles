@@ -26,7 +26,7 @@ import {
  * Game state for the UI: the folded Progress plus a "now" view (streak settled to today, hearts
  * regenerated). `now` ticks every minute and on returning to the tab, which covers local midnight
  * (plans/01 §3.7). All writes go through repo.commit().
- * ponytail: no cross-tab sync; a second open tab sees changes on its next reload.
+ * ponytail: a second tab reloads from IndexedDB when it becomes visible, not live.
  */
 export const useProgressStore = defineStore('progress', () => {
   const state = shallowRef<Progress>(initialProgress())
@@ -38,21 +38,37 @@ export const useProgressStore = defineStore('progress', () => {
 
   const tick = () => (now.value = Date.now())
   setInterval(tick, 60_000)
-  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && tick())
+  // Bumped around a write so a reload that started earlier cannot overwrite the commit.
+  let epoch = 0
 
   let loading: Promise<void> | undefined
   /** Safe to call from anywhere; loads once (call again after import/reset with `reload`). */
   const load = () => (loading ??= reload())
   async function reload() {
-    ;[state.value, profile.value] = await Promise.all([loadProgress(), getProfile()])
+    const seen = epoch
+    const [next, prof] = await Promise.all([loadProgress(), getProfile()])
+    if (epoch !== seen) return
+    state.value = next
+    profile.value = prof
     tick()
     ready.value = true
   }
 
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return
+    tick()
+    if (ready.value) void reload()
+  })
+
   const ctx = (): Ctx => ({ now: Date.now(), tz: deviceTimezone(), dailyGoalXp: dailyGoal.value })
   async function save(events: DomainEvent[]) {
-    if (events.length) state.value = await commit(events)
-    tick()
+    epoch++
+    try {
+      if (events.length) state.value = await commit(events)
+      tick()
+    } finally {
+      epoch++
+    }
   }
 
   async function finishLesson(r: LessonResult) {
@@ -60,8 +76,8 @@ export const useProgressStore = defineStore('progress', () => {
     await save(out.events)
     return out
   }
-  async function finishPractice(kind: Parameters<typeof completePractice>[1], results: AnswerResult[]) {
-    const out = completePractice(state.value, kind, results, ctx())
+  async function finishPractice(kind: Parameters<typeof completePractice>[1], results: AnswerResult[], comboXp = 0) {
+    const out = completePractice(state.value, kind, results, ctx(), comboXp)
     await save(out.events)
     return out
   }

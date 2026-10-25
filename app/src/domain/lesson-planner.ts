@@ -2,7 +2,7 @@
  * Lesson planning and the in-lesson queue (plans/03 §6, plans/01 §4.3.4). Pure: no Vue, no Dexie.
  * An exercise ref is the global ID `levelId/lessonId/exerciseId` (plans/03 §2.3).
  */
-import type { AnswerResult } from './progress'
+import { XP, type AnswerResult } from './progress'
 
 export type ExerciseRef = string
 
@@ -16,6 +16,8 @@ export interface Attempt {
   ref: ExerciseRef
   correct: boolean
   mistakes: number
+  /** The learner revealed the hint before answering. Not a mistake, but not a perfect answer. */
+  hinted?: boolean
 }
 
 export interface LessonRun {
@@ -45,15 +47,29 @@ export const currentRef = (run: LessonRun): ExerciseRef | undefined => run.queue
 export const isFinished = (run: LessonRun) => run.index >= run.queue.length
 
 /** Record the answer to the current item and move on. A wrong answer re-queues the item at the end (unless `requeue` is off, as in tests). */
-export function answerCurrent(run: LessonRun, correct: boolean, mistakes = correct ? 0 : 1, requeue = true): LessonRun {
+export function answerCurrent(run: LessonRun, correct: boolean, mistakes = correct ? 0 : 1, requeue = true, hinted = false): LessonRun {
   const ref = currentRef(run)
   if (!ref) return run
   return {
     ...run,
     queue: correct || !requeue ? run.queue : [...run.queue, ref],
     index: run.index + 1,
-    attempts: [...run.attempts, { ref, correct, mistakes }],
+    attempts: [...run.attempts, { ref, correct, mistakes, hinted }],
   }
+}
+
+/**
+ * +2 XP each time a run of correct graded answers reaches a multiple of 10 (plans/01 §3.2).
+ * Pass graded attempts only, in the order they were answered. A hint or a mistake breaks the run.
+ */
+export function comboXp(attempts: Pick<Attempt, 'correct' | 'mistakes' | 'hinted'>[]): number {
+  let streak = 0
+  let xp = 0
+  for (const a of attempts) {
+    streak = a.correct && !a.mistakes && !a.hinted ? streak + 1 : 0
+    if (streak >= 10 && streak % 10 === 0) xp += XP.combo
+  }
+  return xp
 }
 
 /** One result per graded exercise (`concepts(ref)` is undefined for ungraded ones); ok = right first time. */
@@ -77,6 +93,8 @@ export interface LessonSummary {
   /** Share of graded first attempts that were correct, 0-1. Concept cards don't count (plans/03 §1). */
   accuracy: number
   mistakes: number
+  /** True when any hint was revealed. Accuracy still counts the answer; the lesson is not perfect. */
+  hinted: boolean
   durationMs: number
 }
 
@@ -87,6 +105,7 @@ export function summarise(run: LessonRun, graded: (ref: ExerciseRef) => boolean,
   return {
     accuracy: firsts.length ? firsts.filter((a) => a.correct && !a.mistakes).length / firsts.length : 1,
     mistakes: run.attempts.reduce((n, a) => n + a.mistakes, 0),
+    hinted: run.attempts.some((a) => a.hinted),
     durationMs: now - run.startedAt,
   }
 }

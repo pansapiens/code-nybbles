@@ -25,7 +25,7 @@
         <li v-for="d in screen.week" :key="d.date" :class="d.status ?? 'none'">
           <span class="dow">{{ d.label }}</span>
           <AppIcon v-if="d.status === 'active'" name="check" :size="18" />
-          <AppIcon v-else-if="d.status === 'frozen'" name="star" :size="18" />
+          <AppIcon v-else-if="d.status === 'frozen'" name="freeze" :size="18" />
           <span v-else class="dot" aria-hidden="true" />
           <span class="visually-hidden">{{ d.status ?? 'no lesson' }}</span>
         </li>

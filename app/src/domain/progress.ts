@@ -22,7 +22,7 @@ import {
 
 // ---- Rules (plans/01 §3.2, §3.8, §3.9) ----
 
-export const XP = { lesson: 10, perfectBonus: 5, checkpoint: 30, codeRead: 15, build: 15, buildDone: 20, practice: 10 }
+export const XP = { lesson: 10, perfectBonus: 5, combo: 2, checkpoint: 30, codeRead: 15, build: 15, buildDone: 20, practice: 10 }
 export const GEMS = { perfectLesson: 5, checkpoint: 50, dailyChest: [10, 30], pathChest: [20, 50] } as const
 export const PRICES = { freeze: 200, hearts: 350 } as const
 export const MAX_HEARTS = 5
@@ -57,6 +57,10 @@ export type EventBody =
         accuracy: number
         mistakes: number
         durationMs: number
+        /** A hint was used, so the lesson is not perfect. Absent on older events. */
+        hinted?: boolean
+        /** XP from 10-in-a-row combos, already included in `xp`. Absent on older events. */
+        comboXp?: number
         /** Absent on events written before M4. */
         results?: AnswerResult[]
       }
@@ -228,7 +232,7 @@ export function apply(p: Progress, ev: DomainEvent): { state: Progress; notices:
 
   switch (ev.type) {
     case 'lesson_completed': {
-      const { levelId, xp, accuracy, mistakes, checkpoint } = ev.payload
+      const { levelId, xp, accuracy, mistakes, checkpoint, hinted } = ev.payload
       const prev = s.levels[levelId]
       s.levels = {
         ...s.levels,
@@ -241,7 +245,7 @@ export function apply(p: Progress, ev: DomainEvent): { state: Progress; notices:
       s.xp += xp
       day.xp += xp
       day.sessions += 1
-      if (!mistakes) s.perfectLessons += 1
+      if (!mistakes && !hinted) s.perfectLessons += 1
       if (checkpoint && !prev) s.checkpointsPassed += 1
       const st = onSessionCompleted(s.streak, ev.localDate)
       s.streak = st.state
@@ -418,6 +422,10 @@ export interface LessonResult {
   accuracy: number
   mistakes: number
   durationMs: number
+  /** Set when the learner revealed a hint. The lesson is not perfect, and no heart is lost. */
+  hinted?: boolean
+  /** Extra XP from 10-in-a-row combos, added on top of the lesson's base XP. */
+  comboXp?: number
   results?: AnswerResult[]
 }
 
@@ -426,10 +434,12 @@ export function completeLesson(p: Progress, r: LessonResult, ctx: Ctx) {
   const b = batch(p, ctx)
   const goalBefore = (p.daily[b.localDate]?.xp ?? 0) >= ctx.dailyGoalXp
   const firstPass = !p.levels[r.levelId]
-  const xp = r.checkpoint ? XP.checkpoint : r.codeRead ? XP.codeRead : r.build ? XP.build + (r.build === 'final' ? XP.buildDone : 0) : XP.lesson + (r.mistakes ? 0 : XP.perfectBonus)
+  const perfect = !r.mistakes && !r.hinted
+  const base = r.checkpoint ? XP.checkpoint : r.codeRead ? XP.codeRead : r.build ? XP.build + (r.build === 'final' ? XP.buildDone : 0) : XP.lesson + (perfect ? XP.perfectBonus : 0)
+  const xp = base + (r.comboXp ?? 0)
   const { ev, notices } = b.push({ type: 'lesson_completed', payload: { ...r, xp } })
 
-  if (!r.mistakes) b.push({ type: 'gems_awarded', payload: { gems: GEMS.perfectLesson, reason: 'perfect-lesson' } })
+  if (perfect) b.push({ type: 'gems_awarded', payload: { gems: GEMS.perfectLesson, reason: 'perfect-lesson' } })
   if (r.checkpoint && firstPass)
     b.push({ type: 'gems_awarded', payload: { gems: GEMS.checkpoint, reason: 'checkpoint', ref: r.levelId } })
   sessionRewards(b, notices, goalBefore, ctx, random)
@@ -437,10 +447,10 @@ export function completeLesson(p: Progress, r: LessonResult, ctx: Ctx) {
   return { events: b.events, notices: b.notices, state: b.state, xp }
 }
 
-export function completePractice(p: Progress, kind: 'smart' | 'mistakes' | 'unit', results: AnswerResult[], ctx: Ctx) {
+export function completePractice(p: Progress, kind: 'smart' | 'mistakes' | 'unit', results: AnswerResult[], ctx: Ctx, comboXp = 0) {
   const b = batch(p, ctx)
   const goalBefore = (p.daily[b.localDate]?.xp ?? 0) >= ctx.dailyGoalXp
-  const xp = XP.practice
+  const xp = XP.practice + comboXp
   const { ev, notices } = b.push({ type: 'practice_completed', payload: { kind, xp, results } })
   sessionRewards(b, notices, goalBefore, ctx, ctx.random ?? Math.random)
   unlockAchievements(b, ev)

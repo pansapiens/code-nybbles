@@ -4,7 +4,7 @@
       <button class="icon-btn" type="button" aria-label="Quit lesson" @click="confirmExit = true">
         <AppIcon name="close" />
       </button>
-      <ProgressBar :value="run ? (mode ? run.index / run.queue.length : progress(run)) : 0" label="Lesson progress" />
+      <ProgressBar :value="run ? (mode ? run.index / run.queue.length : progress(run)) : 0" :flash="flash" label="Lesson progress" />
       <HudChip v-if="!mode" kind="hearts" :value="game.view.hearts" :infinite="!heartsApply" />
     </header>
 
@@ -29,13 +29,19 @@
         :correct="result?.correct"
         @mistake="cue('wrong')"
       />
+      <div v-if="hintShown && hintHtml" class="hint-box">
+        <p>Using a hint means this lesson won't count as perfect.</p>
+        <!-- eslint-disable-next-line vue/no-v-html -- build-rendered, html:false Markdown -->
+        <div class="md" v-html="hintHtml" />
+      </div>
     </main>
 
     <footer v-if="!error" class="lesson-foot" :class="feedbackClass" aria-live="polite">
+      <p v-if="comboNote" class="combo">{{ comboNote }}</p>
       <div v-if="result && exercise" class="feedback-text">
         <strong class="verdict">
           <AppIcon :name="result.correct ? 'check' : 'close'" />
-          {{ result.correct ? (result.mistakes ? 'Done!' : 'Nicely done!') : 'Correct solution:' }}
+          {{ result.correct ? (result.mistakes || usedHint ? 'Done!' : 'Nicely done!') : 'Correct solution:' }}
         </strong>
         <template v-if="!result.correct">
           <pre v-if="shownSolution.code" class="solution">{{ shownSolution.code }}</pre>
@@ -48,6 +54,7 @@
           <div class="md" v-html="explanation" />
         </details>
       </div>
+      <button v-if="hintHtml && !hintShown && !result && !screens && !mode" class="hint-btn" type="button" @click="revealHint">Hint</button>
       <DuoButton
         v-if="screens || (exercise && (result || !checksItself(exercise)))"
         block
@@ -81,7 +88,7 @@
 
 <script setup lang="ts">
 import type { CompiledExercise, CompiledLevel } from '@code-nybbles/content-build/schema'
-import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -92,6 +99,7 @@ import { loadCourse, loadLevel } from '@/content/loader'
 import {
   answerCurrent,
   answerResults,
+  comboXp,
   currentRef,
   isFinished,
   type LessonRun,
@@ -141,6 +149,11 @@ const error = ref<string>()
 const response = ref<unknown>()
 const result = ref<Grade>()
 const confirmExit = ref(false)
+const hintShown = ref(false)
+const usedHint = ref(false)
+const combo = ref(0)
+const comboNote = ref<string>()
+const flash = ref(0)
 
 onMounted(async () => {
   try {
@@ -191,6 +204,7 @@ watch(
 watch(run, (r) => (revealed.value = Math.max(revealed.value, reveals.get((r && currentRef(r)) ?? '') ?? 0)))
 const visibleProgram = computed(() => program.value?.rust.split('\n').slice(0, revealed.value).join('\n') ?? '')
 const explanation = computed(() => (exercise.value && 'explanation' in exercise.value ? exercise.value.explanation : undefined))
+const hintHtml = computed(() => (exercise.value && 'hint' in exercise.value ? exercise.value.hint : undefined))
 const shownSolution = computed(() => (exercise.value ? solution(exercise.value as never) : {}))
 const feedbackClass = computed(() => (result.value ? (result.value.correct ? 'ok' : 'bad') : ''))
 const canPress = computed(
@@ -203,9 +217,23 @@ const buttonLabel = computed(() => {
 
 const cue = (c: Cue) => feedback(c, settings)
 
+function revealHint() {
+  hintShown.value = true
+  usedHint.value = true
+}
+
+/** Consecutive graded answers with no mistake and no hint. A toast every 5; +2 XP every 10 (plans/01 §3.2). */
+function recordCombo(correct: boolean) {
+  combo.value = correct && !usedHint.value ? combo.value + 1 : 0
+  const n = combo.value
+  comboNote.value = n >= 5 && n % 5 === 0 ? (n % 10 === 0 ? `${n} in a row! +2 XP` : `${n} in a row!`) : undefined
+  if (comboNote.value) flash.value++
+}
+
 function check() {
   const ex = exercise.value!
   result.value = grade(ex as never, response.value as never)
+  if (!props.mode) recordCombo(result.value.correct)
   cue(result.value.correct ? 'correct' : 'wrong')
   if (!result.value.correct && heartsApply.value) {
     void game.loseHeart().then(() => (outOfHearts.value = game.view.hearts === 0))
@@ -217,10 +245,13 @@ async function refillHearts() {
 }
 
 function next(correct: boolean, mistakes: number) {
-  const r = answerCurrent(run.value!, correct, mistakes, !props.mode)
+  const r = answerCurrent(run.value!, correct, mistakes, !props.mode, usedHint.value)
   run.value = r
   response.value = undefined
   result.value = undefined
+  hintShown.value = false
+  usedHint.value = false
+  comboNote.value = undefined
   if (isFinished(r) || (props.mode === 'placement' && placementScore(firstTries(r), sectionCount.value).over)) void finish(r)
 }
 
@@ -247,6 +278,7 @@ async function finishTest(r: LessonRun, accuracy: number): Promise<Screen[]> {
 async function finish(r: LessonRun) {
   saving.value = true
   const sum = summarise(r, (ref) => isGraded(exercises.get(ref)!), Date.now())
+  const bonus = props.mode ? 0 : comboXp(r.attempts.filter((a) => isGraded(exercises.get(a.ref)!)))
   const results = answerResults(r, (ref) => {
     const ex = exercises.get(ref)!
     return isGraded(ex) ? (ex.concepts ?? []) : undefined
@@ -257,7 +289,7 @@ async function finish(r: LessonRun) {
     return cue('complete')
   }
   const out = props.kind
-    ? await game.finishPractice(props.kind, results)
+    ? await game.finishPractice(props.kind, results, bonus)
     : await game.finishLesson({
         levelId: props.levelId!,
         lessonId: props.lessonId!,
@@ -265,6 +297,7 @@ async function finish(r: LessonRun) {
         codeRead: !!program.value,
         build: build.value,
         results,
+        comboXp: bonus,
         ...sum,
       })
   saving.value = false
@@ -315,6 +348,22 @@ function press() {
 watch(response, (r) => {
   if (r !== undefined && exercise.value && checksItself(exercise.value) && !result.value) check()
 })
+
+// Enter checks or continues from the question. Option tiles are buttons with role="radio", so Enter
+// still checks once one is selected; the CHECK button itself handles its own key.
+function onEnter(e: KeyboardEvent) {
+  if (e.key !== 'Enter' || e.repeat || e.isComposing) return
+  if (confirmExit.value || outOfHearts.value) return
+  const t = e.target
+  if (!(t instanceof HTMLElement)) return
+  if (t.closest('a, summary, input, textarea, select')) return
+  if (t.closest('button') && t.getAttribute('role') !== 'radio') return
+  if (!canPress.value || saving.value) return
+  e.preventDefault()
+  press()
+}
+onMounted(() => document.addEventListener('keydown', onEnter))
+onUnmounted(() => document.removeEventListener('keydown', onEnter))
 
 </script>
 
@@ -369,6 +418,31 @@ watch(response, (r) => {
   background: var(--c-wrong-tint);
   color: var(--c-wrong-text);
   border-color: transparent;
+}
+.combo {
+  margin: 0 0 var(--s-3);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+.hint-btn {
+  min-height: var(--touch-min);
+  margin-bottom: var(--s-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-primary-text);
+  font-weight: 800;
+  cursor: pointer;
+}
+.hint-box {
+  margin-top: var(--s-4);
+  padding: var(--s-3);
+  border-radius: var(--radius-card);
+  background: var(--c-tile);
+}
+.hint-box p {
+  margin: 0 0 var(--s-2);
+  font-weight: 800;
 }
 .feedback-text {
   display: grid;

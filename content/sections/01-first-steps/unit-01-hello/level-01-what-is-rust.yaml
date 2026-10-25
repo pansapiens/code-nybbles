@@ -25,6 +25,7 @@ lessons:
         id: tf-compile-first
         prompt: Rust code is compiled before it runs.
         answer: true
+        hint: Compiling means turning source code into a program before that program runs.
         explanation: "`rustc` turns your source code into a program first. Only then can you run it."
         concepts: [intro.what-is-rust]
 

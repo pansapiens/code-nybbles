@@ -7,14 +7,14 @@
     aria-valuemax="100"
     :aria-label="label"
   >
-    <div class="fill" :style="{ width: `${pct}%` }" />
+    <div class="fill" :key="flash ?? 0" :class="{ pulse: (flash ?? 0) > 0 }" :style="{ width: `${pct}%` }" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{ value: number; label?: string }>()
+const props = defineProps<{ value: number; label?: string; flash?: number }>()
 const pct = computed(() => Math.min(100, Math.max(0, props.value * 100)))
 </script>
 
@@ -32,6 +32,14 @@ const pct = computed(() => Math.min(100, Math.max(0, props.value * 100)))
   border-radius: var(--radius-pill);
   background: var(--c-primary);
   transition: width var(--t-med) ease-out;
+}
+.fill.pulse {
+  animation: bar-flash 0.6s ease-out;
+}
+@keyframes bar-flash {
+  50% {
+    filter: brightness(1.45);
+  }
 }
 /* Highlight stripe along the top of the fill */
 .fill::after {

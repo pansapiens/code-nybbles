@@ -82,10 +82,28 @@
     <details class="about">
       <summary>Licences &amp; attributions</summary>
       <p>
-        Code Nybbles is free software under the MIT or Apache-2.0 licence. Course text is CC BY-SA 4.0 and course
-        code is MIT or Apache-2.0.
-        <a href="https://github.com/pansapiens/code-nybbles">Source and full licence texts</a>.
+        Code Nybbles is free software under the MIT or Apache-2.0 licence. Course text is
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode">CC BY-SA 4.0</a>
+        and course code is MIT or Apache-2.0.
+        <a href="https://github.com/pansapiens/code-nybbles">Source</a>.
       </p>
+      <p>
+        Material drawn from The Rust Programming Language and the Rust standard library is copyright The Rust Project
+        Developers and used under the MIT licence, the MIT side of their MIT OR Apache-2.0 dual licence. Adapted units
+        are marked in the list below.
+      </p>
+      <details>
+        <summary>MIT notice (The Rust Project)</summary>
+        <pre class="licence">{{ rustMit }}</pre>
+      </details>
+      <details>
+        <summary>MIT licence (Code Nybbles)</summary>
+        <pre class="licence">{{ mit }}</pre>
+      </details>
+      <details>
+        <summary>Apache-2.0 licence (Code Nybbles)</summary>
+        <pre class="licence">{{ apache }}</pre>
+      </details>
       <p v-if="manifest?.attributions.length">The course draws on:</p>
       <ul>
         <li v-for="a in manifest?.attributions" :key="a.url">
@@ -101,6 +119,8 @@
 <script setup lang="ts">
 import type { ContentManifest } from '@code-nybbles/content-build/schema'
 import { onMounted, ref } from 'vue'
+import apache from '../../../LICENSE-APACHE?raw'
+import mit from '../../../LICENSE-MIT?raw'
 import { useRouter } from 'vue-router'
 import AnswerTile from '@/components/AnswerTile.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -110,6 +130,26 @@ import { BACKUP_NUDGE_KEY, exportBackup, importBackup, rebuildDerived, resetProg
 import { DAILY_GOALS } from '@/domain/progress'
 import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore, type Theme } from '@/stores/settings'
+
+const rustMit = `Copyright (c) 2010 The Rust Project Developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.`
 
 const router = useRouter()
 const THEMES: Theme[] = ['system', 'light', 'dark']
@@ -180,6 +220,12 @@ legend {
 .version {
   color: var(--c-text-2);
   font-size: 0.85rem;
+}
+.licence {
+  max-height: 16rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.8rem;
 }
 label {
   font-weight: 700;

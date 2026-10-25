@@ -57,6 +57,61 @@ test('lesson player: answer, feedback, quit', async ({ page }) => {
   await expect(page).toHaveURL(/\/code-nybbles\/$/)
 })
 
+test('a perfect first lesson awards XP, extends the streak and shows a combo', async ({ page }) => {
+  const section = await (await page.request.get('content/section-first-steps.json')).json()
+  const unit = section.units[0]
+  const lesson = unit.levels[unit.path[0].level ?? unit.path[0].levelId].lessons[0]
+  await onboard(page)
+  await page.goto('./')
+  await page.getByRole('button', { name: /, up next$/ }).click()
+  await page.getByRole('button', { name: /^Start \+/ }).click()
+
+  let graded = 0
+  let usedEnter = false
+  for (const ex of lesson.exercises) {
+    if (ex.type === 'concept') {
+      await page.getByRole('button', { name: 'Got it' }).click()
+      continue
+    }
+    const count = ex.type === 'true-false' ? 2 : ex.options.length
+    const right = ex.type === 'true-false' ? (ex.answer ? 0 : 1) : ex.options.findIndex((o: { id: string }) => o.id === ex.answer)
+    await page.getByRole('radio').nth(right % count).click()
+    if (!usedEnter) {
+      await page.keyboard.press('Enter')
+      usedEnter = true
+    } else {
+      await page.getByRole('button', { name: 'Check' }).click()
+    }
+    graded++
+    if (graded === 5) await expect(page.getByText('5 in a row!')).toBeVisible()
+    await expect(page.getByText('Nicely done!')).toBeVisible()
+    await page.getByRole('button', { name: 'Continue' }).click()
+  }
+
+  await expect(page.getByRole('heading', { name: 'Lesson complete!' })).toBeVisible()
+  await expect(page.locator('.stat.xp strong')).toHaveText('15')
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByRole('heading', { name: '1 day streak!' })).toBeVisible()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByRole('heading', { name: 'Hello, World!' })).toBeVisible()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByRole('button', { name: '1 day streak' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '30 gems' })).toBeVisible()
+})
+
+test('a hint is offered and keeps the answer from being perfect', async ({ page }) => {
+  await onboard(page)
+  await page.goto('./')
+  await page.getByRole('button', { name: /, up next$/ }).click()
+  await page.getByRole('button', { name: /^Start \+/ }).click()
+  await page.getByRole('button', { name: 'Got it' }).click()
+  await page.getByRole('button', { name: 'Hint' }).click()
+  await expect(page.getByText("won't count as perfect")).toBeVisible()
+  await page.getByRole('radio').first().click()
+  await page.getByRole('button', { name: 'Check' }).click()
+  await expect(page.getByText('Done!')).toBeVisible()
+})
+
 test('a wrong answer lands in Mistakes review', async ({ page }) => {
   // Drives lesson 1 of the first level from its content: the first graded exercise is answered wrongly, the rest correctly.
   const section = await (await page.request.get('content/section-first-steps.json')).json()

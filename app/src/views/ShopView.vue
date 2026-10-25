@@ -4,7 +4,7 @@
     <p class="balance"><AppIcon name="gem" /> {{ game.state.gems }} gems</p>
 
     <article class="item">
-      <AppIcon name="star" :size="40" class="freeze" />
+      <AppIcon name="freeze" :size="40" class="freeze" />
       <div class="stack">
         <h2>Streak freeze</h2>
         <p>Keeps your streak alive for one day you miss. You can hold {{ MAX_FREEZES }}.</p>

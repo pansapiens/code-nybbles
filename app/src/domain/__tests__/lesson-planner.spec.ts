@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { answerCurrent, currentRef, isFinished, planLesson, progress, startRun, summarise } from '../lesson-planner'
+import { answerCurrent, comboXp, currentRef, isFinished, planLesson, progress, startRun, summarise } from '../lesson-planner'
 
 const plan = planLesson('s.u.lvl', { id: 'l1', exercises: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] })
 
@@ -23,7 +23,22 @@ describe('lesson planner', () => {
     const s = summarise(run, (ref) => !ref.endsWith('/a'), 5000) // `a` is a concept card
     expect(s.accuracy).toBe(0.5) // first tries: b wrong, c right
     expect(s.mistakes).toBe(1)
+    expect(s.hinted).toBe(false)
     expect(s.durationMs).toBe(5000)
+  })
+
+  it('a hint is not a mistake, and a combo pays +2 XP on every tenth correct answer', () => {
+    const run = answerCurrent(startRun(plan, 0), true, 0, true, true)
+    const s = summarise(run, () => true, 1000)
+    expect(s.hinted).toBe(true)
+    expect(s.mistakes).toBe(0)
+    expect(s.accuracy).toBe(1)
+
+    const ok = { correct: true, mistakes: 0 }
+    expect(comboXp(Array.from({ length: 9 }, () => ok))).toBe(0)
+    expect(comboXp(Array.from({ length: 10 }, () => ok))).toBe(2)
+    expect(comboXp([...Array.from({ length: 9 }, () => ok), { correct: true, mistakes: 0, hinted: true }, ...Array.from({ length: 10 }, () => ok)])).toBe(2)
+    expect(comboXp([...Array.from({ length: 4 }, () => ok), { correct: false, mistakes: 1 }, ...Array.from({ length: 10 }, () => ok)])).toBe(2)
   })
 
   it('does not re-queue a wrong answer when requeue is off', () => {

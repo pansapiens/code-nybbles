@@ -88,7 +88,7 @@ also works. CI doesn't need either.
   - [x] (new) Public repo `pansapiens/code-nybbles`, Pages from Actions: https://pansapiens.github.io/code-nybbles/
     (push over SSH; the gh token lacks the `workflow` scope)
   - [ ] (new) Actions still target Node 20 (deprecated, forced to Node 24); bump to the next major versions
-  - [ ] (new) Add content-build + rust-verify steps once they exist (M1)
+  - [x] (new) Add content-build + rust-verify steps once they exist (M1)
 - [x] (new) Fonts were inlined as data: URIs by Vite and blocked by the CSP; `assetsInlineLimit` now skips woff2
 - [~] Done-check: installable, offline-loading shell on mobile viewport; Lighthouse PWA checks pass
   - Offline reload verified by e2e; Lighthouse not yet run
@@ -113,7 +113,7 @@ also works. CI doesn't need either.
     `reviewConcepts` must be in some earlier-or-current level's `concepts:`
   - [x] Licence allow-list for `sources:` (enforced by schema enum); `ATTRIBUTIONS.md` generated at the repo
     root by the CLI, and `manifest.attributions` feeds Settings > Licences & attributions (01 §13.3)
-    - [ ] (new) Full MIT/Apache notice texts in-app (currently a link to the repo)
+    - [x] (new) Full MIT/Apache notice texts in-app (Code Nybbles MIT and Apache-2.0, plus the Rust Project MIT notice)
   - [x] Emit `app/public/content/section-<id>.json` + `manifest.json` (contentVersion, hashes) (01 §5.4)
   - [x] Syntax highlighting: deviation, a tiny per-line regex lexer at runtime (`components/highlight.ts`,
     `HighlightedLine.vue`) rather than build-time Shiki/Lezer, because fill-tokens and spot-bug split the code
@@ -150,7 +150,10 @@ also works. CI doesn't need either.
     - [ ] (new) Pool sampling + SRS review items + Legendary subsets (M4)
   - [x] `exercises/registry.ts` (renderer per type) + `exercises/grade.ts` (grader + solution per type, tested)
   - [x] (new) Persist lesson completion (levelProgress, XP events) - M2 with the event log
-  - [ ] (new) Hint button (v1), combo toasts, Enter-to-check keyboard shortcut
+  - [x] (new) Hint button (v1), combo toasts, Enter-to-check keyboard shortcut
+    - A hint drops the perfect bonus and the perfect gems, breaks the combo, and does not cost a heart
+    - Combo toast every 5 correct graded answers; +2 XP (included in the lesson or practice total) every 10
+    - One example hint, on the first true/false of Unit 1.1. Lessons without a `hint` show no button
 - [x] Renderers + graders for all 10 MVP types. Shared pieces: `OptionList` (mcq/decode-error/predict-output/
   true-false/compiles follow-up), `OrderExercise` (parsons + predict-output assemble mode)
   - predict-output assemble mode grades the words of the output, not its line breaks (use choose mode when
@@ -194,7 +197,7 @@ also works. CI doesn't need either.
   - Store `now` ticks every 60 s and on visibilitychange; `viewAt` settles the streak to today
 - [x] Hearts with setting (default off), refill rules (01 §3.8); out-of-hearts sheet with gem refill
 - [x] Gems + shop (01 §3.9): freeze, repair (when offered), hearts refill (hearts mode only)
-  - [ ] (new) Freeze uses the star icon as placeholder art; needs an ice/freeze icon
+  - [x] (new) Freeze uses a snowflake icon in the shop, the streak screen and a frozen calendar day
 - [x] Lesson-complete, streak-extended, milestone, daily-goal and achievement celebration screens
 - [x] Streak calendar screen; profile/stats (7-day XP bars); achievements v1, 10 entries (01 §3.10)
 - [x] Event log `commit(events[])` + derived tables + `rebuildDerived()` (01 §6)
@@ -205,8 +208,8 @@ also works. CI doesn't need either.
 - [x] Export/import JSON backup (zod-validated, merge by event ID) (01 §6); import reloads the page
   - [ ] (new) Backup reminder (01 §6) not done
 - [x] Domain unit tests: streak edge cases (DST, timezone travel, long absence), XP, hearts, economy
-  - [ ] (new) e2e that finishes a whole lesson and checks XP/streak (verified manually with a script so far)
-- [ ] (new) Cross-tab sync (ponytail: a second tab sees changes on reload)
+  - [x] (new) e2e that finishes a whole lesson and checks XP/streak (15 XP, 1-day streak, 30 gems, combo toast)
+- [x] (new) Cross-tab sync (ponytail: a second tab reloads progress from IndexedDB when it becomes visible)
 
 ## M3: Beginner content (02 Sections 1-5)
 
@@ -418,3 +421,8 @@ also works. CI doesn't need either.
   (identical snippets compiled at once in one directory), fixed by sharing one compile per key. M6 Android:
   Capacitor project, reminders, native haptics; debug APK builds, not yet run on a device. Next: device test
   of the APK, manual screen-reader pass, playtest.
+- 2026-10-25: Lesson player: Hint button, combo toasts with +2 XP at every 10, Enter to check or continue.
+  Settings shows the full MIT and Apache-2.0 texts, including the Rust Project notice. Snowflake icon for
+  freezes. A second tab reloads progress when it becomes visible. e2e covers a perfect first lesson (XP,
+  streak, gems, combo) and the hint. 82 unit tests, 24 e2e. Still open: device test of the APK, a manual
+  screen-reader pass, low-end Android performance, a playtest.
