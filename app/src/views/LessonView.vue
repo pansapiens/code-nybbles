@@ -142,6 +142,8 @@ const saving = ref(false)
 const exercises = new Map<string, CompiledExercise>()
 /** Code Reads: the program, and how many of its lines each exercise reveals. Lines stay shown once revealed. */
 const program = shallowRef<CompiledLevel['program']>()
+/** Mistakes review: a Code Read question's own program, so a session can mix reads. */
+const programs = new Map<string, NonNullable<CompiledLevel['program']>>()
 const reveals = new Map<string, number>()
 const revealed = ref(0)
 const run = shallowRef<LessonRun>()
@@ -159,10 +161,16 @@ onMounted(async () => {
   try {
     if (props.kind) {
       const [{ sections }] = await Promise.all([loadCourse(), game.load()])
-      const pool = exercisePool(sections)
+      const pool = exercisePool(sections, props.kind === 'mistakes')
       const items = planPractice(props.kind, game.state, pool, game.view.today, props.unitId)
       if (!items.length) throw new Error("There's nothing to practise yet. Finish a lesson first.")
-      for (const i of pool) exercises.set(i.ref, i.ex)
+      for (const i of pool) {
+        exercises.set(i.ref, i.ex)
+        if (i.program) {
+          programs.set(i.ref, i.program)
+          reveals.set(i.ref, i.reveal ?? 0)
+        }
+      }
       run.value = startRun({ levelId: 'practice', lessonId: props.kind, items }, Date.now())
       return
     }
@@ -201,7 +209,17 @@ watch(
   () => run.value?.index,
   () => nextTick(() => promptEl.value?.focus({ preventScroll: true })),
 )
-watch(run, (r) => (revealed.value = Math.max(revealed.value, reveals.get((r && currentRef(r)) ?? '') ?? 0)))
+watch(run, (r) => {
+  const ref = (r && currentRef(r)) ?? ''
+  // A mistakes session may mix Code Reads, so the program follows the question instead of growing.
+  if (props.kind === 'mistakes') {
+    program.value = programs.get(ref)
+    revealed.value = reveals.get(ref) ?? 0
+    return
+  }
+  const lines = reveals.get(ref)
+  if (lines !== undefined) revealed.value = Math.max(revealed.value, lines)
+})
 const visibleProgram = computed(() => program.value?.rust.split('\n').slice(0, revealed.value).join('\n') ?? '')
 const explanation = computed(() => (exercise.value && 'explanation' in exercise.value ? exercise.value.explanation : undefined))
 const hintHtml = computed(() => (exercise.value && 'hint' in exercise.value ? exercise.value.hint : undefined))
@@ -374,6 +392,7 @@ onUnmounted(() => document.removeEventListener('keydown', onEnter))
   min-height: 100dvh;
   max-width: var(--path-max);
   margin: 0 auto;
+  padding-top: var(--safe-top);
 }
 .lesson-top {
   display: grid;
@@ -405,7 +424,7 @@ onUnmounted(() => document.removeEventListener('keydown', onEnter))
 .lesson-foot {
   position: sticky;
   bottom: 0;
-  padding: var(--s-4) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom));
+  padding: var(--s-4) var(--s-4) calc(var(--s-4) + var(--safe-bottom));
   border-top: 2px solid var(--c-border);
   background: var(--c-canvas);
 }

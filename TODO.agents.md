@@ -317,9 +317,10 @@ also works. CI doesn't need either.
   - (new) A concept moves up a box only when reviewed on or after its due date (several lessons in one day
     don't push it to box 6); a miss resets it to box 0, due the same day
   - (new) `domain/practice.ts`: smart (overdue, then weakest; 2 per concept, 10 per session), mistakes (newest
-    10 that still exist in the content), unit (smart within one unit). Concept cards and Code Read items excluded
+    10 that still exist in the content), unit (smart within one unit). Concept cards are excluded. Code Reads stay
+    out of smart and unit practice; mistakes review shows each one with its program, up to the lines that question reveals
   - [x] (new) A `practice` node before every checkpoint (21 units); optional, never gates the path
-  - [ ] (new) Code Read mistakes are recorded but can't be reviewed (they need their program)
+  - [x] (new) Code Read mistakes are recorded but can't be reviewed (they need their program)
   - [ ] (new) Pool sampling of extra exercises inside normal lessons (plans/03 §1.1) still not done
 - [x] Placement test (02 §6); onboarding flow (01 §4.3.1)
   - (new) Placement is a straight climb, not 02 §6's up-and-down walk (ponytail): 3 questions per section from
@@ -331,7 +332,8 @@ also works. CI doesn't need either.
     launch only (`profile.onboardedAt`; anyone with logged activity counts as onboarded)
   - [x] (new) No e2e for the jump flow or the onboarding placement offer (placement itself has one)
     Jump here: 80% unlocks up to the checkpoint, a low score leaves it locked. Onboarding offers the test after "I know another language"
-  - [ ] (new) "Install app" prompt after the first lesson (01 §4.3.1) not done (M5 install prompt timing)
+  - [x] (new) "Install app" prompt after the first lesson (01 §4.3.1) not done (M5 install prompt timing)
+    Done in M5: toast after the first XP; "Not now" is permanent
 - [x] Spike: in-browser compiler (Weblings / Rubrc), record go/no-go (01 §7): **not yet**
   (plans/spikes/in-browser-compiler.md). Rubrc no-go (rustc 1.83, 4+ GB RAM, 15 s compiles). Weblings is the
   fallback: 44 MB gzip pack, ~0.1-0.4 s compiles on desktop, no COOP/COEP needed, error codes match on all
@@ -430,6 +432,7 @@ also works. CI doesn't need either.
   (identical snippets compiled at once in one directory), fixed by sharing one compile per key. M6 Android:
   Capacitor project, reminders, native haptics; debug APK builds, not yet run on a device. Next: device test
   of the APK, manual screen-reader pass, playtest.
+- 2026-10-25: The Android app keeps the status bar, clock and battery clear of the UI. Top chrome uses the safe-area inset Capacitor reads from the system, including lessons and onboarding which have no HUD.
 - 2026-10-25: A tag like v0.1 builds a debug APK and attaches it to the GitHub release. Version name comes from the tag; v0.1 is version code 100.
 - 2026-10-25: Unit banners are a fixed height, so a sticky card covers the ones stacked under it. A long title ellipsises instead of growing the card.
 - 2026-10-25: The perfect-lesson e2e continues past Early Crab or Night Owl, which only appear before 7am or after 10pm. CI runs in UTC and was stopping on Early Crab.
@@ -444,3 +447,6 @@ also works. CI doesn't need either.
   reports drift without failing. The build rejects a parsons distractor that still passes when swapped in, and
   checks a spot-bug line against rustc (`compilerLine` when the tap target is not the caret; 32 items). e2e covers
   Jump here, pass and fail, and the onboarding placement offer.
+- 2026-10-25: Mistakes review includes Code Read questions and shows that question's program, up to the lines it
+  revealed. Smart and unit practice still leave Code Reads out. e2e misses one question in Ferris says hello and
+  meets it again under Mistakes, with `fn main` on screen.

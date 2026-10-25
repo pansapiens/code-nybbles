@@ -1,7 +1,7 @@
-import type { CompiledExercise } from '@code-nybbles/content-build/schema'
+import type { CompiledExercise, CompiledSection } from '@code-nybbles/content-build/schema'
 import { describe, expect, it } from 'vitest'
 import { initialProgress, type Progress } from '../progress'
-import { type PoolItem, planPractice, reviewableMistakes } from '../practice'
+import { exercisePool, type PoolItem, planPractice, reviewableMistakes } from '../practice'
 
 const TODAY = '2026-10-10'
 const item = (levelId: string, lessonIndex: number, id: string, concepts: string[], unitId = 'u1'): PoolItem => ({
@@ -55,5 +55,45 @@ describe('planPractice', () => {
 
   it('has nothing to practise before any lesson is done', () => {
     expect(planPractice('smart', initialProgress(), pool, TODAY)).toEqual([])
+  })
+
+  it('keeps Code Reads out of smart practice and includes them, with their program, for mistakes', () => {
+    const sections = [
+      {
+        units: [
+          {
+            id: 'u',
+            levels: {
+              'u.read': {
+                id: 'u.read',
+                program: { rust: 'fn main() {}\n' },
+                reveals: [1, 1, 2],
+                lessons: [
+                  {
+                    id: 'read',
+                    exercises: [
+                      { type: 'mcq', id: 'q1', concepts: ['c'] },
+                      { type: 'concept', id: 'card' },
+                      { type: 'true-false', id: 'q2', concepts: ['c'] },
+                    ],
+                  },
+                ],
+              },
+              'u.lv': { id: 'u.lv', lessons: [{ id: 'l1', exercises: [{ type: 'mcq', id: 'q', concepts: ['c'] }] }] },
+            },
+          },
+        ],
+      },
+    ] as unknown as CompiledSection[]
+    expect(exercisePool(sections).map((i) => i.ref)).toEqual(['u.lv/l1/q'])
+    const withReads = exercisePool(sections, true)
+    expect(withReads.map((i) => i.ref)).toEqual(['u.read/read/q1', 'u.read/read/q2', 'u.lv/l1/q'])
+    expect(withReads[0]).toMatchObject({ program: { rust: 'fn main() {}\n' }, reveal: 1 })
+    expect(withReads[1]).toMatchObject({ reveal: 2 })
+    expect(withReads[1]!.program).toBe(withReads[0]!.program)
+    const p = initialProgress()
+    p.mistakes = { 'u.read/read/q2': { at: 1 } }
+    expect(reviewableMistakes(p, exercisePool(sections))).toEqual([])
+    expect(planPractice('mistakes', p, withReads, TODAY)).toEqual(['u.read/read/q2'])
   })
 })

@@ -169,6 +169,37 @@ test('a wrong answer lands in Mistakes review', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Check' })).toBeVisible()
 })
 
+test('a Code Read mistake comes back with its program', async ({ page }) => {
+  const section = await (await page.request.get('content/section-first-steps.json')).json()
+  const unit = section.units[0]
+  const node = unit.path.find((p: { kind: string }) => p.kind === 'code-read')
+  const level = unit.levels[node.levelId]
+  const lesson = level.lessons[0]
+  await onboard(page)
+  await page.goto(`./lesson/${level.id}/${lesson.id}`)
+
+  const answer = async (ex: { type: string; answer: unknown; options?: { id: string }[] }, wrong = false) => {
+    const count = ex.type === 'true-false' ? 2 : ex.options!.length
+    const right = ex.type === 'true-false' ? (ex.answer ? 0 : 1) : ex.options!.findIndex((o: { id: string }) => o.id === ex.answer)
+    await page.getByRole('radio').nth(wrong ? (right + 1) % count : right).click()
+    await page.getByRole('button', { name: 'Check', exact: true }).click()
+    await page.getByRole('button', { name: 'Continue' }).click()
+  }
+  let missed
+  for (const ex of lesson.exercises) await answer(ex, !missed && (missed = ex) !== undefined)
+  await answer(missed)
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Continue' }).click({ timeout: 1000 })
+    expect(page.url()).toMatch(/\/code-nybbles\/$/)
+  }).toPass()
+
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Practice' }).click()
+  await expect(page.getByRole('heading', { name: /Mistakes review/ })).toContainText('1')
+  await page.getByRole('button', { name: 'Start' }).nth(1).click()
+  await expect(page.getByRole('figure', { name: 'Program' })).toContainText('fn main')
+  await expect(page.getByText(missed.prompt)).toBeVisible()
+})
+
 test('works offline after the service worker installs', async ({ page, context }) => {
   await onboard(page)
   await page.goto('./')

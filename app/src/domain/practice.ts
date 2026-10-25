@@ -1,5 +1,5 @@
 /** Practice planning (plans/01 §3.11): picks exercise refs for Smart, Mistakes and unit practice. Pure. */
-import type { CompiledExercise, CompiledSection } from '@code-nybbles/content-build/schema'
+import type { CompiledExercise, CompiledLevel, CompiledSection } from '@code-nybbles/content-build/schema'
 import { shuffledIndices } from '@/exercises/shuffle'
 import type { LocalDate } from './dates'
 import type { ExerciseRef } from './lesson-planner'
@@ -16,19 +16,36 @@ export interface PoolItem {
   unitId: string
   levelId: string
   lessonIndex: number
+  /** Code Read questions carry the program and how many of its lines this question shows. */
+  program?: CompiledLevel['program']
+  reveal?: number
 }
 
-/** Every exercise that can be practised alone: no concept cards, and no Code Reads (they need their program). */
-export function exercisePool(sections: CompiledSection[]): PoolItem[] {
+/**
+ * Exercises that can be practised alone. Concept cards are out. Code Reads are out of smart and unit
+ * practice; pass `codeReads` for mistakes review, which shows each question's program.
+ */
+export function exercisePool(sections: CompiledSection[], codeReads = false): PoolItem[] {
   return sections.flatMap((s) =>
     s.units.flatMap((u) =>
       Object.values(u.levels)
-        .filter((l) => !l.program)
+        .filter((l) => codeReads || !l.program)
         .flatMap((l) =>
           l.lessons.flatMap((lesson, lessonIndex) =>
-            lesson.exercises
-              .filter((ex) => ex.type !== 'concept')
-              .map((ex) => ({ ref: `${l.id}/${lesson.id}/${ex.id}`, ex, unitId: u.id, levelId: l.id, lessonIndex })),
+            lesson.exercises.flatMap((ex, i) =>
+              ex.type === 'concept'
+                ? []
+                : [
+                    {
+                      ref: `${l.id}/${lesson.id}/${ex.id}`,
+                      ex,
+                      unitId: u.id,
+                      levelId: l.id,
+                      lessonIndex,
+                      ...(l.program ? { program: l.program, reveal: l.reveals?.[i] ?? 0 } : {}),
+                    },
+                  ],
+            ),
           ),
         ),
     ),

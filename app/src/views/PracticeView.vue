@@ -66,7 +66,7 @@ Promise.all([loadCourse(), game.load()])
 const pool = computed(() => exercisePool(sections.value))
 const smartCount = computed(() => planPractice('smart', game.state, pool.value, game.view.today).length)
 const due = computed(() => dueConcepts(game.state, pool.value, game.view.today))
-const mistakeCount = computed(() => reviewableMistakes(game.state, pool.value).length)
+const mistakeCount = computed(() => reviewableMistakes(game.state, exercisePool(sections.value, true)).length)
 const smartNote = computed(() => {
   if (!smartCount.value) return 'Finish a lesson to unlock this.'
   return due.value ? `${due.value} ${due.value === 1 ? 'concept is' : 'concepts are'} due for review.` : 'Nothing is due, but you can still practise.'
