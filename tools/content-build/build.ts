@@ -75,6 +75,26 @@ export function caseSource(rust: string, wrap: 'auto' | 'none', hidden?: { befor
   return (hidden?.before ?? '') + wrapped + (hidden?.after ?? '')
 }
 
+/** 1-based line of the first span in rustc's rendered diagnostic (` --> main.rs:3:5`). */
+export function primaryErrorLine(compilerOutput: string): number | undefined {
+  const m = /-->\s+\S+:(\d+):\d+/.exec(compilerOutput)
+  return m ? Number(m[1]) : undefined
+}
+
+/** That line, in the code the learner sees (drop `hidden.before` and a generated `fn main`). */
+export function shownErrorLine(
+  compiledLine: number,
+  rust: string,
+  wrap: 'auto' | 'none',
+  hidden?: { before?: string },
+  mode?: string,
+): number {
+  const full = caseSource(rust, wrap, hidden?.before ? { before: hidden.before } : undefined, mode)
+  const at = full.indexOf(rust)
+  const prefix = at > 0 ? full.slice(0, at) : ''
+  return compiledLine - (prefix ? prefix.split('\n').length - 1 : 0)
+}
+
 interface Snippet {
   case: Case
   /** Absent for a Code Read's program. */
@@ -150,24 +170,47 @@ function snippetsFor(ex: CompiledExercise, gid: string, edition: string): Snippe
   if (ex.type === 'parsons' && ex.verify && ex.verify.mode !== 'none') {
     const v = ex.verify
     const byId = new Map([...ex.lines, ...(ex.distractors ?? [])].map((l) => [l.id, l.text]))
-    for (const [i, order] of [ex.answer, ...(ex.alternatives ?? [])].entries()) {
-      const solution = order.map((id) => byId.get(id) ?? '').join('\n') + '\n'
+    const text = (order: string[]) => order.map((id) => byId.get(id) ?? '').join('\n') + '\n'
+    const orders = [ex.answer, ...(ex.alternatives ?? [])]
+    const solutions = new Set(orders.map(text))
+    const parsonsCase = (id: string, solution: string): Case => ({
+      id,
+      source: v.harness.replace('{{solution}}', solution),
+      mode: v.mode as Case['mode'],
+      edition,
+      expectStdout: v.expectStdout,
+      expectErrors: v.expectErrors,
+      expectErrorMessage: v.expectErrorMessage,
+      expectPanic: v.expectPanic,
+      denyWarnings: v.denyWarnings,
+      stdin: v.stdin,
+    })
+    for (const [i, order] of orders.entries()) {
       out.push({
         exercise: ex,
-        case: {
-          id: i ? `${gid}#alt${i}` : gid,
-          source: v.harness.replace('{{solution}}', solution),
-          mode: v.mode as Case['mode'],
-          edition,
-          expectStdout: v.expectStdout,
-          expectErrors: v.expectErrors,
-          expectErrorMessage: v.expectErrorMessage,
-          expectPanic: v.expectPanic,
-          denyWarnings: v.denyWarnings,
-          stdin: v.stdin,
-        },
+        case: parsonsCase(i ? `${gid}#alt${i}` : gid, text(order)),
         apply: () => {},
       })
+    }
+    // A distractor swapped in for one answer line must not also pass. Catches a line that
+    // still compiles, such as a final `println!` with the semicolon left off.
+    let n = 0
+    for (const d of ex.distractors ?? []) {
+      for (const [i, id] of ex.answer.entries()) {
+        if (byId.get(id) === d.text) continue
+        const solution = ex.answer.map((lineId, j) => (j === i ? d.text : (byId.get(lineId) ?? ''))).join('\n') + '\n'
+        if (solutions.has(solution)) continue
+        const replaced = byId.get(id) ?? id
+        out.push({
+          exercise: ex,
+          case: parsonsCase(`${gid}#dist${n++}`, solution),
+          apply: () => {},
+          probe: (r) =>
+            r.problems.length
+              ? undefined
+              : `distractor ${JSON.stringify(d.text)} also passes in place of ${JSON.stringify(replaced)}`,
+        })
+      }
     }
   }
   return out
@@ -454,6 +497,8 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
     case 'spot-bug': {
       const n = ex.code.rust.replace(/\n$/, '').split('\n').length
       if (ex.answer > n) issues.error(where, `answer line ${ex.answer} > ${n} lines`)
+      if (ex.compilerLine !== undefined && ex.compilerLine > n)
+        issues.error(where, `compilerLine ${ex.compilerLine} > ${n} lines`)
       break
     }
     case 'match-pairs': {
@@ -466,13 +511,26 @@ function checkExercise(ex: Exercise, where: string, concepts: Set<string>, issue
   }
 }
 
-/** After verification: answers that depend on real program output. */
+/** After verification: answers that depend on real program output or the compiler's caret. */
 function checkAgainstOutcome(ex: Exercise, r: CaseResult, where: string, issues: Issues) {
-  if (ex.type !== 'predict-output' || r.outcome.stdout === undefined) return
-  const actual = norm(r.outcome.stdout)
-  const expected = ex.options ? (ex.options.find((o) => o.id === ex.answer)?.text ?? '') : ex.answer
-  if (norm(expected) !== actual)
-    issues.error(where, `answer ${JSON.stringify(expected)} differs from the real output ${JSON.stringify(actual)}`)
+  if (ex.type === 'predict-output' && r.outcome.stdout !== undefined) {
+    const actual = norm(r.outcome.stdout)
+    const expected = ex.options ? (ex.options.find((o) => o.id === ex.answer)?.text ?? '') : ex.answer
+    if (norm(expected) !== actual)
+      issues.error(where, `answer ${JSON.stringify(expected)} differs from the real output ${JSON.stringify(actual)}`)
+  }
+  if (ex.type !== 'spot-bug' || ex.code.verify !== 'compile-fail') return
+  const compiled = primaryErrorLine(r.outcome.compilerOutput)
+  if (compiled === undefined) return
+  const shown = shownErrorLine(compiled, ex.code.rust, ex.code.wrap, ex.code.hidden, ex.code.verify)
+  const claimed = ex.compilerLine ?? ex.answer
+  if (shown === claimed) return
+  issues.error(
+    where,
+    ex.compilerLine === undefined
+      ? `answer line ${ex.answer} but the compiler points at line ${shown}; set compilerLine: ${shown} if the bug is on another line`
+      : `compilerLine ${ex.compilerLine} but the compiler points at line ${shown}`,
+  )
 }
 
 // ---- Markdown (rendered at build time; the app inserts the HTML as-is) ----

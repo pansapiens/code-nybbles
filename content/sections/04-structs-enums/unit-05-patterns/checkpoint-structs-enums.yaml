@@ -179,6 +179,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0424]
         answer: 4
+        compilerLine: 5
         explanation: "`minutes` has no `self` parameter, so line 5 can't use `self` and line 11 can't call it as a method. Write `fn minutes(&self) -> u32`."
         concepts: [method.self, err.E0424]
 

@@ -317,6 +317,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 4
+        compilerLine: 6
         explanation: "The move happens on line 4. Printing `ticket` on line 3 is fine because it comes before the move; line 6 is the late use."
         concepts: [err.E0382, own.move]
 

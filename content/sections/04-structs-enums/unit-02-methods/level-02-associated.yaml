@@ -587,6 +587,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 5
+        compilerLine: 4
         explanation: "The `;` turns the struct expression into a statement, so `new` returns `()` instead of `Self`. Remove it."
         concepts: [style.new, fn.return, err.E0308]
 

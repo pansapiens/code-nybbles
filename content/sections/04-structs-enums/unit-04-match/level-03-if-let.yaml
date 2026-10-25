@@ -346,6 +346,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0384]
         answer: 6
+        compilerLine: 9
         explanation: "Line 9 changes `hp`, so it must be declared `let mut hp`. The compiler reports the error on line 9, but the fix belongs on line 6."
         concepts: [match.if-let, err.E0384]
 

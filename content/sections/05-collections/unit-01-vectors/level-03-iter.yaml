@@ -233,6 +233,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0594]
         answer: 3
+        compilerLine: 4
         explanation: "The error is reported on line 4, but the loop on line 3 only borrows with `&`, which can't change anything. Write `for l in &mut lights`."
         concepts: [vec.iter, borrow.shared, err.E0594]
 
@@ -468,6 +469,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 7
+        compilerLine: 10
         explanation: "The compiler reports line 10, but the mistake is on line 7: the loop moves `names`. `for n in &names` only borrows it."
         concepts: [vec.iter, err.E0382]
 

@@ -268,6 +268,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0594]
         answer: 6
+        compilerLine: 7
         explanation: "The error is reported on line 7, but the cause is line 6: `&prices` lends only shared references. Loop over `&mut prices` to change the values."
         concepts: [map.iter, borrow.mut, err.E0594]
 

@@ -144,6 +144,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0765]
         answer: 3
+        compilerLine: 4
         explanation: "Line 3 is missing the `\"` after `Middle`. The compiler reports it on line 4, where the leftover quote starts a string that never ends."
         concepts: [compiler.read-error, err.E0765]
 

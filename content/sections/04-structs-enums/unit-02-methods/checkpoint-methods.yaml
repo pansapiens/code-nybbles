@@ -183,6 +183,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 5
+        compilerLine: 4
         explanation: "The `;` turns the product into a statement, so `area` returns `()` instead of a `u32`. The compiler points at line 4 but suggests removing the semicolon."
         concepts: [method.self, err.E0308]
 
@@ -332,5 +333,6 @@ lessons:
           verify: compile-fail
           expectErrors: [E0596]
         answer: 8
+        compilerLine: 9
         explanation: "The error points at line 9, but the mistake is the parameter on line 8: `refuel` needs `t: &mut Tank` to call a `&mut self` method."
         concepts: [method.auto-ref, own.param-choice, err.E0596]

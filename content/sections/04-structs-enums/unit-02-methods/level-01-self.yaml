@@ -541,6 +541,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0594]
         answer: 6
+        compilerLine: 7
         explanation: "The compiler reports line 7, but the mistake is the signature on line 6: `grow` changes a field, so it needs `&mut self`."
         concepts: [method.self, err.E0594]
 

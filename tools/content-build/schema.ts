@@ -206,6 +206,11 @@ export const SpotBug = z
     code: Code,
     /** 1-based line number of the bug in `code.rust`. */
     answer: z.number().int().min(1),
+    /**
+     * Line rustc highlights, when that is not the line to tap (the mistake is earlier).
+     * Checked against the compiler; `answer` may differ.
+     */
+    compilerLine: z.number().int().min(1).optional(),
   })
   .strict()
 

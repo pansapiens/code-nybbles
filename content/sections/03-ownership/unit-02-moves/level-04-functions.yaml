@@ -363,6 +363,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 1
+        compilerLine: 3
         explanation: "Line 3 returns `text`, but line 1 has no `-> String`, so the compiler reports *mismatched types* on line 3. The fix goes on line 1: `fn tidy(mut text: String) -> String {`."
         concepts: [own.fn-return, fn.return, err.E0308]
 

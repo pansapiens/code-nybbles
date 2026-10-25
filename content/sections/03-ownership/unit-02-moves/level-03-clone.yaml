@@ -146,6 +146,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 3
+        compilerLine: 4
         explanation: "The error is reported on line 4, but the mistake is the move on line 3. `let radio = genre.clone();` keeps `genre` valid."
         concepts: [own.clone, err.E0382]
 
@@ -441,6 +442,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 4
+        compilerLine: 6
         explanation: "`a` is printed again on line 6, so line 4 should clone it: `let first = a.clone();`. `b` isn't used again, so its move is fine."
         concepts: [own.clone, err.E0382]
 

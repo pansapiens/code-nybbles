@@ -566,6 +566,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0382]
         answer: 7
+        compilerLine: 10
         explanation: "The compiler reports line 10, but the mistake is on line 7: the loop moves `words`. `for word in &words` only borrows it."
         concepts: [own.iter-ref, err.E0382]
 

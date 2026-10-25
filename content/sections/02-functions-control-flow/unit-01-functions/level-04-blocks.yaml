@@ -140,6 +140,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0277]
         answer: 4
+        compilerLine: 6
         explanation: "The error appears at the `println!` on line 6, because `bonus` is `()`. The cause is the `;` on line 4; remove it so the block's value is 20."
         concepts: [expr.block, types.unit, err.E0277]
 

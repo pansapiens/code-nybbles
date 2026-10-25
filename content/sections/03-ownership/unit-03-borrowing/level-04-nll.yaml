@@ -442,6 +442,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0502]
         answer: 6
+        compilerLine: 4
         explanation: "Line 6 uses `first`, so its borrow covers line 4. Printing `first` before line 4 would fix it."
         concepts: [borrow.nll, err.E0502]
 

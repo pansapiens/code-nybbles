@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { stringify } from 'yaml'
-import { buildContent, roteCodes } from './build.ts'
+import { buildContent, primaryErrorLine, roteCodes, shownErrorLine } from './build.ts'
 
 /** Write a one-level course to a temp dir; `exercises` replace the default valid one. */
 function fixture(exercises: unknown[]): string {
@@ -202,6 +202,59 @@ test('a build compiles to a level with one lesson per step and generated cards',
   assert.match((await buildContent({ contentDir: root })).issues.list.map((i) => i.message).join('\n'), /1 exercises \(expected 3-8\)/)
   write([{ ...step('one', one, 'hi\n'), file: { rust: one, verify: 'compile' } }])
   assert.match((await buildContent({ contentDir: root })).issues.errors.map((i) => i.message).join('\n'), /must be `verify: run`/)
+})
+
+const parsons = (distractor: string) => ({
+  type: 'parsons',
+  id: 'par',
+  prompt: 'p',
+  lines: [
+    { id: 'a', text: 'fn main() {' },
+    { id: 'b', text: '    println!("hi");' },
+    { id: 'c', text: '}' },
+  ],
+  distractors: [{ id: 'd', text: distractor }],
+  answer: ['a', 'b', 'c'],
+  verify: { mode: 'run', expectStdout: 'hi\n' },
+  explanation: 'e',
+  concepts: ['intro.main'],
+})
+
+test('a parsons distractor that still produces the expected output is an error', async () => {
+  assert.equal(await errors([parsons('    println!("nope");')]), '')
+  assert.match(await errors([parsons('    println!("hi")')]), /also passes in place of "    println!\(\\"hi\\"\);"/)
+})
+
+const spot = (answer: number, extra: object = {}) => ({
+  type: 'spot-bug',
+  id: 's',
+  prompt: 'p',
+  code: {
+    rust: 'fn main() {\n    println("hi");\n}\n',
+    wrap: 'none',
+    verify: 'compile-fail',
+    expectErrors: ['E0423'],
+  },
+  answer,
+  ...extra,
+  explanation: 'e',
+  concepts: ['intro.main'],
+})
+
+test('a spot-bug answer must be the line the compiler points at, unless compilerLine says otherwise', async () => {
+  assert.equal(await errors([spot(2)]), '')
+  assert.match(await errors([spot(1)]), /answer line 1 but the compiler points at line 2/)
+  assert.equal(await errors([spot(1, { compilerLine: 2 })]), '')
+  assert.match(await errors([spot(1, { compilerLine: 3 })]), /compilerLine 3 but the compiler points at line 2/)
+  const wrapped = spot(1)
+  wrapped.code = { rust: 'println("hi");\n', wrap: 'auto', verify: 'compile-fail', expectErrors: ['E0423'] }
+  assert.equal(await errors([wrapped]), '')
+})
+
+test('primary error line is the first span, shifted back out of a generated main', () => {
+  assert.equal(primaryErrorLine('error[E0423]: x\n --> main.rs:3:5\n  |\n'), 3)
+  assert.equal(shownErrorLine(2, 'println("hi");\n', 'auto', undefined, 'compile-fail'), 1)
+  assert.equal(shownErrorLine(3, 'fn main() {\n    println("hi");\n}\n', 'none'), 3)
 })
 
 test('questions that hinge on an error code are found; codes shown beside a message are fine', () => {

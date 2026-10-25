@@ -369,6 +369,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0596]
         answer: 11
+        compilerLine: 12
         explanation: "The error is reported on line 12, but the fix is on line 11: `let mut s`, so `add` can borrow it mutably."
         concepts: [method.auto-ref, method.self, err.E0596]
 

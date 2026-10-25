@@ -308,6 +308,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0596]
         answer: 6
+        compilerLine: 7
         explanation: "The compiler reports line 7, but the fix is on line 6: `let mut score = 42;`. You can only take `&mut` of a mutable variable."
         concepts: [own.param-choice, borrow.mut, err.E0596]
 

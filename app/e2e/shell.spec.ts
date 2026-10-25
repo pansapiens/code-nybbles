@@ -210,6 +210,77 @@ test.describe('placement test', () => {
   })
 })
 
+test.describe('jump ahead from a locked checkpoint', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  /** Replaces the first checkpoint with a short multiple-choice lesson, so the test can pass or fail it on purpose. */
+  async function stubCheckpoint(page: Page) {
+    const mcq = (id: string) => ({
+      type: 'mcq',
+      id,
+      prompt: 'Pick one',
+      options: [
+        { id: 'a', code: 'right' },
+        { id: 'b', code: 'wrong' },
+      ],
+      answer: 'a',
+    })
+    await page.route('**/content/section-*.json', async (route) => {
+      const section = await (await route.fetch()).json()
+      if (section.id === 'first-steps') {
+        const unit = section.units[0]
+        const node = unit.path.find((p: { kind: string }) => p.kind === 'checkpoint')
+        unit.levels[node.levelId].lessons[0].exercises = ['q1', 'q2', 'q3', 'q4', 'q5'].map(mcq)
+      }
+      await route.fulfill({ json: section })
+    })
+  }
+
+  async function openJump(page: Page) {
+    await stubCheckpoint(page)
+    await onboard(page)
+    await page.goto('./')
+    await page.getByRole('button', { name: 'Checkpoint: Hello, Rust, locked' }).click()
+    await page.getByRole('button', { name: 'Jump here?' }).click()
+    await expect(page).toHaveURL(/\/jump\//)
+    await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeVisible()
+  }
+
+  async function answer(page: Page, right: boolean) {
+    await page.getByRole('radio').nth(right ? 0 : 1).click()
+    await page.getByRole('button', { name: 'Check', exact: true }).click()
+    await page.getByRole('button', { name: 'Continue' }).click()
+  }
+
+  test('scoring 80% unlocks everything up to the checkpoint', async ({ page }) => {
+    await openJump(page)
+    for (let i = 0; i < 5; i++) await answer(page, true)
+    await expect(page.getByRole('heading', { name: 'Jumped ahead!' })).toBeVisible()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('button', { name: 'Checkpoint: Hello, Rust, complete' })).toBeVisible()
+  })
+
+  test('a low score leaves the checkpoint locked', async ({ page }) => {
+    await openJump(page)
+    for (let i = 0; i < 5; i++) await answer(page, false)
+    await expect(page.getByRole('heading', { name: 'Not quite yet' })).toBeVisible()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await expect(page.getByRole('button', { name: 'Checkpoint: Hello, Rust, locked' })).toBeVisible()
+  })
+})
+
+test('onboarding offers a placement test once you already know a language', async ({ page }) => {
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Get started' }).click()
+  await page.getByRole('button', { name: 'I know another language' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('button', { name: 'Skip' }).click()
+  await expect(page.getByRole('heading', { name: 'Want to skip the basics?' })).toBeVisible()
+  await page.getByRole('button', { name: 'Take a short test' }).click()
+  await expect(page).toHaveURL(/\/placement$/)
+  await expect(page.getByRole('button', { name: 'Check' })).toBeVisible()
+})
+
 test('playground runs the default program from the practice hub', async ({ page }) => {
   await page.route('https://play.rust-lang.org/execute', (route) =>
     route.fulfill({ json: { success: true, stdout: 'Hello, Nybbles!\n', stderr: '' } }),

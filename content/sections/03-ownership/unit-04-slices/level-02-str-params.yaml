@@ -479,6 +479,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 1
+        compilerLine: 8
         explanation: "The compiler reports line 8, but the mistake is the parameter type on line 1. With `word: &str`, both calls compile."
         concepts: [slice.str-param, err.E0308]
 

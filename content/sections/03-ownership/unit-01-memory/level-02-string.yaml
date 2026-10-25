@@ -246,6 +246,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0596]
         answer: 2
+        compilerLine: 4
         explanation: "The error points at line 4, but the fix belongs on line 2: `let mut list` so the `String` can be changed."
         concepts: [string.string-vs-literal, var.mut, err.E0596]
 

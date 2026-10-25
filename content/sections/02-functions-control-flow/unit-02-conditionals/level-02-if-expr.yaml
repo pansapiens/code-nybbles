@@ -295,6 +295,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 6
+        compilerLine: 8
         explanation: "The other blocks give text, but this one gives the integer `3`. Every block in the chain must have the same type."
         concepts: [ctrl.if-expr, err.E0308]
 
@@ -487,6 +488,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 3
+        compilerLine: 2
         explanation: "`50;` is a statement, so that block gives `()` instead of a `u32`. Remove the `;`."
         concepts: [ctrl.if-expr, fn.return, err.E0308]
 

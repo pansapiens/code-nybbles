@@ -87,7 +87,9 @@ also works. CI doesn't need either.
 - [x] GitHub Actions: type-check, unit tests, build, deploy to Pages (01 §5.5) - `.github/workflows/deploy.yml`
   - [x] (new) Public repo `pansapiens/code-nybbles`, Pages from Actions: https://pansapiens.github.io/code-nybbles/
     (push over SSH; the gh token lacks the `workflow` scope)
-  - [ ] (new) Actions still target Node 20 (deprecated, forced to Node 24); bump to the next major versions
+  - [x] (new) Actions still target Node 20 (deprecated, forced to Node 24); bump to the next major versions
+    checkout v7, setup-node v7, pnpm/action-setup v6, cache v6, upload-pages-artifact v5, deploy-pages v5
+    (landed with the version-tag release job)
   - [x] (new) Add content-build + rust-verify steps once they exist (M1)
 - [x] (new) Fonts were inlined as data: URIs by Vite and blocked by the CSP; `assetsInlineLimit` now skips woff2
 - [~] Done-check: installable, offline-loading shell on mobile viewport; Lighthouse PWA checks pass
@@ -140,9 +142,10 @@ also works. CI doesn't need either.
   - [ ] `deps:` cases in a shared Cargo project (later)
   - [x] (new) Unit 2.4 runs the Book's `rand` lines against a hidden stand-in module (`hidden.after`), seeded
     from the clock, or from `NYBBLES_SEED`, which the verifier sets so expected output is stable
-  - [ ] Guidebook ```rust blocks with mdBook annotations (03 §4.3)
+  - [x] Guidebook ```rust blocks with mdBook annotations (03 §4.3)
   - [x] Parsons `alternatives` orders verified via harness
-  - [ ] Weekly CI job against latest stable reporting drift (03 §4.2)
+  - [x] Weekly CI job against latest stable reporting drift (03 §4.2)
+    `.github/workflows/rust-drift.yml`, Mondays; `RUSTUP_TOOLCHAIN=stable`. The job stays green and writes the disagreements to the step summary
 - [x] Lesson player `views/LessonView.vue` at `/lesson/:levelId/:lessonId`: queue, CHECK -> feedback
   footer (aria-live) -> CONTINUE, mistake re-queue, progress bar, exit confirm, simple complete screen
   (accuracy, time) (01 §4.3.4)
@@ -176,8 +179,10 @@ also works. CI doesn't need either.
   - [ ] (new) Concept ids for scope/blocks and E0070 (Unit 1.2 tagged them `var.shadowing` / `var.const`)
   - [ ] (new) Human playtest of Units 1.1-1.2 on a phone (03 §5 step 6)
   - [ ] (new) Pools: lessons are exactly 9 items, no extra pooled exercises yet
-  - [ ] (new) Build check: a parsons answer with a distractor swapped in must fail verification (catches
+  - [x] (new) Build check: a parsons answer with a distractor swapped in must fail verification (catches
     distractors that also compile, e.g. a final `println!` without `;`)
+    One hit: Unit 4.5 `parsons-seat` had `    }` as a distractor, which is the function's `}` with different spacing.
+    It is now `    } else {`
   - [x] (new) Width check measures fill-tokens lines with answers in place of `___N___`
   - [x] (new) Warn on a top-level `fn` without `main` under `wrap: auto` (a misspelled `fn Main` was
     silently wrapped in a second `main`)
@@ -279,7 +284,9 @@ also works. CI doesn't need either.
     content adds more items for them
 - [x] (new) Verify `rust` code blocks in guidebooks (plans/03 §4.3): run by default; `compile_fail[,Ecode]`,
   `should_panic`, `no_run`, `ignore` honoured. Found one unannotated panic and one fragment
-- [ ] (new) Build check: spot-bug `answer` line vs the line the compiler reports
+- [x] (new) Build check: spot-bug `answer` line vs the line the compiler reports
+  The first ` --> file:line:col` in the rendered error, shifted back out of a generated `fn main` and `hidden.before`.
+  32 items tap the mistake while rustc points elsewhere; they set `compilerLine`
 - [x] (new) Build check: a fill-tokens bank tile that would also be correct. Tries each unused tile per blank and
   each swap of two answers (`verify: run` + `expectStdout` only); found 9 in Sections 1-2, now fixed
   - [ ] (new) Not every combination (ponytail; /tmp/cn45tools/alts.py does the full search); items that check a
@@ -290,7 +297,8 @@ also works. CI doesn't need either.
   Three items needed this and couldn't be answered before
 - [ ] (new) Authoring note: answers with combining characters (`e\u{301}`) must match the real output's code
   points; a precomposed `é` looks the same but fails
-- [ ] (new) spot-bug: optional "line the compiler reports" field, for "mistake here, error there" items
+- [x] (new) spot-bug: optional "line the compiler reports" field, for "mistake here, error there" items
+  `compilerLine`. The build checks it against rustc; `answer` may differ
 - [ ] (new) predict-output tiles join with spaces but the answer needs real newlines; document or normalise
 - [ ] (new) predict-output can't express "this panics"; panics are mcq + `expectPanic` for now
 - [ ] (new) Two items rely on rustc 1.98 not catching `a[a.len()]` at compile time (unit-04 level-04
@@ -321,7 +329,8 @@ also works. CI doesn't need either.
   - [x] (new) "Jump here?" on locked checkpoints: no re-queue, pass at 80% first-attempt, places up to it
   - (new) Onboarding: welcome, experience, daily goal, reminder time (optional), placement offer; first
     launch only (`profile.onboardedAt`; anyone with logged activity counts as onboarded)
-  - [ ] (new) No e2e for the jump flow or the onboarding placement offer (placement itself has one)
+  - [x] (new) No e2e for the jump flow or the onboarding placement offer (placement itself has one)
+    Jump here: 80% unlocks up to the checkpoint, a low score leaves it locked. Onboarding offers the test after "I know another language"
   - [ ] (new) "Install app" prompt after the first lesson (01 §4.3.1) not done (M5 install prompt timing)
 - [x] Spike: in-browser compiler (Weblings / Rubrc), record go/no-go (01 §7): **not yet**
   (plans/spikes/in-browser-compiler.md). Rubrc no-go (rustc 1.83, 4+ GB RAM, 15 s compiles). Weblings is the
@@ -431,3 +440,7 @@ also works. CI doesn't need either.
   freezes. A second tab reloads progress when it becomes visible. e2e covers a perfect first lesson (XP,
   streak, gems, combo) and the hint. 82 unit tests, 24 e2e. Still open: device test of the APK, a manual
   screen-reader pass, low-end Android performance, a playtest.
+- 2026-10-25: Actions are on their Node 24 majors. A Monday job re-verifies the course on latest stable Rust and
+  reports drift without failing. The build rejects a parsons distractor that still passes when swapped in, and
+  checks a spot-bug line against rustc (`compilerLine` when the tap target is not the caret; 32 items). e2e covers
+  Jump here, pass and fail, and the onboarding placement offer.

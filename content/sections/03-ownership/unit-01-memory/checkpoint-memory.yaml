@@ -98,6 +98,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0599]
         answer: 2
+        compilerLine: 5
         explanation: "The error is reported on line 5, but the mistake is line 2: `name` is a `&str`. `String::from(\"Ada\")` makes text that can grow."
         concepts: [string.string-vs-literal, err.E0599]
 

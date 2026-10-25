@@ -234,6 +234,7 @@ lessons:
           verify: compile-fail
           expectErrorMessage: "unexpected closing delimiter"
         answer: 2
+        compilerLine: 4
         explanation: "The compiler points at line 4, but the mistake is on line 2: it's missing the `{` that opens `main`'s body, so the `}` has nothing to close."
         difficulty: 4
         concepts: [intro.main, compiler.read-error]

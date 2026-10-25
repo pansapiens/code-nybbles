@@ -243,6 +243,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0597]
         answer: 6
+        compilerLine: 5
         explanation: "`city` lives until the `}` on line 6. Line 7 uses `r` after that, so the compiler says *`city` does not live long enough*."
         concepts: [borrow.dangling, own.scope-drop, err.E0597]
 

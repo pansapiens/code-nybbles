@@ -309,6 +309,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0424]
         answer: 4
+        compilerLine: 5
         explanation: "The compiler points at `self` on line 5, but the mistake is line 4: `value` has no `&self` parameter, so there's no `self` to match on."
         concepts: [enum.impl, method.self, err.E0424]
 

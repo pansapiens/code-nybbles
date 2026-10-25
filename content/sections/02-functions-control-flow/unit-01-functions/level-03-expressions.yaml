@@ -191,6 +191,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 2
+        compilerLine: 1
         explanation: "The compiler reports *mismatched types* at the `-> i32` on line 1, but the fix is on line 2: remove the `;` so `n * n` is returned."
         concepts: [err.E0308, expr.vs-stmt]
 
@@ -379,6 +380,7 @@ lessons:
           verify: compile-fail
           expectErrors: [E0308]
         answer: 12
+        compilerLine: 11
         explanation: "`width` is fine. In `height`, the `;` after `3` means the body returns `()`. Removing it on line 12 fixes the error."
         concepts: [err.E0308, expr.vs-stmt]
 

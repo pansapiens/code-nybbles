@@ -1,0 +1,58 @@
+name: Rust stable drift
+
+# plans/03 §4.2: the pinned toolchain gates CI. This job re-verifies on latest stable and
+# reports new lints and changed error codes without failing the build.
+on:
+  schedule:
+    - cron: '0 16 * * 1' # Monday 16:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Latest stable
+        run: rustup toolchain install stable --profile minimal
+      - uses: actions/cache@v6
+        with:
+          path: tools/rust-verify/.cache
+          key: rust-verify-stable-${{ hashFiles('content/**', 'tools/content-build/**') }}
+          restore-keys: rust-verify-stable-
+      - name: Verify against latest stable
+        env:
+          # Overrides tools/rust-verify/rust-toolchain.toml. Outcomes are cached by rustc version.
+          RUSTUP_TOOLCHAIN: stable
+        run: |
+          set +e
+          pnpm content:build > drift.log 2>&1
+          code=$?
+          {
+            echo "## Rust stable drift"
+            echo
+            echo '```'
+            rustc --version
+            echo '```'
+            echo
+            if [ "$code" -eq 0 ]; then
+              echo "No drift: the course still verifies on latest stable."
+            else
+              echo "Latest stable disagrees with the pinned toolchain. This job stays green; the log is the report."
+              echo
+              echo '```'
+              grep -E '^(ERROR|warn )' drift.log | head -n 200
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0

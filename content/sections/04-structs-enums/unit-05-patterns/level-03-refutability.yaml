@@ -373,7 +373,7 @@ lessons:
           - { id: l7, text: "}" }
         distractors:
           - { id: d1, text: "    let Some(n) = seat;" }
-          - { id: d2, text: "    }" }
+          - { id: d2, text: "    } else {" }
         answer: [l1, l2, l3, l4, l5, l6, l7]
         verify:
           harness: |

@@ -909,6 +909,7 @@ steps:
           verify: compile-fail
           expectErrors: [E0594]
         answer: 8
+        compilerLine: 9
         explanation: "`&items` gives shared references, which only allow reading, so the compiler rejects line 9. Loop over `&mut items` to change each item."
         concepts: [vec.iter, borrow.mut, err.E0594]
 
