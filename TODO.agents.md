@@ -421,6 +421,7 @@ also works. CI doesn't need either.
   (identical snippets compiled at once in one directory), fixed by sharing one compile per key. M6 Android:
   Capacitor project, reminders, native haptics; debug APK builds, not yet run on a device. Next: device test
   of the APK, manual screen-reader pass, playtest.
+- 2026-10-25: A tag like v0.1 builds a debug APK and attaches it to the GitHub release. Version name comes from the tag; v0.1 is version code 100.
 - 2026-10-25: Unit banners are a fixed height, so a sticky card covers the ones stacked under it. A long title ellipsises instead of growing the card.
 - 2026-10-25: The perfect-lesson e2e continues past Early Crab or Night Owl, which only appear before 7am or after 10pm. CI runs in UTC and was stopping on Early Crab.
 - 2026-10-25: Path header shows the section and unit title only, with a notebook icon for the guidebook. Nodes are a little smaller and closer, on a slightly wider and faster sine, so more fit on screen.

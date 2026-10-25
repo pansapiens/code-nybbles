@@ -53,6 +53,8 @@ cd android && ./gradlew assembleDebug     # or: pnpm exec cap open android
 
 The debug APK is written to `app/android/app/build/outputs/apk/debug/app-debug.apk`.
 
+A tag such as `v0.1` runs the same build in CI and attaches `code-nybbles-v0.1.apk` to that GitHub release. It is a debug APK (installable, not Play Store signing). `v0.1` is version name `0.1` and version code `100`.
+
 ## Layout
 
 | Path | Contents |

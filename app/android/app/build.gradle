@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// -PappVersionName=0.1 -PappVersionCode=100 on a tagged release (v0.1 -> 100).
+def appVersionCode = ((findProperty('appVersionCode') ?: '1').toString()) as int
+def appVersionName = (findProperty('appVersionName') ?: '1.0').toString()
+
 android {
     namespace = "io.github.pansapiens.codenybbles"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +11,8 @@ android {
         applicationId "io.github.pansapiens.codenybbles"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
