@@ -361,7 +361,8 @@ also works. CI doesn't need either.
 - [x] Install prompt timing, update prompt, `navigator.storage.persist()`, backup reminders
   - (new) Install toast after the first XP, "Not now" is permanent (Settings has no install button yet);
     backup toast 30 days after first launch or the last export/"Later"; one toast at a time
-- [ ] Optional: Periodic Background Sync experiment, `.ics` reminder (01 §8.1)
+- [ ] Optional: Periodic Background Sync experiment (01 §8.1)
+- [x] `.ics` reminder (01 §8.1): Settings downloads a daily calendar event at the chosen reminder time
 - [x] Local error ring buffer included in backups (last 50, `code-nybbles:errors`; exported, not imported)
 
 ## M6: Playground + Android
@@ -456,3 +457,5 @@ also works. CI doesn't need either.
 - 2026-10-25: The backup reminder was already shipping (a toast 30 days after first launch or the last export). Ticked.
 - 2026-10-25: `content:build --partial` writes bundles for units with no errors and leaves the failing units out, so a
   diagram can be previewed while another unit is mid-edit. The command still exits 1.
+- 2026-10-25: Settings "Add to calendar" downloads a daily `.ics` at the reminder time (floating local time).
+  e2e sets 19:30 and checks the file. Periodic background sync is still open.

@@ -27,10 +27,11 @@
         </AnswerTile>
       </div>
     </fieldset>
-    <label class="row">
+    <label class="row reminder">
       Daily reminder
       <input type="time" :value="game.profile?.reminderTime ?? ''" @change="setReminder" />
       <DuoButton v-if="game.profile?.reminderTime" variant="ghost" @click="game.saveProfile({ reminderTime: undefined })">Clear</DuoButton>
+      <DuoButton v-if="game.profile?.reminderTime" variant="ghost" @click.stop="addToCalendar">Add to calendar</DuoButton>
     </label>
     <label class="row">
       <input v-model="settings.heartsMode" type="checkbox" />
@@ -152,6 +153,7 @@ import DuoButton from '@/components/DuoButton.vue'
 import { loadCourse, loadManifest } from '@/content/loader'
 import { rewindChoices, type RewindChoice } from '@/domain/path'
 import { BACKUP_NUDGE_KEY, exportBackup, importBackup, rebuildDerived, resetProgress } from '@/db/repo'
+import { dailyReminderIcs } from '@/services/calendar'
 import { DAILY_GOALS } from '@/domain/progress'
 import { useProgressStore } from '@/stores/progress'
 import { useSettingsStore, type Theme } from '@/stores/settings'
@@ -221,6 +223,17 @@ function closeReset() {
 
 const setReminder = (e: Event) => game.saveProfile({ reminderTime: (e.target as HTMLInputElement).value || undefined })
 
+function addToCalendar() {
+  const time = game.profile?.reminderTime
+  if (!time) return
+  const blob = new Blob([dailyReminderIcs(time)], { type: 'text/calendar' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = 'code-nybbles-reminder.ics'
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
 async function exportFile() {
   const blob = new Blob([JSON.stringify(await exportBackup(), null, 1)], { type: 'application/json' })
   const a = document.createElement('a')
@@ -279,6 +292,9 @@ legend {
 .about summary {
   font-weight: 800;
   cursor: pointer;
+}
+.reminder {
+  flex-wrap: wrap;
 }
 .hint {
   margin: 0;

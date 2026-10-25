@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { expect, type Page, test } from '@playwright/test'
 
 /** Clicks through first-launch onboarding as a beginner, which ends in the first lesson. Each test has a fresh profile. */
@@ -343,4 +344,20 @@ test('playground symbol keys type at the cursor, and TEST appears for code with 
   await page.getByRole('button', { name: 'TEST' }).click()
   await expect(page.getByLabel('Output')).toContainText('test t ... ok')
   expect(sent.tests).toBe(true)
+})
+
+test('a daily reminder downloads as a calendar event', async ({ page }) => {
+  await onboard(page)
+  await page.goto('./settings')
+  const time = page.getByLabel('Daily reminder')
+  await time.fill('19:30')
+  await time.blur()
+  const add = page.getByRole('button', { name: 'Add to calendar' })
+  await expect(add).toBeVisible()
+  const [download] = await Promise.all([page.waitForEvent('download'), add.click()])
+  expect(download.suggestedFilename()).toBe('code-nybbles-reminder.ics')
+  const ics = await readFile((await download.path())!, 'utf8')
+  expect(ics).toContain('RRULE:FREQ=DAILY')
+  expect(ics).toContain('T193000')
+  expect(ics).not.toMatch(/DTSTART:[^\r\n]*Z/)
 })
