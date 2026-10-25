@@ -211,7 +211,8 @@ also works. CI doesn't need either.
   - Deviation: settings live in localStorage (needed before first paint), included in backups
   - Settings has "Repair data" (rebuild) and "Reset progress": rewind to the start of a chosen unit (later lessons marked not done; XP, gems and streak stay) or reset everything
 - [x] Export/import JSON backup (zod-validated, merge by event ID) (01 §6); import reloads the page
-  - [ ] (new) Backup reminder (01 §6) not done
+  - [x] (new) Backup reminder (01 §6) not done
+    Toast 30 days after the first launch or the last export/"Later" (M5); one toast at a time
 - [x] Domain unit tests: streak edge cases (DST, timezone travel, long absence), XP, hearts, economy
   - [x] (new) e2e that finishes a whole lesson and checks XP/streak (15 XP, 1-day streak, 30 gems, combo toast)
 - [x] (new) Cross-tab sync (ponytail: a second tab reloads progress from IndexedDB when it becomes visible)
@@ -450,3 +451,4 @@ also works. CI doesn't need either.
 - 2026-10-25: Mistakes review includes Code Read questions and shows that question's program, up to the lines it
   revealed. Smart and unit practice still leave Code Reads out. e2e misses one question in Ferris says hello and
   meets it again under Mistakes, with `fn main` on screen.
+- 2026-10-25: The backup reminder was already shipping (a toast 30 days after first launch or the last export). Ticked.
