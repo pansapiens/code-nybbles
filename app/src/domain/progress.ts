@@ -78,6 +78,15 @@ export type EventBody =
   | { type: 'placement_completed'; payload: PlacementPayload }
   | { type: 'heart_lost'; payload: Record<string, never> }
   | { type: 'achievement_unlocked'; payload: { id: string } }
+  | { type: 'progress_rewound'; payload: RewindPayload }
+
+/** Clears path progress from one unit through the end of the course. XP, gems and the streak stay. */
+export type RewindPayload = {
+  unitId: string
+  levelIds: string[]
+  chestIds: string[]
+  conceptIds: string[]
+}
 
 /** Levels (with their lesson counts) and chests skipped by the placement test or a "Jump here" checkpoint. */
 export type PlacementPayload = { // a type, not an interface, so it fits the backup schema's Record payload
@@ -216,6 +225,20 @@ export function forgiveTravel(
   return { ...s, days }
 }
 
+/** Drops level, chest, mistake and newly taught concept state. Does not settle the streak or move `last`. */
+function applyRewind(p: Progress, payload: RewindPayload): Progress {
+  const levels = new Set(payload.levelIds)
+  const chests = new Set(payload.chestIds)
+  const concepts = new Set(payload.conceptIds)
+  return {
+    ...p,
+    levels: Object.fromEntries(Object.entries(p.levels).filter(([id]) => !levels.has(id))),
+    openedChests: p.openedChests.filter((id) => !chests.has(id)),
+    mistakes: Object.fromEntries(Object.entries(p.mistakes).filter(([ref]) => !levels.has(ref.split('/')[0] ?? ''))),
+    concepts: Object.fromEntries(Object.entries(p.concepts).filter(([id]) => !concepts.has(id))),
+  }
+}
+
 function settle(p: Progress, at: { ts: number; tz: string; localDate: LocalDate }) {
   // The first event starts the streak calendar; nothing before it can be missed.
   const start = p.last ? p.streak : { ...p.streak, lastSettledDate: addDays(at.localDate, -1) }
@@ -225,6 +248,7 @@ function settle(p: Progress, at: { ts: number; tz: string; localDate: LocalDate 
 // ---- Fold ----
 
 export function apply(p: Progress, ev: DomainEvent): { state: Progress; notices: Notice[] } {
+  if (ev.type === 'progress_rewound') return { state: applyRewind(p, ev.payload), notices: [] }
   const r = settle(p, ev)
   const notices: Notice[] = [...r.events]
   const s: Progress = { ...p, streak: r.state, last: { ts: ev.ts, tz: ev.tz, localDate: ev.localDate } }
@@ -455,6 +479,12 @@ export function completePractice(p: Progress, kind: 'smart' | 'mistakes' | 'unit
   sessionRewards(b, notices, goalBefore, ctx, ctx.random ?? Math.random)
   unlockAchievements(b, ev)
   return { events: b.events, notices: b.notices, state: b.state, xp }
+}
+
+export function rewindProgress(p: Progress, payload: RewindPayload, ctx: Ctx) {
+  const b = batch(p, ctx)
+  b.push({ type: 'progress_rewound', payload })
+  return { events: b.events, state: b.state }
 }
 
 export function completePlacement(p: Progress, payload: PlacementPayload, ctx: Ctx) {

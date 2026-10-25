@@ -204,7 +204,7 @@ also works. CI doesn't need either.
   - Deviation: derived state is one snapshot row (`derived` table, `DERIVED_VERSION`), not per-entity tables;
     `freeze_used` / `streak_lost` are derived on replay, not stored, so live state always equals `fold(events)`
   - Deviation: settings live in localStorage (needed before first paint), included in backups
-  - Settings has "Repair data" (rebuild) and "Reset progress" (confirmed)
+  - Settings has "Repair data" (rebuild) and "Reset progress": rewind to the start of a chosen unit (later lessons marked not done; XP, gems and streak stay) or reset everything
 - [x] Export/import JSON backup (zod-validated, merge by event ID) (01 §6); import reloads the page
   - [ ] (new) Backup reminder (01 §6) not done
 - [x] Domain unit tests: streak edge cases (DST, timezone travel, long absence), XP, hearts, economy
@@ -421,6 +421,7 @@ also works. CI doesn't need either.
   (identical snippets compiled at once in one directory), fixed by sharing one compile per key. M6 Android:
   Capacitor project, reminders, native haptics; debug APK builds, not yet run on a device. Next: device test
   of the APK, manual screen-reader pass, playtest.
+- 2026-10-25: Reset progress lists sections and units. Choosing one marks that unit and everything after it not done, and keeps XP, gems and the streak. Reset everything is still there.
 - 2026-10-25: Lesson player: Hint button, combo toasts with +2 XP at every 10, Enter to check or continue.
   Settings shows the full MIT and Apache-2.0 texts, including the Rust Project notice. Snowflake icon for
   freezes. A second tab reloads progress when it becomes visible. e2e covers a perfect first lesson (XP,

@@ -36,3 +36,48 @@ export function nodeStates(nodes: PathNode[], p: Progress): NodeState[] {
 
 /** Index of the lesson to play next in a level (replays cycle through the lessons once complete). */
 export const nextLesson = (n: PathNode, p: Progress) => (p.levels[n.id]?.lessons ?? 0) % (n.lessons ?? 1)
+
+export interface RewindChoice {
+  unitId: string
+  sectionNo: number
+  sectionTitle: string
+  unitNo: number
+  unitTitle: string
+  /** Levels and chests from this unit through the end of the course. */
+  levelIds: string[]
+  chestIds: string[]
+  /** Concepts first taught in that range. Earlier concepts keep their review history. */
+  conceptIds: string[]
+}
+
+type RewindUnit = {
+  id: string
+  title: string
+  path: { kind: string; levelId?: string; id?: string }[]
+  levels: Record<string, { lessons: { exercises: { concepts?: string[] }[] }[] }>
+}
+
+/** One entry per unit, in course order. Choosing one rewinds to the start of that unit. */
+export function rewindChoices(sections: { title: string; units: RewindUnit[] }[]): RewindChoice[] {
+  const units = sections.flatMap((s, si) => s.units.map((u, ui) => ({ sectionNo: si + 1, sectionTitle: s.title, unitNo: ui + 1, u })))
+  const seen = new Set<string>()
+  return units.map(({ sectionNo, sectionTitle, unitNo, u }, i) => {
+    const levelIds: string[] = []
+    const chestIds: string[] = []
+    const later = new Set<string>()
+    for (const { u: v } of units.slice(i)) {
+      for (const n of v.path) {
+        if (n.kind === 'chest' && n.id) chestIds.push(n.id)
+        else if (n.kind !== 'practice' && n.levelId) levelIds.push(n.levelId)
+      }
+      for (const c of conceptsIn(v)) later.add(c)
+    }
+    const conceptIds = [...later].filter((c) => !seen.has(c))
+    for (const c of conceptsIn(u)) seen.add(c)
+    return { unitId: u.id, sectionNo, sectionTitle, unitNo, unitTitle: u.title, levelIds, chestIds, conceptIds }
+  })
+}
+
+function conceptsIn(u: RewindUnit): string[] {
+  return Object.values(u.levels).flatMap((level) => level.lessons.flatMap((lesson) => lesson.exercises.flatMap((e) => e.concepts ?? [])))
+}

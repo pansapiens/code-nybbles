@@ -14,6 +14,7 @@ import {
   type LessonResult,
   openChest,
   type Progress,
+  rewindProgress,
   viewAt,
   wrongAnswer,
 } from '../progress'
@@ -77,6 +78,29 @@ describe('progress', () => {
     // Passing the last beginner checkpoint unlocks Rustacean Initiate.
     const final = completeLesson(s.state, lesson({ levelId: BEGINNER_FINAL, checkpoint: true }), ctx(T0))
     expect(final.state.achievements['rustacean-initiate']).toBeDefined()
+  })
+
+  it('rewinds lessons from a unit on, and leaves xp, gems and the streak where they were', () => {
+    const s = session()
+    s.run(completeLesson(s.state, lesson({ levelId: 'early', results: [{ ref: 'early/l1/q', concepts: ['intro'], ok: true }] }), ctx(T0)))
+    s.run(completeLesson(s.state, lesson({ levelId: 'late', mistakes: 1, results: [{ ref: 'late/l1/q', concepts: ['var.let'], ok: false }] }), ctx(T0 + 1000)))
+    s.run(openChest(s.state, 'chest-late', ctx(T0 + 1500)))
+    const before = s.state
+    s.run(rewindProgress(s.state, { unitId: 'u2', levelIds: ['late'], chestIds: ['chest-late'], conceptIds: ['var.let'] }, ctx(T0 + 2000)))
+    expect(s.state.levels.early?.lessons).toBe(1)
+    expect(s.state.levels.late).toBeUndefined()
+    expect(s.state.openedChests).toEqual([])
+    expect(s.state.mistakes['late/l1/q']).toBeUndefined()
+    expect(s.state.concepts.intro).toBeDefined()
+    expect(s.state.concepts['var.let']).toBeUndefined()
+    expect(s.state.xp).toBe(before.xp)
+    expect(s.state.gems).toBe(before.gems)
+    expect(s.state.last).toEqual(before.last)
+    expect(s.state.streak.currentStreak).toBe(before.streak.currentStreak)
+    expect(fold(s.log)).toEqual(s.state)
+
+    s.run(completeLesson(s.state, lesson({ levelId: 'late' }), ctx(T0 + 3000)))
+    expect(s.state.levels.late?.lessons).toBe(1)
   })
 
   it('live state equals a replay of the log, across gaps, freezes, loss and repair', () => {

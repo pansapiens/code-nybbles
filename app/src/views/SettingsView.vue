@@ -68,15 +68,39 @@
       </div>
       <div class="row">
         <DuoButton variant="ghost" @click="repair">Repair data</DuoButton>
-        <DuoButton variant="ghost" @click="confirmReset = true">Reset progress</DuoButton>
+        <DuoButton variant="ghost" @click="openReset">Reset progress</DuoButton>
       </div>
       <p v-if="message" role="status">{{ message }}</p>
     </fieldset>
-    <BottomSheet v-model:open="confirmReset" title="Reset all progress?">
-      <p>This deletes your XP, streak, gems and lesson history on this device. It can't be undone unless you have a backup.</p>
+    <BottomSheet v-model:open="confirmReset" title="Reset progress">
+      <p>Go back to the start of a unit. Lessons in that unit and every unit after it are marked not done. XP, gems and your streak stay.</p>
+      <p v-if="resetError" role="alert">{{ resetError }}</p>
+      <p v-if="!resetChoices">Loading the course...</p>
+      <ul v-else class="reset-list">
+        <li v-for="group in resetGroups" :key="group.sectionNo">
+          <p class="reset-section">Section {{ group.sectionNo }}. {{ group.sectionTitle }}</p>
+          <div class="stack">
+            <AnswerTile
+              v-for="u in group.units"
+              :key="u.unitId"
+              :state="picked === u.unitId ? 'selected' : 'idle'"
+              @click="picked = u.unitId"
+            >
+              Unit {{ u.unitNo }}. {{ u.unitTitle }}
+            </AnswerTile>
+          </div>
+        </li>
+      </ul>
       <div class="stack">
-        <DuoButton block @click="confirmReset = false">Keep my progress</DuoButton>
-        <DuoButton block variant="danger" @click="reset">Reset</DuoButton>
+        <DuoButton block variant="danger" :disabled="!pickedChoice" @click="rewind">
+          {{ pickedChoice ? `Reset to the start of ${pickedChoice.unitTitle}` : 'Choose a unit' }}
+        </DuoButton>
+        <DuoButton v-if="!confirmAll" block variant="ghost" @click="confirmAll = true">Reset everything</DuoButton>
+        <template v-else>
+          <p>This deletes your XP, streak, gems and lesson history on this device. It can't be undone unless you have a backup.</p>
+          <DuoButton block variant="danger" @click="resetAll">Reset everything</DuoButton>
+        </template>
+        <DuoButton block variant="ghost" @click="closeReset">Cancel</DuoButton>
       </div>
     </BottomSheet>
     <details class="about">
@@ -118,14 +142,15 @@
 
 <script setup lang="ts">
 import type { ContentManifest } from '@code-nybbles/content-build/schema'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import apache from '../../../LICENSE-APACHE?raw'
 import mit from '../../../LICENSE-MIT?raw'
 import { useRouter } from 'vue-router'
 import AnswerTile from '@/components/AnswerTile.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import DuoButton from '@/components/DuoButton.vue'
-import { loadManifest } from '@/content/loader'
+import { loadCourse, loadManifest } from '@/content/loader'
+import { rewindChoices, type RewindChoice } from '@/domain/path'
 import { BACKUP_NUDGE_KEY, exportBackup, importBackup, rebuildDerived, resetProgress } from '@/db/repo'
 import { DAILY_GOALS } from '@/domain/progress'
 import { useProgressStore } from '@/stores/progress'
@@ -161,7 +186,38 @@ const game = useProgressStore()
 void game.load()
 const message = ref<string>()
 const confirmReset = ref(false)
+const confirmAll = ref(false)
+const picked = ref<string>()
+const resetChoices = ref<RewindChoice[]>()
+const resetError = ref<string>()
 const fileInput = ref<HTMLInputElement>()
+const resetGroups = computed(() => {
+  const groups: { sectionNo: number; sectionTitle: string; units: RewindChoice[] }[] = []
+  for (const choice of resetChoices.value ?? []) {
+    const last = groups.at(-1)
+    if (!last || last.sectionNo !== choice.sectionNo) groups.push({ sectionNo: choice.sectionNo, sectionTitle: choice.sectionTitle, units: [choice] })
+    else last.units.push(choice)
+  }
+  return groups
+})
+const pickedChoice = computed(() => resetChoices.value?.find((u) => u.unitId === picked.value))
+
+async function openReset() {
+  confirmAll.value = false
+  picked.value = undefined
+  resetError.value = undefined
+  confirmReset.value = true
+  if (resetChoices.value) return
+  try {
+    resetChoices.value = rewindChoices((await loadCourse()).sections)
+  } catch (e) {
+    resetError.value = e instanceof Error ? e.message : String(e)
+  }
+}
+function closeReset() {
+  confirmReset.value = false
+  confirmAll.value = false
+}
 
 const setReminder = (e: Event) => game.saveProfile({ reminderTime: (e.target as HTMLInputElement).value || undefined })
 
@@ -191,11 +247,22 @@ async function repair() {
   await game.reload()
   message.value = 'Progress rebuilt from your activity history.'
 }
-async function reset() {
+async function rewind() {
+  const choice = pickedChoice.value
+  if (!choice) return
+  try {
+    await game.rewindTo({ unitId: choice.unitId, levelIds: choice.levelIds, chestIds: choice.chestIds, conceptIds: choice.conceptIds })
+    closeReset()
+    message.value = `Lessons from ${choice.unitTitle} onward are marked not done.`
+  } catch (e) {
+    resetError.value = e instanceof Error ? e.message : String(e)
+  }
+}
+async function resetAll() {
   await resetProgress()
   await game.reload()
-  confirmReset.value = false
-  message.value = 'Progress reset.'
+  closeReset()
+  message.value = 'All progress reset.'
 }
 </script>
 
@@ -226,6 +293,18 @@ legend {
   overflow: auto;
   white-space: pre-wrap;
   font-size: 0.8rem;
+}
+.reset-list {
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--s-4);
+}
+.reset-section {
+  margin: 0 0 var(--s-2);
+  color: var(--c-text-2);
+  font-weight: 800;
 }
 label {
   font-weight: 700;

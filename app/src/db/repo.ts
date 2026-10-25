@@ -96,7 +96,7 @@ const BackupSchema = z.object({
     z.object({
       id: z.uuid(),
       deviceId: z.string(),
-      type: z.enum(['lesson_completed', 'practice_completed', 'placement_completed', 'gems_awarded', 'gems_spent', 'heart_lost', 'achievement_unlocked']),
+      type: z.enum(['lesson_completed', 'practice_completed', 'placement_completed', 'gems_awarded', 'gems_spent', 'heart_lost', 'achievement_unlocked', 'progress_rewound']),
       ts: z.number(),
       localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       tz: z.string(),

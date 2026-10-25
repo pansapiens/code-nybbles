@@ -17,6 +17,8 @@ import {
   openChest,
   type PlacementPayload,
   type Progress,
+  rewindProgress,
+  type RewindPayload,
   type ShopItem,
   viewAt,
   wrongAnswer,
@@ -92,6 +94,8 @@ export const useProgressStore = defineStore('progress', () => {
     return out.gems
   }
   const finishPlacement = async (payload: PlacementPayload) => save(completePlacement(state.value, payload, ctx()).events)
+  // IndexedDB cannot clone a Vue proxy, and the settings list hands us one.
+  const rewindTo = (payload: RewindPayload) => save(rewindProgress(state.value, JSON.parse(JSON.stringify(payload)), ctx()).events)
   const loseHeart = () => save(wrongAnswer(state.value, ctx()).events)
 
   async function saveProfile(changes: Partial<Omit<Profile, 'id'>>) {
@@ -100,5 +104,5 @@ export const useProgressStore = defineStore('progress', () => {
   }
   const setDailyGoal = (g: DailyGoal) => saveProfile({ dailyGoalXp: g })
 
-  return { state, profile, ready, view, dailyGoal, load, reload, finishLesson, finishPractice, purchase, claimChest, loseHeart, finishPlacement, saveProfile, setDailyGoal }
+  return { state, profile, ready, view, dailyGoal, load, reload, finishLesson, finishPractice, purchase, claimChest, loseHeart, finishPlacement, rewindTo, saveProfile, setDailyGoal }
 })
